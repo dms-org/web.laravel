@@ -4,7 +4,7 @@ namespace Dms\Web\Laravel\Tests\Integration\Fixtures\Demo;
 
 use Dms\Core\Persistence\Db\Mapping\Definition\Orm\OrmDefinition;
 use Dms\Core\Persistence\Db\Mapping\Orm;
-use Dms\Web\Laravel\Auth\Persistence\AuthOrm;
+use Dms\Web\Laravel\Persistence\Db\DmsOrm;
 
 /**
  * @author Elliot Levin <elliotlevin@hotmail.com>
@@ -20,6 +20,6 @@ class DemoOrm extends Orm
      */
     protected function define(OrmDefinition $orm)
     {
-        $orm->encompass((new AuthOrm())->inNamespace('dms_'));
+        $orm->encompass((new DmsOrm())->inNamespace('dms_'));
     }
 }

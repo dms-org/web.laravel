@@ -45,12 +45,29 @@ class DateOrTimeFieldRenderer extends BladeFieldRenderer
     {
         return $this->renderView(
                 $field,
-                'dms::components.form.field.date-or-time.single.input',
+                'dms::components.field.date-or-time.single.input',
                 [
                         DateTimeTypeBase::ATTR_FORMAT => 'format',
                         DateTimeTypeBase::ATTR_MIN    => 'min',
                         DateTimeTypeBase::ATTR_MAX    => 'max',
                         // TODO: less_than and greater_than
+                ]
+        );
+    }
+
+    /**
+     * @param IField     $field
+     * @param IFieldType $fieldType
+     *
+     * @return string
+     */
+    protected function renderFieldValue(IField $field, IFieldType $fieldType)
+    {
+        return $this->renderValueViewWithNullDefault(
+                $field,
+                'dms::components.field.date-or-time.single.value',
+                [
+                        'format' => $fieldType->get(DateTimeTypeBase::ATTR_FORMAT),
                 ]
         );
     }

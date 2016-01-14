@@ -50,7 +50,7 @@ class StringFieldRenderer extends BladeFieldRenderer
 
         return $this->renderView(
                 $field,
-                'dms::components.form.field.string.input',
+                'dms::components.field.string.input',
                 [
                         StringType::ATTR_EXACT_LENGTH => 'exactLength',
                         StringType::ATTR_MIN_LENGTH   => 'minLength',
@@ -78,5 +78,25 @@ class StringFieldRenderer extends BladeFieldRenderer
             default:
                 return 'text';
         }
+    }
+
+    /**
+     * @param IField     $field
+     * @param IFieldType $fieldType
+     *
+     * @return string
+     */
+    protected function renderFieldValue(IField $field, IFieldType $fieldType)
+    {
+        /** @var StringType $fieldType */
+        $inputType = $this->getInputType($fieldType);
+
+        return $this->renderValueViewWithNullDefault(
+                $field,
+                'dms::components.field.string.value',
+                [
+                        'type' => $inputType
+                ]
+        );
     }
 }

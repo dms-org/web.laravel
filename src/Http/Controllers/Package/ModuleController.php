@@ -2,7 +2,6 @@
 
 namespace Dms\Web\Laravel\Http\Controllers\Package;
 
-use Dms\Core\ICms;
 use Dms\Core\Package\IPackage;
 use Dms\Web\Laravel\Http\Controllers\DmsController;
 use Illuminate\Http\Request;
@@ -27,6 +26,7 @@ class ModuleController extends DmsController
     public function index(Request $request)
     {
         $this->loadModuleAndPackage($request);
+
 
     }
 

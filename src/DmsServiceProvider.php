@@ -8,6 +8,11 @@ use Dms\Core\Auth\IUserRepository;
 use Dms\Core\Language\ILanguageProvider;
 use Dms\Core\Persistence\Db\Connection\IConnection;
 use Dms\Core\Persistence\Db\Doctrine\DoctrineConnection;
+use Dms\Core\Util\DateTimeClock;
+use Dms\Core\Util\IClock;
+use Dms\Web\Laravel\Action\ActionExceptionHandlerCollection;
+use Dms\Web\Laravel\Action\ActionInputTransformerCollection;
+use Dms\Web\Laravel\Action\ActionResultHandlerCollection;
 use Dms\Web\Laravel\Auth\DmsUserProvider;
 use Dms\Web\Laravel\Auth\LaravelAuthSystem;
 use Dms\Web\Laravel\Auth\Password\BcryptPasswordHasher;
@@ -17,14 +22,21 @@ use Dms\Web\Laravel\Auth\Password\PasswordHasherFactory;
 use Dms\Web\Laravel\Auth\Password\PasswordResetService;
 use Dms\Web\Laravel\Auth\Persistence\RoleRepository;
 use Dms\Web\Laravel\Auth\Persistence\UserRepository;
+use Dms\Web\Laravel\File\Command\ClearTempFilesCommand;
+use Dms\Web\Laravel\File\ITemporaryFileService;
+use Dms\Web\Laravel\File\Persistence\ITemporaryFileRepository;
+use Dms\Web\Laravel\File\Persistence\TemporaryFileRepository;
+use Dms\Web\Laravel\File\TemporaryFileService;
 use Dms\Web\Laravel\Http\Middleware\Authenticate;
 use Dms\Web\Laravel\Http\Middleware\EncryptCookies;
 use Dms\Web\Laravel\Http\Middleware\RedirectIfAuthenticated;
 use Dms\Web\Laravel\Http\Middleware\VerifyCsrfToken;
 use Dms\Web\Laravel\Language\LaravelLanguageProvider;
 use Dms\Web\Laravel\Persistence\Db\Migration\AutoGenerateMigrationCommand;
+use Dms\Web\Laravel\Renderer\Form\FieldRendererCollection;
+use Dms\Web\Laravel\Renderer\Table\ColumnComponentRendererCollection;
+use Dms\Web\Laravel\Renderer\Table\ColumnRendererFactoryCollection;
 use Illuminate\Auth\AuthManager;
-use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Database\Connection;
@@ -57,6 +69,9 @@ class DmsServiceProvider extends ServiceProvider
         $this->registerMiddleware();
         $this->registerDbConnection();
         $this->registerCommands();
+        $this->registerUtils();
+        $this->registerActionServices();
+        $this->registerRenderers();
         $this->publishAssets();
         $this->publishConfig();
         $this->publishSeeders();
@@ -192,6 +207,7 @@ class DmsServiceProvider extends ServiceProvider
     {
         $this->commands([
                 AutoGenerateMigrationCommand::class,
+                ClearTempFilesCommand::class,
         ]);
     }
 
@@ -200,5 +216,66 @@ class DmsServiceProvider extends ServiceProvider
         $this->publishes([
                 __DIR__ . '/Persistence/Db/Seeders/' => database_path('seeds'),
         ]);
+    }
+
+    private function registerUtils()
+    {
+        $this->app->bind(IClock::class, DateTimeClock::class);
+        $this->app->bind(ITemporaryFileService::class, TemporaryFileService::class);
+        $this->app->bind(ITemporaryFileRepository::class, TemporaryFileRepository::class);
+    }
+
+    private function registerActionServices()
+    {
+        $this->app->singleton(ActionInputTransformerCollection::class, function () {
+            return new ActionInputTransformerCollection($this->makeAll(
+                    config('dms.services.actions.input-transformers')
+            ));
+        });
+
+        $this->app->singleton(ActionResultHandlerCollection::class, function () {
+            return new ActionResultHandlerCollection($this->makeAll(
+                    config('dms.services.actions.result-handlers')
+            ));
+        });
+
+        $this->app->singleton(ActionExceptionHandlerCollection::class, function () {
+            return new ActionExceptionHandlerCollection($this->makeAll(
+                    config('dms.services.actions.exception-handlers')
+            ));
+        });
+    }
+
+    private function registerRenderers()
+    {
+        $this->app->singleton(FieldRendererCollection::class, function () {
+            return new FieldRendererCollection($this->makeAll(
+                    config('dms.services.renderers.form-fields')
+            ));
+        });
+
+        $this->app->singleton(ColumnComponentRendererCollection::class, function () {
+            return new ColumnComponentRendererCollection($this->makeAll(
+                    array_merge(config('dms.services.renderers.table.components'), config('dms.services.renderers.form-fields'))
+            ));
+        });
+
+        $this->app->singleton(ColumnRendererFactoryCollection::class, function () {
+            return new ColumnRendererFactoryCollection(
+                    $this->app->make(ColumnComponentRendererCollection::class),
+                    $this->makeAll(
+                            array_merge(config('dms.services.renderers.table.columns'))
+                    )
+            );
+        });
+    }
+
+    private function makeAll(array $services)
+    {
+        foreach ($services as $key => $service) {
+            $services[$key] = $this->app->make($service);
+        }
+
+        return $services;
     }
 }

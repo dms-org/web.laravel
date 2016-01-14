@@ -33,7 +33,7 @@ class PackageController extends DmsController
                     ]);
         }
 
-        $this->package->loadDashboard()->getWidgets()
+
     }
 
     protected function loadPackage(Request $request)

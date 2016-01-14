@@ -2,10 +2,28 @@ Dms.form.initializeCallbacks.push(function (element) {
 
     element.find('form.dms-staged-form').each(function () {
         var form = $(this);
+        var parsley = form.parsley();
         var stageElements = form.find('.dms-form-stage');
+        var submitButtons = form.find('input[type=submit], button[type=submit]');
+
+        var updateFormValidity = function () {
+            var isValid = parsley.isValid()
+                && form.find('.has-error').length === 0
+                && form.find('.dms-form-stage').length === form.find('.dms-form-stage.loaded').length;
+
+            submitButtons.prop('disabled', !isValid);
+        };
+
+        form.on('change input', '*[name]:input', updateFormValidity);
+        updateFormValidity();
 
         stageElements.each(function () {
             var currentStage = $(this);
+
+            if (currentStage.is('.loaded')) {
+                return;
+            }
+
             var previousStages = currentStage.prevAll('.dms-form-stage');
             var loadStageUrl = currentStage.attr('data-stage-load-url');
             var dependentFields = currentStage.attr('data-stage-dependent-fields');
@@ -66,11 +84,12 @@ Dms.form.initializeCallbacks.push(function (element) {
                     currentStage.addClass('loaded');
                     Dms.form.validation.clearMessages(form);
                     currentStage.html(html);
+                    Dms.form.initialize(currentStage);
                 });
 
                 currentAjaxRequest.fail(function (xhr) {
                     switch (xhr.status) {
-                        case 422: // Unprocessable  Entity (validation failure)
+                        case 422: // Unprocessable Entity (validation failure)
                             var validation = JSON.parse(xhr.responseText);
                             Dms.form.validation.displayMessages(form, validation.fields, validation.constraints);
                             break;
@@ -92,6 +111,8 @@ Dms.form.initializeCallbacks.push(function (element) {
                             break;
                     }
                 });
+
+                currentAjaxRequest.always(updateFormValidity);
             });
         });
     });

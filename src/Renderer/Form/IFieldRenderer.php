@@ -29,7 +29,7 @@ interface IFieldRenderer
     public function accepts(IField $field);
 
     /**
-     * Renders the supplied field as a html string.
+     * Renders the supplied field input as a html string.
      *
      * @param IField $field
      *
@@ -37,6 +37,16 @@ interface IFieldRenderer
      * @throws InvalidArgumentException
      */
     public function render(IField $field);
+
+    /**
+     * Renders the supplied field value display as a html string.
+     *
+     * @param IField $field
+     *
+     * @return string
+     * @throws InvalidArgumentException
+     */
+    public function renderValue(IField $field);
 
     /**
      * Sets the parent field renderer.

@@ -47,14 +47,11 @@ class ArrayOfFieldRenderer extends BladeFieldRenderer
     protected function renderField(IField $field, IFieldType $fieldType)
     {
         /** @var ArrayOfType $fieldType */
-        $elementField = Field::element()
-                ->type($fieldType->getElementType())
-                ->attrs($fieldType->getAll([FieldType::ATTR_READ_ONLY]))
-                ->build();
+        $elementField = $this->makeElementField($fieldType);
 
         return $this->renderView(
                 $field,
-                'dms::components.form.field.list-of-fields.input',
+                'dms::components.field.list-of-fields.input',
                 [
                         ArrayOfType::ATTR_MIN_ELEMENTS   => 'minElements',
                         ArrayOfType::ATTR_MAX_ELEMENTS   => 'maxElements',
@@ -65,5 +62,36 @@ class ArrayOfFieldRenderer extends BladeFieldRenderer
                         'fieldRenderer' => $this->fieldRendererCollection->findRendererFor($elementField),
                 ]
         );
+    }
+
+    /**
+     * Renders the supplied field value display as a html string.
+     *
+     * @param IField     $field
+     * @param IFieldType $fieldType
+     *
+     * @return string
+     */
+    public function renderFieldValue(IField $field, IFieldType $fieldType)
+    {
+        /** @var ArrayOfType $fieldType */
+        $elementField = $this->makeElementField($fieldType);
+
+        return $this->renderValueViewWithNullDefault(
+                $field,
+                'dms::components.field.list-of-fields.value',
+                [
+                        'elementField'  => $elementField,
+                        'fieldRenderer' => $this->fieldRendererCollection->findRendererFor($elementField),
+                ]
+        );
+    }
+
+    protected function makeElementField(ArrayOfType $fieldType)
+    {
+        return Field::element()
+                ->type($fieldType->getElementType())
+                ->attrs($fieldType->getAll([FieldType::ATTR_READ_ONLY]))
+                ->build();
     }
 }

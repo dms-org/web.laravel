@@ -23,6 +23,11 @@ $router->group(['prefix' => 'dms', 'middleware' => 'dms.web', 'as' => 'dms::', '
 
     $router->group(['middleware' => 'dms.auth'], function () use ($router) {
 
+        $router->group(['prefix' => 'file/', 'as' => 'file.'], function () use ($router) {
+            $router->get('/upload', 'FileController@upload')->name('upload');
+            $router->get('/download/{token}', 'FileController@download')->name('download');
+        });
+
         $router->get('/', 'IndexController@index')->name('index');
 
         $router->group(['prefix' => 'package/{package}', 'as' => 'package.', 'namespace' => 'Package'], function () use ($router) {
@@ -33,10 +38,10 @@ $router->group(['prefix' => 'dms', 'middleware' => 'dms.web', 'as' => 'dms::', '
                 $router->get('/', 'ModuleController@index')->name('index');
 
                 $router->group(['prefix' => '{action}', 'as' => 'action.'], function () use ($router) {
-                    $router->get('/', 'ActionController@getInfo')->name('info');
+                    $router->get('/', 'ActionController@getActionInfo')->name('info');
                     $router->get('form', 'ActionController@showForm')->name('form');
                     $router->post('form/stage/{number}', 'ActionController@getFormStage')->name('form.stage');
-                    $router->post('run', 'ActionController@run')->name('run');
+                    $router->post('run', 'ActionController@runAction')->name('run');
                 });
             });
         });

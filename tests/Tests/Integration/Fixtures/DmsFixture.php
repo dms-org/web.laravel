@@ -52,6 +52,7 @@ abstract class DmsFixture
         }
 
         $app['config']->set('database.default', 'testing-stub');
+        $app['config']->set('database.default', 'testing-stub');
         $app['config']->set('database.connections.testing-stub', [
                 'driver'   => 'sqlite',
                 'database' => $this->dbStubFile(),
@@ -83,6 +84,7 @@ abstract class DmsFixture
     {
         // Setup default database to use sqlite
         /** @var Application|Container $app */
+        $app['config']->set('dms', require __DIR__ . '/../../../../src/Config/config/dms.php');
         $app['config']->set('database.default', 'testing');
         $app['config']->set('database.connections.testing', [
                 'driver'   => 'sqlite',

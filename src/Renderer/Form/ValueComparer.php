@@ -29,4 +29,24 @@ class ValueComparer
 
         return $a == $b;
     }
+    /**
+     * Returns whether the values are loosely equals
+     *
+     * @param mixed $a
+     * @param mixed $b
+     *
+     * @return bool
+     */
+    public static function loosleyContains($a, $b)
+    {
+        if ($a === null && $b === null) {
+            return true;
+        }
+
+        if ($a === null || $b === null) {
+            return false;
+        }
+
+        return $a == $b;
+    }
 }

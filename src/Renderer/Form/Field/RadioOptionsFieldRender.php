@@ -45,10 +45,24 @@ class RadioOptionsFieldRender extends BladeFieldRenderer
     {
         return $this->renderView(
                 $field,
-                'dms::components.form.field.radio-group.input',
+                'dms::components.field.radio-group.input',
                 [
                         FieldType::ATTR_OPTIONS => 'options',
                 ]
+        );
+    }
+
+    /**
+     * @param IField     $field
+     * @param IFieldType $fieldType
+     *
+     * @return string
+     */
+    protected function renderFieldValue(IField $field, IFieldType $fieldType)
+    {
+        return $this->renderValueViewWithNullDefault(
+                $field,
+                'dms::components.field.string.value'
         );
     }
 }

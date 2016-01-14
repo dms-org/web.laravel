@@ -45,7 +45,21 @@ class RgbaColourFieldRenderer extends BladeFieldRenderer
     {
         return $this->renderView(
                 $field,
-                'dms::components.form.field.colour.rgba.input'
+                'dms::components.field.colour.rgba.input'
+        );
+    }
+
+    /**
+     * @param IField     $field
+     * @param IFieldType $fieldType
+     *
+     * @return string
+     */
+    protected function renderFieldValue(IField $field, IFieldType $fieldType)
+    {
+        return $this->renderValueViewWithNullDefault(
+                $field,
+                'dms::components.field.colour.rgba.value'
         );
     }
 }

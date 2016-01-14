@@ -45,7 +45,7 @@ class IntFieldRenderer extends BladeFieldRenderer
     {
         return $this->renderView(
                 $field,
-                'dms::components.form.field.number.input',
+                'dms::components.field.number.input',
                 [
                         IntType::ATTR_MIN          => 'min',
                         IntType::ATTR_MAX          => 'max',
@@ -53,6 +53,20 @@ class IntFieldRenderer extends BladeFieldRenderer
                         IntType::ATTR_GREATER_THAN => 'greaterThan',
                         IntType::ATTR_LESS_THAN    => 'lessThan',
                 ]
+        );
+    }
+
+    /**
+     * @param IField     $field
+     * @param IFieldType $fieldType
+     *
+     * @return string
+     */
+    protected function renderFieldValue(IField $field, IFieldType $fieldType)
+    {
+        return $this->renderValueViewWithNullDefault(
+                $field,
+                'dms::components.field.number.value'
         );
     }
 }

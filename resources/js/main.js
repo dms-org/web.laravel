@@ -22,10 +22,28 @@ window.Dms = {
         },
         initializeCallbacks: []
     },
+    chart: {
+        initialize: function (element) {
+            $.each(Dms.chart.initializeCallbacks, function (index, callback) {
+                callback(element);
+            });
+        },
+        initializeCallbacks: []
+    },
+    widget: {
+        initialize: function (element) {
+            $.each(Dms.widget.initializeCallbacks, function (index, callback) {
+                callback(element);
+            });
+        },
+        initializeCallbacks: []
+    },
     utilities: {} // @see ./utilities.js
 };
 
 $(document).ready(function () {
     Dms.form.initialize($(document));
     Dms.table.initialize($(document));
+    Dms.chart.initialize($(document));
+    Dms.widget.initialize($(document));
 });

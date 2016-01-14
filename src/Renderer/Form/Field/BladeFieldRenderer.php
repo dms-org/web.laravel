@@ -49,4 +49,29 @@ abstract class BladeFieldRenderer extends FieldRenderer
                 ->with($viewParams)
                 ->with($extraParams);
     }
+
+
+    /**
+     * @param IField $field
+     * @param string $viewName
+     * @param array  $extraParams
+     * @param null   $overrideValue
+     *
+     * @return string
+     */
+    protected function renderValueViewWithNullDefault(IField $field, $viewName, array $extraParams = [], $overrideValue = null)
+    {
+        $value = $overrideValue === null ? $field->getInitialValue() : $overrideValue;
+
+        if ($value === null) {
+            return (string)view('dms::components.field.null.value');
+        }
+
+        return (string)view($viewName)
+                ->with('value', $value)
+                ->with('name', $field->getName())
+                ->with('label', $field->getLabel())
+                ->with('value', $value)
+                ->with($extraParams);
+    }
 }

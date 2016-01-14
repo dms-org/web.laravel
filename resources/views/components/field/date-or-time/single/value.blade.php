@@ -1,0 +1,1 @@
+<span class="dms-display-date-or-time">{{ $value->format($format) }}</span>

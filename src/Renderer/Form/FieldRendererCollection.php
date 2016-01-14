@@ -18,7 +18,7 @@ class FieldRendererCollection
     protected $fieldRenderers;
 
     /**
-     * AggregateFieldRenderer constructor.
+     * FieldRendererCollection constructor.
      *
      * @param IFieldRenderer[] $fieldRenderers
      */
@@ -33,19 +33,6 @@ class FieldRendererCollection
     }
 
     /**
-     * Renders the supplied field as a html string.
-     *
-     * @param IField $field
-     *
-     * @return string
-     * @throws UnrenderableFieldException
-     */
-    public function render(IField $field)
-    {
-        return $this->findRendererFor($field)->render($field);
-    }
-
-    /**
      * @param IField $field
      *
      * @return IFieldRenderer
@@ -55,16 +42,19 @@ class FieldRendererCollection
     {
         $fieldType = $field->getType();
 
-        $fieldTypeClasses = array_merge([get_class($fieldType)], class_parents($fieldType));
+        $fieldTypeClass = get_class($fieldType);
 
-        foreach ($fieldTypeClasses as $class) {
-            if (isset($this->fieldRenderers[$class])) {
-                foreach ($this->fieldRenderers[$class] as $fieldRenderer) {
+        while ($fieldTypeClass) {
+
+            if (isset($this->fieldRenderers[$fieldTypeClass])) {
+                foreach ($this->fieldRenderers[$fieldTypeClass] as $fieldRenderer) {
                     if ($fieldRenderer->accepts($field)) {
                         return $fieldRenderer;
                     }
                 }
             }
+
+            $fieldTypeClass = get_parent_class($fieldTypeClass);
         }
 
         throw UnrenderableFieldException::format(

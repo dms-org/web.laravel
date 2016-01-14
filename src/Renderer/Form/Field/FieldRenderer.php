@@ -70,7 +70,7 @@ abstract class FieldRenderer implements IFieldRenderer
     abstract protected function canRender(IField $field, IFieldType $fieldType);
 
     /**
-     * Renders the supplied field as a html string.
+     * Renders the supplied field input as a html string.
      *
      * @param IField $field
      *
@@ -96,4 +96,32 @@ abstract class FieldRenderer implements IFieldRenderer
      * @return string
      */
     abstract protected function renderField(IField $field, IFieldType $fieldType);
+
+    /**
+     * Renders the supplied field value as a html string.
+     *
+     * @param IField $field
+     *
+     * @return string
+     * @throws InvalidArgumentException
+     */
+    final public function renderValue(IField $field)
+    {
+        if (!$this->accepts($field)) {
+            throw InvalidArgumentException::format(
+                    'Field \'%s\' cannot be rendered in renderer of type %s',
+                    $field->getName(), get_class($this)
+            );
+        }
+
+        return $this->renderField($field, $field->getType());
+    }
+
+    /**
+     * @param IField     $field
+     * @param IFieldType $fieldType
+     *
+     * @return string
+     */
+    abstract protected function renderFieldValue(IField $field, IFieldType $fieldType);
 }

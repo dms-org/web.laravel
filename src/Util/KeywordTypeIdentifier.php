@@ -27,15 +27,21 @@ class KeywordTypeIdentifier
     protected $infoStrings;
 
     /**
+     * @var string[]
+     */
+    protected $overridesMap;
+
+    /**
      * KeywordTypeIdentifier constructor.
      *
      * @param Repository $config
      */
     public function __construct(Repository $config)
     {
-        $this->dangerStrings = $config->get('dms::keywords.danger', []);
+        $this->dangerStrings  = $config->get('dms::keywords.danger', []);
         $this->successStrings = $config->get('dms::keywords.success', []);
-        $this->infoStrings = $config->get('dms::keywords.info', []);
+        $this->infoStrings    = $config->get('dms::keywords.info', []);
+        $this->overridesMap   = $config->get('dms::keywords.overrides', []);
     }
 
 
@@ -50,6 +56,10 @@ class KeywordTypeIdentifier
      */
     public function getTypeFromName($name)
     {
+        if (isset($this->overridesMap[$name])) {
+            return $this->overridesMap[$name];
+        }
+
         if (str_contains($name, $this->dangerStrings)) {
             return 'danger';
         }

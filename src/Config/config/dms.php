@@ -73,12 +73,27 @@ return [
                 Dms\Web\Laravel\Renderer\Widget\TableWidgetRenderer::class,
                 Dms\Web\Laravel\Renderer\Widget\ChartWidgetRenderer::class,
             ],
+            'modules' => [
+                Dms\Web\Laravel\Renderer\Module\DefaultModuleRenderer::class
+            ],
         ],
     ],
 
     'keywords' => [
-        'danger'  => ['delete', 'remove', 'trash', 'drop', 'cancel'],
-        'success' => ['confirm', 'approve', 'accept', 'verify'],
-        'info'    => ['download', 'stats', 'display'],
+        'danger'    => ['delete', 'remove', 'trash', 'drop', 'cancel'],
+        'success'   => ['confirm', 'approve', 'accept', 'verify'],
+        'info'      => ['download', 'stats', 'display'],
+        'overrides' => [
+
+        ],
+    ],
+
+    'front-end' => [
+        'stylesheets' => [
+            asset('vendor/dms/css/all.css'),
+        ],
+        'scripts'     => [
+            asset('vendor/dms/js/all.js'),
+        ],
     ],
 ];

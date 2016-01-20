@@ -35,6 +35,7 @@ use Dms\Web\Laravel\Language\LaravelLanguageProvider;
 use Dms\Web\Laravel\Persistence\Db\Migration\AutoGenerateMigrationCommand;
 use Dms\Web\Laravel\Renderer\Chart\ChartRendererCollection;
 use Dms\Web\Laravel\Renderer\Form\FieldRendererCollection;
+use Dms\Web\Laravel\Renderer\Module\ModuleRendererCollection;
 use Dms\Web\Laravel\Renderer\Table\ColumnComponentRendererCollection;
 use Dms\Web\Laravel\Renderer\Table\ColumnRendererFactoryCollection;
 use Dms\Web\Laravel\Renderer\Widget\WidgetRendererCollection;
@@ -262,8 +263,10 @@ class DmsServiceProvider extends ServiceProvider
 
         $this->app->singleton(ColumnComponentRendererCollection::class, function () {
             return new ColumnComponentRendererCollection($this->makeAll(
-                array_merge(config('dms.services.renderers.table.components'),
-                    config('dms.services.renderers.form-fields'))
+                array_merge(
+                    config('dms.services.renderers.table.column-components'),
+                    config('dms.services.renderers.form-fields')
+                )
             ));
         });
 
@@ -283,8 +286,14 @@ class DmsServiceProvider extends ServiceProvider
         });
 
         $this->app->singleton(WidgetRendererCollection::class, function () {
-            return new ChartRendererCollection($this->makeAll(
+            return new WidgetRendererCollection($this->makeAll(
                 config('dms.services.renderers.widgets')
+            ));
+        });
+
+        $this->app->singleton(ModuleRendererCollection::class, function () {
+            return new ModuleRendererCollection($this->makeAll(
+                config('dms.services.renderers.modules')
             ));
         });
     }

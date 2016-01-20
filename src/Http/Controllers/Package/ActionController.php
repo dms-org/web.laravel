@@ -3,6 +3,7 @@
 namespace Dms\Web\Laravel\Http\Controllers\Package;
 
 use Dms\Core\Auth\UserForbiddenException;
+use Dms\Core\Common\Crud\Action\Object\IObjectAction;
 use Dms\Core\ICms;
 use Dms\Core\Language\ILanguageProvider;
 use Dms\Core\Module\ActionNotFoundException;
@@ -17,7 +18,7 @@ use Dms\Web\Laravel\Action\ActionResultHandlerCollection;
 use Dms\Web\Laravel\Action\UnhandleableActionExceptionException;
 use Dms\Web\Laravel\Action\UnhandleableActionResultException;
 use Dms\Web\Laravel\Http\Controllers\DmsController;
-use Dms\Web\Laravel\Renderer\Form\FormRenderer;
+use Dms\Web\Laravel\Renderer\Form\ActionFormRenderer;
 use Illuminate\Http\Exception\HttpResponseException;
 use Illuminate\Http\Request;
 
@@ -49,9 +50,9 @@ class ActionController extends DmsController
     protected $exceptionHandlers;
 
     /**
-     * @var FormRenderer
+     * @var ActionFormRenderer
      */
-    protected $formRenderer;
+    protected $actionFormRenderer;
 
     /**
      * ActionController constructor.
@@ -60,24 +61,24 @@ class ActionController extends DmsController
      * @param ActionInputTransformerCollection $inputTransformers
      * @param ActionResultHandlerCollection    $resultHandlers
      * @param ActionExceptionHandlerCollection $exceptionHandlers
-     * @param FormRenderer                     $formRenderer
+     * @param ActionFormRenderer               $actionFormRenderer
      */
     public function __construct(
         ICms $cms,
         ActionInputTransformerCollection $inputTransformers,
         ActionResultHandlerCollection $resultHandlers,
         ActionExceptionHandlerCollection $exceptionHandlers,
-        FormRenderer $formRenderer
+        ActionFormRenderer $actionFormRenderer
     ) {
         parent::__construct($cms);
-        $this->lang = $cms->getLang();
-        $this->inputTransformers = $inputTransformers;
-        $this->resultHandlers = $resultHandlers;
-        $this->exceptionHandlers = $exceptionHandlers;
-        $this->formRenderer = $formRenderer;
+        $this->lang               = $cms->getLang();
+        $this->inputTransformers  = $inputTransformers;
+        $this->resultHandlers     = $resultHandlers;
+        $this->exceptionHandlers  = $exceptionHandlers;
+        $this->actionFormRenderer = $actionFormRenderer;
     }
 
-    public function showForm(Request $request, $packageName, $moduleName, $actionName)
+    public function showForm($packageName, $moduleName, $actionName, $objectId = null)
     {
         $action = $this->loadAction($packageName, $moduleName, $actionName);
 
@@ -89,10 +90,22 @@ class ActionController extends DmsController
             abort(401);
         }
 
-        return view('dms::package.module.action.form')
+        if ($objectId && $action instanceof IObjectAction) {
+            $action = $action->withSubmittedFirstStage([
+                IObjectAction::OBJECT_FIELD_NAME => $objectId,
+            ]);
+        }
+
+        return view('dms::package.module.action')
             ->with([
+                'pageTitle'    => ucwords($packageName . ' > ' . $moduleName . ' > ' . $actionName),
+                'breadcrumbs'  => [
+                    route('dms::index')                                 => 'Home',
+                    route('dms::package.dashboard', $packageName)       => ucwords($packageName),
+                    route('dms::package.module.dashboard', $moduleName) => $moduleName,
+                ],
                 'form'         => $action->getStagedForm(),
-                'formRenderer' => $this->formRenderer,
+                'formRenderer' => $this->actionFormRenderer,
             ]);
     }
 
@@ -106,7 +119,7 @@ class ActionController extends DmsController
             ], 403);
         }
 
-        $form = $action->getStagedForm();
+        $form        = $action->getStagedForm();
         $stageNumber = (int)$stageNumber;
 
         if ($stageNumber < 1 || $stageNumber > $form->getAmountOfStages()) {
@@ -122,12 +135,12 @@ class ActionController extends DmsController
             }
 
             $input = $this->inputTransformers->transform($action, $request->all());
-            $form = $form->getFormForStage($stageNumber, $input);
+            $form  = $form->getFormForStage($stageNumber, $input);
         } catch (\Exception $e) {
             return $this->exceptionHandlers->handle($action, $e);
         }
 
-        return response($this->formRenderer->renderFields($form), 200);
+        return response($this->actionFormRenderer->renderFields($form), 200);
     }
 
     public function runAction(Request $request, $packageName, $moduleName, $actionName)
@@ -136,7 +149,7 @@ class ActionController extends DmsController
 
         try {
             if ($action instanceof IParameterizedAction) {
-                $input = $this->inputTransformers->transform($action, $request->all());
+                $input  = $this->inputTransformers->transform($action, $request->all());
                 $result = $action->run($input);
             } else {
                 /** @var IUnparameterizedAction $action */

@@ -42,10 +42,12 @@
                                 <!-- Menu Footer-->
                                 <li class="user-footer">
                                     <div class="pull-left">
-                                        <a href="{{ route('dms::auth.user.profile') }}" class="btn btn-default btn-flat">Profile</a>
+                                        <a href="{{ route('dms::auth.user.profile') }}"
+                                           class="btn btn-default btn-flat">Profile</a>
                                     </div>
                                     <div class="pull-right">
-                                        <a href="{{ route('dms::auth.logout') }}" class="btn btn-default btn-flat">Log out</a>
+                                        <a href="{{ route('dms::auth.logout') }}" class="btn btn-default btn-flat">Log
+                                            out</a>
                                     </div>
                                 </li>
                             </ul>
@@ -65,8 +67,8 @@
                 <div class="user-panel">
                     <div class="pull-left info">
                         <p>{{ $user->getUsername() }}</p>
-                        <a href="{{ route('dms::auth.user.profile') }}"><i
-                                    class="fa fa-circle text-success"></i> {{ $user->getEmailAddress() }}
+                        <a href="{{ route('dms::auth.user.profile') }}">
+                            <i class="fa fa-circle text-success"></i> {{ $user->getEmailAddress() }}
                         </a>
                     </div>
                 </div>
@@ -74,10 +76,11 @@
                 <form action="{{ route('dms::search') }}" method="get" class="sidebar-form">
                     <div class="input-group">
                         <input type="text" name="q" class="form-control" placeholder="Search...">
-                    <span class="input-group-btn">
-                        <button type="submit" name="search" id="search-btn" class="btn btn-flat"><i class="fa fa-search"></i>
-                        </button>
-                    </span>
+                        <span class="input-group-btn">
+                            <button type="submit" name="search" id="search-btn" class="btn btn-flat">
+                                <i class="fa fa-search"></i>
+                            </button>
+                        </span>
                     </div>
                 </form>
                 <!-- /.search form -->
@@ -86,7 +89,8 @@
                     <li class="header">INSTALLED PACKAGES</li>
                     <li class="active treeview">
                         <a href="#">
-                            <i class="fa fa-dashboard"></i> <span>Dashboard</span> <i class="fa fa-angle-left pull-right"></i>
+                            <i class="fa fa-dashboard"></i> <span>Dashboard</span> <i
+                                    class="fa fa-angle-left pull-right"></i>
                         </a>
                         <ul class="treeview-menu">
                             <li class="active"><a href="index.html"><i class="fa fa-circle-o"></i> Dashboard v1</a></li>
@@ -100,6 +104,27 @@
 
         <!-- Content Wrapper. Contains page content -->
         <div class="content-wrapper">
+            <section class="content-header">
+                <h1>
+                    {{ $pageTitle }}
+                    @if (!empty($pageSubtitle))
+                        <small>{{ $pageSubtitle }}</small>
+                    @endif
+                </h1>
+                <ol class="breadcrumb">
+                    @if (!empty($breadcrumbs))
+                        @foreach ($breadcrumbs as $link => $label)
+                            <li>
+                                <a href="{{ $link }}">
+                                    @if ($link === url('/')) <i class="fa fa-dashboard"></i> @endif {{ $label }}
+                                </a>
+                            </li>
+                        @endforeach
+                    @endif
+                    <li class="active">{{ $pageTitle }} </li>
+                </ol>
+            </section>
+
             @yield('content')
         </div>
         <!-- /.content-wrapper -->
@@ -107,8 +132,10 @@
             <div class="pull-right hidden-xs">
                 <b>Version</b> {{ \Dms\Core\ICms::VERSION }}
             </div>
-            <span>For issues or enquiries please contact <a
-                        href="{{ config('dms.contact.website') }}">{{ config('dms.contact.company') }}</a>.</span>
+            <span>
+                For issues or enquiries please contact
+                <a href="{{ config('dms.contact.website') }}">{{ config('dms.contact.company') }}</a>.
+            </span>
         </footer>
     </div>
     </body>

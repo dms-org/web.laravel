@@ -1,7 +1,7 @@
 <?php /** @var \Dms\Core\Table\IColumn[] $columns */ ?>
 <?php /** @var \Dms\Core\Table\ITableSection[] $sections */ ?>
 <?php /** @var \Dms\Web\Laravel\Renderer\Table\IColumnRenderer[] $columnRenderers */ ?>
-<table class="table">
+<table class="table dms-table">
     <thead>
     <tr>
         @foreach ($columns as $column)

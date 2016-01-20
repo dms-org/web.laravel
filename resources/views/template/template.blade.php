@@ -7,8 +7,12 @@
     <title>{{ $title }}</title>
     <!-- Tell the browser to be responsive to screen width -->
     <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
-    <link rel="stylesheet" href="{{ asset('vendor/dms/css/all.css') }}">
+    @foreach (config('dms.front-end.stylesheets') as $stylesheet)
+        <link rel="stylesheet" href="{{ $stylesheet }}"/>
+    @endforeach
 </head>
 @yield('body-content')
-<script src="{{ asset('vendor/dms/js/all.js') }}"></script>
+@foreach (config('dms.front-end.scripts') as $script)
+    <script src="{{ $script }}"></script>
+@endforeach
 </html>

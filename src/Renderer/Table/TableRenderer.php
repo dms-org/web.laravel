@@ -2,6 +2,8 @@
 
 namespace Dms\Web\Laravel\Renderer\Table;
 
+use Dms\Core\Common\Crud\Table\ISummaryTable;
+use Dms\Core\Module\ITableDisplay;
 use Dms\Core\Table\IDataTable;
 
 /**
@@ -33,7 +35,7 @@ class TableRenderer
      *
      * @return string
      */
-    public function renderTable(IDataTable $table)
+    public function renderTableData(IDataTable $table)
     {
         $columnRenderers = [];
 
@@ -45,6 +47,42 @@ class TableRenderer
             ->with([
                 'columnRenderers' => $columnRenderers,
                 'sections'        => $table->getSections(),
+            ]);
+    }
+
+    /**
+     * Renders the supplied table control as a html string.
+     *
+     * @param string        $packageName
+     * @param string        $moduleName
+     * @param ITableDisplay $table
+     * @param string        $viewName
+     *
+     * @return string
+     */
+    public function renderTableControl($packageName, $moduleName, ITableDisplay $table, $viewName)
+    {
+        if ($table instanceof ISummaryTable
+            && $table->hasReorderAction($viewName)
+            && $table->getReorderAction($table)->isAuthorized()
+        ) {
+            $reorderRowActionUrl = route(
+                'dms::package.module.action',
+                [$packageName, $moduleName, $table->getReorderAction($viewName)->getName()]
+            );
+        } else {
+            $reorderRowActionUrl = null;
+        }
+
+        return (string)view('dms::components.table.table-control')
+            ->with([
+                'structure'           => $table->getDataSource()->getStructure(),
+                'table'               => $table->getView($viewName),
+                'loadRowsUrl'         => route(
+                    'dms::package.module.table.view.load',
+                    [$packageName, $moduleName, $table->getName(), $viewName]
+                ),
+                'reorderRowActionUrl' => $reorderRowActionUrl,
             ]);
     }
 }

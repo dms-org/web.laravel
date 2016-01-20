@@ -55,13 +55,13 @@ class UnparameterizedActionWidgetRenderer extends WidgetRenderer
         $action = $widget->getAction();
 
         return (string)view('dms::components.widget.unparameterized-action')
-                ->with([
-                        'action'      => $action,
-                        'actionUrl'   => route(
-                                'dms::package.module.action.run',
-                                [$action->getPackageName(), $action->getModuleName(), $action->getName()]
-                        ),
-                        'buttonClass' => $this->keywordTypeIdentifier->getTypeFromName($action->getName())
-                ]);
+            ->with([
+                'action'      => $action,
+                'actionUrl'   => route(
+                    'dms::package.module.action.run',
+                    [$action->getPackageName(), $action->getModuleName(), $action->getName()]
+                ),
+                'buttonClass' => $this->keywordTypeIdentifier->getTypeFromName($action->getName()),
+            ]);
     }
 }

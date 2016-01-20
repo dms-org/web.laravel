@@ -81,8 +81,8 @@ abstract class FieldRenderer implements IFieldRenderer
     {
         if (!$this->accepts($field)) {
             throw InvalidArgumentException::format(
-                    'Field \'%s\' cannot be rendered in renderer of type %s',
-                    $field->getName(), get_class($this)
+                'Field \'%s\' cannot be rendered in renderer of type %s',
+                $field->getName(), get_class($this)
             );
         }
 
@@ -109,8 +109,8 @@ abstract class FieldRenderer implements IFieldRenderer
     {
         if (!$this->accepts($field)) {
             throw InvalidArgumentException::format(
-                    'Field \'%s\' cannot be rendered in renderer of type %s',
-                    $field->getName(), get_class($this)
+                'Field \'%s\' cannot be rendered in renderer of type %s',
+                $field->getName(), get_class($this)
             );
         }
 

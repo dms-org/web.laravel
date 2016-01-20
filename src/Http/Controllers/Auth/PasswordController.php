@@ -39,7 +39,7 @@ class PasswordController extends DmsController
         parent::__construct($cms);
 
         $this->middleware('dms.guest');
-        $this->passwordBroker       = $passwordBroker;
+        $this->passwordBroker = $passwordBroker;
         $this->passwordResetService = $passwordResetService;
     }
 
@@ -105,13 +105,13 @@ class PasswordController extends DmsController
     public function reset(Request $request)
     {
         $this->validate($request, [
-                'token'    => 'required',
-                'username' => 'required',
-                'password' => 'required|confirmed|min:6|max:50',
+            'token'    => 'required',
+            'username' => 'required',
+            'password' => 'required|confirmed|min:6|max:50',
         ]);
 
         $credentials = $request->only(
-                'username', 'password', 'password_confirmation', 'token'
+            'username', 'password', 'password_confirmation', 'token'
         );
 
         $response = $this->passwordBroker->reset($credentials, function (IUser $user, $password) {
@@ -124,8 +124,8 @@ class PasswordController extends DmsController
 
             default:
                 return redirect()->back()
-                        ->withInput($request->only('email'))
-                        ->withErrors(['email' => trans($response)]);
+                    ->withInput($request->only('email'))
+                    ->withErrors(['email' => trans($response)]);
         }
     }
 }

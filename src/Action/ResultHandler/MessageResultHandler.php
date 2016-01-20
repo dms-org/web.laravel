@@ -61,7 +61,7 @@ class MessageResultHandler extends ActionResultHandler
     {
         /** @var Message $result */
         return \response()->json([
-                'message' => $this->lang->format($result)
+            'message' => $this->lang->format($result),
         ]);
     }
 }

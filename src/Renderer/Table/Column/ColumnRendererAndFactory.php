@@ -28,7 +28,8 @@ abstract class ColumnRendererAndFactory implements IColumnRendererFactory
     final public function buildRenderer(IColumn $column, ColumnComponentRendererCollection $componentRenderers)
     {
         if (!$this->accepts($column)) {
-            throw InvalidArgumentException::format('Invalid column supplied to %s', get_class($this) . '::' . __FUNCTION__);
+            throw InvalidArgumentException::format('Invalid column supplied to %s',
+                get_class($this) . '::' . __FUNCTION__);
         }
 
         $resolvedComponentRenderers = [];
@@ -38,12 +39,12 @@ abstract class ColumnRendererAndFactory implements IColumnRendererFactory
         }
 
         return new CallbackColumnRenderer(
-                function () use ($column) {
-                    return $this->renderHeader($column);
-                },
-                function (array $value) use ($column, $resolvedComponentRenderers) {
-                    return $this->renderValue($column, $resolvedComponentRenderers, $value);
-                }
+            function () use ($column) {
+                return $this->renderHeader($column);
+            },
+            function (array $value) use ($column, $resolvedComponentRenderers) {
+                return $this->renderValue($column, $resolvedComponentRenderers, $value);
+            }
         );
     }
 

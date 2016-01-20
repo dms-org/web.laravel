@@ -23,8 +23,8 @@ class UserForbiddenExceptionHandler extends ActionExceptionHandler
     }
 
     /**
-     * @param IAction $action
-     * @param \Exception   $exception
+     * @param IAction    $action
+     * @param \Exception $exception
      *
      * @return bool
      */
@@ -42,7 +42,7 @@ class UserForbiddenExceptionHandler extends ActionExceptionHandler
     protected function handleException(IAction $action, \Exception $exception)
     {
         return \response()->json([
-                'message' => 'User is forbidden from running this action'
+            'message' => 'User is forbidden from running this action',
         ], 403);
     }
 }

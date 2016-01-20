@@ -31,8 +31,8 @@ class AuthPackage extends Package
             ]);
 
         $package->modules([
-                'users' => UserModule::class,
-                'roles' => RoleModule::class,
+            'users' => UserModule::class,
+            'roles' => RoleModule::class,
         ]);
     }
 }

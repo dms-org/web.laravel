@@ -44,11 +44,11 @@ class RadioOptionsFieldRender extends BladeFieldRenderer
     protected function renderField(IField $field, IFieldType $fieldType)
     {
         return $this->renderView(
-                $field,
-                'dms::components.field.radio-group.input',
-                [
-                        FieldType::ATTR_OPTIONS => 'options',
-                ]
+            $field,
+            'dms::components.field.radio-group.input',
+            [
+                FieldType::ATTR_OPTIONS => 'options',
+            ]
         );
     }
 
@@ -61,8 +61,8 @@ class RadioOptionsFieldRender extends BladeFieldRenderer
     protected function renderFieldValue(IField $field, IFieldType $fieldType)
     {
         return $this->renderValueViewWithNullDefault(
-                $field,
-                'dms::components.field.string.value'
+            $field,
+            'dms::components.field.string.value'
         );
     }
 }

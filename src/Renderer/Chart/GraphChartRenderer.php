@@ -38,31 +38,31 @@ class GraphChartRenderer extends ChartRenderer
         /** @var GraphChart $chartStructure */
         $chartStructure = $chartData->getStructure();
 
-        $yAxisKeys   = [];
+        $yAxisKeys = [];
         $yAxisLabels = [];
 
         $yCounter = 1;
 
         foreach ($chartStructure->getVerticalAxis()->getComponents() as $component) {
-            $yAxisKeys[]   = 'y' . $yCounter++;
+            $yAxisKeys[] = 'y' . $yCounter++;
             $yAxisLabels[] = $component->getLabel();
         }
 
         $chartDataArray = $this->transformChartDataToIndexedArrays(
-                $chartData,
-                $chartStructure->getHorizontalAxis()->getName(),
-                $chartStructure->getHorizontalAxis()->getComponent()->getName(),
-                $chartStructure->getVerticalAxis()->getName()
+            $chartData,
+            $chartStructure->getHorizontalAxis()->getName(),
+            $chartStructure->getHorizontalAxis()->getComponent()->getName(),
+            $chartStructure->getVerticalAxis()->getName()
         );
 
         return (string)view('dms::components.chart.graph-chart')
-                ->with([
-                        'chartType'          => $this->getChartType($chartStructure),
-                        'data'               => $chartDataArray,
-                        'horizontalAxisKey'  => 'x',
-                        'verticalAxisKeys'   => $yAxisKeys,
-                        'verticalAxisLabels' => $yAxisLabels,
-                ]);
+            ->with([
+                'chartType'          => $this->getChartType($chartStructure),
+                'data'               => $chartDataArray,
+                'horizontalAxisKey'  => 'x',
+                'verticalAxisKeys'   => $yAxisKeys,
+                'verticalAxisLabels' => $yAxisLabels,
+            ]);
     }
 
     private function transformChartDataToIndexedArrays(IChartDataTable $data, $xAxisName, $xComponentName, $yAxisName)

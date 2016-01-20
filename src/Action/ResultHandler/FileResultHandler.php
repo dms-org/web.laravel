@@ -36,7 +36,7 @@ class FileResultHandler extends ActionResultHandler
     {
         parent::__construct();
         $this->tempFileService = $tempFileService;
-        $this->config          = $config;
+        $this->config = $config;
     }
 
 
@@ -68,14 +68,15 @@ class FileResultHandler extends ActionResultHandler
     protected function handleResult(IAction $action, $result)
     {
         /** @var IFile $result */
-        $tempFile = $this->tempFileService->storeTempFile($result, $this->config->get('dms.storage.temp-files.download-expiry'));
+        $tempFile = $this->tempFileService->storeTempFile($result,
+            $this->config->get('dms.storage.temp-files.download-expiry'));
 
         return \response()->json([
-                'message' => 'The action was successfully executed',
-                'file'    => [
-                        'name'  => $tempFile->getFile()->getClientFileNameWithFallback(),
-                        'token' => $tempFile->getToken(),
-                ]
+            'message' => 'The action was successfully executed',
+            'file'    => [
+                'name'  => $tempFile->getFile()->getClientFileNameWithFallback(),
+                'token' => $tempFile->getToken(),
+            ],
         ]);
     }
 }

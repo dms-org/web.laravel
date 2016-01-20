@@ -23,7 +23,8 @@ abstract class WidgetRenderer implements IWidgetRenderer
     final public function render(IWidget $widget)
     {
         if (!$this->accepts($widget)) {
-            throw InvalidArgumentException::format('Invalid widget supplied to %s', get_class($this) . '::' . __FUNCTION__);
+            throw InvalidArgumentException::format('Invalid widget supplied to %s',
+                get_class($this) . '::' . __FUNCTION__);
         }
 
         return $this->renderWidget($widget);

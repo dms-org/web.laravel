@@ -43,13 +43,13 @@ class UserModule extends CrudModule
      * @param IPasswordResetService $passwordResetService
      */
     public function __construct(
-            IUserRepository $dataSource,
-            IRoleRepository $roleRepo,
-            IAuthSystem $authSystem,
-            IPasswordResetService $passwordResetService
+        IUserRepository $dataSource,
+        IRoleRepository $roleRepo,
+        IAuthSystem $authSystem,
+        IPasswordResetService $passwordResetService
     ) {
         parent::__construct($dataSource, $authSystem);
-        $this->roleRepo             = $roleRepo;
+        $this->roleRepo = $roleRepo;
         $this->passwordResetService = $passwordResetService;
     }
 
@@ -68,52 +68,52 @@ class UserModule extends CrudModule
             $form->section('Details', [
                 //
                 $form->field(
-                        Field::create('username', 'Username')
-                                ->string()
-                                ->required()
-                                ->uniqueIn($this->dataSource, User::USERNAME)
-                                ->maxLength(100)
+                    Field::create('username', 'Username')
+                        ->string()
+                        ->required()
+                        ->uniqueIn($this->dataSource, User::USERNAME)
+                        ->maxLength(100)
                 )->bindToProperty(User::USERNAME),
                 //
                 $form->field(
-                        Field::create('email', 'Email Address')
-                                ->email()
-                                ->required()
-                                ->uniqueIn($this->dataSource, User::EMAIL_ADDRESS)
-                                ->maxLength(100)
+                    Field::create('email', 'Email Address')
+                        ->email()
+                        ->required()
+                        ->uniqueIn($this->dataSource, User::EMAIL_ADDRESS)
+                        ->maxLength(100)
                 )->bindToProperty(User::EMAIL_ADDRESS),
             ]);
 
             $form->section('Access', [
                 //
                 $form->field(
-                        Field::create('is_banned', 'Is Banned?')->bool()
+                    Field::create('is_banned', 'Is Banned?')->bool()
                 )->bindToProperty(User::IS_BANNED),
                 //
                 $form->field(
-                        Field::create('is_super_user', 'Is Super Admin?')->bool()
+                    Field::create('is_super_user', 'Is Super Admin?')->bool()
                 )->bindToProperty(User::IS_SUPER_USER),
                 //
                 $form->field(
-                        Field::create('roles', 'Roles')
-                                ->entityIdFrom($this->roleRepo)
+                    Field::create('roles', 'Roles')
+                        ->entityIdFrom($this->roleRepo)
                 )->bindToProperty(User::ROLE_IDS),
             ]);
         });
 
         $module->objectAction('reset-password')
-                ->authorize(self::EDIT_PERMISSION)
-                ->form(Form::create()->section('Details', [
-                        Field::create('new_password', 'New Password')
-                                ->string()
-                                ->password()
-                                ->minLength(6)
-                                ->maxLength(50)
-                                ->required()
-                ]))
-                ->handler(function (IUser $user, ArrayDataObject $input) {
-                    $this->passwordResetService->resetUserPassword($user, $input['new_password']);
-                });
+            ->authorize(self::EDIT_PERMISSION)
+            ->form(Form::create()->section('Details', [
+                Field::create('new_password', 'New Password')
+                    ->string()
+                    ->password()
+                    ->minLength(6)
+                    ->maxLength(50)
+                    ->required(),
+            ]))
+            ->handler(function (IUser $user, ArrayDataObject $input) {
+                $this->passwordResetService->resetUserPassword($user, $input['new_password']);
+            });
 
         $module->removeAction()->deleteFromRepository();
 
@@ -124,13 +124,13 @@ class UserModule extends CrudModule
             $table->mapProperty(User::IS_BANNED)->to(Field::create('banned', 'Banned')->bool());
 
             $table->view('default', 'Default')
-                    ->asDefault()
-                    ->loadAll()
-                    ->orderByAsc(User::USERNAME);
+                ->asDefault()
+                ->loadAll()
+                ->orderByAsc(User::USERNAME);
         });
 
         $module->widget('summary-table')
-                ->label('DMS Accounts')
-                ->withTable(self::SUMMARY_TABLE);
+            ->label('DMS Accounts')
+            ->withTable(self::SUMMARY_TABLE);
     }
 }

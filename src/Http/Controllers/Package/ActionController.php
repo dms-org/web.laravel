@@ -3,7 +3,6 @@
 namespace Dms\Web\Laravel\Http\Controllers\Package;
 
 use Dms\Core\Auth\UserForbiddenException;
-use Dms\Core\Common\Crud\Action\Object\IObjectAction;
 use Dms\Core\ICms;
 use Dms\Core\Language\ILanguageProvider;
 use Dms\Core\Module\ActionNotFoundException;
@@ -64,18 +63,18 @@ class ActionController extends DmsController
      * @param FormRenderer                     $formRenderer
      */
     public function __construct(
-            ICms $cms,
-            ActionInputTransformerCollection $inputTransformers,
-            ActionResultHandlerCollection $resultHandlers,
-            ActionExceptionHandlerCollection $exceptionHandlers,
-            FormRenderer $formRenderer
+        ICms $cms,
+        ActionInputTransformerCollection $inputTransformers,
+        ActionResultHandlerCollection $resultHandlers,
+        ActionExceptionHandlerCollection $exceptionHandlers,
+        FormRenderer $formRenderer
     ) {
         parent::__construct($cms);
-        $this->lang              = $cms->getLang();
+        $this->lang = $cms->getLang();
         $this->inputTransformers = $inputTransformers;
-        $this->resultHandlers    = $resultHandlers;
+        $this->resultHandlers = $resultHandlers;
         $this->exceptionHandlers = $exceptionHandlers;
-        $this->formRenderer      = $formRenderer;
+        $this->formRenderer = $formRenderer;
     }
 
     public function showForm(Request $request, $packageName, $moduleName, $actionName)
@@ -91,10 +90,10 @@ class ActionController extends DmsController
         }
 
         return view('dms::package.module.action.form')
-                ->with([
-                        'form'         => $action->getStagedForm(),
-                        'formRenderer' => $this->formRenderer,
-                ]);
+            ->with([
+                'form'         => $action->getStagedForm(),
+                'formRenderer' => $this->formRenderer,
+            ]);
     }
 
     public function getFormStage(Request $request, $packageName, $moduleName, $actionName, $stageNumber)
@@ -103,26 +102,27 @@ class ActionController extends DmsController
 
         if (!($action instanceof IParameterizedAction)) {
             return response()->json([
-                    'message' => 'This action does not require an input form'
+                'message' => 'This action does not require an input form',
             ], 403);
         }
 
-        $form        = $action->getStagedForm();
+        $form = $action->getStagedForm();
         $stageNumber = (int)$stageNumber;
 
         if ($stageNumber < 1 || $stageNumber > $form->getAmountOfStages()) {
             return response()->json([
-                    'message' => 'Invalid stage number'
+                'message' => 'Invalid stage number',
             ], 404);
         }
 
         try {
             if (!$action->isAuthorized()) {
-                throw new UserForbiddenException($this->auth->getAuthenticatedUser(), $action->getRequiredPermissions());
+                throw new UserForbiddenException($this->auth->getAuthenticatedUser(),
+                    $action->getRequiredPermissions());
             }
 
             $input = $this->inputTransformers->transform($action, $request->all());
-            $form  = $form->getFormForStage($stageNumber, $input);
+            $form = $form->getFormForStage($stageNumber, $input);
         } catch (\Exception $e) {
             return $this->exceptionHandlers->handle($action, $e);
         }
@@ -136,7 +136,7 @@ class ActionController extends DmsController
 
         try {
             if ($action instanceof IParameterizedAction) {
-                $input  = $this->inputTransformers->transform($action, $request->all());
+                $input = $this->inputTransformers->transform($action, $request->all());
                 $result = $action->run($input);
             } else {
                 /** @var IUnparameterizedAction $action */
@@ -181,7 +181,7 @@ class ActionController extends DmsController
             throw $e;
         } else {
             return response()->json([
-                    'message' => 'An internal error occurred'
+                'message' => 'An internal error occurred',
             ], 500);
         }
     }
@@ -197,22 +197,22 @@ class ActionController extends DmsController
     {
         try {
             $action = $this->cms
-                    ->loadPackage($packageName)
-                    ->loadModule($moduleName)
-                    ->getAction($actionName);
+                ->loadPackage($packageName)
+                ->loadModule($moduleName)
+                ->getAction($actionName);
 
             return $action;
         } catch (PackageNotFoundException $e) {
             $response = response()->json([
-                    'message' => 'Invalid package name'
+                'message' => 'Invalid package name',
             ], 404);
         } catch (ModuleNotFoundException $e) {
             $response = response()->json([
-                    'message' => 'Invalid module name'
+                'message' => 'Invalid module name',
             ], 404);
         } catch (ActionNotFoundException $e) {
             $response = response()->json([
-                    'message' => 'Invalid action name'
+                'message' => 'Invalid action name',
             ], 404);
         }
 

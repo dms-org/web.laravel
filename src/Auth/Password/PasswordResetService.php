@@ -31,7 +31,7 @@ class PasswordResetService implements IPasswordResetService
     public function __construct(IUserRepository $userRepository, IPasswordHasherFactory $hasherFactory)
     {
         $this->userRepository = $userRepository;
-        $this->hasherFactory  = $hasherFactory;
+        $this->hasherFactory = $hasherFactory;
     }
 
     /**

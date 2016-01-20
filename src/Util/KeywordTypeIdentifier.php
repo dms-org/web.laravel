@@ -33,9 +33,9 @@ class KeywordTypeIdentifier
      */
     public function __construct(Repository $config)
     {
-        $this->dangerStrings  = $config->get('dms::keywords.danger', []);
+        $this->dangerStrings = $config->get('dms::keywords.danger', []);
         $this->successStrings = $config->get('dms::keywords.success', []);
-        $this->infoStrings    = $config->get('dms::keywords.info', []);
+        $this->infoStrings = $config->get('dms::keywords.info', []);
     }
 
 

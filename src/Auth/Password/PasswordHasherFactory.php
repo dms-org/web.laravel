@@ -39,7 +39,7 @@ class PasswordHasherFactory implements IPasswordHasherFactory
      */
     public function __construct(array $hasherFactories, $defaultAlgorithm, $defaultCostFactor)
     {
-        $this->defaultAlgorithm  = $defaultAlgorithm;
+        $this->defaultAlgorithm = $defaultAlgorithm;
         $this->defaultCostFactor = $defaultCostFactor;
 
         foreach ($hasherFactories as $algorithm => $hasherFactory) {
@@ -71,8 +71,8 @@ class PasswordHasherFactory implements IPasswordHasherFactory
     {
         if (!isset($this->hasherFactories[$algorithm])) {
             throw Exception\InvalidArgumentException::format(
-                    'Invalid algorithm supplied to %s: expecting one of (%s), \'%s\' given',
-                    __METHOD__, Debug::formatValues(array_keys($this->hasherFactories)), $algorithm
+                'Invalid algorithm supplied to %s: expecting one of (%s), \'%s\' given',
+                __METHOD__, Debug::formatValues(array_keys($this->hasherFactories)), $algorithm
             );
         }
 

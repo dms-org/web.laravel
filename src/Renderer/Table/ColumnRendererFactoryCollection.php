@@ -31,10 +31,10 @@ class ColumnRendererFactoryCollection
     public function __construct(ColumnComponentRendererCollection $componentRenderers, array $columnRendererFactories)
     {
         InvalidArgumentException::verifyAllInstanceOf(
-                __METHOD__, 'columnRendererFactories', $columnRendererFactories, IColumnRendererFactory::class
+            __METHOD__, 'columnRendererFactories', $columnRendererFactories, IColumnRendererFactory::class
         );
 
-        $this->componentRenderers      = $componentRenderers;
+        $this->componentRenderers = $componentRenderers;
         $this->columnRendererFactories = $columnRendererFactories;
     }
 
@@ -52,8 +52,8 @@ class ColumnRendererFactoryCollection
             }
         }
         throw UnrenderableColumnComponentException::format(
-                'Could not render column \'%s\': no matching renderer could be found',
-                $column->getName()
+            'Could not render column \'%s\': no matching renderer could be found',
+            $column->getName()
         );
     }
 }

@@ -51,8 +51,8 @@ class TableWidgetRenderer extends WidgetRenderer
     {
         /** @var TableWidget $widget */
         return (string)view('dms::components.widget.data-table')
-                ->with([
-                        'dataTableContent' => $this->tableRenderer->renderTable($widget->loadData())
-                ]);
+            ->with([
+                'dataTableContent' => $this->tableRenderer->renderTable($widget->loadData()),
+            ]);
     }
 }

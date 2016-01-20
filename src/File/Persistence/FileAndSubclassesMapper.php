@@ -2,7 +2,6 @@
 
 namespace Dms\Web\Laravel\File\Persistence;
 
-use Dms\Common\Structure\FileSystem\File;
 use Dms\Common\Structure\FileSystem\Image;
 use Dms\Common\Structure\FileSystem\Persistence\FileMapper as BaseFileMapper;
 use Dms\Common\Structure\FileSystem\UploadedFile;
@@ -28,9 +27,9 @@ class FileAndSubclassesMapper extends BaseFileMapper
         parent::define($map);
 
         $map->subclass()->withTypeInColumnMap('type', [
-                'uploaded-image' => UploadedImage::class,
-                'uploaded-file'  => UploadedFile::class,
-                'stored-image'   => Image::class,
+            'uploaded-image' => UploadedImage::class,
+            'uploaded-file'  => UploadedFile::class,
+            'stored-image'   => Image::class,
         ]);
     }
 }

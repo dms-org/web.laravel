@@ -16,10 +16,10 @@ abstract class BladeFieldRenderer extends FieldRenderer
      * @var array
      */
     protected $defaultAttributeMap = [
-            FieldType::ATTR_INITIAL_VALUE => 'value',
-            FieldType::ATTR_READ_ONLY     => 'readonly',
-            FieldType::ATTR_REQUIRED      => 'required',
-            FieldType::ATTR_DEFAULT       => 'defaultValue',
+        FieldType::ATTR_INITIAL_VALUE => 'value',
+        FieldType::ATTR_READ_ONLY     => 'readonly',
+        FieldType::ATTR_REQUIRED      => 'required',
+        FieldType::ATTR_DEFAULT       => 'defaultValue',
     ];
 
     /**
@@ -42,12 +42,12 @@ abstract class BladeFieldRenderer extends FieldRenderer
         }
 
         return (string)view($viewName)
-                ->with('field', $field)
-                ->with('name', $field->getName())
-                ->with('label', $field->getLabel())
-                ->with('fieldType', $fieldType)
-                ->with($viewParams)
-                ->with($extraParams);
+            ->with('field', $field)
+            ->with('name', $field->getName())
+            ->with('label', $field->getLabel())
+            ->with('fieldType', $fieldType)
+            ->with($viewParams)
+            ->with($extraParams);
     }
 
 
@@ -59,8 +59,12 @@ abstract class BladeFieldRenderer extends FieldRenderer
      *
      * @return string
      */
-    protected function renderValueViewWithNullDefault(IField $field, $viewName, array $extraParams = [], $overrideValue = null)
-    {
+    protected function renderValueViewWithNullDefault(
+        IField $field,
+        $viewName,
+        array $extraParams = [],
+        $overrideValue = null
+    ) {
         $value = $overrideValue === null ? $field->getInitialValue() : $overrideValue;
 
         if ($value === null) {
@@ -68,10 +72,10 @@ abstract class BladeFieldRenderer extends FieldRenderer
         }
 
         return (string)view($viewName)
-                ->with('value', $value)
-                ->with('name', $field->getName())
-                ->with('label', $field->getLabel())
-                ->with('value', $value)
-                ->with($extraParams);
+            ->with('value', $value)
+            ->with('name', $field->getName())
+            ->with('label', $field->getLabel())
+            ->with('value', $value)
+            ->with($extraParams);
     }
 }

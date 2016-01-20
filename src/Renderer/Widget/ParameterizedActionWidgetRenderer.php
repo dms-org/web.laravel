@@ -34,7 +34,7 @@ class ParameterizedActionWidgetRenderer extends WidgetRenderer
     public function __construct(KeywordTypeIdentifier $keywordTypeIdentifier, ActionFormRenderer $actionFormRenderer)
     {
         $this->keywordTypeIdentifier = $keywordTypeIdentifier;
-        $this->actionFormRenderer    = $actionFormRenderer;
+        $this->actionFormRenderer = $actionFormRenderer;
     }
 
     /**
@@ -63,9 +63,9 @@ class ParameterizedActionWidgetRenderer extends WidgetRenderer
         $action = $widget->getAction();
 
         return (string)view('dms::components.widget.parameterized-action')
-                ->with([
-                        'action'            => $action,
-                        'actionFormContent' => $this->actionFormRenderer->renderActionForm($action),
-                ]);
+            ->with([
+                'action'            => $action,
+                'actionFormContent' => $this->actionFormRenderer->renderActionForm($action),
+            ]);
     }
 }

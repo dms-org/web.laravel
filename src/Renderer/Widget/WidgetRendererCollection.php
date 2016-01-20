@@ -4,7 +4,6 @@ namespace Dms\Web\Laravel\Renderer\Widget;
 
 use Dms\Core\Exception\InvalidArgumentException;
 use Dms\Core\Widget\IWidget;
-use Dms\Web\Laravel\Renderer\Form\IFieldRenderer;
 
 /**
  * The widget renderer collection.
@@ -26,7 +25,7 @@ class WidgetRendererCollection
     public function __construct(array $widgetRenderers)
     {
         InvalidArgumentException::verifyAllInstanceOf(
-                __METHOD__, 'widgetRenderers', $widgetRenderers, IWidgetRenderer::class
+            __METHOD__, 'widgetRenderers', $widgetRenderers, IWidgetRenderer::class
         );
 
         $this->widgetRenderers = $widgetRenderers;
@@ -47,8 +46,8 @@ class WidgetRendererCollection
         }
 
         throw UnrenderableWidgetException::format(
-                'Could not render widget \'%s\' of type %s: no matching renderer could be found',
-                $widget->getName(), get_class($widget)
+            'Could not render widget \'%s\' of type %s: no matching renderer could be found',
+            $widget->getName(), get_class($widget)
         );
     }
 }

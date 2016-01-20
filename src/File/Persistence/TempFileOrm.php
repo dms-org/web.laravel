@@ -23,7 +23,7 @@ class TempFileOrm extends Orm
     protected function define(OrmDefinition $orm)
     {
         $orm->entities([
-                TemporaryFile::class => TemporaryFileMapper::class,
+            TemporaryFile::class => TemporaryFileMapper::class,
         ]);
     }
 }

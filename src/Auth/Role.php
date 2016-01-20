@@ -46,9 +46,9 @@ class Role extends Entity implements IRole
     public function __construct($name, ValueObjectCollection $permissions, EntityIdCollection $userIds)
     {
         parent::__construct();
-        $this->name        = $name;
+        $this->name = $name;
         $this->permissions = $permissions;
-        $this->userIds     = $userIds;
+        $this->userIds = $userIds;
     }
 
     /**

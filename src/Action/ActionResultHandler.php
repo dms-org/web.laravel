@@ -75,8 +75,8 @@ abstract class ActionResultHandler implements IActionResultHandler
     {
         if (!$this->canHandleResult($action, $result)) {
             throw InvalidArgumentException::format(
-                    'Invalid call to %s: action and result of type %s not supported',
-                    get_class($this) . '::' . __FUNCTION__, Debug::getType($result)
+                'Invalid call to %s: action and result of type %s not supported',
+                get_class($this) . '::' . __FUNCTION__, Debug::getType($result)
             );
         }
 

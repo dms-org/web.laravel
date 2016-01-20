@@ -48,16 +48,16 @@ class InnerFormFieldRenderer extends BladeFieldRenderer
     {
         /** @var InnerFormType $fieldType */
         $formWithArrayFields = $fieldType->getInnerArrayForm($field->getName());
-        $formRenderer        = new FormRenderer($this->fieldRendererCollection);
+        $formRenderer = new FormRenderer($this->fieldRendererCollection);
 
 
         return $this->renderView(
-                $field,
-                'dms::components.field.inner-form.input',
-                [],
-                [
-                        'formContent' => $formRenderer->renderFields($formWithArrayFields)
-                ]
+            $field,
+            'dms::components.field.inner-form.input',
+            [],
+            [
+                'formContent' => $formRenderer->renderFields($formWithArrayFields),
+            ]
         );
     }
 
@@ -71,14 +71,14 @@ class InnerFormFieldRenderer extends BladeFieldRenderer
     {
         /** @var InnerFormType $fieldType */
         $formWithArrayFields = $fieldType->getInnerArrayForm($field->getName());
-        $formRenderer        = new FormRenderer($this->fieldRendererCollection);
+        $formRenderer = new FormRenderer($this->fieldRendererCollection);
 
         return $this->renderValueViewWithNullDefault(
-                $field,
-                'dms::components.field.inner-form.value',
-                [
-                        'formContent' => $formRenderer->renderFields($formWithArrayFields)
-                ]
+            $field,
+            'dms::components.field.inner-form.value',
+            [
+                'formContent' => $formRenderer->renderFields($formWithArrayFields),
+            ]
         );
     }
 }

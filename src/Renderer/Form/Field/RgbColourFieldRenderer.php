@@ -44,8 +44,8 @@ class RgbColourFieldRenderer extends BladeFieldRenderer
     protected function renderField(IField $field, IFieldType $fieldType)
     {
         return $this->renderView(
-                $field,
-                'dms::components.field.colour.rgb.input'
+            $field,
+            'dms::components.field.colour.rgb.input'
         );
     }
 
@@ -58,8 +58,8 @@ class RgbColourFieldRenderer extends BladeFieldRenderer
     protected function renderFieldValue(IField $field, IFieldType $fieldType)
     {
         return $this->renderValueViewWithNullDefault(
-                $field,
-                'dms::components.field.colour.rgb.value'
+            $field,
+            'dms::components.field.colour.rgb.value'
         );
     }
 }

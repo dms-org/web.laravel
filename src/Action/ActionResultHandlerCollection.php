@@ -71,8 +71,8 @@ class ActionResultHandlerCollection
         }
 
         throw UnhandleableActionResultException::format(
-                'Could not handle action result of type %s from action \'%s\': no matching action handler could be found',
-                get_class($result), $action->getName()
+            'Could not handle action result of type %s from action \'%s\': no matching action handler could be found',
+            get_class($result), $action->getName()
         );
     }
 }

@@ -30,21 +30,21 @@ class RoleMapper extends EntityMapper
         $map->idToPrimaryKey('id');
 
         $map->property(Role::NAME)
-                ->to('name')
-                ->asVarchar(255);
+            ->to('name')
+            ->asVarchar(255);
 
         $map->embeddedCollection(Role::PERMISSIONS)
-                ->toTable('permissions')
-                ->withPrimaryKey('id')
-                ->withForeignKeyToParentAs('role_id')
-                ->to(Permission::class);
+            ->toTable('permissions')
+            ->withPrimaryKey('id')
+            ->withForeignKeyToParentAs('role_id')
+            ->to(Permission::class);
 
         $map->relation(Role::USER_IDS)
-                ->to(User::class)
-                ->toManyIds()
-                ->withBidirectionalRelation(User::ROLE_IDS)
-                ->throughJoinTable('user_roles')
-                ->withParentIdAs('role_id')
-                ->withRelatedIdAs('user_id');
+            ->to(User::class)
+            ->toManyIds()
+            ->withBidirectionalRelation(User::ROLE_IDS)
+            ->throughJoinTable('user_roles')
+            ->withParentIdAs('role_id')
+            ->withRelatedIdAs('user_id');
     }
 }

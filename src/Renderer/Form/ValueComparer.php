@@ -29,6 +29,7 @@ class ValueComparer
 
         return $a == $b;
     }
+
     /**
      * Returns whether the values are loosely equals
      *

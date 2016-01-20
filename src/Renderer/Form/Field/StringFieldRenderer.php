@@ -49,14 +49,14 @@ class StringFieldRenderer extends BladeFieldRenderer
         $inputType = $this->getInputType($fieldType);
 
         return $this->renderView(
-                $field,
-                'dms::components.field.string.input',
-                [
-                        StringType::ATTR_EXACT_LENGTH => 'exactLength',
-                        StringType::ATTR_MIN_LENGTH   => 'minLength',
-                        StringType::ATTR_MAX_LENGTH   => 'maxLength'
-                ],
-                ['type' => $inputType]
+            $field,
+            'dms::components.field.string.input',
+            [
+                StringType::ATTR_EXACT_LENGTH => 'exactLength',
+                StringType::ATTR_MIN_LENGTH   => 'minLength',
+                StringType::ATTR_MAX_LENGTH   => 'maxLength',
+            ],
+            ['type' => $inputType]
         );
     }
 
@@ -92,11 +92,11 @@ class StringFieldRenderer extends BladeFieldRenderer
         $inputType = $this->getInputType($fieldType);
 
         return $this->renderValueViewWithNullDefault(
-                $field,
-                'dms::components.field.string.value',
-                [
-                        'type' => $inputType
-                ]
+            $field,
+            'dms::components.field.string.value',
+            [
+                'type' => $inputType,
+            ]
         );
     }
 }

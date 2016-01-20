@@ -44,16 +44,16 @@ class DecimalFieldRenderer extends BladeFieldRenderer
     protected function renderField(IField $field, IFieldType $fieldType)
     {
         return $this->renderView(
-                $field,
-                'dms::components.field.number.input',
-                [
-                        FloatType::ATTR_MIN                => 'min',
-                        FloatType::ATTR_MAX                => 'max',
-                        FloatType::ATTR_MIN                => 'min',
-                        FloatType::ATTR_GREATER_THAN       => 'greaterThan',
-                        FloatType::ATTR_LESS_THAN          => 'lessThan',
-                        FloatType::ATTR_MAX_DECIMAL_POINTS => 'maxDecimalPlaces',
-                ]
+            $field,
+            'dms::components.field.number.input',
+            [
+                FloatType::ATTR_MIN                => 'min',
+                FloatType::ATTR_MAX                => 'max',
+                FloatType::ATTR_MIN                => 'min',
+                FloatType::ATTR_GREATER_THAN       => 'greaterThan',
+                FloatType::ATTR_LESS_THAN          => 'lessThan',
+                FloatType::ATTR_MAX_DECIMAL_POINTS => 'maxDecimalPlaces',
+            ]
         );
     }
 
@@ -66,8 +66,8 @@ class DecimalFieldRenderer extends BladeFieldRenderer
     protected function renderFieldValue(IField $field, IFieldType $fieldType)
     {
         return $this->renderValueViewWithNullDefault(
-                $field,
-                'dms::components.field.number.value'
+            $field,
+            'dms::components.field.number.value'
         );
     }
 }

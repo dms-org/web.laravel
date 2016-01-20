@@ -24,7 +24,8 @@ class FieldRendererCollection
      */
     public function __construct(array $fieldRenderers)
     {
-        InvalidArgumentException::verifyAllInstanceOf(__METHOD__, 'fieldRenderers', $fieldRenderers, IFieldRenderer::class);
+        InvalidArgumentException::verifyAllInstanceOf(__METHOD__, 'fieldRenderers', $fieldRenderers,
+            IFieldRenderer::class);
 
         foreach ($fieldRenderers as $fieldRenderer) {
             $this->fieldRenderers[$fieldRenderer->getFieldTypeClass()][] = $fieldRenderer;
@@ -58,8 +59,8 @@ class FieldRendererCollection
         }
 
         throw UnrenderableFieldException::format(
-                'Could not render field \'%s\' with field type of class %s: no matching field renderer could be found',
-                $field->getName(), get_class($fieldType)
+            'Could not render field \'%s\' with field type of class %s: no matching field renderer could be found',
+            $field->getName(), get_class($fieldType)
         );
     }
 }

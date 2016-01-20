@@ -30,7 +30,7 @@ class ActionFormRenderer
      */
     public function __construct(FormRenderer $formRenderer, KeywordTypeIdentifier $keywordTypeIdentifier)
     {
-        $this->formRenderer          = $formRenderer;
+        $this->formRenderer = $formRenderer;
         $this->keywordTypeIdentifier = $keywordTypeIdentifier;
     }
 
@@ -44,14 +44,14 @@ class ActionFormRenderer
     public function renderActionForm(IParameterizedAction $action)
     {
         return (string)view('dms::components.form.staged-form')
-                ->with([
-                        'action'            => $action,
-                        'stagedForm'        => $action->getStagedForm(),
-                        'formRenderer'      => $this->formRenderer,
-                        'packageName'       => $action->getPackageName(),
-                        'moduleName'        => $action->getModuleName(),
-                        'actionName'        => $action->getName(),
-                        'submitButtonClass' => $this->keywordTypeIdentifier->getTypeFromName($action->getName())
-                ]);
+            ->with([
+                'action'            => $action,
+                'stagedForm'        => $action->getStagedForm(),
+                'formRenderer'      => $this->formRenderer,
+                'packageName'       => $action->getPackageName(),
+                'moduleName'        => $action->getModuleName(),
+                'actionName'        => $action->getName(),
+                'submitButtonClass' => $this->keywordTypeIdentifier->getTypeFromName($action->getName()),
+            ]);
     }
 }

@@ -2,12 +2,8 @@
 
 namespace Dms\Web\Laravel\Renderer\Chart;
 
-use Dms\Core\Exception\InvalidArgumentException;
 use Dms\Core\Table\Chart\IChartDataTable;
-use Dms\Core\Table\Chart\Structure\AreaChart;
-use Dms\Core\Table\Chart\Structure\BarChart;
 use Dms\Core\Table\Chart\Structure\PieChart;
-use Dms\Core\Table\Chart\Structure\LineChart;
 
 /**
  * The chart renderer for pie charts
@@ -39,32 +35,32 @@ class PieChartRenderer extends ChartRenderer
         $chartStructure = $chartData->getStructure();
 
         $chartDataArray = $this->transformChartDataToIndexedArrays(
-                $chartData,
-                $chartStructure->getTypeAxis()->getName(),
-                $chartStructure->getTypeAxis()->getComponent()->getName(),
-                $chartStructure->getValueAxis()->getName(),
-                $chartStructure->getValueAxis()->getComponent()->getName()
+            $chartData,
+            $chartStructure->getTypeAxis()->getName(),
+            $chartStructure->getTypeAxis()->getComponent()->getName(),
+            $chartStructure->getValueAxis()->getName(),
+            $chartStructure->getValueAxis()->getComponent()->getName()
         );
 
         return (string)view('dms::components.chart.pie-chart')
-                ->with([
-                        'data' => $chartDataArray,
-                ]);
+            ->with([
+                'data' => $chartDataArray,
+            ]);
     }
 
     private function transformChartDataToIndexedArrays(
-            IChartDataTable $data,
-            $labelAxisName,
-            $labelComponentName,
-            $valueAxisName,
-            $valueComponentName
+        IChartDataTable $data,
+        $labelAxisName,
+        $labelComponentName,
+        $valueAxisName,
+        $valueComponentName
     ) {
         $results = [];
 
         foreach ($data->getRows() as $row) {
             $results[] = [
-                    'label' => $row[$labelAxisName][$labelComponentName],
-                    'value' => $row[$valueAxisName][$valueComponentName],
+                'label' => $row[$labelAxisName][$labelComponentName],
+                'value' => $row[$valueAxisName][$valueComponentName],
             ];
         }
 

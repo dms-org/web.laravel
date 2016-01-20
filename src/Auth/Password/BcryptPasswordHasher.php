@@ -58,9 +58,9 @@ class BcryptPasswordHasher implements IPasswordHasher
     public function hash($password)
     {
         return new HashedPassword(
-                password_hash($password, PASSWORD_BCRYPT, ['cost' => $this->cost]),
-                self::ALGORITHM,
-                $this->cost
+            password_hash($password, PASSWORD_BCRYPT, ['cost' => $this->cost]),
+            self::ALGORITHM,
+            $this->cost
         );
     }
 

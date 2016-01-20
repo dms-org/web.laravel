@@ -41,8 +41,8 @@ class InvalidFormSubmissionExceptionHandler extends ActionExceptionHandler
     }
 
     /**
-     * @param IAction $action
-     * @param \Exception   $exception
+     * @param IAction    $action
+     * @param \Exception $exception
      *
      * @return bool
      */
@@ -62,7 +62,7 @@ class InvalidFormSubmissionExceptionHandler extends ActionExceptionHandler
     {
         /** @var InvalidFormSubmissionException $exception */
         return \response()->json([
-                'messages' => $this->transformInvalidFormSubmissionToArray($exception)
+            'messages' => $this->transformInvalidFormSubmissionToArray($exception),
         ], 422);
     }
 
@@ -74,8 +74,8 @@ class InvalidFormSubmissionExceptionHandler extends ActionExceptionHandler
     private function transformInvalidFormSubmissionToArray(InvalidFormSubmissionException $exception)
     {
         $validation = [
-                'fields'      => [],
-                'constraints' => [],
+            'fields'      => [],
+            'constraints' => [],
         ];
 
         foreach ($exception->getFieldMessageMap() as $field => $messages) {

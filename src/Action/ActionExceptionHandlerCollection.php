@@ -25,7 +25,8 @@ class ActionExceptionHandlerCollection
      */
     public function __construct(array $handlers)
     {
-        InvalidArgumentException::verifyAllInstanceOf(__METHOD__, 'handlers', $handlers, IActionExceptionHandler::class);
+        InvalidArgumentException::verifyAllInstanceOf(__METHOD__, 'handlers', $handlers,
+            IActionExceptionHandler::class);
 
         foreach ($handlers as $handler) {
             $this->handlers[$handler->getSupportedExceptionType()][] = $handler;
@@ -71,8 +72,8 @@ class ActionExceptionHandlerCollection
         }
 
         throw UnhandleableActionExceptionException::format(
-                'Could not handle action exception of type %s from action \'%s\': no matching action handler could be found',
-                get_class($exception), $action->getName()
+            'Could not handle action exception of type %s from action \'%s\': no matching action handler could be found',
+            get_class($exception), $action->getName()
         );
     }
 }

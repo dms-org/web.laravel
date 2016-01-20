@@ -24,7 +24,8 @@ class ActionInputTransformerCollection implements IActionInputTransformer
      */
     public function __construct(array $transformers)
     {
-        InvalidArgumentException::verifyAllInstanceOf(__METHOD__, 'transformers', $transformers, IActionInputTransformer::class);
+        InvalidArgumentException::verifyAllInstanceOf(__METHOD__, 'transformers', $transformers,
+            IActionInputTransformer::class);
         $this->transformers = $transformers;
     }
 

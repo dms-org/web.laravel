@@ -31,7 +31,7 @@ class CallbackColumnRenderer implements IColumnRenderer
     public function __construct(callable $renderHeaderCallback, callable $renderValueCallback)
     {
         $this->renderHeaderCallback = $renderHeaderCallback;
-        $this->renderValueCallback  = $renderValueCallback;
+        $this->renderValueCallback = $renderValueCallback;
     }
 
 
@@ -49,7 +49,7 @@ class CallbackColumnRenderer implements IColumnRenderer
     /**
      * Renders the supplied column value as a html string.
      *
-     * @param array   $value
+     * @param array $value
      *
      * @return string
      * @throws InvalidArgumentException

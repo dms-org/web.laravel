@@ -50,7 +50,7 @@ class FieldComponentRenderer implements IColumnComponentRenderer
     public function render(IColumnComponent $component, $value)
     {
         return $this->fieldRenderer->renderValue(
-                $component->getType()->getOperator(ConditionOperator::EQUALS)->getField()->withInitialValue($value)
+            $component->getType()->getOperator(ConditionOperator::EQUALS)->getField()->withInitialValue($value)
         );
     }
 }

@@ -2,7 +2,6 @@
 
 namespace Dms\Web\Laravel\Renderer\Table;
 
-use Dms\Core\Exception\InvalidArgumentException;
 use Dms\Core\Table\IColumnComponent;
 
 /**

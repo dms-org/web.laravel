@@ -44,8 +44,8 @@ class BoolFieldRenderer extends BladeFieldRenderer
     protected function renderField(IField $field, IFieldType $fieldType)
     {
         return $this->renderView(
-                $field,
-                'dms::components.field.checkbox.input'
+            $field,
+            'dms::components.field.checkbox.input'
         );
     }
 
@@ -58,8 +58,8 @@ class BoolFieldRenderer extends BladeFieldRenderer
     protected function renderFieldValue(IField $field, IFieldType $fieldType)
     {
         return $this->renderValueViewWithNullDefault(
-                $field,
-                'dms::components.field.checkbox.value'
+            $field,
+            'dms::components.field.checkbox.value'
         );
     }
 }

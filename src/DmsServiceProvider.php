@@ -95,14 +95,14 @@ class DmsServiceProvider extends ServiceProvider
     private function publishAssets()
     {
         $this->publishes([
-                __DIR__ . '/../dist/' => public_path('vendor/dms/'),
+            __DIR__ . '/../dist/' => public_path('vendor/dms/'),
         ], 'assets');
     }
 
     private function publishConfig()
     {
         $this->publishes([
-                __DIR__ . '/Config/config/dms.php' => config_path('dms.php'),
+            __DIR__ . '/Config/config/dms.php' => config_path('dms.php'),
         ]);
     }
 
@@ -120,13 +120,13 @@ class DmsServiceProvider extends ServiceProvider
 
         $this->app->singleton(IPasswordHasherFactory::class, function () {
             return new PasswordHasherFactory(
-                    [
-                            BcryptPasswordHasher::ALGORITHM => function ($costFactor) {
-                                return new BcryptPasswordHasher($costFactor);
-                            },
-                    ],
-                    BcryptPasswordHasher::ALGORITHM,
-                    10
+                [
+                    BcryptPasswordHasher::ALGORITHM => function ($costFactor) {
+                        return new BcryptPasswordHasher($costFactor);
+                    },
+                ],
+                BcryptPasswordHasher::ALGORITHM,
+                10
             );
         });
 
@@ -142,20 +142,20 @@ class DmsServiceProvider extends ServiceProvider
         });
 
         $this->app['config']->set('auth.guards.dms', [
-                'driver'   => 'session',
-                'provider' => 'dms-users',
+            'driver'   => 'session',
+            'provider' => 'dms-users',
         ]);
 
         $this->app['config']->set('auth.providers.dms-users', [
-                'driver' => 'dms',
-                'model'  => Auth\User::class,
+            'driver' => 'dms',
+            'model'  => Auth\User::class,
         ]);
 
         $this->app['config']->set('auth.passwords.dms', [
-                'provider' => 'dms-users',
-                'email'    => 'dms::auth.email.password',
-                'table'    => 'dms_password_resets',
-                'expire'   => 60,
+            'provider' => 'dms-users',
+            'email'    => 'dms::auth.email.password',
+            'table'    => 'dms_password_resets',
+            'expire'   => 60,
         ]);
     }
 
@@ -182,11 +182,11 @@ class DmsServiceProvider extends ServiceProvider
         $router = $this->app['router'];
 
         $router->middlewareGroup('dms.web', [
-                EncryptCookies::class,
-                AddQueuedCookiesToResponse::class,
-                StartSession::class,
-                ShareErrorsFromSession::class,
-                VerifyCsrfToken::class,
+            EncryptCookies::class,
+            AddQueuedCookiesToResponse::class,
+            StartSession::class,
+            ShareErrorsFromSession::class,
+            VerifyCsrfToken::class,
         ]);
 
         $router->middleware('dms.auth', Authenticate::class);
@@ -212,15 +212,15 @@ class DmsServiceProvider extends ServiceProvider
     private function registerCommands()
     {
         $this->commands([
-                AutoGenerateMigrationCommand::class,
-                ClearTempFilesCommand::class,
+            AutoGenerateMigrationCommand::class,
+            ClearTempFilesCommand::class,
         ]);
     }
 
     private function publishSeeders()
     {
         $this->publishes([
-                __DIR__ . '/Persistence/Db/Seeders/' => database_path('seeds'),
+            __DIR__ . '/Persistence/Db/Seeders/' => database_path('seeds'),
         ]);
     }
 
@@ -235,19 +235,19 @@ class DmsServiceProvider extends ServiceProvider
     {
         $this->app->singleton(ActionInputTransformerCollection::class, function () {
             return new ActionInputTransformerCollection($this->makeAll(
-                    config('dms.services.actions.input-transformers')
+                config('dms.services.actions.input-transformers')
             ));
         });
 
         $this->app->singleton(ActionResultHandlerCollection::class, function () {
             return new ActionResultHandlerCollection($this->makeAll(
-                    config('dms.services.actions.result-handlers')
+                config('dms.services.actions.result-handlers')
             ));
         });
 
         $this->app->singleton(ActionExceptionHandlerCollection::class, function () {
             return new ActionExceptionHandlerCollection($this->makeAll(
-                    config('dms.services.actions.exception-handlers')
+                config('dms.services.actions.exception-handlers')
             ));
         });
     }
@@ -256,34 +256,35 @@ class DmsServiceProvider extends ServiceProvider
     {
         $this->app->singleton(FieldRendererCollection::class, function () {
             return new FieldRendererCollection($this->makeAll(
-                    config('dms.services.renderers.form-fields')
+                config('dms.services.renderers.form-fields')
             ));
         });
 
         $this->app->singleton(ColumnComponentRendererCollection::class, function () {
             return new ColumnComponentRendererCollection($this->makeAll(
-                    array_merge(config('dms.services.renderers.table.components'), config('dms.services.renderers.form-fields'))
+                array_merge(config('dms.services.renderers.table.components'),
+                    config('dms.services.renderers.form-fields'))
             ));
         });
 
         $this->app->singleton(ColumnRendererFactoryCollection::class, function () {
             return new ColumnRendererFactoryCollection(
-                    $this->app->make(ColumnComponentRendererCollection::class),
-                    $this->makeAll(
-                            config('dms.services.renderers.table.columns')
-                    )
+                $this->app->make(ColumnComponentRendererCollection::class),
+                $this->makeAll(
+                    config('dms.services.renderers.table.columns')
+                )
             );
         });
 
         $this->app->singleton(ChartRendererCollection::class, function () {
             return new ChartRendererCollection($this->makeAll(
-                    config('dms.services.renderers.charts')
+                config('dms.services.renderers.charts')
             ));
         });
 
         $this->app->singleton(WidgetRendererCollection::class, function () {
             return new ChartRendererCollection($this->makeAll(
-                    config('dms.services.renderers.widgets')
+                config('dms.services.renderers.widgets')
             ));
         });
     }

@@ -51,17 +51,17 @@ class ArrayOfOptionsFieldRenderer extends BladeFieldRenderer
         $elementField = $this->makeElementField($fieldType);
 
         return $this->renderView(
-                $field,
-                'dms::components.field.checkbox-group.input',
-                [
-                        ArrayOfType::ATTR_MIN_ELEMENTS   => 'minElements',
-                        ArrayOfType::ATTR_MAX_ELEMENTS   => 'maxElements',
-                        ArrayOfType::ATTR_EXACT_ELEMENTS => 'exactElements',
-                ],
-                [
-                        'options'  => $elementField,
-                        'fieldRenderer' => $this->fieldRendererCollection->findRendererFor($elementField),
-                ]
+            $field,
+            'dms::components.field.checkbox-group.input',
+            [
+                ArrayOfType::ATTR_MIN_ELEMENTS   => 'minElements',
+                ArrayOfType::ATTR_MAX_ELEMENTS   => 'maxElements',
+                ArrayOfType::ATTR_EXACT_ELEMENTS => 'exactElements',
+            ],
+            [
+                'options'       => $elementField,
+                'fieldRenderer' => $this->fieldRendererCollection->findRendererFor($elementField),
+            ]
         );
     }
 
@@ -77,20 +77,20 @@ class ArrayOfOptionsFieldRenderer extends BladeFieldRenderer
         $elementField = $this->makeElementField($fieldType);
 
         return $this->renderValueViewWithNullDefault(
-                $field,
-                'dms::components.field.list-of-fields.value',
-                [
-                        'elementField'  => $elementField,
-                        'fieldRenderer' => $this->fieldRendererCollection->findRendererFor($elementField),
-                ]
+            $field,
+            'dms::components.field.list-of-fields.value',
+            [
+                'elementField'  => $elementField,
+                'fieldRenderer' => $this->fieldRendererCollection->findRendererFor($elementField),
+            ]
         );
     }
 
     protected function makeElementField(ArrayOfType $fieldType)
     {
         return Field::element()
-                ->type($fieldType->getElementType())
-                ->attrs($fieldType->getAll([FieldType::ATTR_READ_ONLY]))
-                ->build();
+            ->type($fieldType->getElementType())
+            ->attrs($fieldType->getAll([FieldType::ATTR_READ_ONLY]))
+            ->build();
     }
 }

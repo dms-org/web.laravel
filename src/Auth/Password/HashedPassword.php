@@ -42,8 +42,8 @@ class HashedPassword extends ValueObject implements IHashedPassword
     public function __construct($hash, $algorithm, $costFactor)
     {
         parent::__construct();
-        $this->hash       = $hash;
-        $this->algorithm  = $algorithm;
+        $this->hash = $hash;
+        $this->algorithm = $algorithm;
         $this->costFactor = $costFactor;
     }
 

@@ -25,7 +25,7 @@ class ChartRendererCollection
     public function __construct(array $chartRenderers)
     {
         InvalidArgumentException::verifyAllInstanceOf(
-                __METHOD__, 'chartRenderers', $chartRenderers, IChartRenderer::class
+            __METHOD__, 'chartRenderers', $chartRenderers, IChartRenderer::class
         );
 
         $this->chartRenderers = $chartRenderers;
@@ -46,8 +46,8 @@ class ChartRendererCollection
         }
 
         throw UnrenderableChartException::format(
-                'Could not render chart with structure type %s: no matching renderer could be found',
-                get_class($chartData->getStructure())
+            'Could not render chart with structure type %s: no matching renderer could be found',
+            get_class($chartData->getStructure())
         );
     }
 }

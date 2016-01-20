@@ -12,7 +12,7 @@ class IndexController extends DmsController
     public function index()
     {
         $packageNames = $this->cms->getPackageNames();
-        $package      = null;
+        $package = null;
 
         foreach ($packageNames as $name) {
             $package = $this->cms->loadPackage($name);
@@ -23,17 +23,17 @@ class IndexController extends DmsController
 
         if ($package) {
             return redirect()
-                    ->route('dms::package.dashboard', ['package' => $package->getName()]);
+                ->route('dms::package.dashboard', ['package' => $package->getName()]);
         }
 
-        $firstPackage    = $this->cms->loadPackage(reset($packageNames));
-        $modules         = $firstPackage->getModuleNames();
+        $firstPackage = $this->cms->loadPackage(reset($packageNames));
+        $modules = $firstPackage->getModuleNames();
         $firstModuleName = reset($modules);
 
         return redirect()
-                ->route('dms::package.module.index', [
-                        'package' => $firstPackage->getName(),
-                        'module'  => $firstModuleName
-                ]);
+            ->route('dms::package.module.dashboard', [
+                'package' => $firstPackage->getName(),
+                'module'  => $firstModuleName,
+            ]);
     }
 }

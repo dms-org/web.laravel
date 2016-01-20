@@ -23,7 +23,8 @@ abstract class ChartRenderer implements IChartRenderer
     final public function render(IChartDataTable $chartData)
     {
         if (!$this->accepts($chartData)) {
-            throw InvalidArgumentException::format('Invalid chart supplied to %s', get_class($this) . '::' . __FUNCTION__);
+            throw InvalidArgumentException::format('Invalid chart supplied to %s',
+                get_class($this) . '::' . __FUNCTION__);
         }
 
         return $this->renderChart($chartData);

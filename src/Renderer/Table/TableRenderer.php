@@ -42,9 +42,9 @@ class TableRenderer
         }
 
         return (string)view('dms::components.table.data-table')
-                ->with([
-                        'columnRenderers' => $columnRenderers,
-                        'sections'        => $table->getSections(),
-                ]);
+            ->with([
+                'columnRenderers' => $columnRenderers,
+                'sections'        => $table->getSections(),
+            ]);
     }
 }

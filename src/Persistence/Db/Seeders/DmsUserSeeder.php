@@ -31,7 +31,7 @@ class DmsUserSeeder extends Seeder
      */
     public function __construct(IUserRepository $repo, IPasswordHasherFactory $hasherFactory)
     {
-        $this->repo          = $repo;
+        $this->repo = $repo;
         $this->hasherFactory = $hasherFactory;
     }
 
@@ -43,10 +43,10 @@ class DmsUserSeeder extends Seeder
     public function run()
     {
         $this->repo->save(new User(
-                new EmailAddress('admin@admin.com'),
-                'admin',
-                $this->hasherFactory->buildDefault()->hash('admin'),
-                true // super user
+            new EmailAddress('admin@admin.com'),
+            'admin',
+            $this->hasherFactory->buildDefault()->hash('admin'),
+            true // super user
         ));
     }
 }

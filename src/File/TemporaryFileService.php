@@ -41,8 +41,8 @@ class TemporaryFileService implements ITemporaryFileService
      */
     public function __construct(ITemporaryFileRepository $repo, IClock $clock, Repository $config)
     {
-        $this->repo   = $repo;
-        $this->clock  = $clock;
+        $this->repo = $repo;
+        $this->clock = $clock;
         $this->config = $config;
     }
 
@@ -63,9 +63,9 @@ class TemporaryFileService implements ITemporaryFileService
         }
 
         $tempFile = new TemporaryFile(
-                str_random(40),
-                $file,
-                (new DateTime($this->clock->utcNow()))->addSeconds($expirySeconds)
+            str_random(40),
+            $file,
+            (new DateTime($this->clock->utcNow()))->addSeconds($expirySeconds)
         );
 
         $this->repo->save($tempFile);
@@ -95,9 +95,9 @@ class TemporaryFileService implements ITemporaryFileService
     public function getTempFiles(array $tokens)
     {
         $files = $this->repo->matching(
-                $this->repo->criteria()
-                        ->whereIn(TemporaryFile::TOKEN, $tokens)
-                        ->whereSatisfies(TemporaryFile::notExpiredSpec($this->clock))
+            $this->repo->criteria()
+                ->whereIn(TemporaryFile::TOKEN, $tokens)
+                ->whereSatisfies(TemporaryFile::notExpiredSpec($this->clock))
         );
 
         if (count($files) !== count($tokens)) {

@@ -48,8 +48,8 @@ class TemporaryFile extends Entity
     public function __construct($token, IFile $file, DateTime $expiry)
     {
         parent::__construct();
-        $this->token  = $token;
-        $this->file   = File::fromExisting($file);
+        $this->token = $token;
+        $this->file = File::fromExisting($file);
         $this->expiry = $expiry;
     }
 

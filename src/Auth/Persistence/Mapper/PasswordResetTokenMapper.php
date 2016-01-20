@@ -32,14 +32,14 @@ class PasswordResetTokenMapper extends EntityMapper
         $map->idToPrimaryKey('id');
 
         $map->property(PasswordResetToken::EMAIL)
-                ->to('email')
-                ->asVarchar(255);
+            ->to('email')
+            ->asVarchar(255);
 
         $map->property(PasswordResetToken::TOKEN)
-                ->to('token')
-                ->asVarchar(255);
+            ->to('token')
+            ->asVarchar(255);
 
         $map->embedded(PasswordResetToken::CREATED_AT)
-                ->using(new DateTimeMapper('created_at'));
+            ->using(new DateTimeMapper('created_at'));
     }
 }

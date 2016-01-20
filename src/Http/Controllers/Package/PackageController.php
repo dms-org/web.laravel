@@ -27,10 +27,10 @@ class PackageController extends DmsController
             $firstModule = reset($moduleNames);
 
             return redirect()
-                    ->route('dms::package.module.index', [
-                            'package' => $this->package->getName(),
-                            'module' => $firstModule
-                    ]);
+                ->route('dms::package.module.dashboard', [
+                    'package' => $this->package->getName(),
+                    'module'  => $firstModule,
+                ]);
         }
 
 

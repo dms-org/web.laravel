@@ -42,7 +42,7 @@ class NullResultHandler extends ActionResultHandler
     protected function handleResult(IAction $action, $result)
     {
         return \response()->json([
-                'message' => 'The action was successfully executed',
+            'message' => 'The action was successfully executed',
         ]);
     }
 }

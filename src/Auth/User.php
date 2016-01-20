@@ -74,21 +74,21 @@ class User extends Entity implements IUser, Authenticatable
      * @param EntityIdCollection|null $roleIds
      */
     public function __construct(
-            EmailAddress $emailAddress,
-            $username,
-            IHashedPassword $password,
-            $isSuperUser = false,
-            $isBanned = false,
-            EntityIdCollection $roleIds = null
+        EmailAddress $emailAddress,
+        $username,
+        IHashedPassword $password,
+        $isSuperUser = false,
+        $isBanned = false,
+        EntityIdCollection $roleIds = null
     ) {
         parent::__construct();
 
         $this->emailAddress = $emailAddress;
-        $this->username     = $username;
-        $this->password     = HashedPassword::from($password);
-        $this->isSuperUser  = $isSuperUser;
-        $this->isBanned     = $isBanned;
-        $this->roleIds      = $roleIds ?: new EntityIdCollection();
+        $this->username = $username;
+        $this->password = HashedPassword::from($password);
+        $this->isSuperUser = $isSuperUser;
+        $this->isBanned = $isBanned;
+        $this->roleIds = $roleIds ?: new EntityIdCollection();
 
         InvalidArgumentException::verify(strlen($this->username) > 0, 'Username cannot be empty');
     }

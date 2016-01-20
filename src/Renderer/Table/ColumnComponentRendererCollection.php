@@ -33,7 +33,7 @@ class ColumnComponentRendererCollection
         }
 
         InvalidArgumentException::verifyAllInstanceOf(
-                __METHOD__, 'columnComponentRenderers', $columnComponentRenderers, IColumnComponentRenderer::class
+            __METHOD__, 'columnComponentRenderers', $columnComponentRenderers, IColumnComponentRenderer::class
         );
 
         $this->columnComponentRenderers = $columnComponentRenderers;
@@ -54,8 +54,8 @@ class ColumnComponentRendererCollection
         }
 
         throw UnrenderableColumnComponentException::format(
-                'Could not render column component \'%s\' with value type %s: no matching renderer could be found',
-                $component->getName(), get_class($component->getType()->getPhpType()->asTypeString())
+            'Could not render column component \'%s\' with value type %s: no matching renderer could be found',
+            $component->getName(), get_class($component->getType()->getPhpType()->asTypeString())
         );
     }
 }

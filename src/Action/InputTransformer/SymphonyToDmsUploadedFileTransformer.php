@@ -27,10 +27,10 @@ class SymphonyToDmsUploadedFileTransformer implements IActionInputTransformer
         array_walk_recursive($input, function (&$value) {
             if ($value instanceof SymfonyUploadedFile) {
                 $value = UploadedFileFactory::build(
-                        $value->getRealPath(),
-                        $value->getError(),
-                        $value->getClientOriginalName(),
-                        $value->getClientMimeType()
+                    $value->getRealPath(),
+                    $value->getError(),
+                    $value->getClientOriginalName(),
+                    $value->getClientMimeType()
                 );
             }
         });

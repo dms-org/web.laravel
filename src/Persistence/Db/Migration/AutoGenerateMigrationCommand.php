@@ -60,19 +60,19 @@ class AutoGenerateMigrationCommand extends BaseCommand
      * @param IOrm                      $orm
      */
     public function __construct(
-            Composer $composer,
-            LaravelMigrationGenerator $autoMigrationGenerator,
-            IConnection $connection,
-            IOrm $orm
+        Composer $composer,
+        LaravelMigrationGenerator $autoMigrationGenerator,
+        IConnection $connection,
+        IOrm $orm
     ) {
         parent::__construct();
 
         InvalidArgumentException::verifyInstanceOf(__METHOD__, 'connection', $connection, DoctrineConnection::class);
 
-        $this->composer               = $composer;
+        $this->composer = $composer;
         $this->autoMigrationGenerator = $autoMigrationGenerator;
-        $this->connection             = $connection;
-        $this->orm                    = $orm;
+        $this->connection = $connection;
+        $this->orm = $orm;
     }
 
     /**
@@ -83,9 +83,9 @@ class AutoGenerateMigrationCommand extends BaseCommand
     public function fire()
     {
         $file = $this->autoMigrationGenerator->generateMigration(
-                $this->connection,
-                $this->orm,
-                $this->input->getArgument('name')
+            $this->connection,
+            $this->orm,
+            $this->input->getArgument('name')
         );
 
         if (!$file) {

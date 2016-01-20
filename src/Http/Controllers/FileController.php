@@ -39,7 +39,7 @@ class FileController extends DmsController
         parent::__construct($cms);
 
         $this->tempFileService = $tempFileService;
-        $this->config          = $config;
+        $this->config = $config;
     }
 
     public function upload(Request $request)
@@ -49,19 +49,19 @@ class FileController extends DmsController
         /** @var UploadedFile $file */
         foreach ($request->files->all() as $key => $file) {
             $tokens[$key] = $this->tempFileService->storeTempFile(
-                    UploadedFileFactory::build(
-                            $file->getRealPath(),
-                            $file->getError(),
-                            $file->getClientOriginalName(),
-                            $file->getClientMimeType()
-                    ),
-                    $this->config->get('dms.storage.temp-files.upload-expiry')
+                UploadedFileFactory::build(
+                    $file->getRealPath(),
+                    $file->getError(),
+                    $file->getClientOriginalName(),
+                    $file->getClientMimeType()
+                ),
+                $this->config->get('dms.storage.temp-files.upload-expiry')
             );
         }
 
         return response()->json([
-                'message' => 'The files were successfully uploaded',
-                'tokens'  => $tokens
+            'message' => 'The files were successfully uploaded',
+            'tokens'  => $tokens,
         ]);
     }
 
@@ -71,8 +71,8 @@ class FileController extends DmsController
             $file = $this->tempFileService->getTempFile($token);
 
             return \response()
-                    ->withCookie(cookie('file-download', 'done'))
-                    ->download($file->getFile()->getInfo());
+                ->withCookie(cookie('file-download', 'done'))
+                ->download($file->getFile()->getInfo());
         } catch (EntityNotFoundException $e) {
             abort(404);
         }

@@ -43,8 +43,8 @@ class PasswordResetToken extends Entity
     {
         parent::__construct();
 
-        $this->email     = $email;
-        $this->token     = $token;
+        $this->email = $email;
+        $this->token = $token;
         $this->createdAt = $createdAt;
     }
 

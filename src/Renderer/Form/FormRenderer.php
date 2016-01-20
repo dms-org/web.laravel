@@ -49,21 +49,25 @@ class FormRenderer
 
             foreach ($section->getFields() as $field) {
                 $sections[$title][$field->getLabel()] = [
-                        'name'    => $field->getName(),
-                        'content' => $this->fieldRenderers->findRendererFor($field)->render($field)
+                    'name'    => $field->getName(),
+                    'content' => $this->fieldRenderers->findRendererFor($field)->render($field),
                 ];
             }
         }
 
         return (string)view('dms::components.form.form-fields')
-                ->with([
-                        'groupedFields'            => $sections,
-                        'equalFields'              => $this->findFieldsFromValidator($form, MatchingFieldsValidator::class),
-                        'greaterThanFields'        => $this->findFieldsFromValidator($form, FieldGreaterThanAnotherValidator::class),
-                        'greaterThanOrEqualFields' => $this->findFieldsFromValidator($form, FieldGreaterThanOrEqualAnotherValidator::class),
-                        'lessThanFields'           => $this->findFieldsFromValidator($form, FieldLessThanAnotherValidator::class),
-                        'lessThanOrEqualFields'    => $this->findFieldsFromValidator($form, FieldLessThanOrEqualAnotherValidator::class),
-                ]);
+            ->with([
+                'groupedFields'            => $sections,
+                'equalFields'              => $this->findFieldsFromValidator($form, MatchingFieldsValidator::class),
+                'greaterThanFields'        => $this->findFieldsFromValidator($form,
+                    FieldGreaterThanAnotherValidator::class),
+                'greaterThanOrEqualFields' => $this->findFieldsFromValidator($form,
+                    FieldGreaterThanOrEqualAnotherValidator::class),
+                'lessThanFields'           => $this->findFieldsFromValidator($form,
+                    FieldLessThanAnotherValidator::class),
+                'lessThanOrEqualFields'    => $this->findFieldsFromValidator($form,
+                    FieldLessThanOrEqualAnotherValidator::class),
+            ]);
     }
 
     /**
@@ -83,14 +87,14 @@ class FormRenderer
 
             foreach ($section->getFields() as $field) {
                 $sections[$title][$field->getLabel()] = [
-                        'name'    => $field->getName(),
-                        'content' => $this->fieldRenderers->findRendererFor($field)->renderValue($field)
+                    'name'    => $field->getName(),
+                    'content' => $this->fieldRenderers->findRendererFor($field)->renderValue($field),
                 ];
             }
         }
 
         return (string)view('dms::components.form.form-fields')
-                ->with(['groupedFields' => $sections]);
+            ->with(['groupedFields' => $sections]);
     }
 
     private function findFieldsFromValidator(IForm $form, $validatorClass)

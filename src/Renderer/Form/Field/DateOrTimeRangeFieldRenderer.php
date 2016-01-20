@@ -45,14 +45,14 @@ class DateOrTimeRangeFieldRenderer extends BladeFieldRenderer
     protected function renderField(IField $field, IFieldType $fieldType)
     {
         return $this->renderView(
-                $field,
-                'dms::components.field.date-or-time.range.input',
-                [
-                        DateTimeTypeBase::ATTR_FORMAT => 'format',
-                        DateTimeTypeBase::ATTR_MIN    => 'min',
-                        DateTimeTypeBase::ATTR_MAX    => 'max',
-                        // TODO: less_than and greater_than
-                ]
+            $field,
+            'dms::components.field.date-or-time.range.input',
+            [
+                DateTimeTypeBase::ATTR_FORMAT => 'format',
+                DateTimeTypeBase::ATTR_MIN    => 'min',
+                DateTimeTypeBase::ATTR_MAX    => 'max',
+                // TODO: less_than and greater_than
+            ]
         );
     }
 
@@ -65,11 +65,11 @@ class DateOrTimeRangeFieldRenderer extends BladeFieldRenderer
     protected function renderFieldValue(IField $field, IFieldType $fieldType)
     {
         return $this->renderValueViewWithNullDefault(
-                $field,
-                'dms::components.field.date-or-time.single.value',
-                [
-                        'format' => $fieldType->get(DateTimeTypeBase::ATTR_FORMAT),
-                ]
+            $field,
+            'dms::components.field.date-or-time.single.value',
+            [
+                'format' => $fieldType->get(DateTimeTypeBase::ATTR_FORMAT),
+            ]
         );
     }
 }

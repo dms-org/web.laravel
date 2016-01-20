@@ -42,7 +42,7 @@ class TempUploadedFileToUploadedFileTransformer implements IActionInputTransform
     {
         if (isset($input[self::TEMP_FILES_KEY]) && is_array($input[self::TEMP_FILES_KEY])) {
             $uploadedTokenStructure = $input[self::TEMP_FILES_KEY];
-            $uploadedFileTokens     = [];
+            $uploadedFileTokens = [];
 
             array_walk_recursive($uploadedTokenStructure, function ($token) use (&$uploadedFileTokens) {
                 $uploadedFileTokens[] = $token;

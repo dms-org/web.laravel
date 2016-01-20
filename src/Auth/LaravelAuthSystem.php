@@ -15,7 +15,6 @@ use Dms\Core\Auth\UserNotAuthenticatedException;
 use Dms\Core\Exception\InvalidArgumentException;
 use Dms\Web\Laravel\Auth\Password\IPasswordHasherFactory;
 use Illuminate\Auth\AuthManager;
-use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Contracts\Auth\StatefulGuard;
 
 /**
@@ -48,21 +47,21 @@ class LaravelAuthSystem implements IAuthSystem
     /**
      * LaravelAuthSystem constructor.
      *
-     * @param AuthManager                  $laravelAuth
+     * @param AuthManager            $laravelAuth
      * @param IUserRepository        $userRepository
      * @param IRoleRepository        $roleRepository
      * @param IPasswordHasherFactory $passwordHasherFactory
      */
     public function __construct(
-            AuthManager $laravelAuth,
-            IUserRepository $userRepository,
-            IRoleRepository $roleRepository,
-            IPasswordHasherFactory $passwordHasherFactory
+        AuthManager $laravelAuth,
+        IUserRepository $userRepository,
+        IRoleRepository $roleRepository,
+        IPasswordHasherFactory $passwordHasherFactory
     ) {
-        $this->laravelAuth           = $laravelAuth->guard('dms');
-        $this->userRepository        = $userRepository;
+        $this->laravelAuth = $laravelAuth->guard('dms');
+        $this->userRepository = $userRepository;
         $this->passwordHasherFactory = $passwordHasherFactory;
-        $this->roleRepository        = $roleRepository;
+        $this->roleRepository = $roleRepository;
     }
 
     /**
@@ -77,15 +76,15 @@ class LaravelAuthSystem implements IAuthSystem
     {
         /** @var IUser $user */
         $users = $this->userRepository->matching(
-                $this->userRepository->criteria()
-                        ->where(User::USERNAME, '=', $username)
+            $this->userRepository->criteria()
+                ->where(User::USERNAME, '=', $username)
         );
 
         if (count($users) !== 1) {
             throw InvalidCredentialsException::defaultMessage($username);
         }
 
-        $user           = $users[0];
+        $user = $users[0];
         $passwordHasher = $this->passwordHasherFactory->buildFor($user->getPassword());
 
         if (!$passwordHasher->verify($password, $user->getPassword())) {
@@ -204,7 +203,7 @@ class LaravelAuthSystem implements IAuthSystem
         }
 
         $userPermissions = Role::collection(
-                $this->roleRepository->getAllById($user->getRoleIds()->asArray())
+            $this->roleRepository->getAllById($user->getRoleIds()->asArray())
         )->selectMany(function (Role $role) {
             return $role->getPermissions();
         })->indexBy(function (Permission $permission) {

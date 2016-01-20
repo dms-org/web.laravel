@@ -34,7 +34,7 @@ class DmsController extends Controller
      */
     public function __construct(ICms $cms)
     {
-        $this->cms  = $cms;
+        $this->cms = $cms;
         $this->auth = app()->make(IAuthSystem::class);
 
         $this->loadSharedViewVariables(request());
@@ -46,9 +46,9 @@ class DmsController extends Controller
     private function loadSharedViewVariables(Request $request)
     {
         view()->share([
-                'cms'   => $this->cms,
-                'user'  => $this->auth->isAuthenticated() ? $this->auth->getAuthenticatedUser() : null,
-                'title' => 'DMS {' . $request->server->get('SERVER_NAME') . '}',
+            'cms'   => $this->cms,
+            'user'  => $this->auth->isAuthenticated() ? $this->auth->getAuthenticatedUser() : null,
+            'title' => 'DMS {' . $request->server->get('SERVER_NAME') . '}',
         ]);
     }
 }

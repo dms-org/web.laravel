@@ -25,9 +25,9 @@ class DmsOrm extends Orm
     protected function define(OrmDefinition $orm)
     {
         $orm->encompassAll([
-                new CommonOrm(),
-                new AuthOrm(),
-                new TempFileOrm(),
+            new CommonOrm(),
+            new AuthOrm(),
+            new TempFileOrm(),
         ]);
     }
 }

@@ -34,7 +34,7 @@ class DmsUserProvider implements UserProvider
      */
     public function __construct(IUserRepository $repository, IPasswordHasherFactory $passwordHasherFactory)
     {
-        $this->repository            = $repository;
+        $this->repository = $repository;
         $this->passwordHasherFactory = $passwordHasherFactory;
     }
 
@@ -48,8 +48,8 @@ class DmsUserProvider implements UserProvider
     public function retrieveById($username)
     {
         $users = $this->repository->matching(
-                $this->repository->criteria()
-                        ->where(User::USERNAME, '=', $username)
+            $this->repository->criteria()
+                ->where(User::USERNAME, '=', $username)
         );
 
         return reset($users) ?: null;
@@ -66,9 +66,9 @@ class DmsUserProvider implements UserProvider
     public function retrieveByToken($username, $token)
     {
         $users = $this->repository->matching(
-                $this->repository->criteria()
-                        ->where(User::USERNAME, '=', $username)
-                        ->where(User::REMEMBER_TOKEN, '=', $token)
+            $this->repository->criteria()
+                ->where(User::USERNAME, '=', $username)
+                ->where(User::REMEMBER_TOKEN, '=', $token)
         );
 
         return reset($users) ?: null;

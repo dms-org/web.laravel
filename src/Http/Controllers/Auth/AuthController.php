@@ -68,8 +68,8 @@ class AuthController extends DmsController
     public function login(Request $request)
     {
         $this->validate($request, [
-                'username' => 'required',
-                'password' => 'required',
+            'username' => 'required',
+            'password' => 'required',
         ]);
 
         if ($this->hasTooManyLoginAttempts($request)) {
@@ -93,10 +93,10 @@ class AuthController extends DmsController
         // user surpasses their maximum number of attempts they will get locked out.
         $this->incrementLoginAttempts($request);
         return redirect()->back()
-                ->withInput($request->only('username'))
-                ->withErrors([
-                        'username' => trans($errorMessage),
-                ]);
+            ->withInput($request->only('username'))
+            ->withErrors([
+                'username' => trans($errorMessage),
+            ]);
     }
 
     /**
@@ -121,8 +121,8 @@ class AuthController extends DmsController
     protected function hasTooManyLoginAttempts(Request $request)
     {
         return app(RateLimiter::class)->tooManyAttempts(
-                $this->getThrottleKey($request),
-                $this->maxLoginAttempts(), $this->lockoutTime() / 60
+            $this->getThrottleKey($request),
+            $this->maxLoginAttempts(), $this->lockoutTime() / 60
         );
     }
 
@@ -136,7 +136,7 @@ class AuthController extends DmsController
     protected function incrementLoginAttempts(Request $request)
     {
         app(RateLimiter::class)->hit(
-                $this->getThrottleKey($request)
+            $this->getThrottleKey($request)
         );
     }
 
@@ -150,7 +150,7 @@ class AuthController extends DmsController
     protected function retriesLeft(Request $request)
     {
         $attempts = app(RateLimiter::class)->attempts(
-                $this->getThrottleKey($request)
+            $this->getThrottleKey($request)
         );
 
         return $this->maxLoginAttempts() - $attempts + 1;
@@ -166,14 +166,14 @@ class AuthController extends DmsController
     protected function sendLockoutResponse(Request $request)
     {
         $seconds = app(RateLimiter::class)->availableIn(
-                $this->getThrottleKey($request)
+            $this->getThrottleKey($request)
         );
 
         return redirect()->back()
-                ->withInput($request->only('username', 'remember'))
-                ->withErrors([
-                        'username' => trans('dms::auth.throttle', ['seconds' => $seconds]),
-                ]);
+            ->withInput($request->only('username', 'remember'))
+            ->withErrors([
+                'username' => trans('dms::auth.throttle', ['seconds' => $seconds]),
+            ]);
     }
 
     /**
@@ -186,7 +186,7 @@ class AuthController extends DmsController
     protected function clearLoginAttempts(Request $request)
     {
         app(RateLimiter::class)->clear(
-                $this->getThrottleKey($request)
+            $this->getThrottleKey($request)
         );
     }
 

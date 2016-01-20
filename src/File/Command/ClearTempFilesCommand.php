@@ -2,7 +2,6 @@
 
 namespace Dms\Web\Laravel\File\Command;
 
-use Dms\Common\Structure\DateTime\DateTime;
 use Dms\Core\Util\IClock;
 use Dms\Web\Laravel\File\Persistence\ITemporaryFileRepository;
 use Dms\Web\Laravel\File\TemporaryFile;
@@ -56,16 +55,16 @@ class ClearTempFilesCommand extends Command
     public function __construct(Filesystem $filesystem, ITemporaryFileRepository $tempFileRepo, IClock $clock)
     {
         parent::__construct();
-        $this->filesystem   = $filesystem;
+        $this->filesystem = $filesystem;
         $this->tempFileRepo = $tempFileRepo;
-        $this->clock        = $clock;
+        $this->clock = $clock;
     }
 
     public function fire()
     {
         $expiredFiles = $this->tempFileRepo->matching(
-                $this->tempFileRepo->criteria()
-                        ->whereSatisfies(TemporaryFile::expiredSpec($this->clock))
+            $this->tempFileRepo->criteria()
+                ->whereSatisfies(TemporaryFile::expiredSpec($this->clock))
         );
 
         foreach ($expiredFiles as $file) {

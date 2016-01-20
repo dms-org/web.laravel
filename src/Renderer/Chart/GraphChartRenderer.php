@@ -1,6 +1,6 @@
 <?php
 
-namespace Dms\Web\Laravel\Renderer\Widget;
+namespace Dms\Web\Laravel\Renderer\Chart;
 
 use Dms\Core\Exception\InvalidArgumentException;
 use Dms\Core\Table\Chart\IChartDataTable;
@@ -8,34 +8,35 @@ use Dms\Core\Table\Chart\Structure\AreaChart;
 use Dms\Core\Table\Chart\Structure\BarChart;
 use Dms\Core\Table\Chart\Structure\GraphChart;
 use Dms\Core\Table\Chart\Structure\LineChart;
-use Dms\Core\Widget\ChartWidget;
 
 /**
- * The widget renderer for graph charts (eg line, area, bar charts)
+ * The chart renderer for graph charts (eg line, area, bar charts)
  *
  * @author Elliot Levin <elliotlevin@hotmail.com>
  */
-class GraphChartWidgetRenderer extends ChartWidgetRenderer
+class GraphChartRenderer extends ChartRenderer
 {
     /**
-     * @param ChartWidget $widget
+     * Returns whether this renderer can render the supplied chart.
+     *
+     * @param IChartDataTable $chartData
      *
      * @return bool
      */
-    protected function acceptsChartWidget(ChartWidget $widget)
+    public function accepts(IChartDataTable $chartData)
     {
-        return $widget->getChartDataSource()->getStructure() instanceof GraphChart;
+        return $chartData->getStructure() instanceof GraphChart;
     }
 
     /**
-     * @param ChartWidget $widget
+     * @param IChartDataTable $chartData
      *
      * @return string
      */
-    protected function renderWidgetChart(ChartWidget $widget)
+    protected function renderChart(IChartDataTable $chartData)
     {
         /** @var GraphChart $chartStructure */
-        $chartStructure = $widget->getChartDataSource()->getStructure();
+        $chartStructure = $chartData->getStructure();
 
         $yAxisKeys   = [];
         $yAxisLabels = [];
@@ -47,8 +48,8 @@ class GraphChartWidgetRenderer extends ChartWidgetRenderer
             $yAxisLabels[] = $component->getLabel();
         }
 
-        $chartData = $this->transformChartDataToIndexedArrays(
-                $widget->loadData(),
+        $chartDataArray = $this->transformChartDataToIndexedArrays(
+                $chartData,
                 $chartStructure->getHorizontalAxis()->getName(),
                 $chartStructure->getHorizontalAxis()->getComponent()->getName(),
                 $chartStructure->getVerticalAxis()->getName()
@@ -57,7 +58,7 @@ class GraphChartWidgetRenderer extends ChartWidgetRenderer
         return (string)view('dms::components.chart.graph-chart')
                 ->with([
                         'chartType'          => $this->getChartType($chartStructure),
-                        'data'               => $chartData,
+                        'data'               => $chartDataArray,
                         'horizontalAxisKey'  => 'x',
                         'verticalAxisKeys'   => $yAxisKeys,
                         'verticalAxisLabels' => $yAxisLabels,

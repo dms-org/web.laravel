@@ -5,7 +5,6 @@ namespace Dms\Web\Laravel\Renderer\Widget;
 use Dms\Core\Exception\InvalidArgumentException;
 use Dms\Core\Widget\IWidget;
 use Dms\Web\Laravel\Renderer\Form\IFieldRenderer;
-use Dms\Web\Laravel\Renderer\Table\Column\Component\FieldComponentRenderer;
 
 /**
  * The widget renderer collection.
@@ -22,7 +21,7 @@ class WidgetRendererCollection
     /**
      * WidgetRendererCollection constructor.
      *
-     * @param IWidgetRenderer[]|IFieldRenderer[] $widgetRenderers
+     * @param IWidgetRenderer[] $widgetRenderers
      */
     public function __construct(array $widgetRenderers)
     {

@@ -2,33 +2,36 @@
 
 namespace Dms\Web\Laravel\Renderer\Widget;
 
-use Dms\Core\Table\Chart\IChartDataTable;
-use Dms\Core\Table\Chart\Structure\GraphChart;
 use Dms\Core\Widget\ChartWidget;
 use Dms\Core\Widget\IWidget;
+use Dms\Web\Laravel\Renderer\Chart\ChartRendererCollection;
 
 /**
  * The widget renderer for charts
  *
  * @author Elliot Levin <elliotlevin@hotmail.com>
  */
-abstract class ChartWidgetRenderer extends WidgetRenderer
+class ChartWidgetRenderer extends WidgetRenderer
 {
-    public function accepts(IWidget $widget)
-    {
-        if (!($widget instanceof ChartWidget)) {
-            return false;
-        }
-
-        return $this->acceptsChartWidget($widget);
-    }
+    /**
+     * @var ChartRendererCollection
+     */
+    protected $chartRenderers;
 
     /**
-     * @param ChartWidget $widget
+     * ChartWidgetRenderer constructor.
      *
-     * @return bool
+     * @param ChartRendererCollection $chartRenderers
      */
-    abstract protected function acceptsChartWidget(ChartWidget $widget);
+    public function __construct(ChartRendererCollection $chartRenderers)
+    {
+        $this->chartRenderers = $chartRenderers;
+    }
+
+    public function accepts(IWidget $widget)
+    {
+        return $widget instanceof ChartWidget;
+    }
 
     /**
      * Renders the supplied widget input as a html string.
@@ -40,16 +43,11 @@ abstract class ChartWidgetRenderer extends WidgetRenderer
     protected function renderWidget(IWidget $widget)
     {
         /** @var ChartWidget $widget */
+        $chartData = $widget->loadData();
+
         return (string)view('dms::components.widget.chart')
                 ->with([
-                    'chartContent' => $this->renderWidgetChart($widget)
+                        'chartContent' => $this->chartRenderers->findRendererFor($chartData)->render($chartData)
                 ]);
     }
-
-    /**
-     * @param ChartWidget $widget
-     *
-     * @return string
-     */
-    abstract protected function renderWidgetChart(ChartWidget $widget);
 }

@@ -1,39 +1,45 @@
 <?php
 
-namespace Dms\Web\Laravel\Renderer\Widget;
+namespace Dms\Web\Laravel\Renderer\Chart;
 
+use Dms\Core\Exception\InvalidArgumentException;
 use Dms\Core\Table\Chart\IChartDataTable;
+use Dms\Core\Table\Chart\Structure\AreaChart;
+use Dms\Core\Table\Chart\Structure\BarChart;
 use Dms\Core\Table\Chart\Structure\PieChart;
-use Dms\Core\Widget\ChartWidget;
+use Dms\Core\Table\Chart\Structure\LineChart;
 
 /**
- * The widget renderer for pie charts
+ * The chart renderer for pie charts
+ *
  * @author Elliot Levin <elliotlevin@hotmail.com>
  */
-class PieChartWidgetRenderer extends ChartWidgetRenderer
+class PieChartRenderer extends ChartRenderer
 {
     /**
-     * @param ChartWidget $widget
+     * Returns whether this renderer can render the supplied chart.
+     *
+     * @param IChartDataTable $chartData
      *
      * @return bool
      */
-    protected function acceptsChartWidget(ChartWidget $widget)
+    public function accepts(IChartDataTable $chartData)
     {
-        return $widget->getChartDataSource()->getStructure() instanceof PieChart;
+        return $chartData->getStructure() instanceof PieChart;
     }
 
     /**
-     * @param ChartWidget $widget
+     * @param IChartDataTable $chartData
      *
      * @return string
      */
-    protected function renderWidgetChart(ChartWidget $widget)
+    protected function renderChart(IChartDataTable $chartData)
     {
         /** @var PieChart $chartStructure */
-        $chartStructure = $widget->getChartDataSource()->getStructure();
+        $chartStructure = $chartData->getStructure();
 
-        $chartData = $this->transformChartDataToIndexedArrays(
-                $widget->loadData(),
+        $chartDataArray = $this->transformChartDataToIndexedArrays(
+                $chartData,
                 $chartStructure->getTypeAxis()->getName(),
                 $chartStructure->getTypeAxis()->getComponent()->getName(),
                 $chartStructure->getValueAxis()->getName(),
@@ -42,7 +48,7 @@ class PieChartWidgetRenderer extends ChartWidgetRenderer
 
         return (string)view('dms::components.chart.pie-chart')
                 ->with([
-                        'data' => $chartData,
+                        'data' => $chartDataArray,
                 ]);
     }
 

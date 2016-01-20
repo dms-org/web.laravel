@@ -33,13 +33,16 @@ use Dms\Web\Laravel\Http\Middleware\RedirectIfAuthenticated;
 use Dms\Web\Laravel\Http\Middleware\VerifyCsrfToken;
 use Dms\Web\Laravel\Language\LaravelLanguageProvider;
 use Dms\Web\Laravel\Persistence\Db\Migration\AutoGenerateMigrationCommand;
+use Dms\Web\Laravel\Renderer\Chart\ChartRendererCollection;
 use Dms\Web\Laravel\Renderer\Form\FieldRendererCollection;
 use Dms\Web\Laravel\Renderer\Table\ColumnComponentRendererCollection;
 use Dms\Web\Laravel\Renderer\Table\ColumnRendererFactoryCollection;
+use Dms\Web\Laravel\Renderer\Widget\WidgetRendererCollection;
 use Illuminate\Auth\AuthManager;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Database\Connection;
+use Illuminate\Foundation\Application;
 use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Routing\Router;
 use Illuminate\Session\Middleware\StartSession;
@@ -68,13 +71,16 @@ class DmsServiceProvider extends ServiceProvider
         $this->registerHttpRoutes();
         $this->registerMiddleware();
         $this->registerDbConnection();
-        $this->registerCommands();
         $this->registerUtils();
         $this->registerActionServices();
         $this->registerRenderers();
-        $this->publishAssets();
-        $this->publishConfig();
-        $this->publishSeeders();
+
+        if ($this->app instanceof Application && $this->app->runningInConsole()) {
+            $this->registerCommands();
+            $this->publishAssets();
+            $this->publishConfig();
+            $this->publishSeeders();
+        }
     }
 
     /**
@@ -264,9 +270,21 @@ class DmsServiceProvider extends ServiceProvider
             return new ColumnRendererFactoryCollection(
                     $this->app->make(ColumnComponentRendererCollection::class),
                     $this->makeAll(
-                            array_merge(config('dms.services.renderers.table.columns'))
+                            config('dms.services.renderers.table.columns')
                     )
             );
+        });
+
+        $this->app->singleton(ChartRendererCollection::class, function () {
+            return new ChartRendererCollection($this->makeAll(
+                    config('dms.services.renderers.charts')
+            ));
+        });
+
+        $this->app->singleton(WidgetRendererCollection::class, function () {
+            return new ChartRendererCollection($this->makeAll(
+                    config('dms.services.renderers.widgets')
+            ));
         });
     }
 

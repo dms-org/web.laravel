@@ -63,8 +63,15 @@ return [
                                     // Will default to field renderers
                                 ],
                         ],
+                        'charts'      => [
+                                Dms\Web\Laravel\Renderer\Chart\GraphChartRenderer::class,
+                                Dms\Web\Laravel\Renderer\Chart\PieChartRenderer::class,
+                        ],
                         'widgets'     => [
-
+                                Dms\Web\Laravel\Renderer\Widget\UnparameterizedActionWidgetRenderer::class,
+                                Dms\Web\Laravel\Renderer\Widget\ParameterizedActionWidgetRenderer::class,
+                                Dms\Web\Laravel\Renderer\Widget\TableWidgetRenderer::class,
+                                Dms\Web\Laravel\Renderer\Widget\ChartWidgetRenderer::class,
                         ],
                 ]
         ],

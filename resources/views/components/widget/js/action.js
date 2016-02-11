@@ -24,7 +24,7 @@ Dms.widget.initializeCallbacks.push(function () {
                     $(this).click();
                 });
 
-                return true;
+                return false;
             });
         }
     });

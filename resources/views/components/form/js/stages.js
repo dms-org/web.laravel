@@ -58,13 +58,9 @@ Dms.form.initializeCallbacks.push(function (element) {
                     var fieldName = $(this).attr('name');
 
                     if ($(this).is('[type=file]')) {
-                        if ($(this).is('[multiple]')) {
-                            $.each(this.files, function (index, file) {
-                                formData.append(fieldName, file);
-                            });
-                        } else {
-                            formData.append(fieldName, this.files[0]);
-                        }
+                        $.each(this.files, function (index, file) {
+                            formData.append(fieldName, file);
+                        });
                     } else {
                         formData.append(fieldName, $(this).val());
                     }

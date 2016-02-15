@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Action\InputTransformer;
 
@@ -38,7 +38,7 @@ class TempUploadedFileToUploadedFileTransformer implements IActionInputTransform
      *
      * @return array
      */
-    public function transform(IAction $action, array $input)
+    public function transform(IAction $action, array $input) : array
     {
         if (isset($input[self::TEMP_FILES_KEY]) && is_array($input[self::TEMP_FILES_KEY])) {
             $uploadedTokenStructure = $input[self::TEMP_FILES_KEY];

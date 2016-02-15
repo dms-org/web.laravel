@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Action\ResultHandler;
 
@@ -54,7 +54,7 @@ class FileResultHandler extends ActionResultHandler
      *
      * @return bool
      */
-    protected function canHandleResult(IAction $action, $result)
+    protected function canHandleResult(IAction $action, $result) : bool
     {
         return true;
     }

@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Auth;
 
@@ -43,7 +43,7 @@ class Role extends Entity implements IRole
      * @param Permission[]|ValueObjectCollection $permissions
      * @param EntityIdCollection                 $userIds
      */
-    public function __construct($name, ValueObjectCollection $permissions, EntityIdCollection $userIds)
+    public function __construct(string $name, ValueObjectCollection $permissions, EntityIdCollection $userIds)
     {
         parent::__construct();
         $this->name = $name;
@@ -70,7 +70,7 @@ class Role extends Entity implements IRole
      *
      * @return string
      */
-    public function getName()
+    public function getName() : string
     {
         return $this->name;
     }
@@ -88,7 +88,7 @@ class Role extends Entity implements IRole
     /**
      * @return EntityIdCollection
      */
-    public function getUserIds()
+    public function getUserIds() : \Dms\Core\Model\EntityIdCollection
     {
         return $this->userIds;
     }

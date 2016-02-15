@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Renderer\Form;
 
@@ -17,7 +17,7 @@ class ValueComparer
      *
      * @return bool
      */
-    public static function areLooselyEqual($a, $b)
+    public static function areLooselyEqual($a, $b) : bool
     {
         if ($a === null && $b === null) {
             return true;
@@ -38,7 +38,7 @@ class ValueComparer
      *
      * @return bool
      */
-    public static function loosleyContains($a, $b)
+    public static function loosleyContains($a, $b) : bool
     {
         if ($a === null && $b === null) {
             return true;

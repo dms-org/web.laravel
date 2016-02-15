@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Http\Controllers\Auth;
 
@@ -33,7 +33,7 @@ class AuthController extends DmsController
      *
      * @return int
      */
-    protected function maxLoginAttempts()
+    protected function maxLoginAttempts() : int
     {
         return config('dms.auth.login.max-attempts');
     }
@@ -43,7 +43,7 @@ class AuthController extends DmsController
      *
      * @return int
      */
-    protected function lockoutTime()
+    protected function lockoutTime() : int
     {
         return config('dms.auth.login.lockout-time');
     }
@@ -118,7 +118,7 @@ class AuthController extends DmsController
      *
      * @return bool
      */
-    protected function hasTooManyLoginAttempts(Request $request)
+    protected function hasTooManyLoginAttempts(Request $request) : bool
     {
         return app(RateLimiter::class)->tooManyAttempts(
             $this->getThrottleKey($request),
@@ -131,7 +131,7 @@ class AuthController extends DmsController
      *
      * @param  \Illuminate\Http\Request $request
      *
-     * @return int
+     * @return void
      */
     protected function incrementLoginAttempts(Request $request)
     {
@@ -147,7 +147,7 @@ class AuthController extends DmsController
      *
      * @return int
      */
-    protected function retriesLeft(Request $request)
+    protected function retriesLeft(Request $request) : int
     {
         $attempts = app(RateLimiter::class)->attempts(
             $this->getThrottleKey($request)
@@ -197,7 +197,7 @@ class AuthController extends DmsController
      *
      * @return string
      */
-    protected function getThrottleKey(Request $request)
+    protected function getThrottleKey(Request $request) : string
     {
         return mb_strtolower($request->input('username')) . '|' . $request->ip();
     }

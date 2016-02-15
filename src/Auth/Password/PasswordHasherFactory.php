@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Auth\Password;
 
@@ -37,7 +37,7 @@ class PasswordHasherFactory implements IPasswordHasherFactory
      *
      * @internal param IPasswordHasher $defaultHasher
      */
-    public function __construct(array $hasherFactories, $defaultAlgorithm, $defaultCostFactor)
+    public function __construct(array $hasherFactories, string $defaultAlgorithm, int $defaultCostFactor)
     {
         $this->defaultAlgorithm = $defaultAlgorithm;
         $this->defaultCostFactor = $defaultCostFactor;
@@ -53,7 +53,7 @@ class PasswordHasherFactory implements IPasswordHasherFactory
      *
      * @return IPasswordHasher
      */
-    public function buildDefault()
+    public function buildDefault() : IPasswordHasher
     {
         return $this->build($this->defaultAlgorithm, $this->defaultCostFactor);
     }
@@ -67,7 +67,7 @@ class PasswordHasherFactory implements IPasswordHasherFactory
      * @return IPasswordHasher
      * @throws Exception\InvalidArgumentException
      */
-    public function build($algorithm, $costFactor)
+    public function build(string $algorithm, int $costFactor) : IPasswordHasher
     {
         if (!isset($this->hasherFactories[$algorithm])) {
             throw Exception\InvalidArgumentException::format(
@@ -87,7 +87,7 @@ class PasswordHasherFactory implements IPasswordHasherFactory
      * @return IPasswordHasher
      * @throws Exception\InvalidArgumentException
      */
-    public function buildFor(IHashedPassword $hashedPassword)
+    public function buildFor(IHashedPassword $hashedPassword) : IPasswordHasher
     {
         return $this->build($hashedPassword->getAlgorithm(), $hashedPassword->getCostFactor());
     }

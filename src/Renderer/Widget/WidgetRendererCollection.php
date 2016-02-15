@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Renderer\Widget;
 
@@ -37,7 +37,7 @@ class WidgetRendererCollection
      * @return IWidgetRenderer
      * @throws UnrenderableWidgetException
      */
-    public function findRendererFor(IWidget $widget)
+    public function findRendererFor(IWidget $widget) : IWidgetRenderer
     {
         foreach ($this->widgetRenderers as $renderer) {
             if ($renderer->accepts($widget)) {

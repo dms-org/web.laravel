@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Renderer\Widget;
 
@@ -19,7 +19,7 @@ interface IWidgetRenderer
      *
      * @return bool
      */
-    public function accepts(IWidget $widget);
+    public function accepts(IWidget $widget) : bool;
 
     /**
      * Renders the supplied widget input as a html string.
@@ -29,5 +29,5 @@ interface IWidgetRenderer
      * @return string
      * @throws InvalidArgumentException
      */
-    public function render(IWidget $widget);
+    public function render(IWidget $widget) : string;
 }

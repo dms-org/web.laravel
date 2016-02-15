@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Renderer\Form\Field;
 
@@ -30,7 +30,7 @@ abstract class BladeFieldRenderer extends FieldRenderer
      *
      * @return string
      */
-    protected function renderView(IField $field, $viewName, array $attributeVariableMap = [], array $extraParams = [])
+    protected function renderView(IField $field, string $viewName, array $attributeVariableMap = [], array $extraParams = []) : string
     {
         $attributeVariableMap += $this->defaultAttributeMap;
         $fieldType = $field->getType();
@@ -61,10 +61,10 @@ abstract class BladeFieldRenderer extends FieldRenderer
      */
     protected function renderValueViewWithNullDefault(
         IField $field,
-        $viewName,
+        string $viewName,
         array $extraParams = [],
         $overrideValue = null
-    ) {
+    ) : string {
         $value = $overrideValue === null ? $field->getInitialValue() : $overrideValue;
 
         if ($value === null) {

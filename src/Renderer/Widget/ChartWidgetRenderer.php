@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Renderer\Widget;
 
@@ -28,7 +28,7 @@ class ChartWidgetRenderer extends WidgetRenderer
         $this->chartRenderers = $chartRenderers;
     }
 
-    public function accepts(IWidget $widget)
+    public function accepts(IWidget $widget) : bool
     {
         return $widget instanceof ChartWidget;
     }
@@ -40,7 +40,7 @@ class ChartWidgetRenderer extends WidgetRenderer
      *
      * @return string
      */
-    protected function renderWidget(IWidget $widget)
+    protected function renderWidget(IWidget $widget) : string
     {
         /** @var ChartWidget $widget */
         $chartData = $widget->loadData();

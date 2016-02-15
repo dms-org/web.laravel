@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Renderer\Table;
 
@@ -20,7 +20,7 @@ interface IColumnRendererFactory
      * @return string
      * @throws InvalidArgumentException
      */
-    public function accepts(IColumn $column);
+    public function accepts(IColumn $column) : string;
 
     /**
      * Builds a column renderer for the supplied column.
@@ -31,5 +31,5 @@ interface IColumnRendererFactory
      * @return IColumnRenderer
      * @throws InvalidArgumentException
      */
-    public function buildRenderer(IColumn $column, ColumnComponentRendererCollection $componentRenderers);
+    public function buildRenderer(IColumn $column, ColumnComponentRendererCollection $componentRenderers) : IColumnRenderer;
 }

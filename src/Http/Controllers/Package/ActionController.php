@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Http\Controllers\Package;
 
@@ -206,7 +206,7 @@ class ActionController extends DmsController
      *
      * @return \Dms\Core\Module\IAction
      */
-    protected function loadAction($packageName, $moduleName, $actionName)
+    protected function loadAction(string $packageName, string $moduleName, string $actionName)
     {
         try {
             $action = $this->cms

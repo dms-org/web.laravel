@@ -41,9 +41,9 @@ abstract class DmsFixture
     public function setUpBeforeClass(Application $app)
     {
         /** @var LaravelMigrationGenerator $migrationGenerator */
-        $migrationsPath = realpath($this->migrationsPath());
+        $migrationsPath = $this->migrationsPath();
         if (!is_dir($migrationsPath)) {
-            mkdir($migrationsPath);
+            mkdir($migrationsPath, 0777, true);
         }
 
         file_put_contents($this->dbFile(), '');
@@ -62,6 +62,8 @@ abstract class DmsFixture
         $migrationGenerator = $app->make(LaravelMigrationGenerator::class, ['path' => $migrationsPath]);
 
         if (!@file_get_contents($this->dbStubFile())) {
+            file_put_contents($this->dbStubFile(), '');
+
             $migrationFile = $migrationGenerator->generateMigration(
                     $app->make(IConnection::class),
                     $app->make(IOrm::class),
@@ -84,7 +86,7 @@ abstract class DmsFixture
     {
         // Setup default database to use sqlite
         /** @var Application|Container $app */
-        $app['config']->set('dms', require __DIR__ . '/../../../../src/Config/config/dms.php');
+        $app['config']->set('dms', require __DIR__ . '/../../../../config/dms.php');
         $app['config']->set('database.default', 'testing');
         $app['config']->set('database.connections.testing', [
                 'driver'   => 'sqlite',

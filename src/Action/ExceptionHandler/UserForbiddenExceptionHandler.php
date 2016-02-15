@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Action\ExceptionHandler;
 
@@ -28,7 +28,7 @@ class UserForbiddenExceptionHandler extends ActionExceptionHandler
      *
      * @return bool
      */
-    protected function canHandleException(IAction $action, \Exception $exception)
+    protected function canHandleException(IAction $action, \Exception $exception) : bool
     {
         return true;
     }

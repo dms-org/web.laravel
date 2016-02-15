@@ -35,7 +35,7 @@ class CrudModuleRenderer extends ModuleRenderer
     protected function renderDashboard(IModule $module)
     {
         /** @var IReadModule $module */
-        $module->getSummaryTable()->loadView()
+        $module->getSummaryTable()->loadView();
 
         return (string)view('dms::package.module.dashboard.default')
             ->with([

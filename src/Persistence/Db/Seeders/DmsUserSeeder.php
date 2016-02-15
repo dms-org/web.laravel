@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 use Dms\Common\Structure\Web\EmailAddress;
 use Dms\Core\Auth\IUserRepository;

@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Http\Controllers\Auth;
 
@@ -86,7 +86,7 @@ class PasswordController extends DmsController
      *
      * @return \Illuminate\Http\Response
      */
-    public function showPasswordResetForm($token = null)
+    public function showPasswordResetForm(string $token = null)
     {
         if (!$token) {
             return $this->showResetLinkEmailForm();

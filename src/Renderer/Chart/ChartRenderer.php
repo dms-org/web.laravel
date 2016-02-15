@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Renderer\Chart;
 
@@ -20,7 +20,7 @@ abstract class ChartRenderer implements IChartRenderer
      * @return string
      * @throws InvalidArgumentException
      */
-    final public function render(IChartDataTable $chartData)
+    final public function render(IChartDataTable $chartData) : string
     {
         if (!$this->accepts($chartData)) {
             throw InvalidArgumentException::format('Invalid chart supplied to %s',
@@ -37,5 +37,5 @@ abstract class ChartRenderer implements IChartRenderer
      *
      * @return string
      */
-    abstract protected function renderChart(IChartDataTable $chartData);
+    abstract protected function renderChart(IChartDataTable $chartData) : string;
 }

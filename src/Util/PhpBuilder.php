@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Util;
 
@@ -24,7 +24,7 @@ class PhpBuilder
     /**
      * @return string
      */
-    public function getCode()
+    public function getCode() : string
     {
         return $this->code;
     }
@@ -36,7 +36,7 @@ class PhpBuilder
      *
      * @return void
      */
-    public function append($code)
+    public function append(string $code)
     {
         $this->code .= $this->indent($code);
     }
@@ -48,7 +48,7 @@ class PhpBuilder
      *
      * @return void
      */
-    public function appendLine($code = '')
+    public function appendLine(string $code = '')
     {
         $this->append($code);
         $this->code .= PHP_EOL;

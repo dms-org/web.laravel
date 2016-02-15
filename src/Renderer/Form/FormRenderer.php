@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Renderer\Form;
 
@@ -40,7 +40,7 @@ class FormRenderer
      * @return string
      * @throws UnrenderableFieldException
      */
-    public function renderFields(IForm $form)
+    public function renderFields(IForm $form) : string
     {
         $sections = [];
 
@@ -78,7 +78,7 @@ class FormRenderer
      * @return string
      * @throws UnrenderableFieldException
      */
-    public function renderFieldAsValues(IForm $form)
+    public function renderFieldAsValues(IForm $form) : string
     {
         $sections = [];
 

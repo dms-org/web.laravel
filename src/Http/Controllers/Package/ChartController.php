@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Http\Controllers\Package;
 
@@ -115,7 +115,7 @@ class ChartController extends DmsController
      *
      * @return IChartDisplay
      */
-    protected function loadChart($packageName, $moduleName, $actionName)
+    protected function loadChart(string $packageName, string $moduleName, string $actionName) : \Dms\Core\Module\IChartDisplay
     {
         try {
             $action = $this->cms

@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Auth\Password;
 
@@ -11,14 +11,14 @@ interface IPasswordHasher
      *
      * @return string
      */
-    public function getAlgorithm();
+    public function getAlgorithm() : string;
 
     /**
      * Gets the cost factor of the hashing algorithm.
      *
      * @return int
      */
-    public function getCostFactor();
+    public function getCostFactor() : int;
 
     /**
      * Hashes the supplied password.
@@ -27,7 +27,7 @@ interface IPasswordHasher
      *
      * @return IHashedPassword
      */
-    public function hash($password);
+    public function hash(string $password) : \Dms\Core\Auth\IHashedPassword;
 
     /**
      * Verifies the password string against the supplied hashed password.
@@ -37,5 +37,5 @@ interface IPasswordHasher
      *
      * @return boolean
      */
-    public function verify($password, IHashedPassword $hashedPassword);
+    public function verify(string $password, IHashedPassword $hashedPassword) : bool;
 }

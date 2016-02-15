@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\File;
 
@@ -54,7 +54,7 @@ class TemporaryFileService implements ITemporaryFileService
      *
      * @return TemporaryFile
      */
-    public function storeTempFile(IFile $file, $expirySeconds)
+    public function storeTempFile(IFile $file, int $expirySeconds) : TemporaryFile
     {
         $tempUploadDirectory = $this->config->get('dms.storage.temp-files.dir');
 
@@ -79,7 +79,7 @@ class TemporaryFileService implements ITemporaryFileService
      * @return TemporaryFile
      * @throws EntityNotFoundException
      */
-    public function getTempFile($token)
+    public function getTempFile(string $token) : TemporaryFile
     {
         return $this->getTempFiles([$token])[0];
     }
@@ -92,7 +92,7 @@ class TemporaryFileService implements ITemporaryFileService
      * @return TemporaryFile[]
      * @throws EntityNotFoundException
      */
-    public function getTempFiles(array $tokens)
+    public function getTempFiles(array $tokens) : array
     {
         $files = $this->repo->matching(
             $this->repo->criteria()

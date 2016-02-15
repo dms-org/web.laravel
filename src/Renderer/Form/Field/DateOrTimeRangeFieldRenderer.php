@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Renderer\Form\Field;
 
@@ -20,7 +20,7 @@ class DateOrTimeRangeFieldRenderer extends BladeFieldRenderer
      *
      * @return string
      */
-    public function getFieldTypeClass()
+    public function getFieldTypeClass() : string
     {
         return DateOrTimeRangeType::class;
     }
@@ -31,7 +31,7 @@ class DateOrTimeRangeFieldRenderer extends BladeFieldRenderer
      *
      * @return bool
      */
-    protected function canRender(IField $field, IFieldType $fieldType)
+    protected function canRender(IField $field, IFieldType $fieldType) : bool
     {
         return !$fieldType->has(FieldType::ATTR_OPTIONS);
     }
@@ -42,7 +42,7 @@ class DateOrTimeRangeFieldRenderer extends BladeFieldRenderer
      *
      * @return string
      */
-    protected function renderField(IField $field, IFieldType $fieldType)
+    protected function renderField(IField $field, IFieldType $fieldType) : string
     {
         return $this->renderView(
             $field,
@@ -62,7 +62,7 @@ class DateOrTimeRangeFieldRenderer extends BladeFieldRenderer
      *
      * @return string
      */
-    protected function renderFieldValue(IField $field, IFieldType $fieldType)
+    protected function renderFieldValue(IField $field, IFieldType $fieldType) : string
     {
         return $this->renderValueViewWithNullDefault(
             $field,

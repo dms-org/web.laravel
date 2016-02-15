@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Auth\Password;
 
@@ -39,7 +39,7 @@ class HashedPassword extends ValueObject implements IHashedPassword
      * @param string $algorithm
      * @param int    $costFactor
      */
-    public function __construct($hash, $algorithm, $costFactor)
+    public function __construct(string $hash, string $algorithm, int $costFactor)
     {
         parent::__construct();
         $this->hash = $hash;
@@ -52,7 +52,7 @@ class HashedPassword extends ValueObject implements IHashedPassword
      *
      * @return self
      */
-    public static function from(IHashedPassword $password)
+    public static function from(IHashedPassword $password) : self
     {
         if ($password instanceof self) {
             return $password;
@@ -76,7 +76,7 @@ class HashedPassword extends ValueObject implements IHashedPassword
     /**
      * {@inheritDoc}
      */
-    public function getHash()
+    public function getHash() : string
     {
         return $this->hash;
     }
@@ -84,7 +84,7 @@ class HashedPassword extends ValueObject implements IHashedPassword
     /**
      * {@inheritDoc}
      */
-    public function getAlgorithm()
+    public function getAlgorithm() : string
     {
         return $this->algorithm;
     }
@@ -92,7 +92,7 @@ class HashedPassword extends ValueObject implements IHashedPassword
     /**
      * {@inheritDoc}
      */
-    public function getCostFactor()
+    public function getCostFactor() : int
     {
         return $this->costFactor;
     }

@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Renderer\Form;
 
@@ -39,7 +39,7 @@ class FieldRendererCollection
      * @return IFieldRenderer
      * @throws UnrenderableFieldException
      */
-    public function findRendererFor(IField $field)
+    public function findRendererFor(IField $field) : IFieldRenderer
     {
         $fieldType = $field->getType();
 

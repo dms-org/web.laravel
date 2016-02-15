@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Renderer\Chart;
 
@@ -35,7 +35,7 @@ class ChartControlRenderer
      * @return string
      * @throws UnrenderableChartException
      */
-    public function renderChart(IChartDataTable $chartDataTable)
+    public function renderChart(IChartDataTable $chartDataTable) : string
     {
         return $this->chartRenderers->findRendererFor($chartDataTable)->render($chartDataTable);
     }
@@ -50,7 +50,7 @@ class ChartControlRenderer
      *
      * @return string
      */
-    public function renderChartControl($packageName, $moduleName, IChartDisplay $chart, $viewName)
+    public function renderChartControl(string $packageName, string $moduleName, IChartDisplay $chart, string $viewName) : string
     {
         return (string)view('dms::components.table.chart-control')
             ->with([

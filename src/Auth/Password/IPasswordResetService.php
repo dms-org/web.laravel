@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Auth\Password;
 
@@ -19,5 +19,5 @@ interface IPasswordResetService
      *
      * @return void
      */
-    public function resetUserPassword(IUser $user, $newPassword);
+    public function resetUserPassword(IUser $user, string $newPassword);
 }

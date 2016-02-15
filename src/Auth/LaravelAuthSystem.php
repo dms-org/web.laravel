@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Auth;
 
@@ -72,7 +72,7 @@ class LaravelAuthSystem implements IAuthSystem
      * @throws InvalidCredentialsException
      * @throws UserBannedException
      */
-    protected function loadByCredentials($username, $password)
+    protected function loadByCredentials(string $username, string $password) : IUser
     {
         /** @var IUser $user */
         $users = $this->userRepository->matching(
@@ -108,7 +108,7 @@ class LaravelAuthSystem implements IAuthSystem
      * @throws InvalidCredentialsException
      * @throws UserBannedException
      */
-    public function login($username, $password)
+    public function login(string $username, string $password)
     {
         $user = $this->loadByCredentials($username, $password);
 
@@ -139,7 +139,7 @@ class LaravelAuthSystem implements IAuthSystem
      * @throws InvalidCredentialsException
      * @throws UserBannedException
      */
-    public function resetPassword($username, $oldPassword, $newPassword)
+    public function resetPassword(string $username, string $oldPassword, string $newPassword)
     {
         $user = $this->loadByCredentials($username, $oldPassword);
 
@@ -153,10 +153,10 @@ class LaravelAuthSystem implements IAuthSystem
      *
      * @return boolean
      */
-    public function isAuthenticated()
+    public function isAuthenticated() : bool
     {
         $user = $this->laravelAuth->user();
-        return $user;
+        return $user !== null;
     }
 
     /**
@@ -165,7 +165,7 @@ class LaravelAuthSystem implements IAuthSystem
      * @return IUser
      * @throws UserNotAuthenticatedException
      */
-    public function getAuthenticatedUser()
+    public function getAuthenticatedUser() : IUser
     {
         $user = $this->laravelAuth->user();
 
@@ -184,7 +184,7 @@ class LaravelAuthSystem implements IAuthSystem
      *
      * @return boolean
      */
-    public function isAuthorized(array $permissions)
+    public function isAuthorized(array $permissions) : bool
     {
         InvalidArgumentException::verifyAllInstanceOf(__METHOD__, 'permissions', $permissions, IPermission::class);
 

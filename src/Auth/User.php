@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Auth;
 
@@ -75,20 +75,20 @@ class User extends Entity implements IUser, Authenticatable
      */
     public function __construct(
         EmailAddress $emailAddress,
-        $username,
+        string $username,
         IHashedPassword $password,
-        $isSuperUser = false,
-        $isBanned = false,
+        bool $isSuperUser = false,
+        bool $isBanned = false,
         EntityIdCollection $roleIds = null
     ) {
         parent::__construct();
 
         $this->emailAddress = $emailAddress;
-        $this->username = $username;
-        $this->password = HashedPassword::from($password);
-        $this->isSuperUser = $isSuperUser;
-        $this->isBanned = $isBanned;
-        $this->roleIds = $roleIds ?: new EntityIdCollection();
+        $this->username     = $username;
+        $this->password     = HashedPassword::from($password);
+        $this->isSuperUser  = $isSuperUser;
+        $this->isBanned     = $isBanned;
+        $this->roleIds      = $roleIds ?: new EntityIdCollection();
 
         InvalidArgumentException::verify(strlen($this->username) > 0, 'Username cannot be empty');
     }
@@ -118,7 +118,7 @@ class User extends Entity implements IUser, Authenticatable
     /**
      * @return string
      */
-    public function getEmailAddress()
+    public function getEmailAddress() : string
     {
         return $this->emailAddress->asString();
     }
@@ -126,15 +126,15 @@ class User extends Entity implements IUser, Authenticatable
     /**
      * @return string
      */
-    public function getUsername()
+    public function getUsername() : string
     {
         return $this->username;
     }
 
     /**
-     * @return HashedPassword
+     * @return IHashedPassword
      */
-    public function getPassword()
+    public function getPassword() : IHashedPassword
     {
         return $this->password;
     }
@@ -150,7 +150,7 @@ class User extends Entity implements IUser, Authenticatable
     /**
      * @return boolean
      */
-    public function isSuperUser()
+    public function isSuperUser() : bool
     {
         return $this->isSuperUser;
     }
@@ -158,7 +158,7 @@ class User extends Entity implements IUser, Authenticatable
     /**
      * @return boolean
      */
-    public function isBanned()
+    public function isBanned() : bool
     {
         return $this->isBanned;
     }
@@ -166,7 +166,7 @@ class User extends Entity implements IUser, Authenticatable
     /**
      * @return EntityIdCollection
      */
-    public function getRoleIds()
+    public function getRoleIds() : \Dms\Core\Model\EntityIdCollection
     {
         return $this->roleIds;
     }
@@ -176,7 +176,7 @@ class User extends Entity implements IUser, Authenticatable
      *
      * @return string
      */
-    public function getAuthIdentifierName()
+    public function getAuthIdentifierName() : string
     {
         return UserMapper::AUTH_IDENTIFIER_COLUMN;
     }
@@ -196,7 +196,7 @@ class User extends Entity implements IUser, Authenticatable
      *
      * @return string
      */
-    public function getAuthPassword()
+    public function getAuthPassword() : string
     {
         return UserMapper::AUTH_PASSWORD_COLUMN;
     }

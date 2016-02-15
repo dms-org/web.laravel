@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Renderer\Table\Column\Component;
 
@@ -34,7 +34,7 @@ class FieldComponentRenderer implements IColumnComponentRenderer
      *
      * @return bool
      */
-    public function accepts(IColumnComponent $component)
+    public function accepts(IColumnComponent $component) : bool
     {
         return $this->fieldRenderer->accepts($component->getType()->getOperator(ConditionOperator::EQUALS)->getField());
     }
@@ -47,7 +47,7 @@ class FieldComponentRenderer implements IColumnComponentRenderer
      *
      * @return string
      */
-    public function render(IColumnComponent $component, $value)
+    public function render(IColumnComponent $component, $value) : string
     {
         return $this->fieldRenderer->renderValue(
             $component->getType()->getOperator(ConditionOperator::EQUALS)->getField()->withInitialValue($value)

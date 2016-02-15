@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Renderer\Form\Field;
 
@@ -20,7 +20,7 @@ class ArrayOfFieldRenderer extends BladeFieldRenderer
      *
      * @return string
      */
-    public function getFieldTypeClass()
+    public function getFieldTypeClass() : string
     {
         return ArrayOfType::class;
     }
@@ -31,7 +31,7 @@ class ArrayOfFieldRenderer extends BladeFieldRenderer
      *
      * @return bool
      */
-    protected function canRender(IField $field, IFieldType $fieldType)
+    protected function canRender(IField $field, IFieldType $fieldType) : bool
     {
         /** @var ArrayOfType $fieldType */
         return !$fieldType->has(FieldType::ATTR_OPTIONS)
@@ -44,7 +44,7 @@ class ArrayOfFieldRenderer extends BladeFieldRenderer
      *
      * @return string
      */
-    protected function renderField(IField $field, IFieldType $fieldType)
+    protected function renderField(IField $field, IFieldType $fieldType) : string
     {
         /** @var ArrayOfType $fieldType */
         $elementField = $this->makeElementField($fieldType);
@@ -72,7 +72,7 @@ class ArrayOfFieldRenderer extends BladeFieldRenderer
      *
      * @return string
      */
-    public function renderFieldValue(IField $field, IFieldType $fieldType)
+    public function renderFieldValue(IField $field, IFieldType $fieldType) : string
     {
         /** @var ArrayOfType $fieldType */
         $elementField = $this->makeElementField($fieldType);

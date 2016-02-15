@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Auth\Password;
 
@@ -23,7 +23,7 @@ class BcryptPasswordHasher implements IPasswordHasher
      *
      * @param int $cost
      */
-    public function __construct($cost)
+    public function __construct(int $cost)
     {
         $this->cost = $cost;
     }
@@ -33,7 +33,7 @@ class BcryptPasswordHasher implements IPasswordHasher
      *
      * @return string
      */
-    public function getAlgorithm()
+    public function getAlgorithm() : string
     {
         return self::ALGORITHM;
     }
@@ -43,7 +43,7 @@ class BcryptPasswordHasher implements IPasswordHasher
      *
      * @return int
      */
-    public function getCostFactor()
+    public function getCostFactor() : int
     {
         return $this->cost;
     }
@@ -55,7 +55,7 @@ class BcryptPasswordHasher implements IPasswordHasher
      *
      * @return IHashedPassword
      */
-    public function hash($password)
+    public function hash(string $password) : \Dms\Core\Auth\IHashedPassword
     {
         return new HashedPassword(
             password_hash($password, PASSWORD_BCRYPT, ['cost' => $this->cost]),
@@ -72,7 +72,7 @@ class BcryptPasswordHasher implements IPasswordHasher
      *
      * @return boolean
      */
-    public function verify($password, IHashedPassword $hashedPassword)
+    public function verify(string $password, IHashedPassword $hashedPassword) : bool
     {
         return password_verify($password, $hashedPassword->getHash());
     }

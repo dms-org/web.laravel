@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Auth\Password;
 
@@ -12,7 +12,7 @@ interface IPasswordHasherFactory
      *
      * @return IPasswordHasher
      */
-    public function buildDefault();
+    public function buildDefault() : IPasswordHasher;
 
     /**
      * Builds a password hasher with the supplied settings
@@ -23,7 +23,7 @@ interface IPasswordHasherFactory
      * @return IPasswordHasher
      * @throws Exception\InvalidArgumentException
      */
-    public function build($algorithm, $costFactor);
+    public function build(string $algorithm, int $costFactor) : IPasswordHasher;
 
     /**
      * Builds a password hasher matching the supplied hashed password
@@ -33,5 +33,5 @@ interface IPasswordHasherFactory
      * @return IPasswordHasher
      * @throws Exception\InvalidArgumentException
      */
-    public function buildFor(IHashedPassword $hashedPassword);
+    public function buildFor(IHashedPassword $hashedPassword) : IPasswordHasher;
 }

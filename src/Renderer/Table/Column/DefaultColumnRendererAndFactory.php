@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Renderer\Table\Column;
 
@@ -21,7 +21,7 @@ class DefaultColumnRendererAndFactory extends ColumnRendererAndFactory
      * @return string
      * @throws InvalidArgumentException
      */
-    public function accepts(IColumn $column)
+    public function accepts(IColumn $column) : string
     {
         return true;
     }
@@ -33,7 +33,7 @@ class DefaultColumnRendererAndFactory extends ColumnRendererAndFactory
      *
      * @return string
      */
-    protected function renderHeader(IColumn $column)
+    protected function renderHeader(IColumn $column) : string
     {
         $componentLabels = [];
 
@@ -53,7 +53,7 @@ class DefaultColumnRendererAndFactory extends ColumnRendererAndFactory
      *
      * @return string
      */
-    protected function renderValue(IColumn $column, array $componentRenderers, array $value)
+    protected function renderValue(IColumn $column, array $componentRenderers, array $value) : string
     {
         if (\count($value) === 1) {
             return \reset($componentRenderers)->render(\reset($value));

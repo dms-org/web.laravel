@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Renderer\Module;
 
@@ -37,7 +37,7 @@ class ModuleRendererCollection
      * @return IModuleRenderer
      * @throws UnrenderableModuleException
      */
-    public function findRendererFor(IModule $module)
+    public function findRendererFor(IModule $module) : IModuleRenderer
     {
         foreach ($this->moduleRenderers as $renderer) {
             if ($renderer->accepts($module)) {

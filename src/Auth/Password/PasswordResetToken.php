@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Auth\Password;
 
@@ -39,7 +39,7 @@ class PasswordResetToken extends Entity
      * @param string   $token
      * @param DateTime $createdAt
      */
-    public function __construct($email, $token, DateTime $createdAt)
+    public function __construct(string $email, string $token, DateTime $createdAt)
     {
         parent::__construct();
 
@@ -63,7 +63,7 @@ class PasswordResetToken extends Entity
     /**
      * @return string
      */
-    public function getEmail()
+    public function getEmail() : string
     {
         return $this->email;
     }
@@ -71,7 +71,7 @@ class PasswordResetToken extends Entity
     /**
      * @return string
      */
-    public function getToken()
+    public function getToken() : string
     {
         return $this->token;
     }
@@ -79,7 +79,7 @@ class PasswordResetToken extends Entity
     /**
      * @return DateTime
      */
-    public function getCreatedAt()
+    public function getCreatedAt() : \Dms\Common\Structure\DateTime\DateTime
     {
         return $this->createdAt;
     }

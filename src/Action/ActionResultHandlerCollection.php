@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Action;
 
@@ -53,7 +53,7 @@ class ActionResultHandlerCollection
      * @return IActionResultHandler
      * @throws UnhandleableActionResultException
      */
-    public function findHandlerFor(IAction $action, $result)
+    public function findHandlerFor(IAction $action, $result) : IActionResultHandler
     {
         $resultClass = get_class($result);
 

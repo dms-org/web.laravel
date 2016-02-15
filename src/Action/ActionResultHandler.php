@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Action;
 
@@ -38,7 +38,7 @@ abstract class ActionResultHandler implements IActionResultHandler
      *
      * @return bool
      */
-    abstract protected function canHandleResult(IAction $action, $result);
+    abstract protected function canHandleResult(IAction $action, $result) : bool;
 
     /**
      * @param IAction $action
@@ -59,7 +59,7 @@ abstract class ActionResultHandler implements IActionResultHandler
     /**
      * @inheritdoc
      */
-    final public function accepts(IAction $action, $result)
+    final public function accepts(IAction $action, $result) : bool
     {
         if ($this->supportedResultType && !($result instanceof $this->supportedResultType)) {
             return false;

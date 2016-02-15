@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Language;
 
@@ -39,7 +39,7 @@ class LaravelLanguageProvider implements ILanguageProvider
      * @return string
      * @throws MessageNotFoundException
      */
-    public function format(Message $message)
+    public function format(Message $message) : string
     {
         return $this->laravelTranslator->trans(
             $message->getId(),
@@ -57,7 +57,7 @@ class LaravelLanguageProvider implements ILanguageProvider
      * @throws InvalidArgumentException
      * @throws MessageNotFoundException
      */
-    public function formatAll(array $messages)
+    public function formatAll(array $messages) : array
     {
         InvalidArgumentException::verifyAllInstanceOf(__METHOD__, 'messages', $messages, Message::class);
 

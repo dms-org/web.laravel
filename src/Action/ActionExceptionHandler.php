@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Action;
 
@@ -38,7 +38,7 @@ abstract class ActionExceptionHandler implements IActionExceptionHandler
      *
      * @return bool
      */
-    abstract protected function canHandleException(IAction $action, \Exception $exception);
+    abstract protected function canHandleException(IAction $action, \Exception $exception) : bool;
 
     /**
      * @param IAction    $action
@@ -59,7 +59,7 @@ abstract class ActionExceptionHandler implements IActionExceptionHandler
     /**
      * @inheritdoc
      */
-    final public function accepts(IAction $action, \Exception $exception)
+    final public function accepts(IAction $action, \Exception $exception) : bool
     {
         if ($this->supportedExceptionType && !($exception instanceof $this->supportedExceptionType)) {
             return false;

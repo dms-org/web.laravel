@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Action;
 
@@ -37,7 +37,7 @@ class ActionInputTransformerCollection implements IActionInputTransformer
      *
      * @return array
      */
-    public function transform(IAction $action, array $input)
+    public function transform(IAction $action, array $input) : array
     {
         foreach ($this->transformers as $transformer) {
             $input = $transformer->transform($action, $input);

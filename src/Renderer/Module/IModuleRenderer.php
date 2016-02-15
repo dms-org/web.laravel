@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Renderer\Module;
 
@@ -19,7 +19,7 @@ interface IModuleRenderer
      *
      * @return bool
      */
-    public function accepts(IModule $module);
+    public function accepts(IModule $module) : bool;
 
     /**
      * Renders the supplied module dashboard as a html string.
@@ -29,5 +29,5 @@ interface IModuleRenderer
      * @return string
      * @throws InvalidArgumentException
      */
-    public function render(IModule $module);
+    public function render(IModule $module) : string;
 }

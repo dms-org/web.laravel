@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Auth\Password;
 
@@ -42,7 +42,7 @@ class PasswordResetService implements IPasswordResetService
      *
      * @return void
      */
-    public function resetUserPassword(IUser $user, $newPassword)
+    public function resetUserPassword(IUser $user, string $newPassword)
     {
         $hashedPassword = $this->hasherFactory->buildDefault()->hash($newPassword);
 

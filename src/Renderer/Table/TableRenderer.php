@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Renderer\Table;
 
@@ -35,7 +35,7 @@ class TableRenderer
      *
      * @return string
      */
-    public function renderTableData(IDataTable $table)
+    public function renderTableData(IDataTable $table) : string
     {
         $columnRenderers = [];
 
@@ -60,7 +60,7 @@ class TableRenderer
      *
      * @return string
      */
-    public function renderTableControl($packageName, $moduleName, ITableDisplay $table, $viewName)
+    public function renderTableControl(string $packageName, string $moduleName, ITableDisplay $table, string $viewName) : string
     {
         if ($table instanceof ISummaryTable
             && $table->hasReorderAction($viewName)

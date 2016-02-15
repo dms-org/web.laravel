@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Renderer\Form\Field;
 
@@ -50,7 +50,7 @@ abstract class FieldRenderer implements IFieldRenderer
      *
      * @return bool
      */
-    final public function accepts(IField $field)
+    final public function accepts(IField $field) : bool
     {
         $type = $field->getType();
 
@@ -67,7 +67,7 @@ abstract class FieldRenderer implements IFieldRenderer
      *
      * @return bool
      */
-    abstract protected function canRender(IField $field, IFieldType $fieldType);
+    abstract protected function canRender(IField $field, IFieldType $fieldType) : bool;
 
     /**
      * Renders the supplied field input as a html string.
@@ -77,7 +77,7 @@ abstract class FieldRenderer implements IFieldRenderer
      * @return string
      * @throws InvalidArgumentException
      */
-    final public function render(IField $field)
+    final public function render(IField $field) : string
     {
         if (!$this->accepts($field)) {
             throw InvalidArgumentException::format(
@@ -95,7 +95,7 @@ abstract class FieldRenderer implements IFieldRenderer
      *
      * @return string
      */
-    abstract protected function renderField(IField $field, IFieldType $fieldType);
+    abstract protected function renderField(IField $field, IFieldType $fieldType) : string;
 
     /**
      * Renders the supplied field value as a html string.
@@ -105,7 +105,7 @@ abstract class FieldRenderer implements IFieldRenderer
      * @return string
      * @throws InvalidArgumentException
      */
-    final public function renderValue(IField $field)
+    final public function renderValue(IField $field) : string
     {
         if (!$this->accepts($field)) {
             throw InvalidArgumentException::format(
@@ -123,5 +123,5 @@ abstract class FieldRenderer implements IFieldRenderer
      *
      * @return string
      */
-    abstract protected function renderFieldValue(IField $field, IFieldType $fieldType);
+    abstract protected function renderFieldValue(IField $field, IFieldType $fieldType) : string;
 }

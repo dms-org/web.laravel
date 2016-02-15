@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\File;
 
@@ -45,7 +45,7 @@ class TemporaryFile extends Entity
      * @param IFile    $file
      * @param DateTime $expiry
      */
-    public function __construct($token, IFile $file, DateTime $expiry)
+    public function __construct(string $token, IFile $file, DateTime $expiry)
     {
         parent::__construct();
         $this->token = $token;
@@ -58,7 +58,7 @@ class TemporaryFile extends Entity
      *
      * @return ISpecification
      */
-    public static function notExpiredSpec(IClock $clock)
+    public static function notExpiredSpec(IClock $clock) : \Dms\Core\Model\ISpecification
     {
         return self::expiredSpec($clock)->not();
     }
@@ -68,7 +68,7 @@ class TemporaryFile extends Entity
      *
      * @return ISpecification
      */
-    public static function expiredSpec(IClock $clock)
+    public static function expiredSpec(IClock $clock) : \Dms\Core\Model\ISpecification
     {
         return new CustomSpecification(__CLASS__, function (SpecificationDefinition $match) use ($clock) {
             return $match->where(self::EXPIRY, '<=', new DateTime($clock->utcNow()));
@@ -92,7 +92,7 @@ class TemporaryFile extends Entity
     /**
      * @return string
      */
-    public function getToken()
+    public function getToken() : string
     {
         return $this->token;
     }
@@ -100,7 +100,7 @@ class TemporaryFile extends Entity
     /**
      * @return File
      */
-    public function getFile()
+    public function getFile() : \Dms\Common\Structure\FileSystem\File
     {
         return $this->file;
     }
@@ -108,7 +108,7 @@ class TemporaryFile extends Entity
     /**
      * @return DateTime
      */
-    public function getExpiry()
+    public function getExpiry() : \Dms\Common\Structure\DateTime\DateTime
     {
         return $this->expiry;
     }

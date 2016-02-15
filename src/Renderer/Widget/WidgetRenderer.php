@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Renderer\Widget;
 
@@ -20,7 +20,7 @@ abstract class WidgetRenderer implements IWidgetRenderer
      * @return string
      * @throws InvalidArgumentException
      */
-    final public function render(IWidget $widget)
+    final public function render(IWidget $widget) : string
     {
         if (!$this->accepts($widget)) {
             throw InvalidArgumentException::format('Invalid widget supplied to %s',
@@ -37,5 +37,5 @@ abstract class WidgetRenderer implements IWidgetRenderer
      *
      * @return string
      */
-    abstract protected function renderWidget(IWidget $widget);
+    abstract protected function renderWidget(IWidget $widget) : string;
 }

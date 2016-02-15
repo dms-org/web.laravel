@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Action;
 
@@ -30,7 +30,7 @@ interface IActionExceptionHandler
      *
      * @return bool
      */
-    public function accepts(IAction $action, \Exception $exception);
+    public function accepts(IAction $action, \Exception $exception) : bool;
 
     /**
      * Handles the supplied action result and returns the appropriate HTTP response for handling

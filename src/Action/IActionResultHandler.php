@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Action;
 
@@ -30,7 +30,7 @@ interface IActionResultHandler
      *
      * @return bool
      */
-    public function accepts(IAction $action, $result);
+    public function accepts(IAction $action, $result) : bool;
 
     /**
      * Handles the supplied action result and returns the appropriate HTTP response for handling

@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Renderer\Chart;
 
@@ -19,7 +19,7 @@ interface IChartRenderer
      *
      * @return bool
      */
-    public function accepts(IChartDataTable $chartData);
+    public function accepts(IChartDataTable $chartData) : bool;
 
     /**
      * Renders the supplied chart input as a html string.
@@ -29,5 +29,5 @@ interface IChartRenderer
      * @return string
      * @throws InvalidArgumentException
      */
-    public function render(IChartDataTable $chartDataData);
+    public function render(IChartDataTable $chartDataData) : string;
 }

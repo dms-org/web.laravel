@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Renderer\Table;
 
@@ -16,7 +16,7 @@ interface IColumnComponentRenderer
      *
      * @return bool
      */
-    public function accepts(IColumnComponent $component);
+    public function accepts(IColumnComponent $component) : bool;
 
     /**
      * Renders the supplied column component value as a html string.
@@ -26,5 +26,5 @@ interface IColumnComponentRenderer
      *
      * @return string
      */
-    public function render(IColumnComponent $component, $value);
+    public function render(IColumnComponent $component, $value) : string;
 }

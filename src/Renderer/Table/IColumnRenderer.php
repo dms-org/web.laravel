@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Renderer\Table;
 
@@ -17,7 +17,7 @@ interface IColumnRenderer
      * @return string
      * @throws InvalidArgumentException
      */
-    public function renderHeader();
+    public function renderHeader() : string;
 
     /**
      * Renders the supplied column value as a html string.
@@ -27,5 +27,5 @@ interface IColumnRenderer
      * @return string
      * @throws InvalidArgumentException
      */
-    public function render(array $value);
+    public function render(array $value) : string;
 }

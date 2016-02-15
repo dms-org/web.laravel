@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Renderer\Form;
 
@@ -41,7 +41,7 @@ class ActionFormRenderer
      *
      * @return string
      */
-    public function renderActionForm(IParameterizedAction $action)
+    public function renderActionForm(IParameterizedAction $action) : string
     {
         return (string)view('dms::components.form.staged-form')
             ->with([

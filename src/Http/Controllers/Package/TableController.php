@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Http\Controllers\Package;
 
@@ -125,7 +125,7 @@ class TableController extends DmsController
      *
      * @return ITableDisplay
      */
-    protected function loadTable($packageName, $moduleName, $actionName)
+    protected function loadTable(string $packageName, string $moduleName, string $actionName) : \Dms\Core\Module\ITableDisplay
     {
         try {
             $action = $this->cms

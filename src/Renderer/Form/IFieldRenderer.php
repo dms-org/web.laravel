@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Renderer\Form;
 
@@ -17,7 +17,7 @@ interface IFieldRenderer
      *
      * @return string
      */
-    public function getFieldTypeClass();
+    public function getFieldTypeClass() : string;
 
     /**
      * Returns whether this renderer can render the supplied field.
@@ -26,7 +26,7 @@ interface IFieldRenderer
      *
      * @return bool
      */
-    public function accepts(IField $field);
+    public function accepts(IField $field) : bool;
 
     /**
      * Renders the supplied field input as a html string.
@@ -36,7 +36,7 @@ interface IFieldRenderer
      * @return string
      * @throws InvalidArgumentException
      */
-    public function render(IField $field);
+    public function render(IField $field) : string;
 
     /**
      * Renders the supplied field value display as a html string.
@@ -46,7 +46,7 @@ interface IFieldRenderer
      * @return string
      * @throws InvalidArgumentException
      */
-    public function renderValue(IField $field);
+    public function renderValue(IField $field) : string;
 
     /**
      * Sets the parent field renderer.

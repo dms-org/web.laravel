@@ -34,6 +34,61 @@ $(document).ready(function () {
     <!-- Resolve conflict in jQuery UI tooltip with Bootstrap tooltip -->
     $.widget.bridge('uibutton', $.ui.button);
 });
+Dms.form.validation.clearMessages = function (form) {
+    form.removeClass('has-error');
+    form.find('.form-group').removeClass('has-error');
+    form.find('.help-block.help-block-error').remove();
+};
+
+Dms.form.validation.displayMessages = function (form, fieldMessages, generalMessages) {
+    if (!fieldMessages && !generalMessages) {
+        return;
+    }
+
+    form.addClass('has-error');
+
+    var makeHelpBlock = function () {
+        return $('<span />').addClass(['help-block', 'help-block-error']);
+    };
+
+    var helpBlock = makeHelpBlock();
+
+    $.each(generalMessages, function (index, message) {
+        helpBlock.append($('<strong />').text(message));
+    });
+
+    form.prepend(helpBlock);
+
+    var flattenedFieldMessages = {};
+
+    var visitMessages = function (fieldName, messages) {
+        if ($.isArray(messages)) {
+            $.each(messages, function (index, message) {
+                flattenedFieldMessages[fieldName] = message;
+            });
+        } else {
+            $.each(messages.constraints, function (index, message) {
+                flattenedFieldMessages[fieldName] = message;
+            });
+
+            $.each(messages.fields, function (fieldElementName, elementMessages) {
+                visitMessages(fieldName + '[' + fieldElementName + ']', elementMessages);
+            });
+        }
+    };
+    $.each(fieldMessages, visitMessages);
+
+    $.each(flattenedFieldMessages, function (fieldName, messages) {
+        var fieldGroup = form.find('.form-group[data-field-name="' + fieldName + '"]');
+
+        var helpBlock = makeHelpBlock();
+        $.each(messages, function (index, message) {
+            helpBlock.append($('<strong />').text(message));
+        });
+
+        fieldGroup.prepend(helpBlock);
+    });
+};
 window.Dms = {
     config: {
 
@@ -41,11 +96,12 @@ window.Dms = {
     form: {
         initialize: function (element) {
             var callbacks = Dms.form.initializeCallbacks.concat(Dms.form.initializeValidationCallbacks);
-            
+
             $.each(callbacks, function (index, callback) {
                 callback(element);
             });
         },
+        validation: {}, // @see ./form-validation.js
         initializeCallbacks: [],
         initializeValidationCallbacks: []
     },
@@ -57,12 +113,30 @@ window.Dms = {
         },
         initializeCallbacks: []
     },
-    utilities: {}
+    chart: {
+        initialize: function (element) {
+            $.each(Dms.chart.initializeCallbacks, function (index, callback) {
+                callback(element);
+            });
+        },
+        initializeCallbacks: []
+    },
+    widget: {
+        initialize: function (element) {
+            $.each(Dms.widget.initializeCallbacks, function (index, callback) {
+                callback(element);
+            });
+        },
+        initializeCallbacks: []
+    },
+    utilities: {} // @see ./utilities.js
 };
 
 $(document).ready(function () {
     Dms.form.initialize($(document));
     Dms.table.initialize($(document));
+    Dms.chart.initialize($(document));
+    Dms.widget.initialize($(document));
 });
 Dms.utilities.countDecimals = function (value) {
     if (value % 1 != 0) {
@@ -80,83 +154,103 @@ Dms.utilities.guidGenerator = function() {
 }
 Dms.form.initializeCallbacks.push(function (element) {
 
-    var fieldCounter = 1;
+});
+Dms.chart.initializeCallbacks.push(function (element) {
 
-    element.find('.dms-form-fieldset .form-group').each(function () {
-        var fieldLabel = $(this).children('label[data-for]');
-        var forFieldName = fieldLabel.attr('data-for');
+    element.find('.dms-chart-control').each(function () {
+        var control = $(this);
+        var chartContainer = control.find('chart.dms-chart-container');
+        var loadChartUrl = control.attr('data-load-chart-url');
 
-        if (forFieldName) {
-            var forField = $(this).first('*[name="' + forFieldName + '"]');
 
-            if (!forField.attr('id')) {
-                forField.attr('id', 'dms-field-' + fieldCounter);
-                fieldCounter++;
+        var criteria = {
+            orderings: [],
+            conditions: []
+        };
+
+        var currentAjaxRequest;
+
+        var loadCurrentData = function () {
+            chartContainer.addClass('loading');
+
+            if (currentAjaxRequest) {
+                currentAjaxRequest.abort();
             }
 
-            fieldLabel.attr('for', forField.attr('id'));
-        }
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
+            currentAjaxRequest = $.ajax({
+                url: loadChartUrl,
+                type: 'post',
+                dataType: 'html',
+                data: criteria
+            });
 
-    element.find('form.dms-staged-form').each(function () {
-        var form = $(this);
-        var amountOfStages = form.attr('data-amount-of-stages');
-        var stageLoadUrl = form.attr('data-stage-load-url');
+            currentAjaxRequest.done(function (chartData) {
+                chartContainer.html(chartData);
+                Dms.chart.initialize(chartContainer);
+            });
 
-    });
-});
-Dms.form.initializeValidationCallbacks.push(function (element) {
+            currentAjaxRequest.fail(function () {
+                chartContainer.addClass('error');
 
-    element.find('.dms-form-fields').each(function () {
-        if (!$(this).attr('id')) {
-            $(this).attr('id', Dms.utilities.guidGenerator());
-        }
-    });
-
-    element.find('.dms-form-fields').each(function () {
-        var formFieldsGroupId = $(this).attr('id');
-
-
-        var buildElementSelect = function (fieldName) {
-            return '#' + formFieldsGroupId + '*[type="' + fieldName + '"]:input';
-        };
-
-        var fieldValidations = {
-            'data-equal-fields': 'data-parsley-equalto',
-            'data-greater-than-fields': 'data-parsley-gt',
-            'data-greater-than-or-equal-fields': 'data-parsley-gte',
-            'data-less-than-fields': 'data-parsley-lt',
-            'data-less-than-or-equal-fields': 'data-parsley-lte'
-        };
-
-        $.each(fieldValidations, function (validationAttr, parsleyAttr) {
-            var fieldsMap = $(this).attr(validationAttr);
-
-            if (fieldsMap) {
-                $.each(JSON.parse(fieldsMap), function (fieldName, otherFieldName) {
-                    $(this).find(buildElementSelect(fieldName)).attr(parsleyAttr, buildElementSelect(otherFieldName));
+                swal({
+                    title: "Could not load chart data",
+                    text: "An unexpected error occurred",
+                    type: "error"
                 });
-            }
-        });
-    });
+            });
 
-    element.find('form.dms-staged-form').each(function () {
-        var form = $(this);
-        form.parsley();
+            currentAjaxRequest.always(function () {
+                chartContainer.removeClass('loading');
+            });
+        };
 
-        form.find('.dms-form-fields').each(function (index) {
-            $(this).find(':input').attr('data-parsley-group', 'validation-group-' + index);
-        });
-    });
-
-    element.find('form.dms-form').each(function () {
-        $(this).parsley();
+        loadCurrentData();
     });
 });
-Dms.form.initializeCallbacks.push(function (element) {
+Dms.chart.initializeCallbacks.push(function () {
+    $('.dms-chart.dms-graph-chart').each(function () {
+        var chart = $(this);
+        var chartData = JSON.parse(chart.attr('data-chart-data'));
+        var chartType = !!chart.attr('data-chart-type');
+        var horizontalAxisKey = chart.attr('data-horizontal-axis-key');
+        var verticalAxisKeys = JSON.parse(chart.attr('data-vertical-axis-keys'));
+        var verticalAxisLabels = JSON.parse(chart.attr('data-vertical-axis-labels'));
 
+        if (!chart.attr('id')) {
+            chart.attr('id', Dms.utilities.guidGenerator());
+        }
+
+        var morrisConfig = {
+            element: chart.attr('id'),
+            data: chartData,
+            xkey: horizontalAxisKey,
+            ykeys: verticalAxisKeys,
+            labels: verticalAxisLabels
+        };
+
+        if (chartType === 'bar') {
+            Morris.Bar(morrisConfig);
+        } else if (chartType === 'area') {
+            Morris.Area(morrisConfig);
+        } else {
+            Morris.Line(morrisConfig);
+        }
+    });
+});
+Dms.chart.initializeCallbacks.push(function () {
+    $('.dms-chart.dms-pie-chart').each(function () {
+        var chart = $(this);
+        var chartData = JSON.parse(chart.attr('data-chart-data'));
+
+        if (!chart.attr('id')) {
+            chart.attr('id', Dms.utilities.guidGenerator());
+        }
+
+        Morris.Donut({
+            element: chart.attr('id'),
+            data: chartData
+        });
+    });
 });
 Dms.form.initializeCallbacks.push(function (element) {
 
@@ -173,6 +267,22 @@ Dms.form.initializeCallbacks.push(function (element) {
                 e.preventDefault();
             }
         });
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+    element.find('input.dms-colour-input').each(function () {
+        var config = {
+            showInput: true,
+            showPalette: true
+        };
+
+        if ($(this).hasClass('dms-colour-input-rgb')) {
+            config.preferredFormat = 'rgb';
+        } else if ($(this).hasClass('dms-colour-input-rgba')) {
+            config.preferredFormat = 'rgba';
+        }
+
+        $(this).spectrum(config);
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -240,6 +350,15 @@ Dms.form.initializeCallbacks.push(function (element) {
                 startInput.data("DateTimePicker").maxDate(e.date);
             });
         });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+    element.find('.dms-inner-form').each(function () {
+        var innerForm = $(this);
+
+        if (innerForm.attr('data-readonly')) {
+            innerForm.find(':input').attr('readonly', 'readonly');
+        }
+    });
 });
 Dms.form.initializeCallbacks.push(function (element) {
 
@@ -323,14 +442,305 @@ Dms.form.initializeCallbacks.push(function (element) {
 
 });
 Dms.form.initializeCallbacks.push(function (element) {
-
-});
-Dms.form.initializeCallbacks.push(function (element) {
     element.find('input[type="ip-address"]')
         .attr('type', 'text')
         .attr('data-parsley-ip-address', '1');
 });
 Dms.form.initializeCallbacks.push(function (element) {
 
+});
+Dms.form.initializeCallbacks.push(function (element) {
+
+});
+Dms.form.initializeCallbacks.push(function (element) {
+
+    var fieldCounter = 1;
+
+    element.find('.dms-form-fieldset .form-group').each(function () {
+        var fieldLabel = $(this).children('label[data-for]');
+        var forFieldName = fieldLabel.attr('data-for');
+
+        if (forFieldName) {
+            var forField = $(this).first('*[name="' + forFieldName + '"], .dms-inner-form[data-name="' + forFieldName + '"]');
+
+            if (!forField.attr('id')) {
+                forField.attr('id', 'dms-field-' + fieldCounter);
+                fieldCounter++;
+            }
+
+            fieldLabel.attr('for', forField.attr('id'));
+        }
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+
+    element.find('form.dms-staged-form').each(function () {
+        var form = $(this);
+        var parsley = form.parsley();
+        var stageElements = form.find('.dms-form-stage');
+        var submitButtons = form.find('input[type=submit], button[type=submit]');
+
+        var updateFormValidity = function () {
+            var isValid = parsley.isValid()
+                && form.find('.has-error').length === 0
+                && form.find('.dms-form-stage').length === form.find('.dms-form-stage.loaded').length;
+
+            submitButtons.prop('disabled', !isValid);
+        };
+
+        form.on('change input', '*[name]:input', updateFormValidity);
+        updateFormValidity();
+
+        stageElements.each(function () {
+            var currentStage = $(this);
+
+            if (currentStage.is('.loaded')) {
+                return;
+            }
+
+            var previousStages = currentStage.prevAll('.dms-form-stage');
+            var loadStageUrl = currentStage.attr('data-stage-load-url');
+            var dependentFields = currentStage.attr('data-stage-dependent-fields');
+            var dependentFieldsSelector = null;
+            var currentAjaxRequest = null;
+
+            if (dependentFields) {
+                var dependentFieldNames = JSON.parse(dependentFields);
+
+                var selectors = [];
+                $.each(dependentFieldNames, function (index, fieldName) {
+                    selectors.push('*[name="' + fieldName + '"]:input');
+                    selectors.push('*[name^="' + fieldName + '["][name$="]"]:input');
+                });
+
+                dependentFieldsSelector = selectors.join(',');
+            } else {
+                dependentFieldsSelector = '*[name]:input';
+            }
+
+            previousStages.on('change input', dependentFieldsSelector, function () {
+                if (currentAjaxRequest) {
+                    currentAjaxRequest.abort();
+                }
+
+                currentStage.removeClass('loaded');
+                currentStage.addClass('loading');
+
+                var formData = new FormData();
+
+                previousStages.find(dependentFieldsSelector).each(function () {
+                    var fieldName = $(this).attr('name');
+
+                    if ($(this).is('[type=file]')) {
+                        $.each(this.files, function (index, file) {
+                            formData.append(fieldName, file);
+                        });
+                    } else {
+                        formData.append(fieldName, $(this).val());
+                    }
+                });
+
+                currentAjaxRequest = $.ajax({
+                    url: loadStageUrl,
+                    type: 'post',
+                    processData: false,
+                    contentType: false,
+                    dataType: 'html',
+                    data: formData
+                });
+
+                currentAjaxRequest.done(function (html) {
+                    currentStage.removeClass('loading');
+                    currentStage.addClass('loaded');
+                    Dms.form.validation.clearMessages(form);
+                    currentStage.html(html);
+                    Dms.form.initialize(currentStage);
+                });
+
+                currentAjaxRequest.fail(function (xhr) {
+                    switch (xhr.status) {
+                        case 422: // Unprocessable Entity (validation failure)
+                            var validation = JSON.parse(xhr.responseText);
+                            Dms.form.validation.displayMessages(form, validation.fields, validation.constraints);
+                            break;
+
+                        case 400: // Bad request
+                            swal({
+                                title: "Could not load form",
+                                text: JSON.parse(xhr.responseText).message,
+                                type: "error"
+                            });
+                            break;
+
+                        default: // Unknown error
+                            swal({
+                                title: "Could not load form",
+                                text: "An unexpected error occurred",
+                                type: "error"
+                            });
+                            break;
+                    }
+                });
+
+                currentAjaxRequest.always(updateFormValidity);
+            });
+        });
+    });
+});
+Dms.form.initializeValidationCallbacks.push(function (element) {
+
+    element.find('.dms-form-fields').each(function () {
+        if (!$(this).attr('id')) {
+            $(this).attr('id', Dms.utilities.guidGenerator());
+        }
+    });
+
+    element.find('.dms-form-fields').each(function () {
+        var formFieldsGroupId = $(this).attr('id');
+
+
+        var buildElementSelect = function (fieldName) {
+            return '#' + formFieldsGroupId + '*[type="' + fieldName + '"]:input';
+        };
+
+        var fieldValidations = {
+            'data-equal-fields': 'data-parsley-equalto',
+            'data-greater-than-fields': 'data-parsley-gt',
+            'data-greater-than-or-equal-fields': 'data-parsley-gte',
+            'data-less-than-fields': 'data-parsley-lt',
+            'data-less-than-or-equal-fields': 'data-parsley-lte'
+        };
+
+        $.each(fieldValidations, function (validationAttr, parsleyAttr) {
+            var fieldsMap = $(this).attr(validationAttr);
+
+            if (fieldsMap) {
+                $.each(JSON.parse(fieldsMap), function (fieldName, otherFieldName) {
+                    $(this).find(buildElementSelect(fieldName)).attr(parsleyAttr, buildElementSelect(otherFieldName));
+                });
+            }
+        });
+    });
+
+    element.find('form.dms-staged-form').each(function () {
+        var form = $(this);
+        form.parsley();
+
+        form.find('.dms-form-fields').each(function (index) {
+            $(this).find(':input').attr('data-parsley-group', 'validation-group-' + index);
+        });
+    });
+
+    element.find('form.dms-form').each(function () {
+        $(this).parsley();
+    });
+});
+Dms.table.initializeCallbacks.push(function (element) {
+
+    element.find('.dms-table-control').each(function () {
+        var control = $(this);
+        var tableContainer = control.find('table.dms-table-container');
+        var filterForm = control.find('.dms-table-quick-filter-form');
+        var loadRowsUrl = control.attr('data-load-rows-url');
+        var reorderRowsUrl = control.attr('data-reorder-row-action-url');
+
+        var currentPage = 0;
+
+        var getItemsPerPage = function () {
+            return filterForm.find('select[name=items_per_page]').val()
+        };
+
+        var criteria = {
+            orderings: [],
+            conditions: []
+        };
+
+        var currentAjaxRequest;
+
+        var loadCurrentPage = function () {
+            tableContainer.addClass('loading');
+
+            if (currentAjaxRequest) {
+                currentAjaxRequest.abort();
+            }
+
+            criteria.offset = currentPage * getItemsPerPage();
+            criteria.max_rows = getItemsPerPage();
+
+            currentAjaxRequest = $.ajax({
+                url: loadRowsUrl,
+                type: 'post',
+                dataType: 'html',
+                data: criteria
+            });
+
+            currentAjaxRequest.done(function (tableData) {
+                tableContainer.html(tableData);
+                Dms.table.initialize(tableContainer);
+            });
+
+            currentAjaxRequest.fail(function () {
+                tableContainer.addClass('error');
+
+                swal({
+                    title: "Could not load table data",
+                    text: "An unexpected error occurred",
+                    type: "error"
+                });
+            });
+
+            currentAjaxRequest.always(function () {
+                tableContainer.removeClass('loading');
+            });
+        };
+
+        filterForm.find('button').click(function () {
+            criteria.orderings = [
+                {
+                    component: filterForm.find('[name=component]').val(),
+                    direction: filterForm.find('[name=direction]').val()
+                }
+            ];
+
+            criteria.conditions = [
+                // TODO:
+            ];
+
+            loadCurrentPage();
+        });
+
+        loadCurrentPage();
+    });
+});
+Dms.widget.initializeCallbacks.push(function () {
+    $('.dms-widget-unparameterized-action, .dms-widget-parameterized-action').each(function () {
+        var widget = $(this);
+        var button = widget.find('button');
+
+        if (button.is('.btn-danger')) {
+            var isConfirmed = false;
+
+            button.click(function () {
+                if (isConfirmed) {
+                    isConfirmed = false;
+                    return;
+                }
+
+                swal({
+                    title: "Are you sure?",
+                    text: "This will execute the '" + widget.attr('data-action-label') + "' action",
+                    type: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#DD6B55",
+                    confirmButtonText: "Yes proceed!"
+                }, function () {
+                    isConfirmed = true;
+                    $(this).click();
+                });
+
+                return false;
+            });
+        }
+    });
 });
 //# sourceMappingURL=app.js.map

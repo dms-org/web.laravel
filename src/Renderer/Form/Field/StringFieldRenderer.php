@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Renderer\Form\Field;
 
@@ -19,7 +19,7 @@ class StringFieldRenderer extends BladeFieldRenderer
      *
      * @return string
      */
-    public function getFieldTypeClass()
+    public function getFieldTypeClass() : string
     {
         return StringType::class;
     }
@@ -30,7 +30,7 @@ class StringFieldRenderer extends BladeFieldRenderer
      *
      * @return bool
      */
-    protected function canRender(IField $field, IFieldType $fieldType)
+    protected function canRender(IField $field, IFieldType $fieldType) : bool
     {
         return !$fieldType->has(FieldType::ATTR_OPTIONS)
         && !$fieldType->get(StringType::ATTR_MULTILINE)
@@ -43,7 +43,7 @@ class StringFieldRenderer extends BladeFieldRenderer
      *
      * @return string
      */
-    protected function renderField(IField $field, IFieldType $fieldType)
+    protected function renderField(IField $field, IFieldType $fieldType) : string
     {
         /** @var StringType $fieldType */
         $inputType = $this->getInputType($fieldType);
@@ -86,7 +86,7 @@ class StringFieldRenderer extends BladeFieldRenderer
      *
      * @return string
      */
-    protected function renderFieldValue(IField $field, IFieldType $fieldType)
+    protected function renderFieldValue(IField $field, IFieldType $fieldType) : string
     {
         /** @var StringType $fieldType */
         $inputType = $this->getInputType($fieldType);

@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Action\ExceptionHandler;
 
@@ -46,7 +46,7 @@ class InvalidFormSubmissionExceptionHandler extends ActionExceptionHandler
      *
      * @return bool
      */
-    protected function canHandleException(IAction $action, \Exception $exception)
+    protected function canHandleException(IAction $action, \Exception $exception) : bool
     {
         /** @var InvalidFormSubmissionException $exception */
         return true;
@@ -71,7 +71,7 @@ class InvalidFormSubmissionExceptionHandler extends ActionExceptionHandler
      *
      * @return array
      */
-    private function transformInvalidFormSubmissionToArray(InvalidFormSubmissionException $exception)
+    private function transformInvalidFormSubmissionToArray(InvalidFormSubmissionException $exception) : array
     {
         $validation = [
             'fields'      => [],

@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Renderer\Table\Column;
 
@@ -41,7 +41,7 @@ class CallbackColumnRenderer implements IColumnRenderer
      * @return string
      * @throws InvalidArgumentException
      */
-    public function renderHeader()
+    public function renderHeader() : string
     {
         return call_user_func($this->renderHeaderCallback);
     }
@@ -54,7 +54,7 @@ class CallbackColumnRenderer implements IColumnRenderer
      * @return string
      * @throws InvalidArgumentException
      */
-    public function render(array $value)
+    public function render(array $value) : string
     {
         return call_user_func($this->renderValueCallback, $column, $value);
     }

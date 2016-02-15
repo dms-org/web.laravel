@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Persistence\Db\Migration;
 
@@ -53,7 +53,7 @@ class LaravelMigrationGenerator extends MigrationGenerator
      * @param Filesystem       $files
      * @param string|null      $path
      */
-    public function __construct(MigrationCreator $laravelMigrationCreator, Filesystem $files, $path = null)
+    public function __construct(MigrationCreator $laravelMigrationCreator, Filesystem $files, string $path = null)
     {
         parent::__construct();
 
@@ -69,7 +69,7 @@ class LaravelMigrationGenerator extends MigrationGenerator
      *
      * @return string|null
      */
-    protected function createMigration(SchemaDiff $diff, SchemaDiff $reverseDiff, $migrationName)
+    protected function createMigration(SchemaDiff $diff, SchemaDiff $reverseDiff, string $migrationName)
     {
         $this->filterDiff($diff);
         $this->filterDiff($reverseDiff);
@@ -122,7 +122,7 @@ class LaravelMigrationGenerator extends MigrationGenerator
      *
      * @return void
      */
-    protected function orderTablesByForeignKeyDependency(array &$tables, $reverse = false)
+    protected function orderTablesByForeignKeyDependency(array &$tables, bool $reverse = false)
     {
         if (empty($tables)) {
             return;
@@ -158,7 +158,7 @@ class LaravelMigrationGenerator extends MigrationGenerator
      *
      * @return string[]
      */
-    protected function getTableDependencies($table)
+    protected function getTableDependencies($table) : array
     {
         $tableDependencies = [];
 

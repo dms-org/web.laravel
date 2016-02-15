@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Action;
 
@@ -19,5 +19,5 @@ interface IActionInputTransformer
      *
      * @return array
      */
-    public function transform(IAction $action, array $input);
+    public function transform(IAction $action, array $input) : array;
 }

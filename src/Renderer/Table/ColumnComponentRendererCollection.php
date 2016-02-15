@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Renderer\Table;
 
@@ -45,7 +45,7 @@ class ColumnComponentRendererCollection
      * @return IColumnComponentRenderer
      * @throws UnrenderableColumnComponentException
      */
-    public function findRendererFor(IColumnComponent $component)
+    public function findRendererFor(IColumnComponent $component) : IColumnComponentRenderer
     {
         foreach ($this->columnComponentRenderers as $renderer) {
             if ($renderer->accepts($component)) {

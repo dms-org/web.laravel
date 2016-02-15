@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Renderer\Form\Field;
 
@@ -18,7 +18,7 @@ class RadioOptionsFieldRender extends BladeFieldRenderer
      *
      * @return string
      */
-    public function getFieldTypeClass()
+    public function getFieldTypeClass() : string
     {
         return FieldType::class;
     }
@@ -29,7 +29,7 @@ class RadioOptionsFieldRender extends BladeFieldRenderer
      *
      * @return bool
      */
-    protected function canRender(IField $field, IFieldType $fieldType)
+    protected function canRender(IField $field, IFieldType $fieldType) : bool
     {
         return $fieldType->has(FieldType::ATTR_OPTIONS)
         && $fieldType->get(FieldType::ATTR_SHOW_ALL_OPTIONS);
@@ -41,7 +41,7 @@ class RadioOptionsFieldRender extends BladeFieldRenderer
      *
      * @return string
      */
-    protected function renderField(IField $field, IFieldType $fieldType)
+    protected function renderField(IField $field, IFieldType $fieldType) : string
     {
         return $this->renderView(
             $field,
@@ -58,7 +58,7 @@ class RadioOptionsFieldRender extends BladeFieldRenderer
      *
      * @return string
      */
-    protected function renderFieldValue(IField $field, IFieldType $fieldType)
+    protected function renderFieldValue(IField $field, IFieldType $fieldType) : string
     {
         return $this->renderValueViewWithNullDefault(
             $field,

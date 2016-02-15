@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Auth;
 
@@ -130,7 +130,7 @@ class DmsUserProvider implements UserProvider
      *
      * @return bool
      */
-    public function validateCredentials(Authenticatable $user, array $credentials)
+    public function validateCredentials(Authenticatable $user, array $credentials) : bool
     {
         $user = $this->validateUser($user);
 

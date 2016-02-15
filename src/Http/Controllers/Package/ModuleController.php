@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Http\Controllers\Package;
 
@@ -49,7 +49,7 @@ class ModuleController extends DmsController
      *
      * @return Response
      */
-    public function index(Request $request, $packageName, $moduleName)
+    public function index(Request $request, $packageName, $moduleName) : \Illuminate\Http\Response
     {
         $this->loadModuleAndPackage($packageName, $moduleName);
 

@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Renderer\Table\Column;
 
@@ -25,7 +25,7 @@ abstract class ColumnRendererAndFactory implements IColumnRendererFactory
      * @return IColumnRenderer
      * @throws InvalidArgumentException
      */
-    final public function buildRenderer(IColumn $column, ColumnComponentRendererCollection $componentRenderers)
+    final public function buildRenderer(IColumn $column, ColumnComponentRendererCollection $componentRenderers) : \Dms\Web\Laravel\Renderer\Table\IColumnRenderer
     {
         if (!$this->accepts($column)) {
             throw InvalidArgumentException::format('Invalid column supplied to %s',
@@ -55,7 +55,7 @@ abstract class ColumnRendererAndFactory implements IColumnRendererFactory
      *
      * @return string
      */
-    abstract protected function renderHeader(IColumn $column);
+    abstract protected function renderHeader(IColumn $column) : string;
 
     /**
      * Renders the column value as a html string.
@@ -66,5 +66,5 @@ abstract class ColumnRendererAndFactory implements IColumnRendererFactory
      *
      * @return string
      */
-    abstract protected function renderValue(IColumn $column, array $componentRenderers, array $value);
+    abstract protected function renderValue(IColumn $column, array $componentRenderers, array $value) : string;
 }

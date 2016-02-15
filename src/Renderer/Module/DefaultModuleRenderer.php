@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Renderer\Module;
 
@@ -18,7 +18,7 @@ class DefaultModuleRenderer extends ModuleRenderer
      *
      * @return bool
      */
-    public function accepts(IModule $module)
+    public function accepts(IModule $module) : bool
     {
         return true;
     }
@@ -30,7 +30,7 @@ class DefaultModuleRenderer extends ModuleRenderer
      *
      * @return string
      */
-    protected function renderDashboard(IModule $module)
+    protected function renderDashboard(IModule $module) : string
     {
         $authorizedWidgets = [];
 

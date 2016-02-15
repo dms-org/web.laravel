@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Renderer\Chart;
 
@@ -19,7 +19,7 @@ class PieChartRenderer extends ChartRenderer
      *
      * @return bool
      */
-    public function accepts(IChartDataTable $chartData)
+    public function accepts(IChartDataTable $chartData) : bool
     {
         return $chartData->getStructure() instanceof PieChart;
     }
@@ -29,7 +29,7 @@ class PieChartRenderer extends ChartRenderer
      *
      * @return string
      */
-    protected function renderChart(IChartDataTable $chartData)
+    protected function renderChart(IChartDataTable $chartData) : string
     {
         /** @var PieChart $chartStructure */
         $chartStructure = $chartData->getStructure();

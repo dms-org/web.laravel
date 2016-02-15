@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Util;
 
@@ -54,7 +54,7 @@ class KeywordTypeIdentifier
      *
      * @return string|null
      */
-    public function getTypeFromName($name)
+    public function getTypeFromName(string $name)
     {
         if (isset($this->overridesMap[$name])) {
             return $this->overridesMap[$name];

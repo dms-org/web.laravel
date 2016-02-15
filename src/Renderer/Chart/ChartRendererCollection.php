@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Renderer\Chart;
 
@@ -37,7 +37,7 @@ class ChartRendererCollection
      * @return IChartRenderer
      * @throws UnrenderableChartException
      */
-    public function findRendererFor(IChartDataTable $chartData)
+    public function findRendererFor(IChartDataTable $chartData) : IChartRenderer
     {
         foreach ($this->chartRenderers as $renderer) {
             if ($renderer->accepts($chartData)) {

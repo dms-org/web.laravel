@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel;
 
@@ -103,7 +103,7 @@ class DmsServiceProvider extends ServiceProvider
     private function publishConfig()
     {
         $this->publishes([
-            __DIR__ . '/Config/config/dms.php' => config_path('dms.php'),
+            __DIR__ . '/../config/dms.php' => config_path('dms.php'),
         ]);
     }
 

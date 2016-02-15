@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Renderer\Module;
 
@@ -36,7 +36,7 @@ abstract class ModuleRenderer implements IModuleRenderer
      * @return string
      * @throws InvalidArgumentException
      */
-    final public function render(IModule $module)
+    final public function render(IModule $module) : string
     {
         if (!$this->accepts($module)) {
             throw InvalidArgumentException::format(
@@ -55,5 +55,5 @@ abstract class ModuleRenderer implements IModuleRenderer
      *
      * @return string
      */
-    abstract protected function renderDashboard(IModule $module);
+    abstract protected function renderDashboard(IModule $module) : string;
 }

@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Action\InputTransformer;
 
@@ -22,7 +22,7 @@ class SymphonyToDmsUploadedFileTransformer implements IActionInputTransformer
      *
      * @return array
      */
-    public function transform(IAction $action, array $input)
+    public function transform(IAction $action, array $input) : array
     {
         array_walk_recursive($input, function (&$value) {
             if ($value instanceof SymfonyUploadedFile) {

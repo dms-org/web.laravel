@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Renderer\Widget;
 
@@ -35,7 +35,7 @@ class TableWidgetRenderer extends WidgetRenderer
      *
      * @return bool
      */
-    public function accepts(IWidget $widget)
+    public function accepts(IWidget $widget) : bool
     {
         return $widget instanceof TableWidget;
     }
@@ -47,7 +47,7 @@ class TableWidgetRenderer extends WidgetRenderer
      *
      * @return string
      */
-    protected function renderWidget(IWidget $widget)
+    protected function renderWidget(IWidget $widget) : string
     {
         /** @var TableWidget $widget */
         return (string)view('dms::components.widget.data-table')

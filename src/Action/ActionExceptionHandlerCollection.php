@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Action;
 
@@ -54,7 +54,7 @@ class ActionExceptionHandlerCollection
      * @return IActionExceptionHandler
      * @throws UnhandleableActionExceptionException
      */
-    public function findHandlerFor(IAction $action, \Exception $exception)
+    public function findHandlerFor(IAction $action, \Exception $exception) : IActionExceptionHandler
     {
         $exceptionClass = get_class($exception);
 

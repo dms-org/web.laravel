@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Renderer\Widget;
 
@@ -44,7 +44,7 @@ class ParameterizedActionWidgetRenderer extends WidgetRenderer
      *
      * @return bool
      */
-    public function accepts(IWidget $widget)
+    public function accepts(IWidget $widget) : bool
     {
         return $widget instanceof ActionWidget
         && $widget->getAction() instanceof IParameterizedAction;
@@ -57,7 +57,7 @@ class ParameterizedActionWidgetRenderer extends WidgetRenderer
      *
      * @return string
      */
-    protected function renderWidget(IWidget $widget)
+    protected function renderWidget(IWidget $widget) : string
     {
         /** @var ActionWidget $widget */
         $action = $widget->getAction();

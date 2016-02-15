@@ -1,4 +1,4 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Action;
 
@@ -25,8 +25,7 @@ class ActionExceptionHandlerCollection
      */
     public function __construct(array $handlers)
     {
-        InvalidArgumentException::verifyAllInstanceOf(__METHOD__, 'handlers', $handlers,
-            IActionExceptionHandler::class);
+        InvalidArgumentException::verifyAllInstanceOf(__METHOD__, 'handlers', $handlers, IActionExceptionHandler::class);
 
         foreach ($handlers as $handler) {
             $this->handlers[$handler->getSupportedExceptionType()][] = $handler;

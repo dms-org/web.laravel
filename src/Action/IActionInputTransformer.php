@@ -1,8 +1,8 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Action;
 
-use Dms\Core\Module\IAction;
+use Dms\Core\Module\IParameterizedAction;
 
 /**
  * The action input handler interface.
@@ -14,10 +14,10 @@ interface IActionInputTransformer
     /**
      * Transforms for the supplied action.
      *
-     * @param IAction $action
-     * @param array   $input
+     * @param IParameterizedAction $action
+     * @param array                $input
      *
      * @return array
      */
-    public function transform(IAction $action, array $input) : array;
+    public function transform(IParameterizedAction $action, array $input) : array;
 }

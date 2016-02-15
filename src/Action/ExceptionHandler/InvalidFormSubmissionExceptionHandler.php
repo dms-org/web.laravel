@@ -37,7 +37,7 @@ class InvalidFormSubmissionExceptionHandler extends ActionExceptionHandler
      */
     protected function supportedExceptionType()
     {
-        return UserForbiddenException::class;
+        return InvalidFormSubmissionException::class;
     }
 
     /**

@@ -1,8 +1,8 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Action\InputTransformer;
 
-use Dms\Core\Module\IAction;
+use Dms\Core\Module\IParameterizedAction;
 use Dms\Web\Laravel\Action\IActionInputTransformer;
 use Dms\Web\Laravel\File\ITemporaryFileService;
 
@@ -33,16 +33,16 @@ class TempUploadedFileToUploadedFileTransformer implements IActionInputTransform
     /**
      * Transforms for the supplied action.
      *
-     * @param IAction $action
-     * @param array   $input
+     * @param IParameterizedAction $action
+     * @param array                $input
      *
      * @return array
      */
-    public function transform(IAction $action, array $input) : array
+    public function transform(IParameterizedAction $action, array $input) : array
     {
         if (isset($input[self::TEMP_FILES_KEY]) && is_array($input[self::TEMP_FILES_KEY])) {
             $uploadedTokenStructure = $input[self::TEMP_FILES_KEY];
-            $uploadedFileTokens = [];
+            $uploadedFileTokens     = [];
 
             array_walk_recursive($uploadedTokenStructure, function ($token) use (&$uploadedFileTokens) {
                 $uploadedFileTokens[] = $token;
@@ -59,8 +59,10 @@ class TempUploadedFileToUploadedFileTransformer implements IActionInputTransform
             });
 
             unset($input[self::TEMP_FILES_KEY]);
-        }
 
-        return array_replace_recursive($input, $uploadedFileStructure);
+            return array_replace_recursive($input, $uploadedFileStructure);
+        } else {
+             return $input;
+        }
     }
 }

@@ -73,7 +73,7 @@ abstract class ActionExceptionHandler implements IActionExceptionHandler
      */
     final public function handle(IAction $action, \Exception $exception)
     {
-        if (!$this->canHandleException($action, $exception)) {
+        if (!$this->accepts($action, $exception)) {
             throw InvalidArgumentException::format(
                 'Invalid call to %s: action and exception of type not supported',
                 get_class($this) . '::' . __FUNCTION__, Debug::getType($exception)

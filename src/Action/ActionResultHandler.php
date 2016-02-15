@@ -73,7 +73,7 @@ abstract class ActionResultHandler implements IActionResultHandler
      */
     final public function handle(IAction $action, $result)
     {
-        if (!$this->canHandleResult($action, $result)) {
+        if (!$this->accepts($action, $result)) {
             throw InvalidArgumentException::format(
                 'Invalid call to %s: action and result of type %s not supported',
                 get_class($this) . '::' . __FUNCTION__, Debug::getType($result)

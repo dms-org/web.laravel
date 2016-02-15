@@ -28,7 +28,7 @@ class ActionResultHandlerCollection
         InvalidArgumentException::verifyAllInstanceOf(__METHOD__, 'handlers', $handlers, IActionResultHandler::class);
 
         foreach ($handlers as $handler) {
-            $this->handlers[$handler->getSupportedResultType()][] = $handler;
+            $this->handlers[$handler->getSupportedResultType() ?? '<any>'][] = $handler;
         }
     }
 
@@ -55,6 +55,7 @@ class ActionResultHandlerCollection
      */
     public function findHandlerFor(IAction $action, $result) : IActionResultHandler
     {
+
         $resultClass = get_class($result);
 
         while ($resultClass) {
@@ -68,6 +69,12 @@ class ActionResultHandlerCollection
             }
 
             $resultClass = get_parent_class($resultClass);
+        }
+
+        foreach ($this->handlers['<any>'] as $resultHandler) {
+            if ($resultHandler->accepts($action, $result)) {
+                return $resultHandler;
+            }
         }
 
         throw UnhandleableActionResultException::format(

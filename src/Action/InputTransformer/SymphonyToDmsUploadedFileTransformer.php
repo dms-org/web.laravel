@@ -1,9 +1,9 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Action\InputTransformer;
 
 use Dms\Common\Structure\FileSystem\UploadedFileFactory;
-use Dms\Core\Module\IAction;
+use Dms\Core\Module\IParameterizedAction;
 use Dms\Web\Laravel\Action\IActionInputTransformer;
 use Symfony\Component\HttpFoundation\File\UploadedFile as SymfonyUploadedFile;
 
@@ -17,12 +17,12 @@ class SymphonyToDmsUploadedFileTransformer implements IActionInputTransformer
     /**
      * Transforms for the supplied action.
      *
-     * @param IAction $action
-     * @param array   $input
+     * @param IParameterizedAction $action
+     * @param array                $input
      *
      * @return array
      */
-    public function transform(IAction $action, array $input) : array
+    public function transform(IParameterizedAction $action, array $input) : array
     {
         array_walk_recursive($input, function (&$value) {
             if ($value instanceof SymfonyUploadedFile) {

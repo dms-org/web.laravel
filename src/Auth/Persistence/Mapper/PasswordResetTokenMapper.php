@@ -37,6 +37,7 @@ class PasswordResetTokenMapper extends EntityMapper
 
         $map->property(PasswordResetToken::TOKEN)
             ->to('token')
+            ->unique()
             ->asVarchar(255);
 
         $map->embedded(PasswordResetToken::CREATED_AT)

@@ -1,4 +1,4 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Auth\Module;
 
@@ -12,8 +12,8 @@ use Dms\Core\Common\Crud\Definition\CrudModuleDefinition;
 use Dms\Core\Common\Crud\Definition\Form\CrudFormDefinition;
 use Dms\Core\Common\Crud\Definition\Table\SummaryTableDefinition;
 use Dms\Core\Form\Builder\Form;
+use Dms\Core\Model\EntityIdCollection;
 use Dms\Core\Model\Object\ArrayDataObject;
-use Dms\Web\Laravel\Auth\IPasswordHasherFactory;
 use Dms\Web\Laravel\Auth\Password\IPasswordResetService;
 use Dms\Web\Laravel\Auth\User;
 
@@ -48,9 +48,9 @@ class UserModule extends CrudModule
         IAuthSystem $authSystem,
         IPasswordResetService $passwordResetService
     ) {
-        parent::__construct($dataSource, $authSystem);
-        $this->roleRepo = $roleRepo;
+        $this->roleRepo             = $roleRepo;
         $this->passwordResetService = $passwordResetService;
+        parent::__construct($dataSource, $authSystem);
     }
 
     /**
@@ -84,7 +84,7 @@ class UserModule extends CrudModule
                 )->bindToProperty(User::EMAIL_ADDRESS),
             ]);
 
-            $form->section('Access', [
+            $form->section('Access Settings', [
                 //
                 $form->field(
                     Field::create('is_banned', 'Is Banned?')->bool()
@@ -96,22 +96,32 @@ class UserModule extends CrudModule
                 //
                 $form->field(
                     Field::create('roles', 'Roles')
-                        ->entityIdFrom($this->roleRepo)
+                        ->entityIdsFrom($this->roleRepo)
+                        ->mapToCollection(EntityIdCollection::type())
+                        ->required()
+                        ->minLength(1)
                 )->bindToProperty(User::ROLE_IDS),
             ]);
         });
 
         $module->objectAction('reset-password')
             ->authorize(self::EDIT_PERMISSION)
-            ->form(Form::create()->section('Details', [
-                Field::create('new_password', 'New Password')
-                    ->string()
-                    ->password()
-                    ->minLength(6)
-                    ->maxLength(50)
-                    ->required(),
-            ]))
-            ->handler(function (IUser $user, ArrayDataObject $input) {
+            ->form(
+                Form::create()
+                    ->section('Details', [
+                        Field::create('new_password', 'New Password')
+                            ->string()
+                            ->password()
+                            ->minLength(6)
+                            ->maxLength(50)
+                            ->required(),
+                        Field::create('new_password_confirmation', 'Confirm Password')
+                            ->string()
+                            ->password()
+                            ->required(),
+                    ])
+                    ->fieldsMatch('new_password', 'new_password_confirmation')
+            )->handler(function (IUser $user, ArrayDataObject $input) {
                 $this->passwordResetService->resetUserPassword($user, $input['new_password']);
             });
 

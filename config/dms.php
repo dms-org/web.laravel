@@ -84,7 +84,7 @@ return [
         'success'   => ['confirm', 'approve', 'accept', 'verify'],
         'info'      => ['download', 'stats', 'display'],
         'overrides' => [
-
+            'example-name' => 'danger'
         ],
     ],
 

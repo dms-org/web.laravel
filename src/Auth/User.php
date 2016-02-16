@@ -9,6 +9,7 @@ use Dms\Core\Exception\InvalidArgumentException;
 use Dms\Core\Model\EntityIdCollection;
 use Dms\Core\Model\Object\ClassDefinition;
 use Dms\Core\Model\Object\Entity;
+use Dms\Core\Model\Type\Builder\Type;
 use Dms\Web\Laravel\Auth\Password\HashedPassword;
 use Dms\Web\Laravel\Auth\Persistence\Mapper\UserMapper;
 use Illuminate\Contracts\Auth\Authenticatable;
@@ -110,7 +111,7 @@ class User extends Entity implements IUser, Authenticatable
 
         $class->property($this->isBanned)->asBool();
 
-        $class->property($this->roleIds)->asObject(EntityIdCollection::class);
+        $class->property($this->roleIds)->asType(EntityIdCollection::type());
 
         $class->property($this->rememberToken)->nullable()->asString();
     }

@@ -8,6 +8,7 @@ use Dms\Core\Auth\Permission;
 use Dms\Core\Model\EntityIdCollection;
 use Dms\Core\Model\Object\ClassDefinition;
 use Dms\Core\Model\Object\Entity;
+use Dms\Core\Model\Type\Builder\Type;
 use Dms\Core\Model\ValueObjectCollection;
 
 /**
@@ -62,7 +63,7 @@ class Role extends Entity implements IRole
 
         $class->property($this->permissions)->asType(Permission::collectionType());
 
-        $class->property($this->userIds)->asObject(EntityIdCollection::class);
+        $class->property($this->userIds)->asType(EntityIdCollection::type());
     }
 
     /**

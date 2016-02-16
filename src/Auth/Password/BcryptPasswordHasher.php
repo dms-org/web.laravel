@@ -55,7 +55,7 @@ class BcryptPasswordHasher implements IPasswordHasher
      *
      * @return IHashedPassword
      */
-    public function hash(string $password) : \Dms\Core\Auth\IHashedPassword
+    public function hash(string $password) : IHashedPassword
     {
         return new HashedPassword(
             password_hash($password, PASSWORD_BCRYPT, ['cost' => $this->cost]),

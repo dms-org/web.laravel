@@ -1,4 +1,4 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Auth\Module;
 
@@ -12,6 +12,8 @@ use Dms\Core\Common\Crud\Definition\CrudModuleDefinition;
 use Dms\Core\Common\Crud\Definition\Form\CrudFormDefinition;
 use Dms\Core\Common\Crud\Definition\Table\SummaryTableDefinition;
 use Dms\Core\ICms;
+use Dms\Core\Model\EntityIdCollection;
+use Dms\Core\Model\ValueObjectCollection;
 use Dms\Web\Laravel\Auth\Role;
 
 /**
@@ -45,9 +47,10 @@ class RoleModule extends CrudModule
         IAuthSystem $authSystem,
         ICms $cms
     ) {
-        parent::__construct($dataSource, $authSystem);
-        $this->cms = $cms;
+        $this->cms      = $cms;
         $this->userRepo = $userRepo;
+
+        parent::__construct($dataSource, $authSystem);
     }
 
     /**
@@ -64,8 +67,9 @@ class RoleModule extends CrudModule
         $permissionOptions = [];
 
         foreach ($this->cms->loadPermissions() as $permission) {
-            $permissionOptions[$permission->getName()] = ucwords(strtr($permission->getName(),
-                ['-' => ' ', '.' => ' - ']));
+            $permissionOptions[$permission->getName()] = ucwords(
+                strtr($permission->getName(), ['-' => ' ', '.' => ' - '])
+            );
         }
 
         $module->crudForm(function (CrudFormDefinition $form) use ($permissionOptions) {
@@ -80,23 +84,25 @@ class RoleModule extends CrudModule
                 //
                 $form->field(
                     Field::create('permissions', 'Permissions')
-                        ->arrayOf(Field::element()
-                            ->string()
-                            ->oneOf($permissionOptions)
-                            ->required()
-                            ->map(function ($name) {
-                                Permission::named($name);
-                            }, function (Permission $permission) {
-                                return $permission->getName();
-                            }, Permission::type())
-                        )->required()->containsNoDuplicates()->minLength(1)
+                        ->multipleFrom($permissionOptions)
+                        ->required()
+                        ->minLength(1)
+                        ->map(function (array $names) {
+                            return Permission::collectionFromNames($names);
+                        }, function (ValueObjectCollection $collection) {
+                            return $collection
+                                ->select(function (Permission $permission) {
+                                    return $permission->getName();
+                                })
+                                ->asArray();
+                        }, Permission::collectionType())
                 )->bindToProperty(Role::PERMISSIONS),
                 //
                 $form->field(
                     Field::create('users', 'Users')
                         ->entityIdsFrom($this->userRepo)
+                        ->mapToCollection(EntityIdCollection::type())
                         ->required()
-                        ->containsNoDuplicates()
                 )->bindToProperty(Role::USER_IDS),
             ]);
         });
@@ -106,10 +112,9 @@ class RoleModule extends CrudModule
         $module->summaryTable(function (SummaryTableDefinition $table) {
             $table->mapProperty(Role::NAME)->to(Field::create('name', 'Name')->string());
 
-            $table->mapProperty('count(' . Role::PERMISSIONS . ')')->to(Field::create('permissions',
-                'Permissions')->int());
+            $table->mapProperty(Role::PERMISSIONS . '.count()')->to(Field::create('permissions', 'Permissions')->int());
 
-            $table->mapProperty('count(' . Role::USER_IDS . ')')->to(Field::create('users', 'Users')->int());
+            $table->mapProperty(Role::USER_IDS  . '.count()')->to(Field::create('users', 'Users')->int());
 
             $table->view('default', 'Default')
                 ->asDefault()

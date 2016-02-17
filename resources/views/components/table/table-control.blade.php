@@ -62,6 +62,5 @@
             </div>
         </div>
         <div class="dms-table-container"></div>
-
     </div>
 </div>

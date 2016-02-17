@@ -8,22 +8,22 @@
         class="dms-staged-form"
 >
     <?php $stageNumber = 1 ?>
-    <?php foreach ($stagedForm->getAllStages() as $stage): ?>
-    <?php if ($stage instanceof \Dms\Core\Form\Stage\IndependentFormStage): ?>
+    @foreach ($stagedForm->getAllStages() as $stage)
+    @if ($stage instanceof \Dms\Core\Form\Stage\IndependentFormStage)
     <div class="dms-form-stage loaded">
-        <?= $formRenderer->renderFields($stage->loadForm()) ?>
+        {{ $formRenderer->renderFields($stage->loadForm()) }}
     </div>
-    <?php else: ?>
+    @else
     <div
             class="dms-form-stage"
             data-load-stage-url="{{ route('dms::package.module.action.form.stage', [$packageName, $moduleName, $actionName, $stageNumber]) }}"
-            <?php if ($stage->getRequiredFieldNames() !== null): ?> data-stage-dependent-fields="{{ json_encode($stage->getRequiredFieldNames()) }}" <?php endif ?>
+            @if($stage->getRequiredFieldNames() !== null) data-stage-dependent-fields="{{ json_encode($stage->getRequiredFieldNames()) }}" @endif
     >
 
     </div>
-    <?php endif ?>
+    @endif
     <?php $stageNumber++ ?>
-    <?php endforeach ?>
+    @endforeach
 
     <button class="btn btn-{{ $submitButtonClass or 'default' }}" type="submit">{{ $action->getLabel() }} <i class="fa fa-arrow-right"></i></button>
 </form>

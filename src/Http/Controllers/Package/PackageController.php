@@ -1,9 +1,11 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Http\Controllers\Package;
 
+use Dms\Core\ICms;
 use Dms\Core\Package\IPackage;
 use Dms\Web\Laravel\Http\Controllers\DmsController;
+use Dms\Web\Laravel\Renderer\Package\PackageRendererCollection;
 use Illuminate\Http\Request;
 
 /**
@@ -17,6 +19,24 @@ class PackageController extends DmsController
      * @var IPackage
      */
     protected $package;
+
+    /**
+     * @var PackageRendererCollection
+     */
+    protected $packageRenderers;
+
+    /**
+     * PackageController constructor.
+     *
+     * @param ICms                      $cms
+     * @param PackageRendererCollection $packageRenderers
+     */
+    public function __construct(ICms $cms, PackageRendererCollection $packageRenderers)
+    {
+        parent::__construct($cms);
+        $this->packageRenderers = $packageRenderers;
+    }
+
 
     public function showDashboard(Request $request)
     {
@@ -33,7 +53,17 @@ class PackageController extends DmsController
                 ]);
         }
 
+        $packageName = $this->package->getName();
 
+        return view('dms::package.dashboard')
+            ->with([
+                'pageTitle'        => ucwords($packageName),
+                'breadcrumbs'      => [
+                    route('dms::index') => 'Home',
+                ],
+                'packageRenderers' => $this->packageRenderers,
+                'package'          => $this->package,
+            ]);
     }
 
     protected function loadPackage(Request $request)

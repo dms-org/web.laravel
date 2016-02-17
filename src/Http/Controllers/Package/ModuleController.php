@@ -1,4 +1,4 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Http\Controllers\Package;
 
@@ -43,13 +43,14 @@ class ModuleController extends DmsController
         $this->moduleRenderers = $moduleRenderers;
     }
 
-
     /**
      * @param Request $request
+     * @param string  $packageName
+     * @param string  $moduleName
      *
      * @return Response
      */
-    public function index(Request $request, $packageName, $moduleName) : \Illuminate\Http\Response
+    public function index(Request $request, string $packageName, string $moduleName) : Response
     {
         $this->loadModuleAndPackage($packageName, $moduleName);
 

@@ -50,9 +50,4 @@ class ChartRendererCollection
             get_class($chartData->getStructure())
         );
     }
-
-    public function renderChartCont()
-    {
-        
-    }
 }

@@ -73,8 +73,12 @@ return [
                 Dms\Web\Laravel\Renderer\Widget\TableWidgetRenderer::class,
                 Dms\Web\Laravel\Renderer\Widget\ChartWidgetRenderer::class,
             ],
-            'modules' => [
-                Dms\Web\Laravel\Renderer\Module\DefaultModuleRenderer::class
+            'modules'     => [
+                Dms\Web\Laravel\Renderer\Module\DefaultModuleRenderer::class,
+                Dms\Web\Laravel\Renderer\Module\ReadModuleRenderer::class,
+            ],
+            'packages'    => [
+                Dms\Web\Laravel\Renderer\Package\DefaultPackageRenderer::class,
             ],
         ],
     ],
@@ -84,7 +88,7 @@ return [
         'success'   => ['confirm', 'approve', 'accept', 'verify'],
         'info'      => ['download', 'stats', 'display'],
         'overrides' => [
-            'example-name' => 'danger'
+            'example-name' => 'danger',
         ],
     ],
 

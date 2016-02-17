@@ -36,9 +36,11 @@ use Dms\Web\Laravel\Persistence\Db\Migration\AutoGenerateMigrationCommand;
 use Dms\Web\Laravel\Renderer\Chart\ChartRendererCollection;
 use Dms\Web\Laravel\Renderer\Form\FieldRendererCollection;
 use Dms\Web\Laravel\Renderer\Module\ModuleRendererCollection;
+use Dms\Web\Laravel\Renderer\Package\PackageRendererCollection;
 use Dms\Web\Laravel\Renderer\Table\ColumnComponentRendererCollection;
 use Dms\Web\Laravel\Renderer\Table\ColumnRendererFactoryCollection;
 use Dms\Web\Laravel\Renderer\Widget\WidgetRendererCollection;
+use Dms\Web\Laravel\View\DmsNavigationViewComposer;
 use Illuminate\Auth\AuthManager;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Contracts\Container\Container;
@@ -76,6 +78,7 @@ class DmsServiceProvider extends ServiceProvider
         $this->registerUtils();
         $this->registerActionServices();
         $this->registerRenderers();
+        $this->registerViewComposers();
 
         if ($this->app instanceof Application && $this->app->runningInConsole()) {
             $this->registerCommands();
@@ -306,6 +309,12 @@ class DmsServiceProvider extends ServiceProvider
                 config('dms.services.renderers.modules')
             ));
         });
+
+        $this->app->singleton(PackageRendererCollection::class, function () {
+            return new PackageRendererCollection($this->makeAll(
+                config('dms.services.renderers.packages')
+            ));
+        });
     }
 
     private function makeAll(array $services)
@@ -315,5 +324,10 @@ class DmsServiceProvider extends ServiceProvider
         }
 
         return $services;
+    }
+
+    private function registerViewComposers()
+    {
+        view()->composer('dms::template.default', DmsNavigationViewComposer::class);
     }
 }

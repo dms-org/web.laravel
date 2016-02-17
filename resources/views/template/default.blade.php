@@ -88,15 +88,28 @@
                 <ul class="sidebar-menu">
                     <li class="header">INSTALLED PACKAGES</li>
                     <li class="active treeview">
-                        <a href="#">
-                            <i class="fa fa-dashboard"></i> <span>Dashboard</span> <i
-                                    class="fa fa-angle-left pull-right"></i>
-                        </a>
-                        <ul class="treeview-menu">
-                            <li class="active"><a href="index.html"><i class="fa fa-circle-o"></i> Dashboard v1</a></li>
-                            <li><a href="index2.html"><i class="fa fa-circle-o"></i> Dashboard v2</a></li>
-                        </ul>
-                    </li>
+                    @foreach($navigation as $url => $label)
+                        @if(is_array($label))
+                            <li class="treeview">
+                                <a href="javascript:void(0)">
+                                    <span>{{ $label }}</span>
+                                    <i class="fa fa-angle-left pull-right"></i>
+                                </a>
+                                <ul class="treeview-menu">
+                                    @foreach($label as $url => $innerLabel)
+                                        <li><a href="{{ $url }}"><i class="fa fa-circle-o"></i> {{ $innerLabel }}</a></li>
+                                    @endforeach
+                                </ul>
+                            </li>
+                        @else
+                            <li>
+                                <a href="{{ $url }}">
+                                    <span>{{ $label }}</span>
+                                    <i class="fa fa-angle-left pull-right"></i>
+                                </a>
+                            </li>
+                        @endif
+                    @endforeach
                 </ul>
             </section>
             <!-- /.sidebar -->

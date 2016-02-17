@@ -1,4 +1,4 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Auth;
 
@@ -8,7 +8,6 @@ use Dms\Core\Auth\Permission;
 use Dms\Core\Model\EntityIdCollection;
 use Dms\Core\Model\Object\ClassDefinition;
 use Dms\Core\Model\Object\Entity;
-use Dms\Core\Model\Type\Builder\Type;
 use Dms\Core\Model\ValueObjectCollection;
 
 /**
@@ -44,12 +43,12 @@ class Role extends Entity implements IRole
      * @param Permission[]|ValueObjectCollection $permissions
      * @param EntityIdCollection                 $userIds
      */
-    public function __construct(string $name, ValueObjectCollection $permissions, EntityIdCollection $userIds)
+    public function __construct(string $name, ValueObjectCollection $permissions, EntityIdCollection $userIds = null)
     {
         parent::__construct();
-        $this->name = $name;
+        $this->name        = $name;
         $this->permissions = $permissions;
-        $this->userIds = $userIds;
+        $this->userIds     = $userIds ?? new EntityIdCollection();
     }
 
     /**

@@ -2,8 +2,8 @@
 
 namespace Dms\Web\Laravel\Tests\Unit\Auth\Password;
 
-use Dms\Core\Exception\InvalidArgumentException;
 use Dms\Web\Laravel\Auth\Password\BcryptPasswordHasher;
+use Dms\Web\Laravel\Auth\Password\HashAlgorithmNotFoundException;
 use Dms\Web\Laravel\Auth\Password\HashedPassword;
 use Dms\Web\Laravel\Auth\Password\PasswordHasherFactory;
 use Dms\Web\Laravel\Tests\Unit\UnitTest;
@@ -23,7 +23,11 @@ class PasswordHasherFactoryTest extends UnitTest
         parent::setUp();
 
         $this->factory = new PasswordHasherFactory(
-            ['bcrypt' => function (int $costFactor) { return new BcryptPasswordHasher($costFactor); }],
+            [
+                'bcrypt' => function (int $costFactor) {
+                    return new BcryptPasswordHasher($costFactor);
+                },
+            ],
             'bcrypt',
             10
         );
@@ -46,7 +50,7 @@ class PasswordHasherFactoryTest extends UnitTest
 
         $this->assertThrows(function () {
             $this->factory->build('some-invalid-algorithm', 10);
-        }, InvalidArgumentException::class);
+        }, HashAlgorithmNotFoundException::class);
     }
 
     public function testBuildForExistingPassword()
@@ -60,6 +64,6 @@ class PasswordHasherFactoryTest extends UnitTest
 
         $this->assertThrows(function () {
             $this->factory->buildFor(new HashedPassword('--some-hash--', 'some-invalid-algorithm', 8));
-        }, InvalidArgumentException::class);
+        }, HashAlgorithmNotFoundException::class);
     }
 }

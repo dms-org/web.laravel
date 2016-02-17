@@ -6,10 +6,10 @@ use Dms\Common\Structure\Web\EmailAddress;
 use Dms\Core\Auth\IHashedPassword;
 use Dms\Core\Auth\IUser;
 use Dms\Core\Exception\InvalidArgumentException;
+use Dms\Core\Exception\InvalidOperationException;
 use Dms\Core\Model\EntityIdCollection;
 use Dms\Core\Model\Object\ClassDefinition;
 use Dms\Core\Model\Object\Entity;
-use Dms\Core\Model\Type\Builder\Type;
 use Dms\Web\Laravel\Auth\Password\HashedPassword;
 use Dms\Web\Laravel\Auth\Persistence\Mapper\UserMapper;
 use Illuminate\Contracts\Auth\Authenticatable;
@@ -167,9 +167,34 @@ class User extends Entity implements IUser, Authenticatable
     /**
      * @return EntityIdCollection
      */
-    public function getRoleIds() : \Dms\Core\Model\EntityIdCollection
+    public function getRoleIds() : EntityIdCollection
     {
         return $this->roleIds;
+    }
+
+    /**
+     * @param Role $role
+     *
+     * @return void
+     * @throws InvalidOperationException
+     */
+    public function giveRole(Role $role)
+    {
+        if (!$this->hasId()) {
+            throw InvalidOperationException::format('The user must have an id');
+        }
+
+        if (!$role->hasId()) {
+            throw InvalidOperationException::format('The supplied role must have an id');
+        }
+
+        if (!$this->roleIds->contains($role->getId())) {
+            $this->roleIds[] = $role->getId();
+        }
+
+        if (!$role->getUserIds()->contains($this->getId())) {
+            $role->getUserIds()[] = $this->getId();
+        }
     }
 
     /**

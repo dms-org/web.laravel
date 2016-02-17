@@ -1,0 +1,151 @@
+<?php
+
+namespace Dms\Web\Laravel\Tests\Unit\Auth;
+
+use Dms\Core\Persistence\Db\Mapping\IOrm;
+use Dms\Core\Tests\Persistence\Db\Integration\Mapping\DbIntegrationTest;
+use Dms\Web\Laravel\Auth\DmsUserProvider;
+use Dms\Web\Laravel\Auth\Password\BcryptPasswordHasher;
+use Dms\Web\Laravel\Auth\Password\PasswordHasherFactory;
+use Dms\Web\Laravel\Auth\Persistence\AuthOrm;
+use Dms\Web\Laravel\Auth\Persistence\UserRepository;
+use Dms\Web\Laravel\Auth\User;
+
+/**
+ * @author Elliot Levin <elliotlevin@hotmail.com>
+ */
+class DmsUserProviderTest extends DbIntegrationTest
+{
+    /**
+     * @var DmsUserProvider
+     */
+    protected $userProvider;
+
+    /**
+     * @var UserRepository
+     */
+    protected $userRepo;
+
+    /**
+     * @return IOrm
+     */
+    protected function loadOrm()
+    {
+        return new AuthOrm();
+    }
+
+    public function setUp()
+    {
+        parent::setUp();
+
+        $hasher = new PasswordHasherFactory([
+            'bcrypt' => function (int $cost) {
+                return new BcryptPasswordHasher($cost);
+            },
+        ], 'bcrypt', 10);
+
+        $this->userRepo     = new UserRepository($this->connection, $this->orm);
+        $this->userProvider = new DmsUserProvider($this->userRepo, $hasher);
+
+        $this->setDataInDb([
+            'users' => [
+                [
+                    'id'                   => 1,
+                    'email'                => 'admin@admin.com',
+                    'username'             => 'admin',
+                    'password_hash'        => $hasher->buildDefault()->hash('password')->getHash(),
+                    'password_algorithm'   => 'bcrypt',
+                    'password_cost_factor' => 10,
+                    'is_super_user'        => true,
+                    'is_banned'            => false,
+                    'remember_token'       => 'some_token',
+                ],
+                [
+                    'id'                   => 2,
+                    'email'                => 'user@user.com',
+                    'username'             => 'user',
+                    'password_hash'        => $hasher->buildDefault()->hash('password1')->getHash(),
+                    'password_algorithm'   => 'bcrypt',
+                    'password_cost_factor' => 10,
+                    'is_super_user'        => false,
+                    'is_banned'            => false,
+                    'remember_token'       => null,
+                ],
+            ],
+        ]);
+    }
+
+    public function testRetrieveByUsername()
+    {
+        /** @var User $user */
+        $user = $this->userProvider->retrieveById('admin');
+
+        $this->assertInstanceOf(User::class, $user);
+        $this->assertSame(1, $user->getId());
+
+        /** @var User $user */
+        $user = $this->userProvider->retrieveById('user');
+
+        $this->assertInstanceOf(User::class, $user);
+        $this->assertSame(2, $user->getId());
+
+        $this->assertSame(null, $this->userProvider->retrieveById('non_existent_username'));
+    }
+
+    public function testRetrieveByCredentials()
+    {
+        /** @var User $user */
+        $user = $this->userProvider->retrieveByCredentials([
+            'username' => 'admin',
+            'password' => 'does_not_matter',
+        ]);
+
+        $this->assertInstanceOf(User::class, $user);
+        $this->assertSame(1, $user->getId());
+
+        /** @var User $user */
+        $user = $this->userProvider->retrieveByCredentials([
+            'username' => 'user',
+            'password' => 'does_not_matter',
+        ]);
+
+        $this->assertInstanceOf(User::class, $user);
+        $this->assertSame(2, $user->getId());
+
+        $this->assertSame(null, $this->userProvider->retrieveByCredentials([
+            'username' => 'non_existent_username',
+            'password' => 'does_not_matter',
+        ]));
+    }
+
+    public function testUpdateRememberToken()
+    {
+        /** @var User $user */
+        $user = $this->userRepo->get(1);
+        $this->userProvider->updateRememberToken($user, 'new_token');
+
+        $this->assertSame('new_token', $user->getRememberToken());
+        $this->assertSame('new_token', $this->db->getTable('users')->getRows()[1]['remember_token']);
+    }
+
+    public function testRetrieveByToken()
+    {
+        /** @var User $user */
+        $user = $this->userProvider->retrieveByToken('admin', 'some_token');
+
+        $this->assertInstanceOf(User::class, $user);
+        $this->assertSame(1, $user->getId());
+
+        $this->assertSame(null, $this->userProvider->retrieveByToken('admin', 'non_existent_token'));
+    }
+
+    public function testValidateCredentials()
+    {
+        /** @var User $user */
+        $user = $this->userRepo->get(1);
+
+        $this->assertSame(true, $this->userProvider->validateCredentials($user, ['password' => 'password']));
+        $this->assertSame(false, $this->userProvider->validateCredentials($user, ['password' => 'password1']));
+        $this->assertSame(false, $this->userProvider->validateCredentials($user, ['password' => 'abc']));
+    }
+}

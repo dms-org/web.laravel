@@ -58,7 +58,7 @@ class TemporaryFile extends Entity
      *
      * @return ISpecification
      */
-    public static function notExpiredSpec(IClock $clock) : \Dms\Core\Model\ISpecification
+    public static function notExpiredSpec(IClock $clock) : ISpecification
     {
         return self::expiredSpec($clock)->not();
     }
@@ -68,9 +68,9 @@ class TemporaryFile extends Entity
      *
      * @return ISpecification
      */
-    public static function expiredSpec(IClock $clock) : \Dms\Core\Model\ISpecification
+    public static function expiredSpec(IClock $clock) : ISpecification
     {
-        return new CustomSpecification(__CLASS__, function (SpecificationDefinition $match) use ($clock) {
+        return self::specification(function (SpecificationDefinition $match) use ($clock) {
             return $match->where(self::EXPIRY, '<=', new DateTime($clock->utcNow()));
         });
     }
@@ -100,7 +100,7 @@ class TemporaryFile extends Entity
     /**
      * @return File
      */
-    public function getFile() : \Dms\Common\Structure\FileSystem\File
+    public function getFile() : File
     {
         return $this->file;
     }
@@ -108,13 +108,13 @@ class TemporaryFile extends Entity
     /**
      * @return DateTime
      */
-    public function getExpiry() : \Dms\Common\Structure\DateTime\DateTime
+    public function getExpiry() : DateTime
     {
         return $this->expiry;
     }
 
     public function isExpired(IClock $clock)
     {
-        return $this->expiry->comesBefore(new DateTime($clock->now()));
+        return self::expiredSpec($clock)->isSatisfiedBy($this);
     }
 }

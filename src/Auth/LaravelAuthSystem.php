@@ -1,4 +1,4 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Auth;
 
@@ -58,10 +58,10 @@ class LaravelAuthSystem implements IAuthSystem
         IRoleRepository $roleRepository,
         IPasswordHasherFactory $passwordHasherFactory
     ) {
-        $this->laravelAuth = $laravelAuth->guard('dms');
-        $this->userRepository = $userRepository;
+        $this->laravelAuth           = $laravelAuth->guard('dms');
+        $this->userRepository        = $userRepository;
         $this->passwordHasherFactory = $passwordHasherFactory;
-        $this->roleRepository = $roleRepository;
+        $this->roleRepository        = $roleRepository;
     }
 
     /**
@@ -84,7 +84,7 @@ class LaravelAuthSystem implements IAuthSystem
             throw InvalidCredentialsException::defaultMessage($username);
         }
 
-        $user = $users[0];
+        $user           = $users[0];
         $passwordHasher = $this->passwordHasherFactory->buildFor($user->getPassword());
 
         if (!$passwordHasher->verify($password, $user->getPassword())) {

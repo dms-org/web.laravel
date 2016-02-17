@@ -1,4 +1,4 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\File\Command;
 
@@ -55,9 +55,9 @@ class ClearTempFilesCommand extends Command
     public function __construct(Filesystem $filesystem, ITemporaryFileRepository $tempFileRepo, IClock $clock)
     {
         parent::__construct();
-        $this->filesystem = $filesystem;
+        $this->filesystem   = $filesystem;
         $this->tempFileRepo = $tempFileRepo;
-        $this->clock = $clock;
+        $this->clock        = $clock;
     }
 
     public function fire()

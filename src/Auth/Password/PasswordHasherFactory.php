@@ -65,12 +65,12 @@ class PasswordHasherFactory implements IPasswordHasherFactory
      * @param int    $costFactor
      *
      * @return IPasswordHasher
-     * @throws Exception\InvalidArgumentException
+     * @throws HashAlgorithmNotFoundException
      */
     public function build(string $algorithm, int $costFactor) : IPasswordHasher
     {
         if (!isset($this->hasherFactories[$algorithm])) {
-            throw Exception\InvalidArgumentException::format(
+            throw HashAlgorithmNotFoundException::format(
                 'Invalid algorithm supplied to %s: expecting one of (%s), \'%s\' given',
                 __METHOD__, Debug::formatValues(array_keys($this->hasherFactories)), $algorithm
             );

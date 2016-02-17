@@ -21,7 +21,7 @@ interface IPasswordHasherFactory
      * @param int    $costFactor
      *
      * @return IPasswordHasher
-     * @throws Exception\InvalidArgumentException
+     * @throws HashAlgorithmNotFoundException
      */
     public function build(string $algorithm, int $costFactor) : IPasswordHasher;
 
@@ -31,7 +31,7 @@ interface IPasswordHasherFactory
      * @param IHashedPassword $hashedPassword
      *
      * @return IPasswordHasher
-     * @throws Exception\InvalidArgumentException
+     * @throws HashAlgorithmNotFoundException
      */
     public function buildFor(IHashedPassword $hashedPassword) : IPasswordHasher;
 }

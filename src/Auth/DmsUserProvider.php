@@ -1,4 +1,4 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Auth;
 
@@ -34,7 +34,7 @@ class DmsUserProvider implements UserProvider
      */
     public function __construct(IUserRepository $repository, IPasswordHasherFactory $passwordHasherFactory)
     {
-        $this->repository = $repository;
+        $this->repository            = $repository;
         $this->passwordHasherFactory = $passwordHasherFactory;
     }
 
@@ -84,6 +84,8 @@ class DmsUserProvider implements UserProvider
      */
     public function updateRememberToken(Authenticatable $user, $token)
     {
+        $user = $this->validateUser($user);
+
         $user->setRememberToken($token);
         $this->repository->save($user);
     }

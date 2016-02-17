@@ -1,4 +1,4 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Http\Controllers\Auth;
 
@@ -39,7 +39,7 @@ class PasswordController extends DmsController
         parent::__construct($cms);
 
         $this->middleware('dms.guest');
-        $this->passwordBroker = $passwordBroker;
+        $this->passwordBroker       = $passwordBroker;
         $this->passwordResetService = $passwordResetService;
     }
 

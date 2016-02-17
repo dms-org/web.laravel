@@ -1,4 +1,4 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\File;
 
@@ -41,8 +41,8 @@ class TemporaryFileService implements ITemporaryFileService
      */
     public function __construct(ITemporaryFileRepository $repo, IClock $clock, Repository $config)
     {
-        $this->repo = $repo;
-        $this->clock = $clock;
+        $this->repo   = $repo;
+        $this->clock  = $clock;
         $this->config = $config;
     }
 
@@ -69,6 +69,8 @@ class TemporaryFileService implements ITemporaryFileService
         );
 
         $this->repo->save($tempFile);
+
+        return $tempFile;
     }
 
     /**

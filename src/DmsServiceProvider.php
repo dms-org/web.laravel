@@ -1,4 +1,4 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel;
 
@@ -40,6 +40,7 @@ use Dms\Web\Laravel\Renderer\Table\ColumnComponentRendererCollection;
 use Dms\Web\Laravel\Renderer\Table\ColumnRendererFactoryCollection;
 use Dms\Web\Laravel\Renderer\Widget\WidgetRendererCollection;
 use Illuminate\Auth\AuthManager;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Database\Connection;
@@ -78,6 +79,7 @@ class DmsServiceProvider extends ServiceProvider
 
         if ($this->app instanceof Application && $this->app->runningInConsole()) {
             $this->registerCommands();
+            $this->registerSchedule();
             $this->publishAssets();
             $this->publishConfig();
             $this->publishSeeders();
@@ -216,6 +218,14 @@ class DmsServiceProvider extends ServiceProvider
             AutoGenerateMigrationCommand::class,
             ClearTempFilesCommand::class,
         ]);
+    }
+
+    private function registerSchedule()
+    {
+        /** @var Schedule $schedule */
+        $schedule = $this->app[Schedule::class];
+
+        $schedule->command('dms:clear-temp-files')->daily();
     }
 
     private function publishSeeders()

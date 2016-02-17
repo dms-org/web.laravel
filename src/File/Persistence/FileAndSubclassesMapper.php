@@ -1,7 +1,8 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\File\Persistence;
 
+use Dms\Common\Structure\FileSystem\File;
 use Dms\Common\Structure\FileSystem\Image;
 use Dms\Common\Structure\FileSystem\Persistence\FileMapper as BaseFileMapper;
 use Dms\Common\Structure\FileSystem\UploadedFile;
@@ -30,6 +31,7 @@ class FileAndSubclassesMapper extends BaseFileMapper
             'uploaded-image' => UploadedImage::class,
             'uploaded-file'  => UploadedFile::class,
             'stored-image'   => Image::class,
+            'stored-file'    => File::class,
         ]);
     }
 }

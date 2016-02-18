@@ -2,7 +2,10 @@ Dms.form.initializeCallbacks.push(function (element) {
 
     element.find('.list-of-checkboxes').each(function () {
         var listOfCheckboxes = $(this);
-        listOfCheckboxes.find('input[type=checkbox]').iCheck();
+        listOfCheckboxes.find('input[type=checkbox]').iCheck({
+            checkboxClass: 'icheckbox_square-blue',
+            increaseArea: '20%'
+        });
 
         var minFields = listOfCheckboxes.attr('data-min-elements') || 0;
         var maxFields = listOfCheckboxes.attr('data-max-elements') || Infinity;

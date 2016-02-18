@@ -166,24 +166,105 @@ Dms.utilities.guidGenerator = function() {
     };
     return (S4()+S4()+"-"+S4()+"-"+S4()+"-"+S4()+"-"+S4()+S4()+S4());
 };
-Dms.form.initializeCallbacks.push(function (element) {
-    element.find('input[type=checkbox].single-checkbox').iCheck();
-});
-Dms.form.initializeCallbacks.push(function (element) {
-    element.find('input.dms-colour-input').each(function () {
-        var config = {
-            showInput: true,
-            showPalette: true
+Dms.chart.initializeCallbacks.push(function (element) {
+
+    element.find('.dms-chart-control').each(function () {
+        var control = $(this);
+        var chartContainer = control.find('chart.dms-chart-container');
+        var loadChartUrl = control.attr('data-load-chart-url');
+
+
+        var criteria = {
+            orderings: [],
+            conditions: []
         };
 
-        if ($(this).hasClass('dms-colour-input-rgb')) {
-            config.preferredFormat = 'rgb';
-        } else if ($(this).hasClass('dms-colour-input-rgba')) {
-            config.preferredFormat = 'rgba';
+        var currentAjaxRequest;
+
+        var loadCurrentData = function () {
+            chartContainer.addClass('loading');
+
+            if (currentAjaxRequest) {
+                currentAjaxRequest.abort();
+            }
+
+            currentAjaxRequest = $.ajax({
+                url: loadChartUrl,
+                type: 'post',
+                dataType: 'html',
+                data: criteria
+            });
+
+            currentAjaxRequest.done(function (chartData) {
+                chartContainer.html(chartData);
+                Dms.chart.initialize(chartContainer);
+            });
+
+            currentAjaxRequest.fail(function () {
+                chartContainer.addClass('error');
+
+                swal({
+                    title: "Could not load chart data",
+                    text: "An unexpected error occurred",
+                    type: "error"
+                });
+            });
+
+            currentAjaxRequest.always(function () {
+                chartContainer.removeClass('loading');
+            });
+        };
+
+        loadCurrentData();
+    });
+});
+Dms.chart.initializeCallbacks.push(function () {
+    $('.dms-chart.dms-graph-chart').each(function () {
+        var chart = $(this);
+        var chartData = JSON.parse(chart.attr('data-chart-data'));
+        var chartType = !!chart.attr('data-chart-type');
+        var horizontalAxisKey = chart.attr('data-horizontal-axis-key');
+        var verticalAxisKeys = JSON.parse(chart.attr('data-vertical-axis-keys'));
+        var verticalAxisLabels = JSON.parse(chart.attr('data-vertical-axis-labels'));
+
+        if (!chart.attr('id')) {
+            chart.attr('id', Dms.utilities.guidGenerator());
         }
 
-        $(this).spectrum(config);
+        var morrisConfig = {
+            element: chart.attr('id'),
+            data: chartData,
+            xkey: horizontalAxisKey,
+            ykeys: verticalAxisKeys,
+            labels: verticalAxisLabels
+        };
+
+        if (chartType === 'bar') {
+            Morris.Bar(morrisConfig);
+        } else if (chartType === 'area') {
+            Morris.Area(morrisConfig);
+        } else {
+            Morris.Line(morrisConfig);
+        }
     });
+});
+Dms.chart.initializeCallbacks.push(function () {
+    $('.dms-chart.dms-pie-chart').each(function () {
+        var chart = $(this);
+        var chartData = JSON.parse(chart.attr('data-chart-data'));
+
+        if (!chart.attr('id')) {
+            chart.attr('id', Dms.utilities.guidGenerator());
+        }
+
+        Morris.Donut({
+            element: chart.attr('id'),
+            data: chartData
+        });
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+    element.find('input[type=checkbox].single-checkbox').iCheck();
 });
 Dms.form.initializeCallbacks.push(function (element) {
 
@@ -201,6 +282,22 @@ Dms.form.initializeCallbacks.push(function (element) {
                 e.preventDefault();
             }
         });
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+    element.find('input.dms-colour-input').each(function () {
+        var config = {
+            showInput: true,
+            showPalette: true
+        };
+
+        if ($(this).hasClass('dms-colour-input-rgb')) {
+            config.preferredFormat = 'rgb';
+        } else if ($(this).hasClass('dms-colour-input-rgba')) {
+            config.preferredFormat = 'rgba';
+        }
+
+        $(this).spectrum(config);
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -369,103 +466,6 @@ Dms.form.initializeCallbacks.push(function (element) {
 });
 Dms.form.initializeCallbacks.push(function (element) {
 
-});
-Dms.chart.initializeCallbacks.push(function (element) {
-
-    element.find('.dms-chart-control').each(function () {
-        var control = $(this);
-        var chartContainer = control.find('chart.dms-chart-container');
-        var loadChartUrl = control.attr('data-load-chart-url');
-
-
-        var criteria = {
-            orderings: [],
-            conditions: []
-        };
-
-        var currentAjaxRequest;
-
-        var loadCurrentData = function () {
-            chartContainer.addClass('loading');
-
-            if (currentAjaxRequest) {
-                currentAjaxRequest.abort();
-            }
-
-            currentAjaxRequest = $.ajax({
-                url: loadChartUrl,
-                type: 'post',
-                dataType: 'html',
-                data: criteria
-            });
-
-            currentAjaxRequest.done(function (chartData) {
-                chartContainer.html(chartData);
-                Dms.chart.initialize(chartContainer);
-            });
-
-            currentAjaxRequest.fail(function () {
-                chartContainer.addClass('error');
-
-                swal({
-                    title: "Could not load chart data",
-                    text: "An unexpected error occurred",
-                    type: "error"
-                });
-            });
-
-            currentAjaxRequest.always(function () {
-                chartContainer.removeClass('loading');
-            });
-        };
-
-        loadCurrentData();
-    });
-});
-Dms.chart.initializeCallbacks.push(function () {
-    $('.dms-chart.dms-graph-chart').each(function () {
-        var chart = $(this);
-        var chartData = JSON.parse(chart.attr('data-chart-data'));
-        var chartType = !!chart.attr('data-chart-type');
-        var horizontalAxisKey = chart.attr('data-horizontal-axis-key');
-        var verticalAxisKeys = JSON.parse(chart.attr('data-vertical-axis-keys'));
-        var verticalAxisLabels = JSON.parse(chart.attr('data-vertical-axis-labels'));
-
-        if (!chart.attr('id')) {
-            chart.attr('id', Dms.utilities.guidGenerator());
-        }
-
-        var morrisConfig = {
-            element: chart.attr('id'),
-            data: chartData,
-            xkey: horizontalAxisKey,
-            ykeys: verticalAxisKeys,
-            labels: verticalAxisLabels
-        };
-
-        if (chartType === 'bar') {
-            Morris.Bar(morrisConfig);
-        } else if (chartType === 'area') {
-            Morris.Area(morrisConfig);
-        } else {
-            Morris.Line(morrisConfig);
-        }
-    });
-});
-Dms.chart.initializeCallbacks.push(function () {
-    $('.dms-chart.dms-pie-chart').each(function () {
-        var chart = $(this);
-        var chartData = JSON.parse(chart.attr('data-chart-data'));
-
-        if (!chart.attr('id')) {
-            chart.attr('id', Dms.utilities.guidGenerator());
-        }
-
-        Morris.Donut({
-            element: chart.attr('id'),
-            data: chartData
-        });
-    });
 });
 Dms.form.initializeCallbacks.push(function (element) {
 
@@ -654,7 +654,8 @@ Dms.table.initializeCallbacks.push(function (element) {
 
     element.find('.dms-table-control').each(function () {
         var control = $(this);
-        var tableContainer = control.find('table.dms-table-container');
+        var tableContainer = control.find('.dms-table-container');
+        var table = tableContainer.find('table.dms-table');
         var filterForm = control.find('.dms-table-quick-filter-form');
         var loadRowsUrl = control.attr('data-load-rows-url');
         var reorderRowsUrl = control.attr('data-reorder-row-action-url');
@@ -690,7 +691,7 @@ Dms.table.initializeCallbacks.push(function (element) {
             });
 
             currentAjaxRequest.done(function (tableData) {
-                tableContainer.html(tableData);
+                table.html(tableData);
                 Dms.table.initialize(tableContainer);
             });
 

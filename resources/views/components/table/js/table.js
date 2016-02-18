@@ -2,7 +2,8 @@ Dms.table.initializeCallbacks.push(function (element) {
 
     element.find('.dms-table-control').each(function () {
         var control = $(this);
-        var tableContainer = control.find('table.dms-table-container');
+        var tableContainer = control.find('.dms-table-container');
+        var table = tableContainer.find('table.dms-table');
         var filterForm = control.find('.dms-table-quick-filter-form');
         var loadRowsUrl = control.attr('data-load-rows-url');
         var reorderRowsUrl = control.attr('data-reorder-row-action-url');
@@ -38,7 +39,7 @@ Dms.table.initializeCallbacks.push(function (element) {
             });
 
             currentAjaxRequest.done(function (tableData) {
-                tableContainer.html(tableData);
+                table.html(tableData);
                 Dms.table.initialize(tableContainer);
             });
 

@@ -61,6 +61,11 @@
                 </span>
             </div>
         </div>
-        <div class="dms-table-container"></div>
+
+        <div class="dms-table-container row">
+            <div class="col-xs-12">
+                <table class="dms-table table"></table>
+            </div>
+        </div>
     </div>
 </div>

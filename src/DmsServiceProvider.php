@@ -33,6 +33,7 @@ use Dms\Web\Laravel\Http\Middleware\EncryptCookies;
 use Dms\Web\Laravel\Http\Middleware\RedirectIfAuthenticated;
 use Dms\Web\Laravel\Http\Middleware\VerifyCsrfToken;
 use Dms\Web\Laravel\Language\LaravelLanguageProvider;
+use Dms\Web\Laravel\Persistence\Db\LaravelConnection;
 use Dms\Web\Laravel\Persistence\Db\Migration\AutoGenerateMigrationCommand;
 use Dms\Web\Laravel\Renderer\Chart\ChartRendererCollection;
 use Dms\Web\Laravel\Renderer\Form\FieldRendererCollection;
@@ -218,7 +219,7 @@ class DmsServiceProvider extends ServiceProvider
             /** @var Connection $connection */
             $connection = $this->app->make(Connection::class);
 
-            return new DoctrineConnection($connection->getDoctrineConnection());
+            return new LaravelConnection($connection);
         });
     }
 

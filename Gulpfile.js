@@ -41,6 +41,9 @@ var bowerFilesConfig = {
         },
         "font-awesome": {
             "main": ["fonts/fontawesome-webfont.woff", "fonts/fontawesome-webfont.woff2"]
+        },
+        "iCheck": {
+            "main": ["icheck.min.js", "skins/square/blue.css"]
         }
     }
 };

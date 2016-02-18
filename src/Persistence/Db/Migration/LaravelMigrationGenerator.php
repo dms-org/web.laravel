@@ -1,4 +1,4 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Persistence\Db\Migration;
 
@@ -58,8 +58,8 @@ class LaravelMigrationGenerator extends MigrationGenerator
         parent::__construct();
 
         $this->laravelMigrationCreator = $laravelMigrationCreator;
-        $this->files = $files;
-        $this->path = $path ?: database_path('migrations');
+        $this->files                   = $files;
+        $this->path                    = $path ?: database_path('migrations');
     }
 
     /**
@@ -78,10 +78,10 @@ class LaravelMigrationGenerator extends MigrationGenerator
             return null;
         }
 
-        $upCode = $this->createMigrationCode($diff);
+        $upCode   = $this->createMigrationCode($diff);
         $downCode = $this->createMigrationCode($reverseDiff);
 
-        $migrationFile = $this->laravelMigrationCreator->create($migrationName, $this->path);
+        $migrationFile     = $this->laravelMigrationCreator->create($migrationName, $this->path);
         $migrationContents = $this->files->get($migrationFile);
 
         $migrationContents = $this->replaceMethodBody('up', $upCode, $migrationContents);
@@ -137,12 +137,16 @@ class LaravelMigrationGenerator extends MigrationGenerator
                 ? $table->getNewName()
                 : $table->getName();
 
-            $topologicalSorter->add($tableName, $this->getTableDependencies($table));
+            $originalTable = $table instanceof TableDiff
+                ? $table->fromTable
+                : $table;
+
+            $topologicalSorter->add($tableName, $this->getTableDependencies($originalTable));
             $indexedTables[$tableName] = $table;
         }
 
         $sortedTableNames = $topologicalSorter->sort();
-        $sortedTables = [];
+        $sortedTables     = [];
 
         foreach ($sortedTableNames as $tableName) {
             $sortedTables[$tableName] = $indexedTables[$tableName];
@@ -154,11 +158,12 @@ class LaravelMigrationGenerator extends MigrationGenerator
     }
 
     /**
-     * @param Table|TableDiff $table
+     * @param Table $table
      *
-     * @return string[]
+     * @return array|\string[]
+     * @throws InvalidArgumentException
      */
-    protected function getTableDependencies($table) : array
+    protected function getTableDependencies(Table $table) : array
     {
         $tableDependencies = [];
 
@@ -171,9 +176,11 @@ class LaravelMigrationGenerator extends MigrationGenerator
 
     protected function replaceMethodBody($methodName, $code, $migrationContents)
     {
-        return preg_replace('/(function\\s+' . $methodName . '\\(\\)\\s*{)\\s*.*(\\s*})/',
+        return preg_replace(
+            '/(function\\s+' . $methodName . '\\(\\)\\s*{)\\s*.*(\\s*})/',
             '$1' . PHP_EOL . $code . '$2',
-            $migrationContents);
+            $migrationContents
+        );
     }
 
     protected function createMigrationCode(SchemaDiff $diff)
@@ -315,9 +322,9 @@ class LaravelMigrationGenerator extends MigrationGenerator
 
     private function createAddColumnCode(Column $column, $change = false, &$hasAutoIncrement = false)
     {
-        $code = '$table->';
-        $type = $column->getType();
-        $name = var_export($column->getName(), true);
+        $code          = '$table->';
+        $type          = $column->getType();
+        $name          = var_export($column->getName(), true);
         $ignoreDefault = false;
 
         if ($type instanceof BaseEnumType) {
@@ -449,7 +456,7 @@ class LaravelMigrationGenerator extends MigrationGenerator
         $columns = $this->exportSimpleArrayOrSingle($index->getColumns());
 
         $indexName = $overrideName ?: $index->getName();
-        $name = var_export($indexName, true);
+        $name      = var_export($indexName, true);
 
         $code .= $columns . ', ' . $name . ')';
 
@@ -463,12 +470,12 @@ class LaravelMigrationGenerator extends MigrationGenerator
 
     private function createAddForeignKeyCode(ForeignKeyConstraint $foreignKey)
     {
-        $name = var_export($foreignKey->getName(), true);
-        $localColumns = $this->exportSimpleArrayOrSingle($foreignKey->getLocalColumns());
-        $referencedTable = var_export($foreignKey->getForeignTableName(), true);
+        $name              = var_export($foreignKey->getName(), true);
+        $localColumns      = $this->exportSimpleArrayOrSingle($foreignKey->getLocalColumns());
+        $referencedTable   = var_export($foreignKey->getForeignTableName(), true);
         $referencedColumns = $this->exportSimpleArrayOrSingle($foreignKey->getForeignColumns());
-        $onUpdate = var_export(strtolower($foreignKey->onUpdate()), true);
-        $onDelete = var_export(strtolower($foreignKey->onDelete()), true);
+        $onUpdate          = var_export(strtolower($foreignKey->onUpdate()), true);
+        $onDelete          = var_export(strtolower($foreignKey->onDelete()), true);
 
         $indent = PHP_EOL . str_repeat(' ', 8);
 

@@ -94,10 +94,10 @@ return [
 
     'front-end' => [
         'stylesheets' => [
-            asset('vendor/dms/css/all.css'),
+            'vendor/dms/css/all.css',
         ],
         'scripts'     => [
-            asset('vendor/dms/js/all.js'),
+            'vendor/dms/js/all.js',
         ],
     ],
 ];

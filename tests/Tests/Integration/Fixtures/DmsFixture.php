@@ -86,7 +86,6 @@ abstract class DmsFixture
     {
         // Setup default database to use sqlite
         /** @var Application|Container $app */
-        $app['config']->set('dms', require __DIR__ . '/../../../../config/dms.php');
         $app['config']->set('database.default', 'testing');
         $app['config']->set('database.connections.testing', [
                 'driver'   => 'sqlite',

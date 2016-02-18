@@ -5,6 +5,7 @@ namespace Dms\Web\Laravel;
 use Dms\Core\Auth\IAuthSystem;
 use Dms\Core\Auth\IRoleRepository;
 use Dms\Core\Auth\IUserRepository;
+use Dms\Core\Exception\InvalidOperationException;
 use Dms\Core\Language\ILanguageProvider;
 use Dms\Core\Persistence\Db\Connection\IConnection;
 use Dms\Core\Persistence\Db\Doctrine\DoctrineConnection;
@@ -65,10 +66,16 @@ class DmsServiceProvider extends ServiceProvider
     /**
      * Register the service provider.
      *
-     * @return void
+     * @throws InvalidOperationException
      */
     public function register()
     {
+        if (!is_array($this->app['config']->get('dms'))) {
+            throw InvalidOperationException::format(
+                'Cannot find dms config file: did you forget to run `php artisan vendor:publish` ?'
+            );
+        }
+
         $this->registerIocContainer();
         $this->registerAuth();
         $this->registerLang();

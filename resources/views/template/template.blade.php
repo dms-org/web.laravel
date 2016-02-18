@@ -8,11 +8,11 @@
     <!-- Tell the browser to be responsive to screen width -->
     <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
     @foreach (config('dms.front-end.stylesheets') as $stylesheet)
-        <link rel="stylesheet" href="{{ $stylesheet }}"/>
+        <link rel="stylesheet" href="{{ asset($stylesheet) }}"/>
     @endforeach
 </head>
 @yield('body-content')
 @foreach (config('dms.front-end.scripts') as $script)
-    <script src="{{ $script }}"></script>
+    <script src="{{ asset($script) }}"></script>
 @endforeach
 </html>

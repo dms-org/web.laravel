@@ -55,6 +55,12 @@ abstract class CmsIntegrationTest extends TestCase
         static::$fixture->setUp($this->app);
     }
 
+    protected function resolveApplicationConfiguration($app)
+    {
+        parent::resolveApplicationConfiguration($app);
+        $app['config']->set('dms', require __DIR__ . '/../../../config/dms.php');
+    }
+
     /**
      * @return \Illuminate\Foundation\Application
      */

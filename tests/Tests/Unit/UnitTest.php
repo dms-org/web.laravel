@@ -24,4 +24,10 @@ abstract class UnitTest extends TestCase
     {
         return [DmsServiceProvider::class];
     }
+
+    protected function resolveApplicationConfiguration($app)
+    {
+        parent::resolveApplicationConfiguration($app);
+        $app['config']->set('dms', require __DIR__ . '/../../../config/dms.php');
+    }
 }

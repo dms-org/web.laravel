@@ -1,4 +1,4 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Renderer\Table;
 
@@ -43,11 +43,13 @@ class TableRenderer
             $columnRenderers[$column->getName()] = $this->columnRendererFactories->buildRendererFor($column);
         }
 
-        return (string)view('dms::components.table.data-table')
+        return view('dms::components.table.data-table')
             ->with([
+                'columns'         => $table->getStructure()->getColumns(),
                 'columnRenderers' => $columnRenderers,
                 'sections'        => $table->getSections(),
-            ]);
+            ])
+            ->render();
     }
 
     /**
@@ -74,8 +76,9 @@ class TableRenderer
             $reorderRowActionUrl = null;
         }
 
-        return (string)view('dms::components.table.table-control')
+        return view('dms::components.table.table-control')
             ->with([
+                'columns'             => $table->getDataSource()->getStructure()->getColumns(),
                 'structure'           => $table->getDataSource()->getStructure(),
                 'table'               => $table->getView($viewName),
                 'loadRowsUrl'         => route(
@@ -83,6 +86,7 @@ class TableRenderer
                     [$packageName, $moduleName, $table->getName(), $viewName]
                 ),
                 'reorderRowActionUrl' => $reorderRowActionUrl,
-            ]);
+            ])
+            ->render();
     }
 }

@@ -43,7 +43,7 @@ class ActionFormRenderer
      */
     public function renderActionForm(IParameterizedAction $action) : string
     {
-        return (string)view('dms::components.form.staged-form')
+        return view('dms::components.form.staged-form')
             ->with([
                 'action'            => $action,
                 'stagedForm'        => $action->getStagedForm(),
@@ -52,6 +52,7 @@ class ActionFormRenderer
                 'moduleName'        => $action->getModuleName(),
                 'actionName'        => $action->getName(),
                 'submitButtonClass' => $this->keywordTypeIdentifier->getTypeFromName($action->getName()),
-            ]);
+            ])
+            ->render();
     }
 }

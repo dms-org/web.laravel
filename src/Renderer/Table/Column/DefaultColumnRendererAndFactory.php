@@ -55,8 +55,9 @@ class DefaultColumnRendererAndFactory extends ColumnRendererAndFactory
      */
     protected function renderValue(IColumn $column, array $componentRenderers, array $value) : string
     {
-        if (\count($value) === 1) {
-            return \reset($componentRenderers)->render(\reset($value));
+        if (count($value) === 1) {
+            $components = $column->getComponents();
+            return reset($componentRenderers)->render(reset($components), reset($value));
         }
 
         $renderedComponents = [];

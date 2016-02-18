@@ -129,7 +129,7 @@ class UserModule extends CrudModule
 
         $module->summaryTable(function (SummaryTableDefinition $table) {
             $table->mapProperty(User::USERNAME)->to(Field::create('username', 'Username')->string());
-            $table->mapProperty(User::EMAIL_ADDRESS)->to(Field::create('email', 'Email')->string());
+            $table->mapProperty(User::EMAIL_ADDRESS)->to(Field::create('email', 'Email')->email());
             $table->mapProperty(User::IS_SUPER_USER)->to(Field::create('super_admin', 'Super Admin')->bool());
             $table->mapProperty(User::IS_BANNED)->to(Field::create('banned', 'Banned')->bool());
 

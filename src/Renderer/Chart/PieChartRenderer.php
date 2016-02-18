@@ -42,10 +42,11 @@ class PieChartRenderer extends ChartRenderer
             $chartStructure->getValueAxis()->getComponent()->getName()
         );
 
-        return (string)view('dms::components.chart.pie-chart')
+        return view('dms::components.chart.pie-chart')
             ->with([
                 'data' => $chartDataArray,
-            ]);
+            ])
+            ->render();
     }
 
     private function transformChartDataToIndexedArrays(

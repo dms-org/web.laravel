@@ -59,13 +59,14 @@ class ReadModuleRenderer extends ModuleRenderer
         /** @var ITableView[] $views */
         $views = $summaryTable->getViews() ?: [$summaryTable->getDefaultView()];
 
-        return (string)view('dms::package.module.dashboard.summary-table')
+        return view('dms::package.module.dashboard.summary-table')
             ->with([
                 'packageName'       => $module->getPackageName(),
                 'moduleName'        => $module->getName(),
                 'tableRenderer'     => $this->tableRenderer,
                 'summaryTable'      => $summaryTable,
                 'summaryTableViews' => $views,
-            ]);
+            ])
+            ->render();
     }
 }

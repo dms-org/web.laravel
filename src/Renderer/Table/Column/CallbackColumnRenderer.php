@@ -56,6 +56,6 @@ class CallbackColumnRenderer implements IColumnRenderer
      */
     public function render(array $value) : string
     {
-        return call_user_func($this->renderValueCallback, $column, $value);
+        return call_user_func($this->renderValueCallback, $value);
     }
 }

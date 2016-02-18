@@ -1,12 +1,12 @@
 <input
-        type="{{ $inputType }}"
+        type="{{ $type }}"
         name="{{ $name }}"
         placeholder="{{ $label }}"
         @if($required) required @endif
         @if($readonly) readonly @endif
         @if($value !== null) value="{{ $value }}" @endif
 
-        @if($exactLength !== null)
+        @if($exactLength ?? false)
         minlength="{{ $exactLength }}"
         maxlength="{{ $exactLength }}"
         @else

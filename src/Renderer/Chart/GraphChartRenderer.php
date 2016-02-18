@@ -55,14 +55,15 @@ class GraphChartRenderer extends ChartRenderer
             $chartStructure->getVerticalAxis()->getName()
         );
 
-        return (string)view('dms::components.chart.graph-chart')
+        return view('dms::components.chart.graph-chart')
             ->with([
                 'chartType'          => $this->getChartType($chartStructure),
                 'data'               => $chartDataArray,
                 'horizontalAxisKey'  => 'x',
                 'verticalAxisKeys'   => $yAxisKeys,
                 'verticalAxisLabels' => $yAxisLabels,
-            ]);
+            ])
+            ->render();
     }
 
     private function transformChartDataToIndexedArrays(IChartDataTable $data, $xAxisName, $xComponentName, $yAxisName)

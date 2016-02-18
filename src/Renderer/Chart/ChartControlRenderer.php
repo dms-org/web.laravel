@@ -52,7 +52,7 @@ class ChartControlRenderer
      */
     public function renderChartControl(string $packageName, string $moduleName, IChartDisplay $chart, string $viewName) : string
     {
-        return (string)view('dms::components.table.chart-control')
+        return view('dms::components.table.chart-control')
             ->with([
                 'structure'    => $chart->getDataSource()->getStructure(),
                 'table'        => $chart->getView($viewName),
@@ -60,6 +60,7 @@ class ChartControlRenderer
                     'dms::package.module.chart.view.load',
                     [$packageName, $moduleName, $chart->getName(), $viewName]
                 ),
-            ]);
+            ])
+            ->render();
     }
 }

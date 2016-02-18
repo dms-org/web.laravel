@@ -1,4 +1,4 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Renderer\Form;
 
@@ -55,19 +55,16 @@ class FormRenderer
             }
         }
 
-        return (string)view('dms::components.form.form-fields')
+        return view('dms::components.form.form-fields')
             ->with([
                 'groupedFields'            => $sections,
                 'equalFields'              => $this->findFieldsFromValidator($form, MatchingFieldsValidator::class),
-                'greaterThanFields'        => $this->findFieldsFromValidator($form,
-                    FieldGreaterThanAnotherValidator::class),
-                'greaterThanOrEqualFields' => $this->findFieldsFromValidator($form,
-                    FieldGreaterThanOrEqualAnotherValidator::class),
-                'lessThanFields'           => $this->findFieldsFromValidator($form,
-                    FieldLessThanAnotherValidator::class),
-                'lessThanOrEqualFields'    => $this->findFieldsFromValidator($form,
-                    FieldLessThanOrEqualAnotherValidator::class),
-            ]);
+                'greaterThanFields'        => $this->findFieldsFromValidator($form, FieldGreaterThanAnotherValidator::class),
+                'greaterThanOrEqualFields' => $this->findFieldsFromValidator($form, FieldGreaterThanOrEqualAnotherValidator::class),
+                'lessThanFields'           => $this->findFieldsFromValidator($form, FieldLessThanAnotherValidator::class),
+                'lessThanOrEqualFields'    => $this->findFieldsFromValidator($form, FieldLessThanOrEqualAnotherValidator::class),
+            ])
+            ->render();
     }
 
     /**
@@ -93,8 +90,9 @@ class FormRenderer
             }
         }
 
-        return (string)view('dms::components.form.form-fields')
-            ->with(['groupedFields' => $sections]);
+        return view('dms::components.form.form-fields')
+            ->with(['groupedFields' => $sections])
+            ->render();
     }
 
     private function findFieldsFromValidator(IForm $form, $validatorClass)

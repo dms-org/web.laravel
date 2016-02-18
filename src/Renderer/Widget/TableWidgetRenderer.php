@@ -50,9 +50,10 @@ class TableWidgetRenderer extends WidgetRenderer
     protected function renderWidget(IWidget $widget) : string
     {
         /** @var TableWidget $widget */
-        return (string)view('dms::components.widget.data-table')
+        return view('dms::components.widget.data-table')
             ->with([
                 'dataTableContent' => $this->tableRenderer->renderTableData($widget->loadData()),
-            ]);
+            ])
+            ->render();
     }
 }

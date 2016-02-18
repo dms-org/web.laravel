@@ -1,4 +1,4 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Renderer\Widget;
 
@@ -34,7 +34,7 @@ class ParameterizedActionWidgetRenderer extends WidgetRenderer
     public function __construct(KeywordTypeIdentifier $keywordTypeIdentifier, ActionFormRenderer $actionFormRenderer)
     {
         $this->keywordTypeIdentifier = $keywordTypeIdentifier;
-        $this->actionFormRenderer = $actionFormRenderer;
+        $this->actionFormRenderer    = $actionFormRenderer;
     }
 
     /**
@@ -62,10 +62,11 @@ class ParameterizedActionWidgetRenderer extends WidgetRenderer
         /** @var ActionWidget $widget */
         $action = $widget->getAction();
 
-        return (string)view('dms::components.widget.parameterized-action')
+        return view('dms::components.widget.parameterized-action')
             ->with([
                 'action'            => $action,
                 'actionFormContent' => $this->actionFormRenderer->renderActionForm($action),
-            ]);
+            ])
+            ->render();
     }
 }

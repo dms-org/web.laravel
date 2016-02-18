@@ -64,15 +64,10 @@ class RoleModule extends CrudModule
 
         $module->labelObjects()->fromProperty(Role::NAME);
 
-        $permissionOptions = [];
 
-        foreach ($this->cms->loadPermissions() as $permission) {
-            $permissionOptions[$permission->getName()] = ucwords(
-                strtr($permission->getName(), ['-' => ' ', '.' => ' - '])
-            );
-        }
+        $module->crudForm(function (CrudFormDefinition $form) {
+            $permissionOptions =  [];//$this->loadPermissionOptions();
 
-        $module->crudForm(function (CrudFormDefinition $form) use ($permissionOptions) {
             $form->section('Details', [
                 //
                 $form->field(
@@ -121,5 +116,21 @@ class RoleModule extends CrudModule
                 ->loadAll()
                 ->orderByAsc(Role::NAME);
         });
+    }
+
+    /**
+     * @return array
+     */
+    protected function loadPermissionOptions() : array
+    {
+        $permissionOptions = [];
+
+        foreach ($this->cms->loadPermissions() as $permission) {
+            $permissionOptions[$permission->getName()] = ucwords(
+                strtr($permission->getName(), ['-' => ' ', '.' => ' - '])
+            );
+        }
+
+        return $permissionOptions;
     }
 }

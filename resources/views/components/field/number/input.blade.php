@@ -6,9 +6,9 @@
         @if($readonly) readonly @endif
         @if($value !== null) value="{{ $value }}" @endif
 
-        @if($min !== null) min="{{ $min }}" @endif
-        @if($max !== null) min="{{ $max }}" @endif
-        @if($greaterThan !== null) data-greater-than="{{ $greaterThan }}" @endif
-        @if($lessThan !== null) data-less-than="{{ $lessThan }}" @endif
-        @if($maxDecimalPlaces !== null) step="{{ pow(.1, $maxDecimalPlaces) }}" data-max-decimal-places="{{ $maxDecimalPlaces }}" @endif
+        @if($min ?? false) min="{{ $min }}" @endif
+        @if($max ?? false) min="{{ $max }}" @endif
+        @if($greaterThan ?? false) data-greater-than="{{ $greaterThan }}" @endif
+        @if($lessThan ?? false) data-less-than="{{ $lessThan }}" @endif
+        @if($maxDecimalPlaces ?? false) step="{{ pow(.1, $maxDecimalPlaces) }}" data-max-decimal-places="{{ $maxDecimalPlaces }}" @endif
 />

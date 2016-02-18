@@ -16,7 +16,6 @@ abstract class BladeFieldRenderer extends FieldRenderer
      * @var array
      */
     protected $defaultAttributeMap = [
-        FieldType::ATTR_INITIAL_VALUE => 'value',
         FieldType::ATTR_READ_ONLY     => 'readonly',
         FieldType::ATTR_REQUIRED      => 'required',
         FieldType::ATTR_DEFAULT       => 'defaultValue',
@@ -41,13 +40,16 @@ abstract class BladeFieldRenderer extends FieldRenderer
             $viewParams[$variableName] = $fieldType->get($attribute);
         }
 
-        return (string)view($viewName)
+        $viewParams['value'] = $field->getUnprocessedInitialValue();
+
+        return view($viewName)
             ->with('field', $field)
             ->with('name', $field->getName())
             ->with('label', $field->getLabel())
             ->with('fieldType', $fieldType)
             ->with($viewParams)
-            ->with($extraParams);
+            ->with($extraParams)
+            ->render();
     }
 
 
@@ -65,17 +67,19 @@ abstract class BladeFieldRenderer extends FieldRenderer
         array $extraParams = [],
         $overrideValue = null
     ) : string {
-        $value = $overrideValue === null ? $field->getInitialValue() : $overrideValue;
+        $value = $overrideValue === null ? $field->getUnprocessedInitialValue() : $overrideValue;
 
         if ($value === null) {
-            return (string)view('dms::components.field.null.value');
+            return view('dms::components.field.null.value')
+                ->render();
         }
 
-        return (string)view($viewName)
+        return view($viewName)
             ->with('value', $value)
             ->with('name', $field->getName())
             ->with('label', $field->getLabel())
             ->with('value', $value)
-            ->with($extraParams);
+            ->with($extraParams)
+            ->render();
     }
 }

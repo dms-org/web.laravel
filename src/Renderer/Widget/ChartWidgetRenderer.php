@@ -45,9 +45,10 @@ class ChartWidgetRenderer extends WidgetRenderer
         /** @var ChartWidget $widget */
         $chartData = $widget->loadData();
 
-        return (string)view('dms::components.widget.chart')
+        return view('dms::components.widget.chart')
             ->with([
                 'chartContent' => $this->chartRenderers->findRendererFor($chartData)->render($chartData),
-            ]);
+            ])
+            ->render();
     }
 }

@@ -14,7 +14,7 @@
             <thead>
             <tr>
                 @foreach ($section->getGroupData()->getData() as $columnName => $value)
-                    <td>{!! $columnRenderers[$columnName]->renderValue($value) !!}</td>
+                    <td>{!! $columnRenderers[$columnName]->render($value) !!}</td>
                 @endforeach
             </tr>
             </thead>
@@ -24,7 +24,7 @@
         @foreach ($section->getRows() as $row)
             <tr>
                 @foreach ($row->getData() as $columnName => $value)
-                    <td>{!! $columnRenderers[$columnName]->renderValue($value) !!}</td>
+                    <td>{!! $columnRenderers[$columnName]->render($value) !!}</td>
                 @endforeach
             </tr>
         @endforeach

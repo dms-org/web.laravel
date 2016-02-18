@@ -73,6 +73,7 @@ elixir(function (mix) {
     mix.scripts(loadBowerFiles('**/*.js'), paths.distJs + 'vendor.js', './');
     mix.copy(loadBowerFiles(["**/*.woff", "**/*.woff2"]), paths.distFonts);
     mix.copy(paths.bower + 'admin-lte/dist/img/', paths.distImg);
+    mix.copy([paths.bower + 'iCheck/skins/square/blue.png', paths.bower + 'iCheck/skins/square/blue@2x.png'], paths.distCss);
 
     // Combine
     mix.styles([paths.distCss + 'vendor.css', paths.distCss + 'app.css'], paths.distCss + 'all.css', './');

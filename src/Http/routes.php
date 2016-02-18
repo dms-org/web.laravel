@@ -31,6 +31,8 @@ $router->group(['prefix' => 'dms', 'middleware' => 'dms.web', 'as' => 'dms::', '
 
             $router->get('/', 'IndexController@index')->name('index');
             $router->post('search', 'IndexController@searchSystem')->name('search');
+            $router->get('/user/profile', 'UserController@showProfileForm')->name('auth.user.profile');
+            $router->post('/user/profile', 'UserController@updateUserProfile')->name('auth.user.profile.submit');
 
             $router->group(['prefix' => 'package/{package}', 'as' => 'package.', 'namespace' => 'Package'],
                 function () use ($router) {

@@ -15,6 +15,7 @@ use Dms\Core\ICms;
 use Dms\Core\Model\EntityIdCollection;
 use Dms\Core\Model\ValueObjectCollection;
 use Dms\Web\Laravel\Auth\Role;
+use Dms\Web\Laravel\Auth\User;
 
 /**
  * The role crud module.
@@ -96,6 +97,9 @@ class RoleModule extends CrudModule
                 $form->field(
                     Field::create('users', 'Users')
                         ->entityIdsFrom($this->userRepo)
+                        ->labelledByCallback(function (User $user) {
+                            return $user->getUsername() . ' <' . $user->getEmailAddress() . '>';
+                        })
                         ->mapToCollection(EntityIdCollection::type())
                         ->required()
                 )->bindToProperty(Role::USER_IDS),

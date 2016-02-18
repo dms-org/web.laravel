@@ -72,7 +72,7 @@ class DmsNavigationViewComposer
 
             foreach ($package->loadModules() as $module) {
                 $moduleDashboardUrl                     = route('dms::package.module.dashboard', [$package->getName(), $module->getName()]);
-                $moduleLabel                            = ucwords(str_replace('-', ' ', $package->getName()));
+                $moduleLabel                            = ucwords(str_replace('-', ' ', $module->getName()));
                 $packageNavigation[$moduleDashboardUrl] = $moduleLabel;
             }
 

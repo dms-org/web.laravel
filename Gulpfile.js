@@ -58,7 +58,8 @@ elixir(function (mix) {
     ], paths.distCss + 'app.css', './');
 
     mix.scripts([
-        paths.resources + 'js/**/*.js',
+        paths.resources + 'js/main.js',
+        paths.resources + 'js/services/**/*.js',
         paths.resources + 'views/**/*.js'
     ], paths.distJs + 'app.js', './');
 

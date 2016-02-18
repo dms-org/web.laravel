@@ -114,7 +114,7 @@ abstract class FieldRenderer implements IFieldRenderer
             );
         }
 
-        return $this->renderField($field, $field->getType());
+        return $this->renderFieldValue($field, $field->getType());
     }
 
     /**

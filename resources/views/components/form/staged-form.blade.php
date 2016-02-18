@@ -11,7 +11,7 @@
     @foreach ($stagedForm->getAllStages() as $stage)
     @if ($stage instanceof \Dms\Core\Form\Stage\IndependentFormStage)
     <div class="dms-form-stage loaded">
-        {{ $formRenderer->renderFields($stage->loadForm()) }}
+        {!!  $formRenderer->renderFields($stage->loadForm()) !!}
     </div>
     @else
     <div
@@ -25,5 +25,5 @@
     <?php $stageNumber++ ?>
     @endforeach
 
-    <button class="btn btn-{{ $submitButtonClass or 'default' }}" type="submit">{{ $action->getLabel() }} <i class="fa fa-arrow-right"></i></button>
+    <button class="btn btn-{{ $submitButtonClass or 'default' }}" type="submit">{{ $action->getName() }} <i class="fa fa-arrow-right"></i></button>
 </form>

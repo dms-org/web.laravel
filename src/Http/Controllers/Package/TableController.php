@@ -1,4 +1,4 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Http\Controllers\Package;
 
@@ -48,18 +48,19 @@ class TableController extends DmsController
 
         return view('dms::package.module.table')
             ->with([
-                'pageTitle'     => ucwords($packageName . ' > ' . $moduleName . ' > ' . $tableName),
-                'pageSubTitle'  => $viewName,
-                'breadcrumbs'   => [
+                'pageTitle'       => ucwords($packageName . ' > ' . $moduleName . ' > ' . $tableName),
+                'pageSubTitle'    => $viewName,
+                'breadcrumbs'     => [
                     route('dms::index')                                 => 'Home',
                     route('dms::package.dashboard', $packageName)       => ucwords($packageName),
                     route('dms::package.module.dashboard', $moduleName) => $moduleName,
                 ],
-                'tableRenderer' => $this->tableRenderer,
-                'packageName'   => $packageName,
-                'moduleName'    => $moduleName,
-                'table'         => $table,
-                'viewName'      => $viewName,
+                'finalBreadcrumb' => ucwords($tableName),
+                'tableRenderer'   => $this->tableRenderer,
+                'packageName'     => $packageName,
+                'moduleName'      => $moduleName,
+                'table'           => $table,
+                'viewName'        => $viewName,
             ]);
     }
 

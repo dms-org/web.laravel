@@ -133,7 +133,7 @@ class UserModule extends CrudModule
             $table->mapProperty(User::IS_SUPER_USER)->to(Field::create('super_admin', 'Super Admin')->bool());
             $table->mapProperty(User::IS_BANNED)->to(Field::create('banned', 'Banned')->bool());
 
-            $table->view('default', 'Default')
+            $table->view('all', 'All')
                 ->asDefault()
                 ->loadAll()
                 ->orderByAsc(User::USERNAME);

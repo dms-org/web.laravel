@@ -2,6 +2,7 @@
 
 namespace Dms\Web\Laravel\Renderer\Module;
 
+use Dms\Core\Common\Crud\ICrudModule;
 use Dms\Core\Common\Crud\IReadModule;
 use Dms\Core\Module\IModule;
 use Dms\Core\Module\ITableView;
@@ -59,6 +60,14 @@ class ReadModuleRenderer extends ModuleRenderer
         /** @var ITableView[] $views */
         $views = $summaryTable->getViews() ?: [$summaryTable->getDefaultView()];
 
+        $createActionName = null;
+        if ($module instanceof ICrudModule) {
+            /** @var ICrudModule $module */
+            if ($module->allowsCreate()) {
+                $createActionName = $module->getCreateAction()->getName();
+            }
+        }
+
         return view('dms::package.module.dashboard.summary-table')
             ->with([
                 'packageName'       => $module->getPackageName(),
@@ -66,6 +75,7 @@ class ReadModuleRenderer extends ModuleRenderer
                 'tableRenderer'     => $this->tableRenderer,
                 'summaryTable'      => $summaryTable,
                 'summaryTableViews' => $views,
+                'createActionName'  => $createActionName,
             ])
             ->render();
     }

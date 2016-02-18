@@ -74,8 +74,8 @@ return [
                 Dms\Web\Laravel\Renderer\Widget\ChartWidgetRenderer::class,
             ],
             'modules'     => [
-                Dms\Web\Laravel\Renderer\Module\DefaultModuleRenderer::class,
                 Dms\Web\Laravel\Renderer\Module\ReadModuleRenderer::class,
+                Dms\Web\Laravel\Renderer\Module\DefaultModuleRenderer::class,
             ],
             'packages'    => [
                 Dms\Web\Laravel\Renderer\Package\DefaultPackageRenderer::class,

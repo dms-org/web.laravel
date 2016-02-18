@@ -1,5 +1,6 @@
 <input
         type="{{ $type }}"
+        class="form-control"
         name="{{ $name }}"
         placeholder="{{ $label }}"
         @if($required) required @endif

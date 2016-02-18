@@ -7,7 +7,6 @@ use Dms\Core\Package\IPackage;
 use Dms\Web\Laravel\Http\Controllers\DmsController;
 use Dms\Web\Laravel\Renderer\Module\ModuleRendererCollection;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 
 /**
  * The module controller.
@@ -48,9 +47,9 @@ class ModuleController extends DmsController
      * @param string  $packageName
      * @param string  $moduleName
      *
-     * @return Response
+     * @return mixed
      */
-    public function index(Request $request, string $packageName, string $moduleName) : Response
+    public function showDashboard(Request $request, string $packageName, string $moduleName)
     {
         $this->loadModuleAndPackage($packageName, $moduleName);
 
@@ -61,6 +60,7 @@ class ModuleController extends DmsController
                     route('dms::index')                           => 'Home',
                     route('dms::package.dashboard', $packageName) => ucwords($packageName),
                 ],
+                'finalBreadcrumb' => ucwords($moduleName),
                 'moduleRenderers' => $this->moduleRenderers,
                 'module'          => $this->module,
             ]);

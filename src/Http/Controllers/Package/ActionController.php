@@ -1,9 +1,10 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Http\Controllers\Package;
 
 use Dms\Core\Auth\UserForbiddenException;
 use Dms\Core\Common\Crud\Action\Object\IObjectAction;
+use Dms\Core\Form\InvalidFormSubmissionException;
 use Dms\Core\ICms;
 use Dms\Core\Language\ILanguageProvider;
 use Dms\Core\Module\ActionNotFoundException;
@@ -91,21 +92,29 @@ class ActionController extends DmsController
         }
 
         if ($objectId && $action instanceof IObjectAction) {
+            try {
+                $object = $action->getObjectForm()->getField(IObjectAction::OBJECT_FIELD_NAME)->process($objectId);
+            } catch (InvalidFormSubmissionException $e) {
+                abort(404);
+            }
+
             $action = $action->withSubmittedFirstStage([
-                IObjectAction::OBJECT_FIELD_NAME => $objectId,
+                IObjectAction::OBJECT_FIELD_NAME => $object,
             ]);
         }
 
         return view('dms::package.module.action')
             ->with([
-                'pageTitle'    => ucwords($packageName . ' > ' . $moduleName . ' > ' . $actionName),
-                'breadcrumbs'  => [
-                    route('dms::index')                                 => 'Home',
-                    route('dms::package.dashboard', $packageName)       => ucwords($packageName),
-                    route('dms::package.module.dashboard', $moduleName) => $moduleName,
+                'pageTitle'       => ucwords($packageName . ' > ' . $moduleName . ' > ' . $actionName),
+                'breadcrumbs'     => [
+                    route('dms::index')                                                 => 'Home',
+                    route('dms::package.dashboard', [$packageName])                     => ucwords($packageName),
+                    route('dms::package.module.dashboard', [$packageName, $moduleName]) => $moduleName,
                 ],
-                'form'         => $action->getStagedForm(),
-                'formRenderer' => $this->actionFormRenderer,
+                'finalBreadcrumb' => ucwords($actionName),
+                'action'          => $action,
+                'form'            => $action->getStagedForm(),
+                'formRenderer'    => $this->actionFormRenderer,
             ]);
     }
 

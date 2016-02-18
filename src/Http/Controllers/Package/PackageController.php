@@ -61,6 +61,7 @@ class PackageController extends DmsController
                 'breadcrumbs'      => [
                     route('dms::index') => 'Home',
                 ],
+                'finalBreadcrumb'  => ucwords($packageName),
                 'packageRenderers' => $this->packageRenderers,
                 'package'          => $this->package,
             ]);

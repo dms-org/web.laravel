@@ -1,4 +1,4 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Http\Controllers\Package;
 
@@ -48,18 +48,19 @@ class ChartController extends DmsController
 
         return view('dms::package.module.chart')
             ->with([
-                'pageTitle'     => ucwords($packageName . ' > ' . $moduleName . ' > ' . $chartName),
-                'pageSubTitle'  => $viewName,
-                'breadcrumbs'   => [
+                'pageTitle'       => ucwords($packageName . ' > ' . $moduleName . ' > ' . $chartName),
+                'pageSubTitle'    => $viewName,
+                'breadcrumbs'     => [
                     route('dms::index')                                 => 'Home',
                     route('dms::package.dashboard', $packageName)       => ucwords($packageName),
                     route('dms::package.module.dashboard', $moduleName) => $moduleName,
                 ],
-                'chartRenderer' => $this->chartRenderer,
-                'packageName'   => $packageName,
-                'moduleName'    => $moduleName,
-                'chart'         => $chart,
-                'viewName'      => $viewName,
+                'finalBreadcrumb' => ucwords($chartName),
+                'chartRenderer'   => $this->chartRenderer,
+                'packageName'     => $packageName,
+                'moduleName'      => $moduleName,
+                'chart'           => $chart,
+                'viewName'        => $viewName,
             ]);
     }
 

@@ -67831,6 +67831,55 @@ Licensed under the BSD-2-Clause License.
 
 //# sourceMappingURL=vendor.js.map
 
+window.Dms = {
+    config: {
+
+    },
+    form: {
+        initialize: function (element) {
+            var callbacks = Dms.form.initializeCallbacks.concat(Dms.form.initializeValidationCallbacks);
+
+            $.each(callbacks, function (index, callback) {
+                callback(element);
+            });
+        },
+        validation: {}, // @see ./form-validation.js
+        initializeCallbacks: [],
+        initializeValidationCallbacks: []
+    },
+    table: {
+        initialize: function (element) {
+            $.each(Dms.table.initializeCallbacks, function (index, callback) {
+                callback(element);
+            });
+        },
+        initializeCallbacks: []
+    },
+    chart: {
+        initialize: function (element) {
+            $.each(Dms.chart.initializeCallbacks, function (index, callback) {
+                callback(element);
+            });
+        },
+        initializeCallbacks: []
+    },
+    widget: {
+        initialize: function (element) {
+            $.each(Dms.widget.initializeCallbacks, function (index, callback) {
+                callback(element);
+            });
+        },
+        initializeCallbacks: []
+    },
+    utilities: {} // @see ./utilities.js
+};
+
+$(document).ready(function () {
+    Dms.form.initialize($(document));
+    Dms.table.initialize($(document));
+    Dms.chart.initialize($(document));
+    Dms.widget.initialize($(document));
+});
 window.ParsleyValidator
     .addValidator('ip-address', {
         requirementType: 'string',
@@ -67922,55 +67971,6 @@ Dms.form.validation.displayMessages = function (form, fieldMessages, generalMess
         fieldGroup.prepend(helpBlock);
     });
 };
-window.Dms = {
-    config: {
-
-    },
-    form: {
-        initialize: function (element) {
-            var callbacks = Dms.form.initializeCallbacks.concat(Dms.form.initializeValidationCallbacks);
-
-            $.each(callbacks, function (index, callback) {
-                callback(element);
-            });
-        },
-        validation: {}, // @see ./form-validation.js
-        initializeCallbacks: [],
-        initializeValidationCallbacks: []
-    },
-    table: {
-        initialize: function (element) {
-            $.each(Dms.table.initializeCallbacks, function (index, callback) {
-                callback(element);
-            });
-        },
-        initializeCallbacks: []
-    },
-    chart: {
-        initialize: function (element) {
-            $.each(Dms.chart.initializeCallbacks, function (index, callback) {
-                callback(element);
-            });
-        },
-        initializeCallbacks: []
-    },
-    widget: {
-        initialize: function (element) {
-            $.each(Dms.widget.initializeCallbacks, function (index, callback) {
-                callback(element);
-            });
-        },
-        initializeCallbacks: []
-    },
-    utilities: {} // @see ./utilities.js
-};
-
-$(document).ready(function () {
-    Dms.form.initialize($(document));
-    Dms.table.initialize($(document));
-    Dms.chart.initialize($(document));
-    Dms.widget.initialize($(document));
-});
 Dms.utilities.countDecimals = function (value) {
     if (value % 1 != 0) {
         return value.toString().split(".")[1].length;
@@ -67984,7 +67984,7 @@ Dms.utilities.guidGenerator = function() {
         return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
     };
     return (S4()+S4()+"-"+S4()+"-"+S4()+"-"+S4()+"-"+S4()+S4()+S4());
-}
+};
 Dms.chart.initializeCallbacks.push(function (element) {
 
     element.find('.dms-chart-control').each(function () {
@@ -68083,12 +68083,13 @@ Dms.chart.initializeCallbacks.push(function () {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-
+    element.find('input[type=checkbox].single-checkbox').iCheck();
 });
 Dms.form.initializeCallbacks.push(function (element) {
 
     element.find('.list-of-checkboxes').each(function () {
         var listOfCheckboxes = $(this);
+        listOfCheckboxes.find('input[type=checkbox]').iCheck();
 
         var minFields = listOfCheckboxes.attr('data-min-elements') || 0;
         var maxFields = listOfCheckboxes.attr('data-max-elements') || Infinity;

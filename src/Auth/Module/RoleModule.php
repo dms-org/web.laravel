@@ -111,7 +111,7 @@ class RoleModule extends CrudModule
 
             $table->mapProperty(Role::USER_IDS  . '.count()')->to(Field::create('users', 'Users')->int());
 
-            $table->view('default', 'Default')
+            $table->view('all', 'All')
                 ->asDefault()
                 ->loadAll()
                 ->orderByAsc(Role::NAME);

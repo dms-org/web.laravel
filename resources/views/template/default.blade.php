@@ -90,21 +90,27 @@
                     <li class="active treeview">
                     @foreach($navigation as $url => $label)
                         @if(is_array($label))
-                            <li class="treeview">
+                            <li class="treeview  @if(isset($label[request()->url()])) active @endif">
                                 <a href="javascript:void(0)">
+                                    <i class="fa fa-folder"></i>
                                     <span>{{ $url }}</span>
                                     <i class="fa fa-angle-left pull-right"></i>
                                 </a>
                                 <ul class="treeview-menu">
                                     @foreach($label as $url => $innerLabel)
-                                        <li><a href="{{ $url }}"><i class="fa fa-circle-o"></i> {{ $innerLabel }}</a></li>
+                                        <li @if($url === request()->url()) class="active" @endif>
+                                            <a href="{{ $url }}"><i class="fa fa-circle-o"></i> {{ $innerLabel }}</a>
+                                        </li>
                                     @endforeach
                                 </ul>
                             </li>
                         @else
-                            <li>
+                            <li @if($url === request()->url()) class="active" @endif>
                                 <a href="{{ $url }}">
-                                    <span>{{ $label }}</span>
+                                    @if($url === route('dms::index'))<i class="fa fa-dashboard"></i>@endif
+                                    <span>
+                                        {{ $label }}
+                                    </span>
                                     <i class="fa fa-angle-left pull-right"></i>
                                 </a>
                             </li>
@@ -129,12 +135,12 @@
                         @foreach ($breadcrumbs as $link => $label)
                             <li>
                                 <a href="{{ $link }}">
-                                    @if ($link === url('/')) <i class="fa fa-dashboard"></i> @endif {{ $label }}
+                                    @if ($link === route('dms::index')) <i class="fa fa-dashboard"></i> @endif {{ $label }}
                                 </a>
                             </li>
                         @endforeach
                     @endif
-                    <li class="active">{{ $pageTitle }} </li>
+                    <li class="active">{{ $finalBreadcrumb }} </li>
                 </ol>
             </section>
 

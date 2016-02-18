@@ -98,17 +98,16 @@ class LaravelMigrationGenerator extends MigrationGenerator
         $this->removeIgnoredTables($diff->removedTables);
         $this->removeIgnoredTables($diff->changedTables);
 
-        $this->orderTablesByForeignKeyDependency($diff->newTables);
-        $this->orderTablesByForeignKeyDependency($diff->changedTables);
-        $this->orderTablesByForeignKeyDependency($diff->removedTables, $reverse = true);
+        // TODO: verify
+        // $this->orderTablesByForeignKeyDependency($diff->newTables);
+        // $this->orderTablesByForeignKeyDependency($diff->changedTables);
+        // $this->orderTablesByForeignKeyDependency($diff->removedTables, $reverse = true);
     }
 
     protected function removeIgnoredTables(array &$tables)
     {
         foreach ($tables as $key => $table) {
-            $tableName = $table instanceof TableDiff
-                ? $table->getNewName()
-                : $table->getName();
+            $tableName = $this->getNameFromTableOrDiff($table);
 
             if (in_array($tableName, $this->tablesToIgnore, true)) {
                 unset($tables[$key]);
@@ -133,9 +132,7 @@ class LaravelMigrationGenerator extends MigrationGenerator
         $indexedTables = [];
 
         foreach ($tables as $table) {
-            $tableName = $table instanceof TableDiff
-                ? $table->getNewName()
-                : $table->getName();
+            $tableName = $this->getNameFromTableOrDiff($table);
 
             $originalTable = $table instanceof TableDiff
                 ? $table->fromTable
@@ -490,5 +487,17 @@ class LaravelMigrationGenerator extends MigrationGenerator
     private function createDropForeignKeyCode($foreignKeyName)
     {
         return '$table->dropForeign(' . var_export($foreignKeyName, true) . ');';
+    }
+
+    /**
+     * @param TableDiff|Table $table
+     *
+     * @return string
+     */
+    protected function getNameFromTableOrDiff($table) : string
+    {
+        return (string)($table instanceof TableDiff
+            ? ($table->getNewName() ?: $table->fromTable->getName())
+            : $table->getName());
     }
 }

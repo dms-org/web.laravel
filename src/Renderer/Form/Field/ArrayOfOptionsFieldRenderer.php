@@ -91,6 +91,7 @@ class ArrayOfOptionsFieldRenderer extends BladeFieldRenderer
         return Field::element()
             ->type($fieldType->getElementType())
             ->attrs($fieldType->getAll([FieldType::ATTR_READ_ONLY]))
+            ->attr(FieldType::ATTR_REQUIRED, false)
             ->build();
     }
 }

@@ -1,6 +1,7 @@
 <?php /** @var \Dms\Core\Form\IFieldOption[] $options */ ?>
 <?php /** @var array $value */ ?>
 <?php $valuesAsKeys = $value ? array_fill_keys($value, true) : []; ?>
+
 <div class="list-of-checkboxes"
      @if($exactElements !== null)
      data-min-elements="{{ $exactElements }}"
@@ -21,5 +22,7 @@
             />
             {{ $option->getLabel() }}
         </label>
+    @else
+        <p class="help-block">No options are available</p>
     @endforeach
 </div>

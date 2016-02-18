@@ -2,7 +2,7 @@
 <?php /** @var \Dms\Core\Module\IParameterizedAction $action */ ?>
 @extends('dms::template.default')
 
-@section('body-content')
+@section('content')
     <div class="row">
         <div class="col-sm-12">
             <div class="box">

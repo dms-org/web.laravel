@@ -92,7 +92,7 @@
                         @if(is_array($label))
                             <li class="treeview">
                                 <a href="javascript:void(0)">
-                                    <span>{{ $label }}</span>
+                                    <span>{{ $url }}</span>
                                     <i class="fa fa-angle-left pull-right"></i>
                                 </a>
                                 <ul class="treeview-menu">

@@ -5,7 +5,7 @@
 <?php /** @var string $viewName */ ?>
 @extends('dms::template.default')
 
-@section('body-content')
+@section('content')
     <div class="row">
         <div class="col-sm-12">
             <div class="box">

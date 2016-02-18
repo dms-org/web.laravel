@@ -1,6 +1,12 @@
 window.Dms = {
-    config: {
-
+    config: {},
+    global: {
+        initialize: function (element) {
+            $.each(Dms.global.initializeCallbacks, function (index, callback) {
+                callback(element);
+            });
+        },
+        initializeCallbacks: []
     },
     form: {
         initialize: function (element) {
@@ -42,6 +48,7 @@ window.Dms = {
 };
 
 $(document).ready(function () {
+    Dms.global.initialize($(document));
     Dms.form.initialize($(document));
     Dms.table.initialize($(document));
     Dms.chart.initialize($(document));

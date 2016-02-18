@@ -7,6 +7,8 @@
         enctype="multipart/form-data"
         class="dms-staged-form"
 >
+    {!! csrf_field() !!}
+
     <?php $stageNumber = 1 ?>
     @foreach ($stagedForm->getAllStages() as $stage)
     @if ($stage instanceof \Dms\Core\Form\Stage\IndependentFormStage)

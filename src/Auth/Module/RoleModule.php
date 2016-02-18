@@ -67,7 +67,7 @@ class RoleModule extends CrudModule
 
 
         $module->crudForm(function (CrudFormDefinition $form) {
-            $permissionOptions =  [];//$this->loadPermissionOptions();
+            $permissionOptions =  $this->loadPermissionOptions();
 
             $form->section('Details', [
                 //

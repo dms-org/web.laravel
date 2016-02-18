@@ -17,7 +17,6 @@
                 <input
                         type="checkbox"
                         name="{{ $name }}[]"
-                        @if($required) required @endif
                         @if($readonly) readonly @endif
                         @if(isset($valuesAsKeys[$option->getValue()])) checked="checked" @endif
                 />

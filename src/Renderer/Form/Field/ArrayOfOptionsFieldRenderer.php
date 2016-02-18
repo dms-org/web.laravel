@@ -60,7 +60,7 @@ class ArrayOfOptionsFieldRenderer extends BladeFieldRenderer
             ],
             [
                 'options'       => $elementField->getType()->get(ArrayOfType::ATTR_OPTIONS)->getAll(),
-                'fieldRenderer' => $this->fieldRendererCollection->findRendererFor($elementField),
+                'fieldRenderer' => $this->fieldRendererCollection->findRendererFor($elementField)->render($elementField),
             ]
         );
     }

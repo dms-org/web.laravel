@@ -17,10 +17,10 @@ interface IColumnRendererFactory
      *
      * @param IColumn $column
      *
-     * @return string
+     * @return bool
      * @throws InvalidArgumentException
      */
-    public function accepts(IColumn $column) : string;
+    public function accepts(IColumn $column) : bool;
 
     /**
      * Builds a column renderer for the supplied column.

@@ -18,10 +18,10 @@ class DefaultColumnRendererAndFactory extends ColumnRendererAndFactory
      *
      * @param IColumn $column
      *
-     * @return string
+     * @return bool
      * @throws InvalidArgumentException
      */
-    public function accepts(IColumn $column) : string
+    public function accepts(IColumn $column) : bool
     {
         return true;
     }

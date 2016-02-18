@@ -16,6 +16,7 @@ use Dms\Core\Persistence\ArrayRepository;
 use Dms\Core\Persistence\IRepository;
 use Dms\Core\Tests\Common\Crud\Modules\CrudModuleTest;
 use Dms\Core\Tests\Module\Mock\MockAuthSystem;
+use Dms\Core\Widget\TableWidget;
 use Dms\Web\Laravel\Auth\Module\UserModule;
 use Dms\Web\Laravel\Auth\Password\IPasswordResetService;
 use Dms\Web\Laravel\Auth\Role;
@@ -155,5 +156,13 @@ class UserModuleTest extends CrudModuleTest
             'username'                       => 'admin',
             'roles'                          => [$adminRoleId],
         ]);
+    }
+
+    public function testSummaryTableWidget()
+    {
+        $widget = $this->module->getWidget('summary-table');
+
+        $this->assertSame('summary-table', $widget->getName());
+        $this->assertInstanceOf(TableWidget::class, $widget);
     }
 }

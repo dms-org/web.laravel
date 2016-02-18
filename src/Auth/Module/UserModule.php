@@ -141,6 +141,7 @@ class UserModule extends CrudModule
 
         $module->widget('summary-table')
             ->label('DMS Accounts')
-            ->withTable(self::SUMMARY_TABLE);
+            ->withTable(self::SUMMARY_TABLE)
+            ->allRows();
     }
 }

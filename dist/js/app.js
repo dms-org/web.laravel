@@ -152,9 +152,6 @@ Dms.utilities.guidGenerator = function() {
     };
     return (S4()+S4()+"-"+S4()+"-"+S4()+"-"+S4()+"-"+S4()+S4()+S4());
 }
-Dms.form.initializeCallbacks.push(function (element) {
-
-});
 Dms.chart.initializeCallbacks.push(function (element) {
 
     element.find('.dms-chart-control').each(function () {
@@ -251,6 +248,9 @@ Dms.chart.initializeCallbacks.push(function () {
             data: chartData
         });
     });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+
 });
 Dms.form.initializeCallbacks.push(function (element) {
 
@@ -442,12 +442,12 @@ Dms.form.initializeCallbacks.push(function (element) {
 
 });
 Dms.form.initializeCallbacks.push(function (element) {
+
+});
+Dms.form.initializeCallbacks.push(function (element) {
     element.find('input[type="ip-address"]')
         .attr('type', 'text')
         .attr('data-parsley-ip-address', '1');
-});
-Dms.form.initializeCallbacks.push(function (element) {
-
 });
 Dms.form.initializeCallbacks.push(function (element) {
 

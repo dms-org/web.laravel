@@ -20,7 +20,7 @@ var bowerFilesConfig = {
         "admin-lte": {
             "main": [
                 "dist/css/AdminLTE.css",
-                "dist/css/skins/skin-blue-light.css",
+                "dist/css/skins/skin-blue.css",
                 "dist/js/app.js"
             ],
             "dependencies": {

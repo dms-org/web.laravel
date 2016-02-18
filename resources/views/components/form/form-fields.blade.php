@@ -12,8 +12,12 @@
             <legend>{{ $groupTitle }}</legend>
             @foreach($fields as $label => $field)
                 <div class="form-group" data-field-name="{{ $field['name'] }}">
-                    <label data-for="{{ $field['name'] }}">{{ $label }}</label>
-                    {!! $field['content'] !!}
+                    <div class="col-lg-2 col-md-3 col-sm-4">
+                        <label data-for="{{ $field['name'] }}">{{ $label }}</label>
+                    </div>
+                    <div class="col-lg-10 col-md-9 col-sm-8">
+                        {!! $field['content'] !!}
+                    </div>
                 </div>
             @endforeach
         </fieldset>

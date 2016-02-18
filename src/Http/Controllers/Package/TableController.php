@@ -95,7 +95,7 @@ class TableController extends DmsController
             'conditions.*.operator'  => 'required|in:' . implode(',', ConditionOperator::getAll()),
             'conditions.*.value'     => 'required',
             'orderings.*.component'  => 'required|in:' . implode(',', $validComponentIds),
-            'orderings.*.direction'  => 'required|in' . implode(',', OrderingDirection::getAll()),
+            'orderings.*.direction'  => 'required|in:' . implode(',', OrderingDirection::getAll()),
         ]);
 
         if ($request->has('offset')) {

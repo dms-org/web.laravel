@@ -5,7 +5,7 @@
         action="{{ route('dms::package.module.action.run', [$packageName, $moduleName, $actionName]) }}"
         method="post"
         enctype="multipart/form-data"
-        class="dms-staged-form"
+        class="dms-staged-form form-horizontal"
 >
     {!! csrf_field() !!}
 

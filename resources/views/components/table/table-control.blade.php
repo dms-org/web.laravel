@@ -62,6 +62,10 @@
             </div>
         </div>
 
+        <div class="col-md-12">
+            <hr/>
+        </div>
+
         <div class="dms-table-container row">
             <div class="col-xs-12">
                 <table class="dms-table table"></table>

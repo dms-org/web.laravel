@@ -68044,7 +68044,7 @@ $(document).ready(function () {
 Dms.action.responseHandler = function (response) {
     if (typeof response.redirect !== 'undefined') {
         if (typeof respoonse.messsage !== 'undefined') {
-            Cookies.set('dms-flash-success', response.message);
+            Cookies.set('dms-flash-alert-success', response.message);
         }
 
         window.location.href = response.redirect;
@@ -68104,12 +68104,12 @@ Dms.alerts.add = function (type, title, message) {
     alertsList.append(alert);
 };
 
-Dms.global.initializeCallbacks = function () {
+Dms.global.initializeCallbacks.push(function () {
     var successFlash = Cookies.get('dms-flash-alert-success');
     Cookies.remove('dms-flash-alert-success');
 
     Dms.alerts.add('success', successFlash);
-};
+});
 Dms.global.initializeCallbacks.push(function () {
     $.ajaxSetup({
         headers: {

@@ -10,9 +10,9 @@ Dms.alerts.add = function (type, title, message) {
     alertsList.append(alert);
 };
 
-Dms.global.initializeCallbacks = function () {
+Dms.global.initializeCallbacks.push(function () {
     var successFlash = Cookies.get('dms-flash-alert-success');
     Cookies.remove('dms-flash-alert-success');
 
     Dms.alerts.add('success', successFlash);
-};
+});

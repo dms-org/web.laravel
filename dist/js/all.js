@@ -68168,11 +68168,19 @@ Dms.form.validation.displayMessages = function (form, fieldMessages, generalMess
     var visitMessages = function (fieldName, messages) {
         if ($.isArray(messages)) {
             $.each(messages, function (index, message) {
-                flattenedFieldMessages[fieldName] = message;
+                if (typeof flattenedFieldMessages[fieldName] === 'undefined') {
+                    flattenedFieldMessages[fieldName] = [];
+                }
+
+                flattenedFieldMessages[fieldName].push(message);
             });
         } else {
             $.each(messages.constraints, function (index, message) {
-                flattenedFieldMessages[fieldName] = message;
+                if (typeof flattenedFieldMessages[fieldName] === 'undefined') {
+                    flattenedFieldMessages[fieldName] = [];
+                }
+
+                flattenedFieldMessages[fieldName].push(message);
             });
 
             $.each(messages.fields, function (fieldElementName, elementMessages) {
@@ -68207,12 +68215,6 @@ Dms.utilities.guidGenerator = function() {
     };
     return (S4()+S4()+"-"+S4()+"-"+S4()+"-"+S4()+"-"+S4()+S4()+S4());
 };
-Dms.form.initializeCallbacks.push(function (element) {
-    element.find('input[type=checkbox].single-checkbox').iCheck({
-        checkboxClass: 'icheckbox_square-blue',
-        increaseArea: '20%'
-    });
-});
 Dms.chart.initializeCallbacks.push(function (element) {
 
     element.find('.dms-chart-control').each(function () {
@@ -68308,6 +68310,12 @@ Dms.chart.initializeCallbacks.push(function () {
             element: chart.attr('id'),
             data: chartData
         });
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+    element.find('input[type=checkbox].single-checkbox').iCheck({
+        checkboxClass: 'icheckbox_square-blue',
+        increaseArea: '20%'
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -68488,6 +68496,9 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
+
+});
+Dms.form.initializeCallbacks.push(function (element) {
     element.find('input[type="number"][data-max-decimal-places]').each(function () {
         $(this).attr('data-parsley-max-decimal-places', $(this).attr('data-max-decimal-places'));
     });
@@ -68504,93 +68515,12 @@ Dms.form.initializeCallbacks.push(function (element) {
 
 });
 Dms.form.initializeCallbacks.push(function (element) {
-
-});
-Dms.form.initializeCallbacks.push(function (element) {
     element.find('input[type="ip-address"]')
         .attr('type', 'text')
         .attr('data-parsley-ip-address', '1');
 });
 Dms.form.initializeCallbacks.push(function (element) {
 
-});
-Dms.table.initializeCallbacks.push(function (element) {
-
-    element.find('.dms-table-control').each(function () {
-        var control = $(this);
-        var tableContainer = control.find('.dms-table-container');
-        var table = tableContainer.find('table.dms-table');
-        var filterForm = control.find('.dms-table-quick-filter-form');
-        var loadRowsUrl = control.attr('data-load-rows-url');
-        var reorderRowsUrl = control.attr('data-reorder-row-action-url');
-
-        var currentPage = 0;
-
-        var getItemsPerPage = function () {
-            return filterForm.find('select[name=items_per_page]').val()
-        };
-
-        var criteria = {
-            orderings: [],
-            conditions: []
-        };
-
-        var currentAjaxRequest;
-
-        var loadCurrentPage = function () {
-            tableContainer.addClass('loading');
-
-            if (currentAjaxRequest) {
-                currentAjaxRequest.abort();
-            }
-
-            criteria.offset = currentPage * getItemsPerPage();
-            criteria.max_rows = getItemsPerPage();
-
-            currentAjaxRequest = $.ajax({
-                url: loadRowsUrl,
-                type: 'post',
-                dataType: 'html',
-                data: criteria
-            });
-
-            currentAjaxRequest.done(function (tableData) {
-                table.html(tableData);
-                Dms.table.initialize(tableContainer);
-            });
-
-            currentAjaxRequest.fail(function () {
-                tableContainer.addClass('error');
-
-                swal({
-                    title: "Could not load table data",
-                    text: "An unexpected error occurred",
-                    type: "error"
-                });
-            });
-
-            currentAjaxRequest.always(function () {
-                tableContainer.removeClass('loading');
-            });
-        };
-
-        filterForm.find('button').click(function () {
-            criteria.orderings = [
-                {
-                    component: filterForm.find('[name=component]').val(),
-                    direction: filterForm.find('[name=direction]').val()
-                }
-            ];
-
-            criteria.conditions = [
-                // TODO:
-            ];
-
-            loadCurrentPage();
-        });
-
-        loadCurrentPage();
-    });
 });
 Dms.form.initializeCallbacks.push(function (element) {
 
@@ -68824,6 +68754,84 @@ Dms.form.initializeValidationCallbacks.push(function (element) {
 
     element.find('form.dms-form').each(function () {
         $(this).parsley();
+    });
+});
+Dms.table.initializeCallbacks.push(function (element) {
+
+    element.find('.dms-table-control').each(function () {
+        var control = $(this);
+        var tableContainer = control.find('.dms-table-container');
+        var table = tableContainer.find('table.dms-table');
+        var filterForm = control.find('.dms-table-quick-filter-form');
+        var loadRowsUrl = control.attr('data-load-rows-url');
+        var reorderRowsUrl = control.attr('data-reorder-row-action-url');
+
+        var currentPage = 0;
+
+        var getItemsPerPage = function () {
+            return filterForm.find('select[name=items_per_page]').val()
+        };
+
+        var criteria = {
+            orderings: [],
+            conditions: []
+        };
+
+        var currentAjaxRequest;
+
+        var loadCurrentPage = function () {
+            tableContainer.addClass('loading');
+
+            if (currentAjaxRequest) {
+                currentAjaxRequest.abort();
+            }
+
+            criteria.offset = currentPage * getItemsPerPage();
+            criteria.max_rows = getItemsPerPage();
+
+            currentAjaxRequest = $.ajax({
+                url: loadRowsUrl,
+                type: 'post',
+                dataType: 'html',
+                data: criteria
+            });
+
+            currentAjaxRequest.done(function (tableData) {
+                table.html(tableData);
+                Dms.table.initialize(tableContainer);
+            });
+
+            currentAjaxRequest.fail(function () {
+                tableContainer.addClass('error');
+
+                swal({
+                    title: "Could not load table data",
+                    text: "An unexpected error occurred",
+                    type: "error"
+                });
+            });
+
+            currentAjaxRequest.always(function () {
+                tableContainer.removeClass('loading');
+            });
+        };
+
+        filterForm.find('button').click(function () {
+            criteria.orderings = [
+                {
+                    component: filterForm.find('[name=component]').val(),
+                    direction: filterForm.find('[name=direction]').val()
+                }
+            ];
+
+            criteria.conditions = [
+                // TODO:
+            ];
+
+            loadCurrentPage();
+        });
+
+        loadCurrentPage();
     });
 });
 Dms.widget.initializeCallbacks.push(function () {

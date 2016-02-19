@@ -28,11 +28,19 @@ Dms.form.validation.displayMessages = function (form, fieldMessages, generalMess
     var visitMessages = function (fieldName, messages) {
         if ($.isArray(messages)) {
             $.each(messages, function (index, message) {
-                flattenedFieldMessages[fieldName] = message;
+                if (typeof flattenedFieldMessages[fieldName] === 'undefined') {
+                    flattenedFieldMessages[fieldName] = [];
+                }
+
+                flattenedFieldMessages[fieldName].push(message);
             });
         } else {
             $.each(messages.constraints, function (index, message) {
-                flattenedFieldMessages[fieldName] = message;
+                if (typeof flattenedFieldMessages[fieldName] === 'undefined') {
+                    flattenedFieldMessages[fieldName] = [];
+                }
+
+                flattenedFieldMessages[fieldName].push(message);
             });
 
             $.each(messages.fields, function (fieldElementName, elementMessages) {

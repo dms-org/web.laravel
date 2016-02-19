@@ -75,9 +75,11 @@ class FileResultHandler extends ActionResultHandler
 
         return \response()->json([
             'message' => 'The action was successfully executed',
-            'file'    => [
-                'name'  => $tempFile->getFile()->getClientFileNameWithFallback(),
-                'token' => $tempFile->getToken(),
+            'files'   => [
+                [
+                    'name'  => $tempFile->getFile()->getClientFileNameWithFallback(),
+                    'token' => $tempFile->getToken(),
+                ],
             ],
         ]);
     }

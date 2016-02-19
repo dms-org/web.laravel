@@ -1,5 +1,7 @@
 window.Dms = {
-    config: {},
+    config: {
+        // @see /resources/views/partials/js-config.blade.php
+    },
     global: {
         initialize: function (element) {
             $.each(Dms.global.initializeCallbacks, function (index, callback) {
@@ -7,6 +9,12 @@ window.Dms = {
             });
         },
         initializeCallbacks: []
+    },
+    action: {
+        responseHandler: null // @see ./services/action.js
+    },
+    alerts: {
+        add: null // @see ./services/alerts.js
     },
     form: {
         initialize: function (element) {
@@ -16,7 +24,7 @@ window.Dms = {
                 callback(element);
             });
         },
-        validation: {}, // @see ./form-validation.js
+        validation: {}, // @see ./services/form-validation.js
         initializeCallbacks: [],
         initializeValidationCallbacks: []
     },
@@ -44,7 +52,7 @@ window.Dms = {
         },
         initializeCallbacks: []
     },
-    utilities: {} // @see ./utilities.js
+    utilities: {} // @see ./services/utilities.js
 };
 
 $(document).ready(function () {

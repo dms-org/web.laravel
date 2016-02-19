@@ -65175,6 +65175,152 @@ if("function"!=typeof a)throw new TypeError("parseInputDate() sholud be as funct
 
 });
 
+/*!
+ * JavaScript Cookie v2.1.0
+ * https://github.com/js-cookie/js-cookie
+ *
+ * Copyright 2006, 2015 Klaus Hartl & Fagner Brack
+ * Released under the MIT license
+ */
+(function (factory) {
+	if (typeof define === 'function' && define.amd) {
+		define(factory);
+	} else if (typeof exports === 'object') {
+		module.exports = factory();
+	} else {
+		var _OldCookies = window.Cookies;
+		var api = window.Cookies = factory();
+		api.noConflict = function () {
+			window.Cookies = _OldCookies;
+			return api;
+		};
+	}
+}(function () {
+	function extend () {
+		var i = 0;
+		var result = {};
+		for (; i < arguments.length; i++) {
+			var attributes = arguments[ i ];
+			for (var key in attributes) {
+				result[key] = attributes[key];
+			}
+		}
+		return result;
+	}
+
+	function init (converter) {
+		function api (key, value, attributes) {
+			var result;
+
+			// Write
+
+			if (arguments.length > 1) {
+				attributes = extend({
+					path: '/'
+				}, api.defaults, attributes);
+
+				if (typeof attributes.expires === 'number') {
+					var expires = new Date();
+					expires.setMilliseconds(expires.getMilliseconds() + attributes.expires * 864e+5);
+					attributes.expires = expires;
+				}
+
+				try {
+					result = JSON.stringify(value);
+					if (/^[\{\[]/.test(result)) {
+						value = result;
+					}
+				} catch (e) {}
+
+				if (!converter.write) {
+					value = encodeURIComponent(String(value))
+						.replace(/%(23|24|26|2B|3A|3C|3E|3D|2F|3F|40|5B|5D|5E|60|7B|7D|7C)/g, decodeURIComponent);
+				} else {
+					value = converter.write(value, key);
+				}
+
+				key = encodeURIComponent(String(key));
+				key = key.replace(/%(23|24|26|2B|5E|60|7C)/g, decodeURIComponent);
+				key = key.replace(/[\(\)]/g, escape);
+
+				return (document.cookie = [
+					key, '=', value,
+					attributes.expires && '; expires=' + attributes.expires.toUTCString(), // use expires attribute, max-age is not supported by IE
+					attributes.path    && '; path=' + attributes.path,
+					attributes.domain  && '; domain=' + attributes.domain,
+					attributes.secure ? '; secure' : ''
+				].join(''));
+			}
+
+			// Read
+
+			if (!key) {
+				result = {};
+			}
+
+			// To prevent the for loop in the first place assign an empty array
+			// in case there are no cookies at all. Also prevents odd result when
+			// calling "get()"
+			var cookies = document.cookie ? document.cookie.split('; ') : [];
+			var rdecode = /(%[0-9A-Z]{2})+/g;
+			var i = 0;
+
+			for (; i < cookies.length; i++) {
+				var parts = cookies[i].split('=');
+				var name = parts[0].replace(rdecode, decodeURIComponent);
+				var cookie = parts.slice(1).join('=');
+
+				if (cookie.charAt(0) === '"') {
+					cookie = cookie.slice(1, -1);
+				}
+
+				try {
+					cookie = converter.read ?
+						converter.read(cookie, name) : converter(cookie, name) ||
+						cookie.replace(rdecode, decodeURIComponent);
+
+					if (this.json) {
+						try {
+							cookie = JSON.parse(cookie);
+						} catch (e) {}
+					}
+
+					if (key === name) {
+						result = cookie;
+						break;
+					}
+
+					if (!key) {
+						result[name] = cookie;
+					}
+				} catch (e) {}
+			}
+
+			return result;
+		}
+
+		api.get = api.set = api;
+		api.getJSON = function () {
+			return api.apply({
+				json: true
+			}, [].slice.call(arguments));
+		};
+		api.defaults = {};
+
+		api.remove = function (key, attributes) {
+			api(key, '', extend(attributes, {
+				expires: -1
+			}));
+		};
+
+		api.withConverter = init;
+
+		return api;
+	}
+
+	return init(function () {});
+}));
+
 /*! AdminLTE app.js
  * ================
  * Main JS application file for AdminLTE v2. This file
@@ -67832,7 +67978,9 @@ Licensed under the BSD-2-Clause License.
 //# sourceMappingURL=vendor.js.map
 
 window.Dms = {
-    config: {},
+    config: {
+        // @see /resources/views/partials/js-config.blade.php
+    },
     global: {
         initialize: function (element) {
             $.each(Dms.global.initializeCallbacks, function (index, callback) {
@@ -67840,6 +67988,12 @@ window.Dms = {
             });
         },
         initializeCallbacks: []
+    },
+    action: {
+        responseHandler: null // @see ./services/action.js
+    },
+    alerts: {
+        add: null // @see ./services/alerts.js
     },
     form: {
         initialize: function (element) {
@@ -67849,7 +68003,7 @@ window.Dms = {
                 callback(element);
             });
         },
-        validation: {}, // @see ./form-validation.js
+        validation: {}, // @see ./services/form-validation.js
         initializeCallbacks: [],
         initializeValidationCallbacks: []
     },
@@ -67877,7 +68031,7 @@ window.Dms = {
         },
         initializeCallbacks: []
     },
-    utilities: {} // @see ./utilities.js
+    utilities: {} // @see ./services/utilities.js
 };
 
 $(document).ready(function () {
@@ -67887,6 +68041,60 @@ $(document).ready(function () {
     Dms.chart.initialize($(document));
     Dms.widget.initialize($(document));
 });
+Dms.action.responseHandler = function (response) {
+    if (typeof respoonse.messsage !== 'undefined') {
+        Dms.alerts.add('success', response.message);
+    }
+
+    if (typeof response.files !== 'undefined') {
+        swal({
+            title: "Downloading files",
+            text: "Please wait while your download begins. <br> Files: " + response.files.join(', '),
+            type: "info",
+            showConfirmButton: false,
+            showLoaderOnConfirm: true
+        });
+
+        $.each(response.files, function (index, file) {
+            $('<iframe />')
+                .attr('src', Dms.config.routes.downloadFile(file.token))
+                .css('display', 'none')
+                .appendTo($(document.body));
+        });
+
+        var downloadsBegun = 0;
+        var checkIfDownloadsHaveBegun = function () {
+
+            $.each(response.files, function (index, file) {
+                var fileCookieName = 'file-download-' + file.token;
+
+                if (Cookies.get(fileCookieName)) {
+                    downloadsBegun++;
+                    Cookies.remove(fileCookieName)
+                }
+            });
+
+            if (downloadsBegun < response.files.length) {
+                setTimeout(checkIfDownloadsHaveBegun, 100);
+            } else {
+                swal.close();
+            }
+        };
+
+        checkIfDownloadsHaveBegun();
+    }
+};
+Dms.alerts.add = function (type, title, message) {
+    var alertsList = $('.alerts-list');
+    var templates = alertsList.find('.alert-templates');
+
+
+    var alert = templates.find('.alert.alert-' + type).clone(true);
+    alert.find('.alert-title').text(title);
+    alert.find('.alert-message').text(message);
+
+    alertsList.append(alert);
+};
 Dms.global.initializeCallbacks.push(function () {
     $.ajaxSetup({
         headers: {
@@ -68215,6 +68423,12 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
+    element.find('select[multiple]').multiselect({
+        enableFiltering: true,
+        includeSelectAllOption: true
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
 
     element.find('ul.list-field').each(function () {
         var listOfFields = $(this);
@@ -68271,12 +68485,6 @@ Dms.form.initializeCallbacks.push(function (element) {
             addButton.closest('.list-field-add').remove();
             listOfFields.find('.btn-remove-field').remove();
         }
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
-    element.find('select[multiple]').multiselect({
-        enableFiltering: true,
-        includeSelectAllOption: true
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -68441,6 +68649,57 @@ Dms.form.initializeCallbacks.push(function (element) {
         });
     });
 });
+Dms.form.initializeCallbacks.push(function (element) {
+
+    element.find('form.dms-staged-form').each(function () {
+        var form = $(this);
+        var submitButtons = form.find('input[type=submit], button[type=submit]');
+        var submitMethod = form.attr('method');
+        var submitUrl = form.attr('action');
+
+        form.on('submit', function (e) {
+            e.preventDefault();
+
+            var formData = new FormData(form.get(0));
+
+            submitButtons.prop('disabled', true);
+
+            var currentAjaxRequest = $.ajax({
+                url: submitUrl,
+                type: submitMethod,
+                processData: false,
+                contentType: false,
+                dataType: 'json',
+                data: formData
+            });
+
+            currentAjaxRequest.done(function (data) {
+                Dms.action.responseHandler(data);
+            });
+
+            currentAjaxRequest.fail(function (xhr) {
+                switch (xhr.status) {
+                    case 422: // Unprocessable Entity (validation failure)
+                        var validation = JSON.parse(xhr.responseText);
+                        Dms.form.validation.displayMessages(form, validation.fields, validation.constraints);
+                        break;
+
+                    default: // Unknown error
+                        swal({
+                            title: "Could not submit form",
+                            text: "An unexpected error occurred",
+                            type: "error"
+                        });
+                        break;
+                }
+            });
+
+            currentAjaxRequest.always(function () {
+                submitButtons.prop('disabled', false);
+            });
+        });
+    });
+});
 Dms.form.initializeValidationCallbacks.push(function (element) {
 
     element.find('.dms-form-fields').each(function () {
@@ -68487,6 +68746,37 @@ Dms.form.initializeValidationCallbacks.push(function (element) {
 
     element.find('form.dms-form').each(function () {
         $(this).parsley();
+    });
+});
+Dms.widget.initializeCallbacks.push(function () {
+    $('.dms-widget-unparameterized-action, .dms-widget-parameterized-action').each(function () {
+        var widget = $(this);
+        var button = widget.find('button');
+
+        if (button.is('.btn-danger')) {
+            var isConfirmed = false;
+
+            button.click(function () {
+                if (isConfirmed) {
+                    isConfirmed = false;
+                    return;
+                }
+
+                swal({
+                    title: "Are you sure?",
+                    text: "This will execute the '" + widget.attr('data-action-label') + "' action",
+                    type: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#DD6B55",
+                    confirmButtonText: "Yes proceed!"
+                }, function () {
+                    isConfirmed = true;
+                    $(this).click();
+                });
+
+                return false;
+            });
+        }
     });
 });
 Dms.table.initializeCallbacks.push(function (element) {
@@ -68565,37 +68855,6 @@ Dms.table.initializeCallbacks.push(function (element) {
         });
 
         loadCurrentPage();
-    });
-});
-Dms.widget.initializeCallbacks.push(function () {
-    $('.dms-widget-unparameterized-action, .dms-widget-parameterized-action').each(function () {
-        var widget = $(this);
-        var button = widget.find('button');
-
-        if (button.is('.btn-danger')) {
-            var isConfirmed = false;
-
-            button.click(function () {
-                if (isConfirmed) {
-                    isConfirmed = false;
-                    return;
-                }
-
-                swal({
-                    title: "Are you sure?",
-                    text: "This will execute the '" + widget.attr('data-action-label') + "' action",
-                    type: "warning",
-                    showCancelButton: true,
-                    confirmButtonColor: "#DD6B55",
-                    confirmButtonText: "Yes proceed!"
-                }, function () {
-                    isConfirmed = true;
-                    $(this).click();
-                });
-
-                return false;
-            });
-        }
     });
 });
 //# sourceMappingURL=app.js.map

@@ -1,4 +1,4 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Http\Controllers;
 
@@ -39,7 +39,7 @@ class FileController extends DmsController
         parent::__construct($cms);
 
         $this->tempFileService = $tempFileService;
-        $this->config = $config;
+        $this->config          = $config;
     }
 
     public function upload(Request $request)
@@ -71,7 +71,7 @@ class FileController extends DmsController
             $file = $this->tempFileService->getTempFile($token);
 
             return \response()
-                ->withCookie(cookie('file-download', 'done'))
+                ->withCookie(cookie('file-download-' . $token, true))
                 ->download($file->getFile()->getInfo());
         } catch (EntityNotFoundException $e) {
             abort(404);

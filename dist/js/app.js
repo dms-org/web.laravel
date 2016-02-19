@@ -1,5 +1,7 @@
 window.Dms = {
-    config: {},
+    config: {
+        // @see /resources/views/partials/js-config.blade.php
+    },
     global: {
         initialize: function (element) {
             $.each(Dms.global.initializeCallbacks, function (index, callback) {
@@ -7,6 +9,12 @@ window.Dms = {
             });
         },
         initializeCallbacks: []
+    },
+    action: {
+        responseHandler: null // @see ./services/action.js
+    },
+    alerts: {
+        add: null // @see ./services/alerts.js
     },
     form: {
         initialize: function (element) {
@@ -16,7 +24,7 @@ window.Dms = {
                 callback(element);
             });
         },
-        validation: {}, // @see ./form-validation.js
+        validation: {}, // @see ./services/form-validation.js
         initializeCallbacks: [],
         initializeValidationCallbacks: []
     },
@@ -44,7 +52,7 @@ window.Dms = {
         },
         initializeCallbacks: []
     },
-    utilities: {} // @see ./utilities.js
+    utilities: {} // @see ./services/utilities.js
 };
 
 $(document).ready(function () {
@@ -54,6 +62,60 @@ $(document).ready(function () {
     Dms.chart.initialize($(document));
     Dms.widget.initialize($(document));
 });
+Dms.action.responseHandler = function (response) {
+    if (typeof respoonse.messsage !== 'undefined') {
+        Dms.alerts.add('success', response.message);
+    }
+
+    if (typeof response.files !== 'undefined') {
+        swal({
+            title: "Downloading files",
+            text: "Please wait while your download begins. <br> Files: " + response.files.join(', '),
+            type: "info",
+            showConfirmButton: false,
+            showLoaderOnConfirm: true
+        });
+
+        $.each(response.files, function (index, file) {
+            $('<iframe />')
+                .attr('src', Dms.config.routes.downloadFile(file.token))
+                .css('display', 'none')
+                .appendTo($(document.body));
+        });
+
+        var downloadsBegun = 0;
+        var checkIfDownloadsHaveBegun = function () {
+
+            $.each(response.files, function (index, file) {
+                var fileCookieName = 'file-download-' + file.token;
+
+                if (Cookies.get(fileCookieName)) {
+                    downloadsBegun++;
+                    Cookies.remove(fileCookieName)
+                }
+            });
+
+            if (downloadsBegun < response.files.length) {
+                setTimeout(checkIfDownloadsHaveBegun, 100);
+            } else {
+                swal.close();
+            }
+        };
+
+        checkIfDownloadsHaveBegun();
+    }
+};
+Dms.alerts.add = function (type, title, message) {
+    var alertsList = $('.alerts-list');
+    var templates = alertsList.find('.alert-templates');
+
+
+    var alert = templates.find('.alert.alert-' + type).clone(true);
+    alert.find('.alert-title').text(title);
+    alert.find('.alert-message').text(message);
+
+    alertsList.append(alert);
+};
 Dms.global.initializeCallbacks.push(function () {
     $.ajaxSetup({
         headers: {
@@ -382,6 +444,12 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
+    element.find('select[multiple]').multiselect({
+        enableFiltering: true,
+        includeSelectAllOption: true
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
 
     element.find('ul.list-field').each(function () {
         var listOfFields = $(this);
@@ -438,12 +506,6 @@ Dms.form.initializeCallbacks.push(function (element) {
             addButton.closest('.list-field-add').remove();
             listOfFields.find('.btn-remove-field').remove();
         }
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
-    element.find('select[multiple]').multiselect({
-        enableFiltering: true,
-        includeSelectAllOption: true
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -608,6 +670,57 @@ Dms.form.initializeCallbacks.push(function (element) {
         });
     });
 });
+Dms.form.initializeCallbacks.push(function (element) {
+
+    element.find('form.dms-staged-form').each(function () {
+        var form = $(this);
+        var submitButtons = form.find('input[type=submit], button[type=submit]');
+        var submitMethod = form.attr('method');
+        var submitUrl = form.attr('action');
+
+        form.on('submit', function (e) {
+            e.preventDefault();
+
+            var formData = new FormData(form.get(0));
+
+            submitButtons.prop('disabled', true);
+
+            var currentAjaxRequest = $.ajax({
+                url: submitUrl,
+                type: submitMethod,
+                processData: false,
+                contentType: false,
+                dataType: 'json',
+                data: formData
+            });
+
+            currentAjaxRequest.done(function (data) {
+                Dms.action.responseHandler(data);
+            });
+
+            currentAjaxRequest.fail(function (xhr) {
+                switch (xhr.status) {
+                    case 422: // Unprocessable Entity (validation failure)
+                        var validation = JSON.parse(xhr.responseText);
+                        Dms.form.validation.displayMessages(form, validation.fields, validation.constraints);
+                        break;
+
+                    default: // Unknown error
+                        swal({
+                            title: "Could not submit form",
+                            text: "An unexpected error occurred",
+                            type: "error"
+                        });
+                        break;
+                }
+            });
+
+            currentAjaxRequest.always(function () {
+                submitButtons.prop('disabled', false);
+            });
+        });
+    });
+});
 Dms.form.initializeValidationCallbacks.push(function (element) {
 
     element.find('.dms-form-fields').each(function () {
@@ -654,6 +767,37 @@ Dms.form.initializeValidationCallbacks.push(function (element) {
 
     element.find('form.dms-form').each(function () {
         $(this).parsley();
+    });
+});
+Dms.widget.initializeCallbacks.push(function () {
+    $('.dms-widget-unparameterized-action, .dms-widget-parameterized-action').each(function () {
+        var widget = $(this);
+        var button = widget.find('button');
+
+        if (button.is('.btn-danger')) {
+            var isConfirmed = false;
+
+            button.click(function () {
+                if (isConfirmed) {
+                    isConfirmed = false;
+                    return;
+                }
+
+                swal({
+                    title: "Are you sure?",
+                    text: "This will execute the '" + widget.attr('data-action-label') + "' action",
+                    type: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#DD6B55",
+                    confirmButtonText: "Yes proceed!"
+                }, function () {
+                    isConfirmed = true;
+                    $(this).click();
+                });
+
+                return false;
+            });
+        }
     });
 });
 Dms.table.initializeCallbacks.push(function (element) {
@@ -732,37 +876,6 @@ Dms.table.initializeCallbacks.push(function (element) {
         });
 
         loadCurrentPage();
-    });
-});
-Dms.widget.initializeCallbacks.push(function () {
-    $('.dms-widget-unparameterized-action, .dms-widget-parameterized-action').each(function () {
-        var widget = $(this);
-        var button = widget.find('button');
-
-        if (button.is('.btn-danger')) {
-            var isConfirmed = false;
-
-            button.click(function () {
-                if (isConfirmed) {
-                    isConfirmed = false;
-                    return;
-                }
-
-                swal({
-                    title: "Are you sure?",
-                    text: "This will execute the '" + widget.attr('data-action-label') + "' action",
-                    type: "warning",
-                    showCancelButton: true,
-                    confirmButtonColor: "#DD6B55",
-                    confirmButtonText: "Yes proceed!"
-                }, function () {
-                    isConfirmed = true;
-                    $(this).click();
-                });
-
-                return false;
-            });
-        }
     });
 });
 //# sourceMappingURL=app.js.map

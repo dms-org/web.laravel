@@ -145,6 +145,8 @@
             </section>
 
             <section class="content">
+                @include('partials.alerts')
+
                 @yield('content')
             </section>
         </div>
@@ -159,5 +161,8 @@
             </span>
         </footer>
     </div>
+
+    @include('partials.js-config')
+
     </body>
 @endsection

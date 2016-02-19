@@ -1,6 +1,6 @@
 Dms.action.responseHandler = function (response) {
     if (typeof response.redirect !== 'undefined') {
-        if (typeof respoonse.messsage !== 'undefined') {
+        if (typeof response.messsage !== 'undefined') {
             Cookies.set('dms-flash-alert-success', response.message);
         }
 

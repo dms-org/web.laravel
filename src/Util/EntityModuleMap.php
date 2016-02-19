@@ -49,6 +49,8 @@ class EntityModuleMap
                     }
                 }
             }
+
+            return $map;
         });
     }
 

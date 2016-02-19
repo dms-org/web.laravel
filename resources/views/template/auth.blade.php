@@ -6,7 +6,7 @@
             <a href="{{ route('dms::index') }}"><b>DMS</b> <br/> {{ '{' . request()->server->get('SERVER_NAME') . '}' }}</a>
         </div>
         <div class="login-box-body">
-            @include('partials.alerts')
+            @include('dms::partials.alerts')
             @yield('content')
         </div>
         <!-- /.login-box-body -->

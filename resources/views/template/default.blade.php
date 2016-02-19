@@ -145,7 +145,7 @@
             </section>
 
             <section class="content">
-                @include('partials.alerts')
+                @include('dms::partials.alerts')
 
                 @yield('content')
             </section>
@@ -162,7 +162,7 @@
         </footer>
     </div>
 
-    @include('partials.js-config')
+    @include('dms::partials.js-config')
 
     </body>
 @endsection

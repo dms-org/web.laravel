@@ -87,7 +87,7 @@ Dms.form.initializeCallbacks.push(function (element) {
                     switch (xhr.status) {
                         case 422: // Unprocessable Entity (validation failure)
                             var validation = JSON.parse(xhr.responseText);
-                            Dms.form.validation.displayMessages(form, validation.fields, validation.constraints);
+                            Dms.form.validation.displayMessages(form, validation.messages.fields, validation.messages.constraints);
                             break;
 
                         case 400: // Bad request

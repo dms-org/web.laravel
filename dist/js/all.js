@@ -68042,6 +68042,14 @@ $(document).ready(function () {
     Dms.widget.initialize($(document));
 });
 Dms.action.responseHandler = function (response) {
+    if (typeof response.redirect !== 'undefined') {
+        if (typeof respoonse.messsage !== 'undefined') {
+            Cookies.set('dms-flash-success', response.message);
+        }
+
+        window.location.href = response.redirect;
+    }
+
     if (typeof respoonse.messsage !== 'undefined') {
         Dms.alerts.add('success', response.message);
     }
@@ -68094,6 +68102,13 @@ Dms.alerts.add = function (type, title, message) {
     alert.find('.alert-message').text(message);
 
     alertsList.append(alert);
+};
+
+Dms.global.initializeCallbacks = function () {
+    var successFlash = Cookies.get('dms-flash-alert-success');
+    Cookies.remove('dms-flash-alert-success');
+
+    Dms.alerts.add('success', successFlash);
 };
 Dms.global.initializeCallbacks.push(function () {
     $.ajaxSetup({

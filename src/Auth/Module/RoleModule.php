@@ -65,7 +65,6 @@ class RoleModule extends CrudModule
 
         $module->labelObjects()->fromProperty(Role::NAME);
 
-
         $module->crudForm(function (CrudFormDefinition $form) {
             $permissionOptions =  $this->loadPermissionOptions();
 

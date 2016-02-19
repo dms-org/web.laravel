@@ -29,6 +29,8 @@ return [
                 Dms\Web\Laravel\Action\InputTransformer\TempUploadedFileToUploadedFileTransformer::class,
             ],
             'result-handlers'    => [
+                Dms\Web\Laravel\Action\ResultHandler\CreatedEntityResultHandler::class,
+                Dms\Web\Laravel\Action\ResultHandler\EditedEntityResultHandler::class,
                 Dms\Web\Laravel\Action\ResultHandler\NullResultHandler::class,
                 Dms\Web\Laravel\Action\ResultHandler\MessageResultHandler::class,
                 Dms\Web\Laravel\Action\ResultHandler\FileResultHandler::class,

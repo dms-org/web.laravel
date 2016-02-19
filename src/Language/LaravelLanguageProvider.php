@@ -42,7 +42,7 @@ class LaravelLanguageProvider implements ILanguageProvider
     public function format(Message $message) : string
     {
         return $this->laravelTranslator->trans(
-            $message->getId(),
+            'dms::' . $message->getId(),
             $message->getParameters()
         );
     }

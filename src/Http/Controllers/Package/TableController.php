@@ -84,7 +84,6 @@ class TableController extends DmsController
         foreach ($structure->getColumns() as $column) {
             foreach ($column->getComponents() as $component) {
                 $validComponentIds[] = $column->getName() . '.' . $component->getName();
-
             }
         }
 

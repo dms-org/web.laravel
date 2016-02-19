@@ -139,8 +139,10 @@ class ActionController extends DmsController
 
         try {
             if (!$action->isAuthorized()) {
-                throw new UserForbiddenException($this->auth->getAuthenticatedUser(),
-                    $action->getRequiredPermissions());
+                throw new UserForbiddenException(
+                    $this->auth->getAuthenticatedUser(),
+                    $action->getRequiredPermissions()
+                );
             }
 
             $input = $this->inputTransformers->transform($action, $request->all());
@@ -149,7 +151,7 @@ class ActionController extends DmsController
             return $this->exceptionHandlers->handle($action, $e);
         }
 
-        return response($this->actionFormRenderer->renderFields($form), 200);
+        return response($this->actionFormRenderer->renderFormFields($form), 200);
     }
 
     public function runAction(Request $request, $packageName, $moduleName, $actionName)

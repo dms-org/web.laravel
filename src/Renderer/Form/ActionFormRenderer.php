@@ -2,6 +2,7 @@
 
 namespace Dms\Web\Laravel\Renderer\Form;
 
+use Dms\Core\Form\IForm;
 use Dms\Core\Module\IParameterizedAction;
 use Dms\Web\Laravel\Util\KeywordTypeIdentifier;
 
@@ -54,5 +55,17 @@ class ActionFormRenderer
                 'submitButtonClass' => $this->keywordTypeIdentifier->getTypeFromName($action->getName()),
             ])
             ->render();
+    }
+
+    /**
+     * Renders the supplied form fields.
+     *
+     * @param IForm $form
+     *
+     * @return string
+     */
+    public function renderFormFields(IForm $form) : string
+    {
+        return $this->formRenderer->renderFields($form);
     }
 }

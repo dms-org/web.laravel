@@ -12,7 +12,7 @@ Dms.form.validation.displayMessages = function (form, fieldMessages, generalMess
     form.addClass('has-error');
 
     var makeHelpBlock = function () {
-        return $('<span />').addClass(['help-block', 'help-block-error']);
+        return $('<span />').addClass('help-block help-block-error');
     };
 
     var helpBlock = makeHelpBlock();
@@ -51,13 +51,15 @@ Dms.form.validation.displayMessages = function (form, fieldMessages, generalMess
     $.each(fieldMessages, visitMessages);
 
     $.each(flattenedFieldMessages, function (fieldName, messages) {
-        var fieldGroup = form.find('.form-group[data-field-name="' + fieldName + '"]');
+        var fieldMessages = form.find('.form-group[data-field-name="' + fieldName + '"]');
+        var validationMessagesContainer = fieldMessages.find('.dms-validation-messages-container');
 
         var helpBlock = makeHelpBlock();
         $.each(messages, function (index, message) {
             helpBlock.append($('<strong />').text(message));
         });
 
-        fieldGroup.prepend(helpBlock);
+        fieldMessages.addClass('has-error');
+        validationMessagesContainer.prepend(helpBlock);
     });
 };

@@ -9,6 +9,8 @@ Dms.form.initializeCallbacks.push(function (element) {
         form.on('submit', function (e) {
             e.preventDefault();
 
+            Dms.form.validation.clearMessages(form);
+
             var formData = new FormData(form.get(0));
 
             submitButtons.prop('disabled', true);

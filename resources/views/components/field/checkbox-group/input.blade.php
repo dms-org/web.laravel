@@ -16,6 +16,7 @@
             <label class="checkbox-inline">
                 <input
                         type="checkbox"
+                        value="{{ $option->getValue() }}"
                         name="{{ $name }}[]"
                         @if($readonly) readonly @endif
                         @if(isset($valuesAsKeys[$option->getValue()])) checked="checked" @endif

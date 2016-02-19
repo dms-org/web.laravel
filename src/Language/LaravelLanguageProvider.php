@@ -1,4 +1,4 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Language;
 
@@ -41,10 +41,18 @@ class LaravelLanguageProvider implements ILanguageProvider
      */
     public function format(Message $message) : string
     {
-        return $this->laravelTranslator->trans(
-            'dms::' . $message->getId(),
-            $message->getParameters()
+        $messageId = 'dms::' . $message->getId();
+
+        $response = $this->laravelTranslator->trans(
+            $messageId,
+            $this->processParameters($message->getParameters())
         );
+
+        if ($response === $messageId) {
+            throw MessageNotFoundException::format('Could not translate message: unknown message id \'%s\'', $messageId);
+        }
+
+        return $response;
     }
 
     /**
@@ -62,5 +70,24 @@ class LaravelLanguageProvider implements ILanguageProvider
         InvalidArgumentException::verifyAllInstanceOf(__METHOD__, 'messages', $messages, Message::class);
 
         return array_map([$this, 'format'], $messages);
+    }
+
+    private function processParameters(array $parameters) : array
+    {
+        $processedParams = [];
+
+        foreach ($parameters as $key => $value) {
+            if (is_array($value)) {
+                $processedParams[$key] = implode(', ', $this->processParameters($value));
+            } elseif (is_object($value) && method_exists($value, '__toString')) {
+                $processedParams[$key] = (string)$value;
+            } elseif (is_object($value)) {
+                $processedParams[$key] = get_class($value);
+            } else {
+                $processedParams[$key] = (string)$value;
+            }
+        }
+
+        return $processedParams;
     }
 }

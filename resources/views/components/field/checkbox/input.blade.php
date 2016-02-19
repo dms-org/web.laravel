@@ -1,5 +1,6 @@
 <input
         type="checkbox"
+        value="1"
         class="single-checkbox"
         name="{{ $name }}"
         @if($required) required @endif

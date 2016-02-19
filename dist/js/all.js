@@ -68152,7 +68152,7 @@ Dms.form.validation.displayMessages = function (form, fieldMessages, generalMess
     form.addClass('has-error');
 
     var makeHelpBlock = function () {
-        return $('<span />').addClass(['help-block', 'help-block-error']);
+        return $('<span />').addClass('help-block help-block-error');
     };
 
     var helpBlock = makeHelpBlock();
@@ -68191,14 +68191,16 @@ Dms.form.validation.displayMessages = function (form, fieldMessages, generalMess
     $.each(fieldMessages, visitMessages);
 
     $.each(flattenedFieldMessages, function (fieldName, messages) {
-        var fieldGroup = form.find('.form-group[data-field-name="' + fieldName + '"]');
+        var fieldMessages = form.find('.form-group[data-field-name="' + fieldName + '"]');
+        var validationMessagesContainer = fieldMessages.find('.dms-validation-messages-container');
 
         var helpBlock = makeHelpBlock();
         $.each(messages, function (index, message) {
             helpBlock.append($('<strong />').text(message));
         });
 
-        fieldGroup.prepend(helpBlock);
+        fieldMessages.addClass('has-error');
+        validationMessagesContainer.prepend(helpBlock);
     });
 };
 Dms.utilities.countDecimals = function (value) {
@@ -68496,9 +68498,6 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-
-});
-Dms.form.initializeCallbacks.push(function (element) {
     element.find('input[type="number"][data-max-decimal-places]').each(function () {
         $(this).attr('data-parsley-max-decimal-places', $(this).attr('data-max-decimal-places'));
     });
@@ -68510,6 +68509,9 @@ Dms.form.initializeCallbacks.push(function (element) {
     element.find('input[type="number"][data-less-than]').each(function () {
         $(this).attr('data-parsley-lt', $(this).attr('data-less-than'));
     });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+
 });
 Dms.form.initializeCallbacks.push(function (element) {
 
@@ -68667,6 +68669,8 @@ Dms.form.initializeCallbacks.push(function (element) {
 
         form.on('submit', function (e) {
             e.preventDefault();
+
+            Dms.form.validation.clearMessages(form);
 
             var formData = new FormData(form.get(0));
 

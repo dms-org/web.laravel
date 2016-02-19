@@ -22,10 +22,10 @@ return [
     'array'                => 'The :field must be an array.',
     'before'               => 'The :field must be a date before :date.',
     'between'              => [
-            'numeric' => 'The :field must be between :min and :max.',
-            'file'    => 'The :field must be between :min and :max kilobytes.',
-            'string'  => 'The :field must be between :min and :max characters.',
-            'array'   => 'The :field must have between :min and :max items.',
+        'numeric' => 'The :field must be between :min and :max.',
+        'file'    => 'The :field must be between :min and :max kilobytes.',
+        'string'  => 'The :field must be between :min and :max characters.',
+        'array'   => 'The :field must have between :min and :max items.',
     ],
     'boolean'              => 'The :field field must be true or false.',
     'confirmed'            => 'The :field confirmation does not match.',
@@ -43,17 +43,17 @@ return [
     'ip'                   => 'The :field must be a valid IP address.',
     'json'                 => 'The :field must be a valid JSON string.',
     'max'                  => [
-            'numeric' => 'The :field may not be greater than :max.',
-            'file'    => 'The :field may not be greater than :max kilobytes.',
-            'string'  => 'The :field may not be greater than :max characters.',
-            'array'   => 'The :field may not have more than :max items.',
+        'numeric' => 'The :field may not be greater than :max.',
+        'file'    => 'The :field may not be greater than :max kilobytes.',
+        'string'  => 'The :field may not be greater than :max characters.',
+        'array'   => 'The :field may not have more than :max items.',
     ],
     'mimes'                => 'The :field must be a file of type: :values.',
     'min'                  => [
-            'numeric' => 'The :field must be at least :min.',
-            'file'    => 'The :field must be at least :min kilobytes.',
-            'string'  => 'The :field must be at least :min characters.',
-            'array'   => 'The :field must have at least :min items.',
+        'numeric' => 'The :field must be at least :min.',
+        'file'    => 'The :field must be at least :min kilobytes.',
+        'string'  => 'The :field must be at least :min characters.',
+        'array'   => 'The :field must have at least :min items.',
     ],
     'not_in'               => 'The selected :field is invalid.',
     'numeric'              => 'The :field must be a number.',
@@ -67,13 +67,14 @@ return [
     'required_without_all' => 'The :field field is required when none of :values are present.',
     'same'                 => 'The :field and :other must match.',
     'size'                 => [
-            'numeric' => 'The :field must be :size.',
-            'file'    => 'The :field must be :size kilobytes.',
-            'string'  => 'The :field must be :size characters.',
-            'array'   => 'The :field must contain :size items.',
+        'numeric' => 'The :field must be :size.',
+        'file'    => 'The :field must be :size kilobytes.',
+        'string'  => 'The :field must be :size characters.',
+        'array'   => 'The :field must contain :size items.',
     ],
     'string'               => 'The :field must be a string.',
     'timezone'             => 'The :field must be a valid zone.',
+    'type'                 => 'The :field must be of a :type type',
     'unique'               => 'The :field has already been taken.',
     'url'                  => 'The :field format is invalid.',
 
@@ -89,9 +90,9 @@ return [
     */
 
     'custom' => [
-            'field-name' => [
-                    'rule-name' => 'custom-message',
-            ],
+        'field-name' => [
+            'rule-name' => 'custom-message',
+        ],
     ],
 
     /*

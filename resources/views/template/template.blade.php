@@ -13,7 +13,10 @@
     @endforeach
 </head>
 @yield('body-content')
+
 @foreach (config('dms.front-end.scripts') as $script)
     <script src="{{ asset($script) }}"></script>
 @endforeach
+@include('dms::partials.js-config')
+
 </html>

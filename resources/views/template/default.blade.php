@@ -161,8 +161,5 @@
             </span>
         </footer>
     </div>
-
-    @include('dms::partials.js-config')
-
     </body>
 @endsection

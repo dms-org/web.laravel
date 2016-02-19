@@ -97,11 +97,11 @@ class RoleModule extends CrudModule
                 $form->field(
                     Field::create('users', 'Users')
                         ->entityIdsFrom($this->userRepo)
+                        ->defaultTo([])
                         ->labelledByCallback(function (User $user) {
                             return $user->getUsername() . ' <' . $user->getEmailAddress() . '>';
                         })
                         ->mapToCollection(EntityIdCollection::type())
-                        ->required()
                 )->bindToProperty(Role::USER_IDS),
             ]);
         });

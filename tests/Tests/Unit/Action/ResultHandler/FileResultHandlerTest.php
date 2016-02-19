@@ -45,9 +45,11 @@ class FileResultHandlerTest extends ResultHandlerTest
                 $this->mockFile(),
                 new JsonResponse([
                     'message' => 'The action was successfully executed',
-                    'file'    => [
-                        'name'  => 'file-name',
-                        'token' => 'some-token',
+                    'files'   => [
+                        [
+                            'name'  => 'file-name',
+                            'token' => 'some-token',
+                        ],
                     ],
                 ]),
             ],

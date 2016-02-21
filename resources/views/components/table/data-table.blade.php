@@ -21,7 +21,7 @@
                     <td data-column-name="{{ $columnName }}">{!! $columnRenderers[$columnName]->render($value) !!}</td>
                 @endforeach
                 @if($rowActionButtons)
-                    <th class="dms-row-action-column">Actions</th>
+                    <td class="dms-row-action-column">Actions</td>
                 @endif
             </tr>
             </thead>
@@ -34,7 +34,7 @@
                     <td data-column-name="{{ $columnName }}">{!! $columnRenderers[$columnName]->render($value) !!}</td>
                 @endforeach
                 @if($rowActionButtons)
-                    <th class="dms-row-action-column">
+                    <td class="dms-row-action-column">
                         @foreach($rowActionButtons as $action)
                             @if($action->isPost())
                                 <form class="dms-run-action-form inline" action="{{ $action->getUrl($row) }}" method="post">
@@ -45,7 +45,7 @@
                                 <a class="btn btn-xs btn-default" href="{{ $action->getUrl($row) }}">{{ $action->getLabel() }}</a>
                             @endif
                         @endforeach
-                    </th>
+                    </td>
                 @endif
             </tr>
         @endforeach

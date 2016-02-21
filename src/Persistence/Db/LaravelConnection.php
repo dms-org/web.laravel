@@ -22,6 +22,7 @@ class LaravelConnection extends DoctrineConnection
     {
         parent::__construct($connection->getDoctrineConnection());
         $this->connection = $connection;
+        $connection->getPdo()->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
     }
 
     public function prepare($sql, array $parameters = []) : IQuery

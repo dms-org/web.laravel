@@ -25,7 +25,7 @@ abstract class ColumnRendererAndFactory implements IColumnRendererFactory
      * @return IColumnRenderer
      * @throws InvalidArgumentException
      */
-    final public function buildRenderer(IColumn $column, ColumnComponentRendererCollection $componentRenderers) : \Dms\Web\Laravel\Renderer\Table\IColumnRenderer
+    final public function buildRenderer(IColumn $column, ColumnComponentRendererCollection $componentRenderers) : IColumnRenderer
     {
         if (!$this->accepts($column)) {
             throw InvalidArgumentException::format('Invalid column supplied to %s',

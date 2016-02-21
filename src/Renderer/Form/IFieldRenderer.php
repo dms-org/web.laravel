@@ -1,4 +1,4 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Renderer\Form;
 
@@ -41,12 +41,13 @@ interface IFieldRenderer
     /**
      * Renders the supplied field value display as a html string.
      *
-     * @param IField $field
+     * @param IField     $field
+     * @param mixed|null $overrideValue
      *
      * @return string
      * @throws InvalidArgumentException
      */
-    public function renderValue(IField $field) : string;
+    public function renderValue(IField $field, $overrideValue = null) : string;
 
     /**
      * Sets the parent field renderer.

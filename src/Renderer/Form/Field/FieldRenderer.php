@@ -1,4 +1,4 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Renderer\Form\Field;
 
@@ -101,11 +101,12 @@ abstract class FieldRenderer implements IFieldRenderer
      * Renders the supplied field value as a html string.
      *
      * @param IField $field
+     * @param mixed  $overrideValue
      *
      * @return string
      * @throws InvalidArgumentException
      */
-    final public function renderValue(IField $field) : string
+    final public function renderValue(IField $field, $overrideValue = null) : string
     {
         if (!$this->accepts($field)) {
             throw InvalidArgumentException::format(
@@ -114,14 +115,15 @@ abstract class FieldRenderer implements IFieldRenderer
             );
         }
 
-        return $this->renderFieldValue($field, $field->getType());
+        return $this->renderFieldValue($field, $overrideValue ?? $field->getUnprocessedInitialValue(), $field->getType());
     }
 
     /**
      * @param IField     $field
+     * @param mixed      $value
      * @param IFieldType $fieldType
      *
      * @return string
      */
-    abstract protected function renderFieldValue(IField $field, IFieldType $fieldType) : string;
+    abstract protected function renderFieldValue(IField $field, $value, IFieldType $fieldType) : string;
 }

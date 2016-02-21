@@ -38,12 +38,26 @@ class KeywordTypeIdentifier
      */
     public function __construct(Repository $config)
     {
-        $this->dangerStrings  = $config->get('dms::keywords.danger', []);
-        $this->successStrings = $config->get('dms::keywords.success', []);
-        $this->infoStrings    = $config->get('dms::keywords.info', []);
-        $this->overridesMap   = $config->get('dms::keywords.overrides', []);
+        $this->dangerStrings  = $config->get('dms.keywords.danger', []);
+        $this->successStrings = $config->get('dms.keywords.success', []);
+        $this->infoStrings    = $config->get('dms.keywords.info', []);
+        $this->overridesMap   = $config->get('dms.keywords.overrides', []);
     }
 
+
+    /**
+     * Gets the keyword type from the given string.
+     *
+     * Returns one of ("danger", "success", "info") or NULL if unknown
+     *
+     * @param string $name
+     *
+     * @return string|null
+     */
+    public static function getClass(string $name)
+    {
+        return app(__CLASS__)->getTypeFromName($name);
+    }
 
     /**
      * Gets the keyword type from the given string.

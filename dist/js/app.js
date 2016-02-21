@@ -64,14 +64,15 @@ $(document).ready(function () {
 });
 Dms.action.responseHandler = function (response) {
     if (typeof response.redirect !== 'undefined') {
-        if (typeof response.messsage !== 'undefined') {
+        if (typeof response.message !== 'undefined') {
             Cookies.set('dms-flash-alert-success', response.message);
         }
 
         window.location.href = response.redirect;
+        return;
     }
 
-    if (typeof respoonse.messsage !== 'undefined') {
+    if (typeof response.message !== 'undefined') {
         Dms.alerts.add('success', response.message);
     }
 
@@ -119,17 +120,29 @@ Dms.alerts.add = function (type, title, message) {
 
 
     var alert = templates.find('.alert.alert-' + type).clone(true);
-    alert.find('.alert-title').text(title);
-    alert.find('.alert-message').text(message);
 
-    alertsList.append(alert);
+    if (!message) {
+        var typeTitle = type.charAt(0).toUpperCase() + type.slice(1);
+
+        alert.find('.alert-title').text(typeTitle);
+        alert.find('.alert-message').text(title);
+    } else {
+        alert.find('.alert-title').text(title);
+        alert.find('.alert-message').text(message);
+    }
+
+    alertsList.append(alert.hide());
+    alert.fadeIn();
 };
 
 Dms.global.initializeCallbacks.push(function () {
     var successFlash = Cookies.get('dms-flash-alert-success');
-    Cookies.remove('dms-flash-alert-success');
 
-    Dms.alerts.add('success', successFlash);
+    if (successFlash) {
+        Cookies.remove('dms-flash-alert-success');
+
+        Dms.alerts.add('success', successFlash);
+    }
 });
 Dms.global.initializeCallbacks.push(function () {
     $.ajaxSetup({
@@ -175,7 +188,6 @@ $(document).ready(function () {
     $.widget.bridge('uibutton', $.ui.button);
 });
 Dms.form.validation.clearMessages = function (form) {
-    form.removeClass('has-error');
     form.find('.form-group').removeClass('has-error');
     form.find('.help-block.help-block-error').remove();
 };
@@ -184,8 +196,6 @@ Dms.form.validation.displayMessages = function (form, fieldMessages, generalMess
     if (!fieldMessages && !generalMessages) {
         return;
     }
-
-    form.addClass('has-error');
 
     var makeHelpBlock = function () {
         return $('<span />').addClass('help-block help-block-error');
@@ -239,6 +249,58 @@ Dms.form.validation.displayMessages = function (form, fieldMessages, generalMess
         validationMessagesContainer.prepend(helpBlock);
     });
 };
+Dms.global.initializeCallbacks.push(function () {
+    $('a').click(function (e) {
+        if ($(this).attr('disabled')) {
+            e.stopImmediatePropagation();
+
+            return false;
+        }
+
+        return true;
+    });
+});
+Dms.global.initializeCallbacks.push(function () {
+    var navigationFilter = $('.dms-nav-quick-filter');
+    var packagesNavigation = $('.dms-packages-nav');
+    var navigationSections = packagesNavigation.find('li.treeview');
+    var navigationLabels = packagesNavigation.find('.dms-nav-label');
+
+    navigationFilter.on('input', function () {
+        var filterBy = $(this).val();
+
+        navigationSections.hide();
+        var sectionsToShow = [];
+        navigationLabels.each(function (index, navItem) {
+            navItem = $(navItem);
+            var label = navItem.text();
+
+            var doesContainFilter = label.toLowerCase().indexOf(filterBy.toLowerCase()) !== -1;
+            navItem.closest('li').toggle(doesContainFilter);
+
+            if (doesContainFilter) {
+                navItem.closest('ul.treeview-menu').toggle(doesContainFilter).addClass('menu-open');
+                navItem.parents('li.treeview').show();
+
+                if (navItem.is('.dms-nav-label-group')) {
+                    sectionsToShow.push(navItem.closest('li.treeview').get(0));
+                }
+            }
+        });
+
+        $(sectionsToShow).find('li').show();
+        $(sectionsToShow).find('ul.treeview-menu').show().addClass('menu-open');
+    });
+
+    navigationFilter.on('keyup', function (event) {
+        var enterKey = 13;
+
+        if (event.keyCode === enterKey) {
+            var link = packagesNavigation.find('a[href!="javascript:void(0)"]:visible').first().attr('href');
+            window.location.href = link;
+        }
+    });
+});
 Dms.utilities.countDecimals = function (value) {
     if (value % 1 != 0) {
         return value.toString().split(".")[1].length;
@@ -259,7 +321,6 @@ Dms.chart.initializeCallbacks.push(function (element) {
         var control = $(this);
         var chartContainer = control.find('chart.dms-chart-container');
         var loadChartUrl = control.attr('data-load-chart-url');
-
 
         var criteria = {
             orderings: [],
@@ -288,6 +349,10 @@ Dms.chart.initializeCallbacks.push(function (element) {
             });
 
             currentAjaxRequest.fail(function () {
+                if (currentAjaxRequest.statusText === 'abort') {
+                    return;
+                }
+
                 chartContainer.addClass('error');
 
                 swal({
@@ -666,6 +731,10 @@ Dms.form.initializeCallbacks.push(function (element) {
                 });
 
                 currentAjaxRequest.fail(function (xhr) {
+                    if (currentAjaxRequest.statusText === 'abort') {
+                        return;
+                    }
+
                     switch (xhr.status) {
                         case 422: // Unprocessable Entity (validation failure)
                             var validation = JSON.parse(xhr.responseText);
@@ -726,6 +795,10 @@ Dms.form.initializeCallbacks.push(function (element) {
             });
 
             currentAjaxRequest.fail(function (xhr) {
+                if (currentAjaxRequest.statusText === 'abort') {
+                    return;
+                }
+
                 switch (xhr.status) {
                     case 422: // Unprocessable Entity (validation failure)
                         var validation = JSON.parse(xhr.responseText);
@@ -803,18 +876,21 @@ Dms.table.initializeCallbacks.push(function (element) {
         var tableContainer = control.find('.dms-table-container');
         var table = tableContainer.find('table.dms-table');
         var filterForm = control.find('.dms-table-quick-filter-form');
+        var rowsPerPageSelect = control.find('.dms-table-rows-per-page-form select');
+        var paginationPreviousButton = control.find('.dms-table-pagination .dms-pagination-previous');
+        var paginationNextButton = control.find('.dms-table-pagination .dms-pagination-next');
         var loadRowsUrl = control.attr('data-load-rows-url');
         var reorderRowsUrl = control.attr('data-reorder-row-action-url');
+        var stringFilterableComponentIds = JSON.parse(control.attr('data-string-filterable-component-ids')) || [];
 
         var currentPage = 0;
 
-        var getItemsPerPage = function () {
-            return filterForm.find('select[name=items_per_page]').val()
-        };
-
         var criteria = {
             orderings: [],
-            conditions: []
+            condition_mode: 'or',
+            conditions: [],
+            offset: 0,
+            max_rows: rowsPerPageSelect.val()
         };
 
         var currentAjaxRequest;
@@ -826,8 +902,7 @@ Dms.table.initializeCallbacks.push(function (element) {
                 currentAjaxRequest.abort();
             }
 
-            criteria.offset = currentPage * getItemsPerPage();
-            criteria.max_rows = getItemsPerPage();
+            criteria.offset = currentPage * criteria.max_rows;
 
             currentAjaxRequest = $.ajax({
                 url: loadRowsUrl,
@@ -839,9 +914,17 @@ Dms.table.initializeCallbacks.push(function (element) {
             currentAjaxRequest.done(function (tableData) {
                 table.html(tableData);
                 Dms.table.initialize(tableContainer);
+
+                if (table.find('tbody tr').length < criteria.max_rows) {
+                    paginationNextButton.attr('disabled', true);
+                }
             });
 
             currentAjaxRequest.fail(function () {
+                if (currentAjaxRequest.statusText === 'abort') {
+                    return;
+                }
+
                 tableContainer.addClass('error');
 
                 swal({
@@ -864,12 +947,55 @@ Dms.table.initializeCallbacks.push(function (element) {
                 }
             ];
 
-            criteria.conditions = [
-                // TODO:
-            ];
+            criteria.conditions = [];
+
+            var filterByString = filterForm.find('[name=filter]').val();
+
+            if (filterByString) {
+                $.each(stringFilterableComponentIds, function (index, componentId) {
+                    criteria.conditions.push({
+                        component: componentId,
+                        operator: 'string-contains-case-insensitive',
+                        value: filterByString
+                    });
+                });
+            }
 
             loadCurrentPage();
         });
+
+        filterForm.find('input[name=filter]').on('keyup', function (event) {
+            var enterKey = 13;
+
+            if (event.keyCode === enterKey) {
+                filterForm.find('button').click();
+            }
+        });
+
+        rowsPerPageSelect.on('change', function () {
+            criteria.max_rows = $(this).val();
+
+            loadCurrentPage();
+        });
+
+        paginationPreviousButton.click(function () {
+            paginationNextButton.attr('disabled', false);
+            currentPage--;
+            loadCurrentPage();
+        });
+
+        paginationNextButton.click(function () {
+            paginationPreviousButton.attr('disabled', false);
+            currentPage++;
+            loadCurrentPage();
+        });
+
+        paginationPreviousButton.click(function () {
+            currentPage--;
+            loadCurrentPage();
+        });
+
+        paginationPreviousButton.attr('disabled', true);
 
         loadCurrentPage();
     });

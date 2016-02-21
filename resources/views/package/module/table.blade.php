@@ -1,6 +1,5 @@
 <?php /** @var \Dms\Web\Laravel\Renderer\Table\TableRenderer $tableRenderer */ ?>
-<?php /** @var string $packageName */ ?>
-<?php /** @var string $moduleName */ ?>
+<?php /** @var \Dms\Core\Module\IModule $module */ ?>
 <?php /** @var \Dms\Core\Module\ITableDisplay $table */ ?>
 <?php /** @var string $viewName */ ?>
 @extends('dms::template.default')
@@ -11,7 +10,7 @@
             <div class="box">
                 <!-- /.box-header -->
                 <div class="box-body">
-                    {!! $tableRenderer->renderTableControl($packageName, $moduleName, $table, $viewName) !!}
+                    {!! $tableRenderer->renderTableControl($module, $table, $viewName) !!}
                 </div>
                 <!-- /.box-footer -->
             </div>

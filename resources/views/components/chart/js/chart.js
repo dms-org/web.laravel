@@ -5,7 +5,6 @@ Dms.chart.initializeCallbacks.push(function (element) {
         var chartContainer = control.find('chart.dms-chart-container');
         var loadChartUrl = control.attr('data-load-chart-url');
 
-
         var criteria = {
             orderings: [],
             conditions: []
@@ -33,6 +32,10 @@ Dms.chart.initializeCallbacks.push(function (element) {
             });
 
             currentAjaxRequest.fail(function () {
+                if (currentAjaxRequest.statusText === 'abort') {
+                    return;
+                }
+
                 chartContainer.addClass('error');
 
                 swal({

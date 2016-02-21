@@ -1,7 +1,8 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Renderer\Widget;
 
+use Dms\Core\Module\IModule;
 use Dms\Core\Module\IUnparameterizedAction;
 use Dms\Core\Widget\ActionWidget;
 use Dms\Core\Widget\IWidget;
@@ -36,10 +37,23 @@ class UnparameterizedActionWidgetRenderer extends WidgetRenderer
      *
      * @return bool
      */
-    public function accepts(IWidget $widget) : bool
+    public function accepts(IModule $module, IWidget $widget) : bool
     {
         return $widget instanceof ActionWidget
         && $widget->getAction() instanceof IUnparameterizedAction;
+    }
+
+    /**
+     * Gets an array of links for the supplied widget.
+     *
+     * @param IModule $module
+     * @param IWidget $widget
+     *
+     * @return array
+     */
+    protected function getWidgetLinks(IModule $module, IWidget $widget) : array
+    {
+        return [];
     }
 
     /**
@@ -49,7 +63,7 @@ class UnparameterizedActionWidgetRenderer extends WidgetRenderer
      *
      * @return string
      */
-    protected function renderWidget(IWidget $widget) : string
+    protected function renderWidget(IModule $module, IWidget $widget) : string
     {
         /** @var ActionWidget $widget */
         $action = $widget->getAction();

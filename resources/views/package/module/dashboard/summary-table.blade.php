@@ -1,4 +1,5 @@
 <?php /** @var \Dms\Web\Laravel\Renderer\Table\TableRenderer $tableRenderer */ ?>
+<?php /** @var \Dms\Core\Module\IModule $module */ ?>
 <?php /** @var \Dms\Core\Common\Crud\Table\ISummaryTable $summaryTable */ ?>
 <?php /** @var \Dms\Core\Module\ITableView[] $summaryTableViews */ ?>
 <div class="row">
@@ -21,7 +22,7 @@
             <div class="tab-content">
                 @foreach($summaryTableViews as $view)
                     <div class="tab-pane active" id="summary-table-tab-{{ $view->getName() }}">
-                        {!! $tableRenderer->renderTableControl($packageName, $moduleName, $summaryTable, $view->getName()) !!}
+                        {!! $tableRenderer->renderTableControl($module, $summaryTable, $view->getName()) !!}
                     </div>
                     <!-- /.tab-pane -->
                 @endforeach

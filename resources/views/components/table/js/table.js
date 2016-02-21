@@ -5,18 +5,21 @@ Dms.table.initializeCallbacks.push(function (element) {
         var tableContainer = control.find('.dms-table-container');
         var table = tableContainer.find('table.dms-table');
         var filterForm = control.find('.dms-table-quick-filter-form');
+        var rowsPerPageSelect = control.find('.dms-table-rows-per-page-form select');
+        var paginationPreviousButton = control.find('.dms-table-pagination .dms-pagination-previous');
+        var paginationNextButton = control.find('.dms-table-pagination .dms-pagination-next');
         var loadRowsUrl = control.attr('data-load-rows-url');
         var reorderRowsUrl = control.attr('data-reorder-row-action-url');
+        var stringFilterableComponentIds = JSON.parse(control.attr('data-string-filterable-component-ids')) || [];
 
         var currentPage = 0;
 
-        var getItemsPerPage = function () {
-            return filterForm.find('select[name=items_per_page]').val()
-        };
-
         var criteria = {
             orderings: [],
-            conditions: []
+            condition_mode: 'or',
+            conditions: [],
+            offset: 0,
+            max_rows: rowsPerPageSelect.val()
         };
 
         var currentAjaxRequest;
@@ -28,8 +31,7 @@ Dms.table.initializeCallbacks.push(function (element) {
                 currentAjaxRequest.abort();
             }
 
-            criteria.offset = currentPage * getItemsPerPage();
-            criteria.max_rows = getItemsPerPage();
+            criteria.offset = currentPage * criteria.max_rows;
 
             currentAjaxRequest = $.ajax({
                 url: loadRowsUrl,
@@ -41,9 +43,17 @@ Dms.table.initializeCallbacks.push(function (element) {
             currentAjaxRequest.done(function (tableData) {
                 table.html(tableData);
                 Dms.table.initialize(tableContainer);
+
+                if (table.find('tbody tr').length < criteria.max_rows) {
+                    paginationNextButton.attr('disabled', true);
+                }
             });
 
             currentAjaxRequest.fail(function () {
+                if (currentAjaxRequest.statusText === 'abort') {
+                    return;
+                }
+
                 tableContainer.addClass('error');
 
                 swal({
@@ -66,12 +76,55 @@ Dms.table.initializeCallbacks.push(function (element) {
                 }
             ];
 
-            criteria.conditions = [
-                // TODO:
-            ];
+            criteria.conditions = [];
+
+            var filterByString = filterForm.find('[name=filter]').val();
+
+            if (filterByString) {
+                $.each(stringFilterableComponentIds, function (index, componentId) {
+                    criteria.conditions.push({
+                        component: componentId,
+                        operator: 'string-contains-case-insensitive',
+                        value: filterByString
+                    });
+                });
+            }
 
             loadCurrentPage();
         });
+
+        filterForm.find('input[name=filter]').on('keyup', function (event) {
+            var enterKey = 13;
+
+            if (event.keyCode === enterKey) {
+                filterForm.find('button').click();
+            }
+        });
+
+        rowsPerPageSelect.on('change', function () {
+            criteria.max_rows = $(this).val();
+
+            loadCurrentPage();
+        });
+
+        paginationPreviousButton.click(function () {
+            paginationNextButton.attr('disabled', false);
+            currentPage--;
+            loadCurrentPage();
+        });
+
+        paginationNextButton.click(function () {
+            paginationPreviousButton.attr('disabled', false);
+            currentPage++;
+            loadCurrentPage();
+        });
+
+        paginationPreviousButton.click(function () {
+            currentPage--;
+            loadCurrentPage();
+        });
+
+        paginationPreviousButton.attr('disabled', true);
 
         loadCurrentPage();
     });

@@ -2,17 +2,21 @@
 
 namespace Dms\Web\Laravel\Http\Controllers\Package;
 
+use Dms\Core\Common\Crud\Table\ISummaryTable;
 use Dms\Core\Exception\InvalidArgumentException;
 use Dms\Core\ICms;
 use Dms\Core\Model\Criteria\Condition\ConditionOperator;
 use Dms\Core\Model\Criteria\OrderingDirection;
+use Dms\Core\Module\IModule;
 use Dms\Core\Module\ITableDisplay;
+use Dms\Core\Module\ITableView;
 use Dms\Core\Module\ModuleNotFoundException;
 use Dms\Core\Package\PackageNotFoundException;
 use Dms\Core\Table\Criteria\RowCriteria;
 use Dms\Core\Table\ITableStructure;
 use Dms\Web\Laravel\Http\Controllers\DmsController;
 use Dms\Web\Laravel\Renderer\Table\TableRenderer;
+use Dms\Web\Laravel\Util\StringHumanizer;
 use Illuminate\Http\Exception\HttpResponseException;
 use Illuminate\Http\Request;
 
@@ -37,42 +41,57 @@ class TableController extends DmsController
     public function __construct(
         ICms $cms,
         TableRenderer $tableRenderer
-    ) {
+    )
+    {
         parent::__construct($cms);
         $this->tableRenderer = $tableRenderer;
     }
 
-    public function showTable($packageName, $moduleName, $tableName, $viewName)
+    public function showTable(string $packageName, string $moduleName, string $tableName, string $viewName)
     {
-        $table = $this->loadTable($packageName, $moduleName, $tableName);
+        /** @var IModule $module */
+        /** @var ITableDisplay $table */
+        list($module, $table) = $this->loadTable($packageName, $moduleName, $tableName);
+
+
+        if ($table instanceof ISummaryTable) {
+            return redirect()->route('dms::package.module.dashboard', [$packageName, $moduleName]);
+        }
+
+        $this->loadTableView($table, $viewName);
 
         return view('dms::package.module.table')
             ->with([
-                'pageTitle'       => ucwords($packageName . ' > ' . $moduleName . ' > ' . $tableName),
+                'pageTitle'       => StringHumanizer::title($packageName . ' :: ' . $moduleName . ' :: ' . $tableName),
                 'pageSubTitle'    => $viewName,
                 'breadcrumbs'     => [
-                    route('dms::index')                                 => 'Home',
-                    route('dms::package.dashboard', $packageName)       => ucwords($packageName),
-                    route('dms::package.module.dashboard', $moduleName) => $moduleName,
+                    route('dms::index')                                                 => 'Home',
+                    route('dms::package.dashboard', [$packageName])                     => StringHumanizer::title($packageName),
+                    route('dms::package.module.dashboard', [$packageName, $moduleName]) => StringHumanizer::title($moduleName),
                 ],
-                'finalBreadcrumb' => ucwords($tableName),
+                'finalBreadcrumb' => StringHumanizer::title($tableName),
                 'tableRenderer'   => $this->tableRenderer,
-                'packageName'     => $packageName,
-                'moduleName'      => $moduleName,
+                'module'          => $module,
                 'table'           => $table,
                 'viewName'        => $viewName,
             ]);
     }
 
-    public function loadTableRows(Request $request, $packageName, $moduleName, $tableName, $tableView)
+    public function loadTableRows(Request $request, string $packageName, string $moduleName, string $tableName, string $viewName)
     {
-        $table = $this->loadTable($packageName, $moduleName, $tableName);
+        /** @var IModule $module */
+        /** @var ITableDisplay $table */
+        list($module, $table) = $this->loadTable($packageName, $moduleName, $tableName);
 
-        $criteria = $table->getView($tableView)->getCriteriaCopy() ?: $table->getDataSource()->criteria();
+        $tableView = $this->loadTableView($table, $viewName);
+
+        $criteria = $tableView->getCriteriaCopy() ?: $table->getDataSource()->criteria();
 
         $this->filterCriteriaFromRequest($request, $table->getDataSource()->getStructure(), $criteria);
 
         return $this->tableRenderer->renderTableData(
+            $module,
+            $table,
             $table->getDataSource()->load($criteria)
         );
     }
@@ -90,6 +109,7 @@ class TableController extends DmsController
         $this->validate($request, [
             'offset'                 => 'integer|min:0',
             'amount'                 => 'integer|min:0',
+            'condition_mode'         => 'required|in:or,and',
             'conditions.*.component' => 'required|in:' . implode(',', $validComponentIds),
             'conditions.*.operator'  => 'required|in:' . implode(',', ConditionOperator::getAll()),
             'conditions.*.value'     => 'required',
@@ -106,6 +126,8 @@ class TableController extends DmsController
         }
 
         if ($request->has('conditions')) {
+            $criteria->setConditionMode($request->input('condition_mode'));
+
             foreach ($request->input('conditions') as $condition) {
                 $criteria->where($condition['component'], $condition['operator'], $condition['value']);
             }
@@ -119,21 +141,35 @@ class TableController extends DmsController
     }
 
     /**
+     * @param ITableDisplay $table
+     * @param string        $viewName
+     *
+     * @return ITableView
+     */
+    protected function loadTableView(ITableDisplay $table, string $viewName) : ITableView
+    {
+        try {
+            $tableView = $table->getView($viewName);
+            return $tableView;
+        } catch (InvalidArgumentException $e) {
+            abort(404);
+        }
+    }
+
+    /**
      * @param string $packageName
      * @param string $moduleName
      * @param string $actionName
      *
-     * @return ITableDisplay
+     * @return array
      */
-    protected function loadTable(string $packageName, string $moduleName, string $actionName) : \Dms\Core\Module\ITableDisplay
+    protected function loadTable(string $packageName, string $moduleName, string $actionName) : array
     {
         try {
-            $action = $this->cms
-                ->loadPackage($packageName)
-                ->loadModule($moduleName)
-                ->getTable($actionName);
+            $module = $this->cms->loadPackage($packageName)->loadModule($moduleName);
+            $table  = $module->getTable($actionName);
 
-            return $action;
+            return [$module, $table];
         } catch (PackageNotFoundException $e) {
             $response = response()->json([
                 'message' => 'Invalid package name',

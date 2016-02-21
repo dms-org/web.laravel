@@ -12,18 +12,22 @@
         @endif
 >
     @if(count($options) > 0)
+        <div class="row">
         @foreach ($options as $option)
-            <label class="checkbox-inline">
-                <input
-                        type="checkbox"
-                        value="{{ $option->getValue() }}"
-                        name="{{ $name }}[]"
-                        @if($readonly) readonly @endif
-                        @if(isset($valuesAsKeys[$option->getValue()])) checked="checked" @endif
-                />
-                {{ $option->getLabel() }}
-            </label>
+            <div class="col-md-4 col-lg-3">
+                <label class="">
+                    <input
+                            type="checkbox"
+                            value="{{ $option->getValue() }}"
+                            name="{{ $name }}[]"
+                            @if($readonly) readonly @endif
+                            @if(isset($valuesAsKeys[$option->getValue()])) checked="checked" @endif
+                    />
+                    {{ $option->getLabel() }}
+                </label>
+            </div>
         @endforeach
+        </div>
     @else
         <p class="help-block">No options are available</p>
     @endif

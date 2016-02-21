@@ -67,14 +67,14 @@ class InnerFormFieldRenderer extends BladeFieldRenderer
      *
      * @return string
      */
-    protected function renderFieldValue(IField $field, IFieldType $fieldType) : string
+    protected function renderFieldValue(IField $field, $value, IFieldType $fieldType) : string
     {
         /** @var InnerFormType $fieldType */
         $formWithArrayFields = $fieldType->getInnerArrayForm($field->getName());
         $formRenderer = new FormRenderer($this->fieldRendererCollection);
 
         return $this->renderValueViewWithNullDefault(
-            $field,
+            $field, $value,
             'dms::components.field.inner-form.value',
             [
                 'formContent' => $formRenderer->renderFields($formWithArrayFields),

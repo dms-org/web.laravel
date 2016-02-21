@@ -4,7 +4,7 @@ namespace Dms\Web\Laravel\Tests\Integration\Fixtures\Demo;
 
 use Dms\Core\Cms;
 use Dms\Core\CmsDefinition;
-use Dms\Web\Laravel\Auth\AuthPackage;
+use Dms\Web\Laravel\Auth\AdminPackage;
 
 /**
  * @author Elliot Levin <elliotlevin@hotmail.com>
@@ -21,7 +21,7 @@ class DemoCms extends Cms
     protected function define(CmsDefinition $cms)
     {
         $cms->packages([
-                'auth' => AuthPackage::class
+                'admin' => AdminPackage::class
         ]);
     }
 }

@@ -3,6 +3,7 @@
 namespace Dms\Web\Laravel\View;
 
 use Dms\Core\ICms;
+use Dms\Web\Laravel\Util\StringHumanizer;
 use Illuminate\Cache\Repository as Cache;
 use Illuminate\View\View;
 
@@ -68,11 +69,11 @@ class DmsNavigationViewComposer
                 route('dms::package.dashboard', [$package->getName()]) => 'Dashboard',
             ];
 
-            $packageLabel = ucwords(str_replace('-', ' ', $package->getName()));
+            $packageLabel = StringHumanizer::title($package->getName());
 
             foreach ($package->loadModules() as $module) {
                 $moduleDashboardUrl                     = route('dms::package.module.dashboard', [$package->getName(), $module->getName()]);
-                $moduleLabel                            = ucwords(str_replace('-', ' ', $module->getName()));
+                $moduleLabel                            = StringHumanizer::title($module->getName());
                 $packageNavigation[$moduleDashboardUrl] = $moduleLabel;
             }
 

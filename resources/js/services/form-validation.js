@@ -1,5 +1,4 @@
 Dms.form.validation.clearMessages = function (form) {
-    form.removeClass('has-error');
     form.find('.form-group').removeClass('has-error');
     form.find('.help-block.help-block-error').remove();
 };
@@ -8,8 +7,6 @@ Dms.form.validation.displayMessages = function (form, fieldMessages, generalMess
     if (!fieldMessages && !generalMessages) {
         return;
     }
-
-    form.addClass('has-error');
 
     var makeHelpBlock = function () {
         return $('<span />').addClass('help-block help-block-error');

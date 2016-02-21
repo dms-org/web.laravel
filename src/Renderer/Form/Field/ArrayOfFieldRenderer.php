@@ -68,17 +68,19 @@ class ArrayOfFieldRenderer extends BladeFieldRenderer
      * Renders the supplied field value display as a html string.
      *
      * @param IField     $field
+     * @param mixed      $value
      * @param IFieldType $fieldType
      *
      * @return string
+     * @throws \Dms\Web\Laravel\Renderer\Form\UnrenderableFieldException
      */
-    public function renderFieldValue(IField $field, IFieldType $fieldType) : string
+    public function renderFieldValue(IField $field, $value, IFieldType $fieldType) : string
     {
         /** @var ArrayOfType $fieldType */
         $elementField = $this->makeElementField($fieldType);
 
         return $this->renderValueViewWithNullDefault(
-            $field,
+            $field, $value,
             'dms::components.field.list-of-fields.value',
             [
                 'elementField'  => $elementField,

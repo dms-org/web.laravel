@@ -12,7 +12,7 @@ use Dms\Web\Laravel\Auth\Module\UserModule;
  *
  * @author Elliot Levin <elliotlevin@hotmail.com>
  */
-class AuthPackage extends Package
+class AdminPackage extends Package
 {
     /**
      * Defines the structure of this cms package.
@@ -23,11 +23,12 @@ class AuthPackage extends Package
      */
     protected function define(PackageDefinition $package)
     {
-        $package->name('auth');
+        $package->name('admin');
 
         $package->dashboard()
             ->widgets([
                 'users.summary-table',
+                'roles.summary-table',
             ]);
 
         $package->modules([

@@ -82,17 +82,18 @@ class StringFieldRenderer extends BladeFieldRenderer
 
     /**
      * @param IField     $field
+     * @param mixed      $value
      * @param IFieldType $fieldType
      *
      * @return string
      */
-    protected function renderFieldValue(IField $field, IFieldType $fieldType) : string
+    protected function renderFieldValue(IField $field, $value, IFieldType $fieldType) : string
     {
         /** @var StringType $fieldType */
         $inputType = $this->getInputType($fieldType);
 
         return $this->renderValueViewWithNullDefault(
-            $field,
+            $field, $value,
             'dms::components.field.string.value',
             [
                 'type' => $inputType,

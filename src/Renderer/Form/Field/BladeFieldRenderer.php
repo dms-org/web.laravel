@@ -1,4 +1,4 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Renderer\Form\Field;
 
@@ -16,9 +16,9 @@ abstract class BladeFieldRenderer extends FieldRenderer
      * @var array
      */
     protected $defaultAttributeMap = [
-        FieldType::ATTR_READ_ONLY     => 'readonly',
-        FieldType::ATTR_REQUIRED      => 'required',
-        FieldType::ATTR_DEFAULT       => 'defaultValue',
+        FieldType::ATTR_READ_ONLY => 'readonly',
+        FieldType::ATTR_REQUIRED  => 'required',
+        FieldType::ATTR_DEFAULT   => 'defaultValue',
     ];
 
     /**
@@ -55,20 +55,19 @@ abstract class BladeFieldRenderer extends FieldRenderer
 
     /**
      * @param IField $field
+     * @param mixed  $value
      * @param string $viewName
      * @param array  $extraParams
-     * @param null   $overrideValue
      *
      * @return string
      */
     protected function renderValueViewWithNullDefault(
         IField $field,
+        $value,
         string $viewName,
-        array $extraParams = [],
-        $overrideValue = null
-    ) : string {
-        $value = $overrideValue === null ? $field->getUnprocessedInitialValue() : $overrideValue;
-
+        array $extraParams = []
+    ) : string
+    {
         if ($value === null) {
             return view('dms::components.field.null.value')
                 ->render();

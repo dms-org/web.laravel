@@ -1,3 +1,4 @@
+
 <span class="dms-display-string">
     @if (!isset($type) || $type === 'text')
         {{ $value }}

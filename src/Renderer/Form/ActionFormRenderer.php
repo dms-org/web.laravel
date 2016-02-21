@@ -1,4 +1,4 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Renderer\Form;
 
@@ -31,7 +31,7 @@ class ActionFormRenderer
      */
     public function __construct(FormRenderer $formRenderer, KeywordTypeIdentifier $keywordTypeIdentifier)
     {
-        $this->formRenderer = $formRenderer;
+        $this->formRenderer          = $formRenderer;
         $this->keywordTypeIdentifier = $keywordTypeIdentifier;
     }
 
@@ -40,9 +40,13 @@ class ActionFormRenderer
      *
      * @param IParameterizedAction $action
      *
+     * @param array                $hiddenValues
+     *
      * @return string
+     * @throws \Exception
+     * @throws \Throwable
      */
-    public function renderActionForm(IParameterizedAction $action) : string
+    public function renderActionForm(IParameterizedAction $action, array $hiddenValues = []) : string
     {
         return view('dms::components.form.staged-form')
             ->with([
@@ -53,6 +57,7 @@ class ActionFormRenderer
                 'moduleName'        => $action->getModuleName(),
                 'actionName'        => $action->getName(),
                 'submitButtonClass' => $this->keywordTypeIdentifier->getTypeFromName($action->getName()),
+                'hiddenValues'      => $hiddenValues,
             ])
             ->render();
     }

@@ -1,4 +1,4 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Renderer\Package;
 
@@ -35,7 +35,7 @@ class DefaultPackageRenderer extends PackageRenderer
         $authorizedWidgets = [];
 
         foreach ($package->loadDashboard()->getWidgets() as $widget) {
-            if ($widget->isAuthorized()) {
+            if ($widget->getWidget()->isAuthorized()) {
                 $authorizedWidgets[] = $widget;
             }
         }

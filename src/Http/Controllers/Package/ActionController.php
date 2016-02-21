@@ -4,11 +4,13 @@ namespace Dms\Web\Laravel\Http\Controllers\Package;
 
 use Dms\Core\Auth\UserForbiddenException;
 use Dms\Core\Common\Crud\Action\Object\IObjectAction;
+use Dms\Core\Common\Crud\IReadModule;
 use Dms\Core\Form\InvalidFormSubmissionException;
 use Dms\Core\ICms;
 use Dms\Core\Language\ILanguageProvider;
 use Dms\Core\Module\ActionNotFoundException;
 use Dms\Core\Module\IAction;
+use Dms\Core\Module\IModule;
 use Dms\Core\Module\IParameterizedAction;
 use Dms\Core\Module\IUnparameterizedAction;
 use Dms\Core\Module\ModuleNotFoundException;
@@ -20,6 +22,7 @@ use Dms\Web\Laravel\Action\UnhandleableActionExceptionException;
 use Dms\Web\Laravel\Action\UnhandleableActionResultException;
 use Dms\Web\Laravel\Http\Controllers\DmsController;
 use Dms\Web\Laravel\Renderer\Form\ActionFormRenderer;
+use Dms\Web\Laravel\Util\StringHumanizer;
 use Illuminate\Http\Exception\HttpResponseException;
 use Illuminate\Http\Request;
 
@@ -70,7 +73,8 @@ class ActionController extends DmsController
         ActionResultHandlerCollection $resultHandlers,
         ActionExceptionHandlerCollection $exceptionHandlers,
         ActionFormRenderer $actionFormRenderer
-    ) {
+    )
+    {
         parent::__construct($cms);
         $this->lang               = $cms->getLang();
         $this->inputTransformers  = $inputTransformers;
@@ -81,7 +85,10 @@ class ActionController extends DmsController
 
     public function showForm($packageName, $moduleName, $actionName, $objectId = null)
     {
-        $action = $this->loadAction($packageName, $moduleName, $actionName);
+        /** @var IModule $module */
+        /** @var IAction $action */
+        list($module, $action) = $this->loadAction($packageName, $moduleName, $actionName);
+        $titleParts = [$packageName, $moduleName, $actionName];
 
         if (!($action instanceof IParameterizedAction)) {
             abort(404);
@@ -91,7 +98,11 @@ class ActionController extends DmsController
             abort(401);
         }
 
+        $hiddenValues = [];
+
         if ($objectId && $action instanceof IObjectAction) {
+            /** @var IReadModule $module */
+            /** @var IObjectAction $action */
             try {
                 $object = $action->getObjectForm()->getField(IObjectAction::OBJECT_FIELD_NAME)->process($objectId);
             } catch (InvalidFormSubmissionException $e) {
@@ -101,26 +112,33 @@ class ActionController extends DmsController
             $action = $action->withSubmittedFirstStage([
                 IObjectAction::OBJECT_FIELD_NAME => $object,
             ]);
+
+            $hiddenValues[IObjectAction::OBJECT_FIELD_NAME] = $objectId;
+            $extraTitle = $module->getLabelFor($object);
+        } else {
+            $extraTitle = null;
         }
 
         return view('dms::package.module.action')
             ->with([
-                'pageTitle'       => ucwords($packageName . ' > ' . $moduleName . ' > ' . $actionName),
+                'pageTitle'       => StringHumanizer::title(implode(' :: ', $titleParts)) . ($extraTitle ? ' :: ' . $extraTitle : ''),
                 'breadcrumbs'     => [
                     route('dms::index')                                                 => 'Home',
-                    route('dms::package.dashboard', [$packageName])                     => ucwords($packageName),
-                    route('dms::package.module.dashboard', [$packageName, $moduleName]) => $moduleName,
+                    route('dms::package.dashboard', [$packageName])                     => StringHumanizer::title($packageName),
+                    route('dms::package.module.dashboard', [$packageName, $moduleName]) => StringHumanizer::title($moduleName),
                 ],
-                'finalBreadcrumb' => ucwords($actionName),
+                'finalBreadcrumb' => StringHumanizer::title($actionName),
                 'action'          => $action,
-                'form'            => $action->getStagedForm(),
                 'formRenderer'    => $this->actionFormRenderer,
+                'hiddenValues'    => $hiddenValues,
             ]);
     }
 
     public function getFormStage(Request $request, $packageName, $moduleName, $actionName, $stageNumber)
     {
-        $action = $this->loadAction($packageName, $moduleName, $actionName);
+        /** @var IModule $module */
+        /** @var IParameterizedAction $action */
+        list($module, $action) = $this->loadAction($packageName, $moduleName, $actionName);
 
         if (!($action instanceof IParameterizedAction)) {
             return response()->json([
@@ -156,10 +174,13 @@ class ActionController extends DmsController
 
     public function runAction(Request $request, $packageName, $moduleName, $actionName)
     {
-        $action = $this->loadAction($packageName, $moduleName, $actionName);
+        /** @var IModule $module */
+        /** @var IAction $action */
+        list($module, $action) = $this->loadAction($packageName, $moduleName, $actionName);
 
         try {
             if ($action instanceof IParameterizedAction) {
+                /** @var IParameterizedAction $action */
                 $input  = $this->inputTransformers->transform($action, $request->all());
                 $result = $action->run($input);
             } else {
@@ -215,17 +236,15 @@ class ActionController extends DmsController
      * @param string $moduleName
      * @param string $actionName
      *
-     * @return \Dms\Core\Module\IAction
+     * @return array
      */
-    protected function loadAction(string $packageName, string $moduleName, string $actionName)
+    protected function loadAction(string $packageName, string $moduleName, string $actionName) : array
     {
         try {
-            $action = $this->cms
-                ->loadPackage($packageName)
-                ->loadModule($moduleName)
-                ->getAction($actionName);
+            $module = $this->cms->loadPackage($packageName)->loadModule($moduleName);
+            $action = $module->getAction($actionName);
 
-            return $action;
+            return [$module, $action];
         } catch (PackageNotFoundException $e) {
             $response = response()->json([
                 'message' => 'Invalid package name',

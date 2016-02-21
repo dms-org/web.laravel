@@ -67,17 +67,18 @@ class ArrayOfOptionsFieldRenderer extends BladeFieldRenderer
 
     /**
      * @param IField     $field
+     * @param mixed      $value
      * @param IFieldType $fieldType
      *
      * @return string
      */
-    protected function renderFieldValue(IField $field, IFieldType $fieldType) : string
+    protected function renderFieldValue(IField $field, $value, IFieldType $fieldType) : string
     {
         /** @var ArrayOfType $fieldType */
         $elementField = $this->makeElementField($fieldType);
 
         return $this->renderValueViewWithNullDefault(
-            $field,
+            $field, $value,
             'dms::components.field.list-of-fields.value',
             [
                 'elementField'  => $elementField,

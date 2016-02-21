@@ -84,6 +84,10 @@ Dms.form.initializeCallbacks.push(function (element) {
                 });
 
                 currentAjaxRequest.fail(function (xhr) {
+                    if (currentAjaxRequest.statusText === 'abort') {
+                        return;
+                    }
+
                     switch (xhr.status) {
                         case 422: // Unprocessable Entity (validation failure)
                             var validation = JSON.parse(xhr.responseText);

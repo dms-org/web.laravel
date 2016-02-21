@@ -1,4 +1,4 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 use Dms\Common\Structure\Web\EmailAddress;
 use Dms\Core\Auth\IUserRepository;
@@ -21,7 +21,7 @@ class DmsUserSeeder extends Seeder
     /**
      * @var IPasswordHasherFactory
      */
-    private $hasherFactory;
+    protected $hasherFactory;
 
     /**
      * DmsUserSeeder constructor.
@@ -31,7 +31,7 @@ class DmsUserSeeder extends Seeder
      */
     public function __construct(IUserRepository $repo, IPasswordHasherFactory $hasherFactory)
     {
-        $this->repo = $repo;
+        $this->repo          = $repo;
         $this->hasherFactory = $hasherFactory;
     }
 
@@ -42,6 +42,8 @@ class DmsUserSeeder extends Seeder
      */
     public function run()
     {
+        $this->repo->clear();
+
         $this->repo->save(new User(
             new EmailAddress('admin@admin.com'),
             'admin',

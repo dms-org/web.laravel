@@ -16,6 +16,7 @@ use Dms\Core\Model\EntityIdCollection;
 use Dms\Core\Model\ValueObjectCollection;
 use Dms\Web\Laravel\Auth\Role;
 use Dms\Web\Laravel\Auth\User;
+use Dms\Web\Laravel\Util\StringHumanizer;
 
 /**
  * The role crud module.
@@ -110,15 +111,19 @@ class RoleModule extends CrudModule
         $module->summaryTable(function (SummaryTableDefinition $table) {
             $table->mapProperty(Role::NAME)->to(Field::create('name', 'Name')->string());
 
-            $table->mapProperty(Role::PERMISSIONS . '.count()')->to(Field::create('permissions', 'Permissions')->int());
+            $table->mapProperty(Role::PERMISSIONS . '.count()')->to(Field::create('permissions', '# Permissions')->int());
 
-            $table->mapProperty(Role::USER_IDS  . '.count()')->to(Field::create('users', 'Users')->int());
+            $table->mapProperty(Role::USER_IDS  . '.count()')->to(Field::create('users', '# Users')->int());
 
             $table->view('all', 'All')
                 ->asDefault()
                 ->loadAll()
                 ->orderByAsc(Role::NAME);
         });
+
+        $module->widget('summary-table')->label('Roles')
+            ->withTable('summary-table')
+            ->allRows();
     }
 
     /**
@@ -129,8 +134,8 @@ class RoleModule extends CrudModule
         $permissionOptions = [];
 
         foreach ($this->cms->loadPermissions() as $permission) {
-            $permissionOptions[$permission->getName()] = ucwords(
-                strtr($permission->getName(), ['-' => ' ', '.' => ' - '])
+            $permissionOptions[$permission->getName()] = StringHumanizer::title(
+                strtr($permission->getName(), ['.' => ' - '])
             );
         }
 

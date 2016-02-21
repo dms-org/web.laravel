@@ -1,4 +1,4 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Http\Controllers;
 
@@ -12,7 +12,7 @@ class IndexController extends DmsController
     public function index()
     {
         $packageNames = $this->cms->getPackageNames();
-        $package = null;
+        $package      = null;
 
         foreach ($packageNames as $name) {
             $package = $this->cms->loadPackage($name);
@@ -26,8 +26,8 @@ class IndexController extends DmsController
                 ->route('dms::package.dashboard', ['package' => $package->getName()]);
         }
 
-        $firstPackage = $this->cms->loadPackage(reset($packageNames));
-        $modules = $firstPackage->getModuleNames();
+        $firstPackage    = $this->cms->loadPackage(reset($packageNames));
+        $modules         = $firstPackage->getModuleNames();
         $firstModuleName = reset($modules);
 
         return redirect()

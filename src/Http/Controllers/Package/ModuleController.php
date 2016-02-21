@@ -6,6 +6,7 @@ use Dms\Core\ICms;
 use Dms\Core\Package\IPackage;
 use Dms\Web\Laravel\Http\Controllers\DmsController;
 use Dms\Web\Laravel\Renderer\Module\ModuleRendererCollection;
+use Dms\Web\Laravel\Util\StringHumanizer;
 use Illuminate\Http\Request;
 
 /**
@@ -55,12 +56,12 @@ class ModuleController extends DmsController
 
         return view('dms::package.module.dashboard')
             ->with([
-                'pageTitle'       => ucwords($packageName . ' > ' . $moduleName),
+                'pageTitle'       => StringHumanizer::title($packageName . ' :: ' . $moduleName),
                 'breadcrumbs'     => [
                     route('dms::index')                           => 'Home',
-                    route('dms::package.dashboard', $packageName) => ucwords($packageName),
+                    route('dms::package.dashboard', $packageName) => StringHumanizer::title($packageName),
                 ],
-                'finalBreadcrumb' => ucwords($moduleName),
+                'finalBreadcrumb' => StringHumanizer::title($moduleName),
                 'moduleRenderers' => $this->moduleRenderers,
                 'module'          => $this->module,
             ]);

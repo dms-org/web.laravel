@@ -62,6 +62,7 @@ return [
                     Dms\Web\Laravel\Renderer\Table\Column\DefaultColumnRendererAndFactory::class,
                 ],
                 'column-components' => [
+                    Dms\Web\Laravel\Renderer\Table\Column\Component\OptimizedScalarValueComponentRenderer::class,
                     // Will default to field renderers
                 ],
             ],
@@ -86,7 +87,7 @@ return [
     ],
 
     'keywords' => [
-        'danger'    => ['delete', 'remove', 'trash', 'drop', 'cancel'],
+        'danger'    => ['delete', 'remove', 'trash', 'drop', 'cancel', 'reset'],
         'success'   => ['confirm', 'approve', 'accept', 'verify'],
         'info'      => ['download', 'stats', 'display'],
         'overrides' => [

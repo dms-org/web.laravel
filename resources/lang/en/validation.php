@@ -77,6 +77,7 @@ return [
     'type'                 => 'The :field must be of a :type type',
     'unique'               => 'The :field has already been taken.',
     'url'                  => 'The :field format is invalid.',
+    'matching-fields'      => 'The \':field1\' and \':field2\' fields must match.',
 
     /*
     |--------------------------------------------------------------------------
@@ -90,10 +91,10 @@ return [
     */
 
     'custom' => [
-        'field-name' => [
-            'rule-name' => 'custom-message',
-        ],
+    'field-name' => [
+        'rule-name' => 'custom-message',
     ],
+],
 
     /*
     |--------------------------------------------------------------------------

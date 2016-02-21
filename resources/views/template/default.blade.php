@@ -73,19 +73,19 @@
                     </div>
                 </div>
                 <!-- search form -->
-                <form action="{{ route('dms::search') }}" method="get" class="sidebar-form">
+                <div class="sidebar-form">
                     <div class="input-group">
-                        <input type="text" name="q" class="form-control" placeholder="Search...">
+                        <input type="text" class="form-control dms-nav-quick-filter" placeholder="Search packages...">
                         <span class="input-group-btn">
                             <button type="submit" name="search" id="search-btn" class="btn btn-flat">
                                 <i class="fa fa-search"></i>
                             </button>
                         </span>
                     </div>
-                </form>
+                </div>
                 <!-- /.search form -->
                 <!-- sidebar menu: : style can be found in sidebar.less -->
-                <ul class="sidebar-menu">
+                <ul class="sidebar-menu dms-packages-nav">
                     <li class="header">INSTALLED PACKAGES</li>
                     <li class="active treeview">
                     @foreach($navigation as $url => $label)
@@ -93,13 +93,13 @@
                             <li class="treeview  @if(isset($label[request()->url()])) active @endif">
                                 <a href="javascript:void(0)">
                                     <i class="fa fa-folder"></i>
-                                    <span>{{ $url }}</span>
+                                    <span class="dms-nav-label dms-nav-label-group">{{ $url }}</span>
                                     <i class="fa fa-angle-left pull-right"></i>
                                 </a>
                                 <ul class="treeview-menu">
                                     @foreach($label as $url => $innerLabel)
                                         <li @if($url === request()->url()) class="active" @endif>
-                                            <a href="{{ $url }}"><i class="fa fa-circle-o"></i> {{ $innerLabel }}</a>
+                                            <a href="{{ $url }}"><i class="fa fa-circle-o"></i> <span class="dms-nav-label">{{ $innerLabel }}</span></a>
                                         </li>
                                     @endforeach
                                 </ul>
@@ -108,7 +108,7 @@
                             <li @if($url === request()->url()) class="active" @endif>
                                 <a href="{{ $url }}">
                                     @if($url === route('dms::index'))<i class="fa fa-dashboard"></i>@endif
-                                    <span>
+                                    <span class="dms-nav-label">
                                         {{ $label }}
                                     </span>
                                     <i class="fa fa-angle-left pull-right"></i>

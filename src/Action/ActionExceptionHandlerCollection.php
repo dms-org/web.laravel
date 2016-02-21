@@ -70,9 +70,13 @@ class ActionExceptionHandlerCollection
             $exceptionClass = get_parent_class($exceptionClass);
         }
 
-        throw UnhandleableActionExceptionException::format(
-            'Could not handle action exception of type %s from action \'%s\': no matching action handler could be found',
-            get_class($exception), $action->getName()
+        throw new UnhandleableActionExceptionException(
+            sprintf(
+                'Could not handle action exception of type %s from action \'%s\': no matching action handler could be found',
+                get_class($exception), $action->getName()
+            ),
+            0,
+            $exception
         );
     }
 }

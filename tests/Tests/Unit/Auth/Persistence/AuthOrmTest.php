@@ -231,7 +231,7 @@ class AuthOrmTest extends DbIntegrationTest
                 ['id' => 1, 'name' => 'admin'],
             ],
             'user_roles'      => [
-                ['role_id' => 1, 'user_id' => 1],
+                ['id' => 1, 'role_id' => 1, 'user_id' => 1],
             ],
         ]);
     }
@@ -258,7 +258,7 @@ class AuthOrmTest extends DbIntegrationTest
                 ['id' => 10, 'name' => 'admin'],
             ],
             'user_roles'      => [
-                ['role_id' => 10, 'user_id' => 1],
+                ['id' => 1, 'role_id' => 10, 'user_id' => 1],
             ],
         ]);
 

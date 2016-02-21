@@ -1,9 +1,9 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Http;
 
 /** @var \Illuminate\Routing\Router $router */
-$router = app('router');
+$router    = app('router');
 $namespace = __NAMESPACE__ . '\\Controllers';
 
 $router->group(['prefix' => 'dms', 'middleware' => 'dms.web', 'as' => 'dms::', 'namespace' => $namespace],
@@ -24,41 +24,68 @@ $router->group(['prefix' => 'dms', 'middleware' => 'dms.web', 'as' => 'dms::', '
 
         $router->group(['middleware' => 'dms.auth'], function () use ($router) {
 
-            $router->group(['prefix' => 'file/', 'as' => 'file.'], function () use ($router) {
-                $router->get('/upload', 'FileController@upload')->name('upload');
-                $router->get('/download/{token}', 'FileController@download')->name('download');
-            });
+            // Files
+            $router->get('/file/upload', 'FileController@upload')->name('file.upload');
+            $router->get('/file/download/{token}', 'FileController@download')->name('file.download');
 
+            // Account
             $router->get('/', 'IndexController@index')->name('index');
-            $router->post('search', 'IndexController@searchSystem')->name('search');
             $router->get('/user/profile', 'UserController@showProfileForm')->name('auth.user.profile');
             $router->post('/user/profile', 'UserController@updateUserProfile')->name('auth.user.profile.submit');
 
-            $router->group(['prefix' => 'package/{package}', 'as' => 'package.', 'namespace' => 'Package'],
-                function () use ($router) {
+            // Packages
+            $router->get(
+                'package/{package}/dashboard',
+                'Package\PackageController@showDashboard'
+            )->name('package.dashboard');
 
-                    $router->get('dashboard', 'PackageController@showDashboard')->name('dashboard');
+            // Modules
+            $router->get(
+                'package/{package}/{module}',
+                'Package\ModuleController@showDashboard'
+            )->name('package.module.dashboard');
 
-                    $router->group(['prefix' => '{module}', 'as' => 'module.'], function () use ($router) {
-                        $router->get('/', 'ModuleController@showDashboard')->name('dashboard');
+            // Actions
+            $router->get(
+                'package/{package}/{module}/action/{action}/form/{object_id?}',
+                'Package\ActionController@showForm'
+            )->name('package.module.action.form');
 
-                        $router->group(['prefix' => 'action/{action}', 'as' => 'action.'], function () use ($router) {
-                            $router->get('form/{object_id?}', 'ActionController@showForm')->name('form');
-                            $router->post('form/stage/{number}', 'ActionController@getFormStage')->name('form.stage');
-                            $router->post('run', 'ActionController@runAction')->name('run');
-                        });
+            $router->post(
+                'package/{package}/{module}/action/{action}/form/stage/{number?}',
+                'Package\ActionController@getFormStage'
+            )->name('package.module.action.form.stage');
 
-                        $router->group(['prefix' => 'table/{table}/{view}', 'as' => 'table.view.'], function () use ($router) {
-                            $router->get('/', 'TableController@showTable')->name('show');
-                            $router->get('reorder', 'TableController@reorderRow')->name('reorder');
-                            $router->post('load', 'TableController@loadTableRows')->name('load');
-                        });
+            $router->post(
+                'package/{package}/{module}/action/{action}/run',
+                'Package\ActionController@runAction'
+            )->name('package.module.action.run');
 
-                        $router->group(['prefix' => 'chart/{chart}/{view}', 'as' => 'chart.view'], function () use ($router) {
-                            $router->get('/', 'ChartController@showChart')->name('show');
-                            $router->post('load', 'ChartController@loadChartData')->name('load');
-                        });
-                    });
-                });
+            // Tables
+            $router->get(
+                'package/{package}/{module}/table/{table}/{view}',
+                'Package\TableController@showTable'
+            )->name('package.module.table.view.show');
+
+            $router->post(
+                'package/{package}/{module}/table/{table}/{view}/reorder',
+                'Package\TableController@reorderRow'
+            )->name('package.module.table.view.reorder');
+
+            $router->post(
+                'package/{package}/{module}/table/{table}/{view}/load',
+                'Package\TableController@loadTableRows'
+            )->name('package.module.table.view.load');
+
+            // Charts
+            $router->get(
+                'package/{package}/{module}/chart/{chart}/{view}',
+                'Package\ChartController@showChart'
+            )->name('package.module.chart.view.show');
+
+            $router->post(
+                'package/{package}/{module}/chart/{chart}/{view}/reorder',
+                'Package\ChartController@loadChartData'
+            )->name('package.module.chart.view.load');
         });
     });

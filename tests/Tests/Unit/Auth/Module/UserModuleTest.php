@@ -18,6 +18,9 @@ use Dms\Core\Tests\Common\Crud\Modules\CrudModuleTest;
 use Dms\Core\Tests\Module\Mock\MockAuthSystem;
 use Dms\Core\Widget\TableWidget;
 use Dms\Web\Laravel\Auth\Module\UserModule;
+use Dms\Web\Laravel\Auth\Password\HashedPassword;
+use Dms\Web\Laravel\Auth\Password\IPasswordHasher;
+use Dms\Web\Laravel\Auth\Password\IPasswordHasherFactory;
 use Dms\Web\Laravel\Auth\Password\IPasswordResetService;
 use Dms\Web\Laravel\Auth\Role;
 use Dms\Web\Laravel\Auth\User;
@@ -31,6 +34,11 @@ class UserModuleTest extends CrudModuleTest
      * @var bool
      */
     protected $hasPasswordResetServiceBeenCalled = false;
+
+    /**
+     * @var bool
+     */
+    protected $hasHasherBeenCalled = false;
 
     /**
      * @return IRepository
@@ -56,7 +64,13 @@ class UserModuleTest extends CrudModuleTest
      */
     protected function buildCrudModule(IRepository $dataSource, MockAuthSystem $authSystem)
     {
-        return new UserModule($dataSource, $this->mockRolDataSource(), $authSystem, $this->mockPasswordResetService());
+        return new UserModule(
+            $dataSource,
+            $this->mockRolDataSource(),
+            $this->mockPasswordHasherFactory(),
+            $authSystem,
+            $this->mockPasswordResetService()
+        );
     }
 
     protected function mockRolDataSource() : IRoleRepository
@@ -82,6 +96,26 @@ class UserModuleTest extends CrudModuleTest
             });
 
         return $passwordResetService;
+    }
+
+    protected function mockPasswordHasherFactory() : IPasswordHasherFactory
+    {
+        $hasherFactory = $this->getMock(IPasswordHasherFactory::class);
+        $hasherFactory->method('buildDefault')
+            ->willReturnCallback(function () {
+
+                $hasher = $this->getMock(IPasswordHasher::class);
+                $hasher->method('hash')
+                    ->willReturnCallback(function () {
+                        $this->hasHasherBeenCalled = true;
+
+                        return $this->getMockWithoutInvokingTheOriginalConstructor(HashedPassword::class);
+                    });
+
+                return $hasher;
+            });
+
+        return $hasherFactory;
     }
 
     /**
@@ -124,6 +158,28 @@ class UserModuleTest extends CrudModuleTest
             'new_password_confirmation'      => 'abc123A',
         ]);
         $this->assertTrue($this->hasPasswordResetServiceBeenCalled);
+    }
+
+    public function testCreateUser()
+    {
+        $action = $this->module->getCreateAction();
+
+        $adminRoleId = 1;
+        /** @var User $user */
+        $user = $action->run([
+            'email'    => 'new@user.com',
+            'username' => 'user',
+            'password' => 'abc123',
+            'roles'    => [$adminRoleId],
+        ]);
+
+        $this->assertInstanceOf(User::class, $user);
+
+        $this->assertSame('new@user.com', $user->getEmailAddress());
+        $this->assertSame('user', $user->getUsername());
+        $this->assertTrue($this->hasHasherBeenCalled);
+        $this->assertInstanceOf(HashedPassword::class, $user->getPassword());
+        $this->assertSame([$adminRoleId], $user->getRoleIds()->asArray());
     }
 
     public function testEmailAddressMustBeUnique()

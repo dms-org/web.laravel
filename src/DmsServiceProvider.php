@@ -196,7 +196,7 @@ class DmsServiceProvider extends ServiceProvider
         $router = $this->app['router'];
 
         $router->middlewareGroup('dms.web', [
-            EncryptCookies::class,
+            //EncryptCookies::class, // TODO: enable
             AddQueuedCookiesToResponse::class,
             StartSession::class,
             ShareErrorsFromSession::class,
@@ -215,6 +215,16 @@ class DmsServiceProvider extends ServiceProvider
 
     private function registerDbConnection()
     {
+        // Ensure the mysql returns the number of matched rows (instead of affected)
+        // rows for update / delete queries
+        foreach ($this->app['config']->get('database.connections') as $key => $config) {
+            if ($config['driver'] === 'mysql') {
+                $config['options'][\PDO::MYSQL_ATTR_FOUND_ROWS] = true;
+
+                $this->app['config']->set('database.connections.' . $key, $config);
+            }
+        }
+
         $this->app->singleton(IConnection::class, function () {
             /** @var Connection $connection */
             $connection = $this->app->make(Connection::class);

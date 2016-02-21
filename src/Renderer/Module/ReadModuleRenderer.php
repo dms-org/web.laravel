@@ -73,6 +73,7 @@ class ReadModuleRenderer extends ModuleRenderer
                 'packageName'       => $module->getPackageName(),
                 'moduleName'        => $module->getName(),
                 'tableRenderer'     => $this->tableRenderer,
+                'module'            => $module,
                 'summaryTable'      => $summaryTable,
                 'summaryTableViews' => $views,
                 'createActionName'  => $createActionName,

@@ -7,12 +7,14 @@ use Dms\Core\ICms;
 use Dms\Core\Model\Criteria\Condition\ConditionOperator;
 use Dms\Core\Model\Criteria\OrderingDirection;
 use Dms\Core\Module\IChartDisplay;
+use Dms\Core\Module\IChartView;
 use Dms\Core\Module\ModuleNotFoundException;
 use Dms\Core\Package\PackageNotFoundException;
 use Dms\Core\Table\Chart\Criteria\ChartCriteria;
 use Dms\Core\Table\Chart\IChartStructure;
 use Dms\Web\Laravel\Http\Controllers\DmsController;
 use Dms\Web\Laravel\Renderer\Chart\ChartControlRenderer;
+use Dms\Web\Laravel\Util\StringHumanizer;
 use Illuminate\Http\Exception\HttpResponseException;
 use Illuminate\Http\Request;
 
@@ -31,31 +33,34 @@ class ChartController extends DmsController
     /**
      * ChartController constructor.
      *
-     * @param ICms                 $cms
+     * @param ICms $cms
      * @param ChartControlRenderer $chartRenderer
      */
     public function __construct(
         ICms $cms,
         ChartControlRenderer $chartRenderer
-    ) {
+    )
+    {
         parent::__construct($cms);
         $this->chartRenderer = $chartRenderer;
     }
 
-    public function showChart($packageName, $moduleName, $chartName, $viewName)
+    public function showChart(string $packageName, string $moduleName, string $chartName, string $viewName)
     {
         $chart = $this->loadChart($packageName, $moduleName, $chartName);
 
+        $this->loadChartView($chart, $viewName);
+
         return view('dms::package.module.chart')
             ->with([
-                'pageTitle'       => ucwords($packageName . ' > ' . $moduleName . ' > ' . $chartName),
+                'pageTitle'       => StringHumanizer::title($packageName . ' :: ' . $moduleName . ' :: ' . $chartName),
                 'pageSubTitle'    => $viewName,
                 'breadcrumbs'     => [
                     route('dms::index')                                 => 'Home',
-                    route('dms::package.dashboard', $packageName)       => ucwords($packageName),
+                    route('dms::package.dashboard', $packageName)       => StringHumanizer::title($packageName),
                     route('dms::package.module.dashboard', $moduleName) => $moduleName,
                 ],
-                'finalBreadcrumb' => ucwords($chartName),
+                'finalBreadcrumb' => StringHumanizer::title($chartName),
                 'chartRenderer'   => $this->chartRenderer,
                 'packageName'     => $packageName,
                 'moduleName'      => $moduleName,
@@ -64,11 +69,13 @@ class ChartController extends DmsController
             ]);
     }
 
-    public function loadChartRows(Request $request, $packageName, $moduleName, $chartName, $chartView)
+    public function loadChartRows(Request $request, string $packageName, string $moduleName, string $chartName, string $viewName)
     {
         $chart = $this->loadChart($packageName, $moduleName, $chartName);
 
-        $criteria = $chart->getView($chartView)->getCriteriaCopy() ?: $chart->getDataSource()->criteria();
+        $chartView = $this->loadChartView($chart, $viewName);
+
+        $criteria = $chartView->getCriteriaCopy() ?: $chart->getDataSource()->criteria();
 
         $this->filterCriteriaFromRequest($request, $chart->getDataSource()->getStructure(), $criteria);
 
@@ -110,13 +117,27 @@ class ChartController extends DmsController
     }
 
     /**
+     * @param IChartDisplay $chart
+     * @param string $chartView
+     * @return IChartView
+     */
+    protected function loadChartView(IChartDisplay $chart, string $chartView) : IChartView
+    {
+        try {
+            return $chart->getView($chartView);
+        } catch (InvalidArgumentException $e) {
+            abort(404);
+        }
+    }
+
+    /**
      * @param string $packageName
      * @param string $moduleName
      * @param string $actionName
      *
      * @return IChartDisplay
      */
-    protected function loadChart(string $packageName, string $moduleName, string $actionName) : \Dms\Core\Module\IChartDisplay
+    protected function loadChart(string $packageName, string $moduleName, string $actionName) : IChartDisplay
     {
         try {
             $action = $this->cms

@@ -14,7 +14,9 @@ use Dms\Core\Common\Crud\Definition\Table\SummaryTableDefinition;
 use Dms\Core\Form\Builder\Form;
 use Dms\Core\Model\EntityIdCollection;
 use Dms\Core\Model\Object\ArrayDataObject;
+use Dms\Web\Laravel\Auth\Password\IPasswordHasherFactory;
 use Dms\Web\Laravel\Auth\Password\IPasswordResetService;
+use Dms\Web\Laravel\Auth\Role;
 use Dms\Web\Laravel\Auth\User;
 
 /**
@@ -30,6 +32,11 @@ class UserModule extends CrudModule
     private $roleRepo;
 
     /**
+     * @var IPasswordHasherFactory
+     */
+    private $hasher;
+
+    /**
      * @var IPasswordResetService
      */
     private $passwordResetService;
@@ -37,18 +44,21 @@ class UserModule extends CrudModule
     /**
      * UserModule constructor.
      *
-     * @param IUserRepository       $dataSource
-     * @param IRoleRepository       $roleRepo
-     * @param IAuthSystem           $authSystem
-     * @param IPasswordResetService $passwordResetService
+     * @param IUserRepository        $dataSource
+     * @param IRoleRepository        $roleRepo
+     * @param IPasswordHasherFactory $hasher
+     * @param IAuthSystem            $authSystem
+     * @param IPasswordResetService  $passwordResetService
      */
     public function __construct(
         IUserRepository $dataSource,
         IRoleRepository $roleRepo,
+        IPasswordHasherFactory $hasher,
         IAuthSystem $authSystem,
         IPasswordResetService $passwordResetService
     ) {
         $this->roleRepo             = $roleRepo;
+        $this->hasher               = $hasher;
         $this->passwordResetService = $passwordResetService;
         parent::__construct($dataSource, $authSystem);
     }
@@ -62,7 +72,9 @@ class UserModule extends CrudModule
     {
         $module->name('users');
 
-        $module->labelObjects()->fromProperty(User::USERNAME);
+        $module->labelObjects()->fromCallback(function (User $user) {
+            return $user->getUsername() . ' <' . $user->getEmailAddress() . '>';
+        });
 
         $module->crudForm(function (CrudFormDefinition $form) {
             $form->section('Details', [
@@ -84,6 +96,23 @@ class UserModule extends CrudModule
                 )->bindToProperty(User::EMAIL_ADDRESS),
             ]);
 
+            if ($form->isCreateForm()) {
+                $form->section('Password', [
+                    //
+                    $form->field(
+                        Field::create('password', 'Password')
+                            ->string()
+                            ->password()
+                            ->required()
+                            ->minLength(6)
+                    )->withoutBinding(),
+                ]);
+
+                $form->onSubmit(function (User $user, array $input) {
+                    $user->setPassword($this->hasher->buildDefault()->hash($input['password']));
+                });
+            }
+
             $form->section('Access Settings', [
                 //
                 $form->field(
@@ -98,6 +127,7 @@ class UserModule extends CrudModule
                     Field::create('roles', 'Roles')
                         ->entityIdsFrom($this->roleRepo)
                         ->mapToCollection(EntityIdCollection::type())
+                        ->labelledBy(Role::NAME)
                         ->required()
                         ->minLength(1)
                 )->bindToProperty(User::ROLE_IDS),
@@ -140,7 +170,7 @@ class UserModule extends CrudModule
         });
 
         $module->widget('summary-table')
-            ->label('DMS Accounts')
+            ->label('Accounts')
             ->withTable(self::SUMMARY_TABLE)
             ->allRows();
     }

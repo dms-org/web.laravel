@@ -1,15 +1,16 @@
-<?php /** @var \Dms\Core\Table\ITableStructure $structure */ ?>
+<?php /** @var \Dms\Core\Table\IColumn[] $columns */ ?>
 <?php /** @var \Dms\Core\Module\ITableView $table */ ?>
 <div
-        class="dms-table-control"
+        class="dms-table-control clearfix"
         data-load-rows-url="{{ $loadRowsUrl }}"
         @if ($reorderRowActionUrl)
         data-reorder-row-action-url="{{ $reorderRowActionUrl }}"
         @endif
+        data-string-filterable-component-ids="{{ json_encode($stringFilterableComponentIds) }}"
 >
-    <div class="row dms-table-quick-filter-form form-inline">
+    <div class="row form-inline">
 
-        <div class="col-md-6">
+        <div class="col-md-4 col-lg-2 clearfix dms-table-rows-per-page-form">
             <div class="input-group">
                 <span class="input-group-addon">Items Per Page</span>
 
@@ -23,23 +24,29 @@
             </div>
         </div>
 
-        <div class="col-md-6">
-            <div class="input-group">
+        <br class="visible-sm visible-xs">
+
+        <div class="col-md-8 col-lg-10 clearfix  dms-table-quick-filter-form">
+            <div class="input-group pull-right">
                 <span class="input-group-addon">Order By</span>
 
                 <div class="form-group">
                     <select name="component" class="form-control">
-                        @foreach($structure->getColumns() as $column)
+                        @foreach($columns as $column)
                             @foreach($column->getComponents() as $component)
                                 <option value="{{ $column->getName() . '.' . $component->getName() }}">
-                                    {{ $column->getLabel() . ' > ' . $component->getLabel() }}
+                                    @if($column->getLabel() === $component->getLabel())
+                                        {{ $column->getLabel() }}
+                                    @else
+                                        {{ $column->getLabel() . ' > ' . $component->getLabel() }}
+                                    @endif
                                 </option>
                             @endforeach
                         @endforeach
                     </select>
                 </div>
 
-                <div class="form-group">
+                <div class="form-group visible-lg-inline-block">
                     <select name="direction" class="form-control">
                         <option value="{{ \Dms\Core\Model\Criteria\OrderingDirection::ASC }}">
                             Asc
@@ -61,15 +68,23 @@
                 </span>
             </div>
         </div>
+    </div>
 
-        <div class="col-md-12">
-            <hr/>
-        </div>
+    <hr/>
 
-        <div class="dms-table-container">
-            <div class="col-xs-12">
-                <table class="dms-table table"></table>
-            </div>
+    <div class="dms-table-container clearfix">
+        <div class="col-xs-12">
+            <table class="dms-table table"></table>
         </div>
+        @include('dms::partials.spinner')
+    </div>
+
+    <div class="dms-table-pagination">
+        <nav>
+            <ul class="pager">
+                <li><a href="javascript:void(0)" class="dms-pagination-previous">Previous</a></li>
+                <li><a href="javascript:void(0)" class="dms-pagination-next">Next</a></li>
+            </ul>
+        </nav>
     </div>
 </div>

@@ -7,6 +7,63 @@
 .user-panel > .info {
   position: static; }
 
+a[disabled] {
+  opacity: .6;
+  pointer-events: none;
+  cursor: auto; }
+
+.dms-table-container {
+  position: relative;
+  min-height: 50px; }
+  .dms-table-container.loading table {
+    opacity: .3; }
+  .dms-table-container.loading .spinner {
+    display: block;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    top: calc(50% - 10px);
+    left: calc(50% - 35px); }
+  .dms-table-container table th[data-column-name="id"], .dms-table-container table td[data-column-name="id"] {
+    display: none !important; }
+
+.spinner {
+  margin: 0 auto 0;
+  width: 70px;
+  text-align: center;
+  display: none; }
+
+.spinner > div {
+  width: 18px;
+  height: 18px;
+  background-color: #00B1E1;
+  border-radius: 100%;
+  display: inline-block;
+  -webkit-animation: sk-bouncedelay 1.4s infinite ease-in-out both;
+  animation: sk-bouncedelay 1.4s infinite ease-in-out both; }
+
+.spinner .bounce1 {
+  -webkit-animation-delay: -0.32s;
+  animation-delay: -0.32s; }
+
+.spinner .bounce2 {
+  -webkit-animation-delay: -0.16s;
+  animation-delay: -0.16s; }
+
+@-webkit-keyframes sk-bouncedelay {
+  0%, 80%, 100% {
+    -webkit-transform: scale(0); }
+  40% {
+    -webkit-transform: scale(1); } }
+
+@keyframes sk-bouncedelay {
+  0%, 80%, 100% {
+    -webkit-transform: scale(0);
+    transform: scale(0); }
+  40% {
+    -webkit-transform: scale(1);
+    transform: scale(1); } }
+
 body.login-page {
   background-color: #fff; }
 

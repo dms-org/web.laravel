@@ -134,8 +134,8 @@ class RoleModule extends CrudModule
         $permissionOptions = [];
 
         foreach ($this->cms->loadPermissions() as $permission) {
-            $permissionOptions[$permission->getName()] = StringHumanizer::title(
-                strtr($permission->getName(), ['.' => ' - '])
+            $permissionOptions[$permission->getName()] = ucwords(
+                strtr($permission->getName(), ['.' => ' - ', '-' => ' '])
             );
         }
 

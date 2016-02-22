@@ -7,15 +7,8 @@ Dms.form.initializeCallbacks.push(function (element) {
             increaseArea: '20%'
         });
 
-        var minFields = listOfCheckboxes.attr('data-min-elements') || 0;
-        var maxFields = listOfCheckboxes.attr('data-max-elements') || Infinity;
-
-        listOfCheckboxes.find('input[type=checkbox]').on('click', function (e) {
-            var currentCount = listOfCheckboxes.find('input[type=checkbox]:checked').length;
-
-            if (currentCount >= maxFields && !$(this).is(':checked')) {
-                e.preventDefault();
-            }
-        });
+        var firstCheckbox = listOfCheckboxes.find('input[type=checkbox]').first();
+        firstCheckbox.attr('data-parsley-min-elements', listOfCheckboxes.attr('data-min-elements'));
+        firstCheckbox.attr('data-parsley-max-elements', listOfCheckboxes.attr('data-max-elements'));
     });
 });

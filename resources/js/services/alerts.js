@@ -20,11 +20,11 @@ Dms.alerts.add = function (type, title, message) {
 };
 
 Dms.global.initializeCallbacks.push(function () {
-    var successFlash = Cookies.get('dms-flash-alert-success');
+    var flashMessage = Cookies.getJSON('dms-flash-alert');
 
-    if (successFlash) {
-        Cookies.remove('dms-flash-alert-success');
+    if (flashMessage) {
+        Cookies.remove('dms-flash-alert');
 
-        Dms.alerts.add('success', successFlash);
+        Dms.alerts.add(flashMessage.type, flashMessage.message);
     }
 });

@@ -27,6 +27,9 @@ a[disabled] {
   .dms-table-container table th[data-column-name="id"], .dms-table-container table td[data-column-name="id"] {
     display: none !important; }
 
+.dms-staged-form .help-block-error {
+  color: #a94442; }
+
 .spinner {
   margin: 0 auto 0;
   width: 70px;
@@ -63,6 +66,9 @@ a[disabled] {
   40% {
     -webkit-transform: scale(1);
     transform: scale(1); } }
+
+body {
+  font-family: Arial, sans-serif !important; }
 
 body.login-page {
   background-color: #fff; }

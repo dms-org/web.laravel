@@ -10,7 +10,7 @@
                     <h3 class="box-title">{{ $widget->getWidget()->getLabel() }}</h3>
                     <div class="pull-right box-tools">
                         @foreach ($renderer->getLinks($widget->getModule(), $widget->getWidget()) as $url => $label)
-                            <a class="btn btn-info" href="{{ $url }}">
+                            <a class="btn btn-sm btn-default" href="{{ $url }}">
                                 {{ $label }} &nbsp; <i class="fa fa-arrow-right"></i>
                             </a>
                         @endforeach

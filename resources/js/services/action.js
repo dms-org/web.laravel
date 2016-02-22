@@ -1,7 +1,10 @@
 Dms.action.responseHandler = function (response) {
     if (typeof response.redirect !== 'undefined') {
         if (typeof response.message !== 'undefined') {
-            Cookies.set('dms-flash-alert-success', response.message);
+            Cookies.set('dms-flash-alert', {
+                message: response.message,
+                type: response.message_type || 'success'
+            });
         }
 
         window.location.href = response.redirect;

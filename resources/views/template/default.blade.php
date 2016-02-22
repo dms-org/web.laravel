@@ -90,7 +90,7 @@
                     <li class="active treeview">
                     @foreach($navigation as $url => $label)
                         @if(is_array($label))
-                            <li class="treeview  @if(isset($label[request()->url()])) active @endif">
+                            <li class="treeview  @if(starts_with(request()->url(), array_keys($label))) active @endif">
                                 <a href="javascript:void(0)">
                                     <i class="fa fa-folder"></i>
                                     <span class="dms-nav-label dms-nav-label-group">{{ $url }}</span>
@@ -98,7 +98,7 @@
                                 </a>
                                 <ul class="treeview-menu">
                                     @foreach($label as $url => $innerLabel)
-                                        <li @if($url === request()->url()) class="active" @endif>
+                                        <li @if(starts_with(request()->url(), $url)) class="active" @endif>
                                             <a href="{{ $url }}"><i class="fa fa-circle-o"></i> <span class="dms-nav-label">{{ $innerLabel }}</span></a>
                                         </li>
                                     @endforeach

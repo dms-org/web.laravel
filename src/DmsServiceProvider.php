@@ -196,7 +196,7 @@ class DmsServiceProvider extends ServiceProvider
         $router = $this->app['router'];
 
         $router->middlewareGroup('dms.web', [
-            //EncryptCookies::class, // TODO: enable
+            EncryptCookies::class,
             AddQueuedCookiesToResponse::class,
             StartSession::class,
             ShareErrorsFromSession::class,
@@ -228,6 +228,11 @@ class DmsServiceProvider extends ServiceProvider
         $this->app->singleton(IConnection::class, function () {
             /** @var Connection $connection */
             $connection = $this->app->make(Connection::class);
+
+            if ($connection->getPdo()->getAttribute(\PDO::ATTR_DRIVER_NAME) === 'mysql'
+                && version_compare($connection->getPdo()->getAttribute(\PDO::ATTR_SERVER_VERSION), '5.7.6', '>=')) {
+                $connection->statement('SET optimizer_switch = \'derived_merge=off\'');
+            }
 
             return new LaravelConnection($connection);
         });

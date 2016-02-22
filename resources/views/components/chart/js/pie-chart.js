@@ -4,7 +4,7 @@ Dms.chart.initializeCallbacks.push(function () {
         var chartData = JSON.parse(chart.attr('data-chart-data'));
 
         if (!chart.attr('id')) {
-            chart.attr('id', Dms.utilities.guidGenerator());
+            chart.attr('id', Dms.utilities.idGenerator());
         }
 
         Morris.Donut({

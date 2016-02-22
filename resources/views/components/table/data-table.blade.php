@@ -9,7 +9,7 @@
             <th data-column-name="{{ $column->getName() }}">{!! $columnRenderers[$column->getName()]->renderHeader() !!}</th>
         @endforeach
         @if($rowActionButtons)
-            <th class="dms-row-action-column">Actions</th>
+            <th class="dms-row-action-column"><span class="pull-right">Actions</span></th>
         @endif
     </tr>
     </thead>
@@ -21,7 +21,7 @@
                     <td data-column-name="{{ $columnName }}">{!! $columnRenderers[$columnName]->render($value) !!}</td>
                 @endforeach
                 @if($rowActionButtons)
-                    <td class="dms-row-action-column">Actions</td>
+                    <td class="dms-row-action-column"><span class="pull-right">Actions</span></td>
                 @endif
             </tr>
             </thead>
@@ -34,17 +34,59 @@
                     <td data-column-name="{{ $columnName }}">{!! $columnRenderers[$columnName]->render($value) !!}</td>
                 @endforeach
                 @if($rowActionButtons)
+                    <?php $objectId = $row->getCellComponentData(\Dms\Core\Common\Crud\IReadModule::SUMMARY_TABLE_ID_COLUMN) ?>
                     <td class="dms-row-action-column">
-                        @foreach($rowActionButtons as $action)
-                            @if($action->isPost())
-                                <form class="dms-run-action-form inline" action="{{ $action->getUrl($row) }}" method="post">
-                                    {!! csrf_field() !!}
-                                    <button type="submit" class="btn btn-xs btn-default">{{ $action->getLabel() }}</button>
-                                </form>
-                            @else
-                                <a class="btn btn-xs btn-default" href="{{ $action->getUrl($row) }}">{{ $action->getLabel() }}</a>
+                        <div class="dms-row-button-control pull-right">
+                            @if(isset($rowActionButtons['details']))
+                                <a href="{{ $rowActionButtons['details']->getUrl($objectId) }}" title="View Details"
+                                   class="btn btn-xs btn-info">
+                                    <i class="fa fa-bars"></i>
+                                </a>
                             @endif
-                        @endforeach
+                            @if(isset($rowActionButtons['edit']))
+                                <a href="{{ $rowActionButtons['edit']->getUrl($objectId) }}" title="Edit"
+                                   class="btn btn-xs btn-primary">
+                                    <i class="fa fa-pencil-square-o"></i>
+                                </a>
+                            @endif
+                            @if(isset($rowActionButtons['remove']))
+                                <form class="dms-run-action-form inline"
+                                      action="{{ $rowActionButtons['remove']->getUrl($objectId) }}"
+                                      data-after-run-remove-closest="tr"
+                                      method="post">
+                                    {!! csrf_field() !!}
+                                    <button type="submit" class="btn btn-xs btn-danger">
+                                        <i class="fa fa-trash-o"></i>
+                                    </button>
+                                </form>
+                            @endif
+
+                            @if(array_diff_key($rowActionButtons, ['details' => true, 'edit' => true, 'remove' => true]))
+                                <div class="inline" style="position: relative">
+                                    <button type="button" class="btn btn-xs btn-default dropdown-toggle"
+                                            data-toggle="dropdown"
+                                            aria-expanded="false">
+                                        &nbsp;<span class="fa fa-caret-down"></span>&nbsp;
+                                    </button>
+                                    <ul class="dropdown-menu  dropdown-menu-right">
+                                        @foreach(array_diff_key($rowActionButtons, ['details' => true, 'edit' => true, 'remove' => true]) as $action)
+                                            <li>
+                                                @if($action->isPost())
+                                                    <form class="dms-run-action-form inline"
+                                                          action="{{ $action->getUrl($objectId) }}"
+                                                          method="post">
+                                                        {!! csrf_field() !!}
+                                                        <button type="submit">{{ $action->getLabel() }}</button>
+                                                    </form>
+                                                @else
+                                                    <a href="{{ $action->getUrl($objectId) }}">{{ $action->getLabel() }}</a>
+                                                @endif
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            @endif
+                        </div>
                     </td>
                 @endif
             </tr>

@@ -73,9 +73,7 @@
     <hr/>
 
     <div class="dms-table-container clearfix">
-        <div class="col-xs-12">
-            <table class="dms-table table"></table>
-        </div>
+        <table class="dms-table table"></table>
         @include('dms::partials.spinner')
     </div>
 

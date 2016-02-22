@@ -75,7 +75,7 @@ class FormRenderer
      * @return string
      * @throws UnrenderableFieldException
      */
-    public function renderFieldAsValues(IForm $form) : string
+    public function renderFieldsAsValues(IForm $form) : string
     {
         $sections = [];
 

@@ -29,6 +29,6 @@ class IndexTest extends CmsIntegrationTest
 
         $this->route('GET', 'dms::index');
 
-        $this->assertRedirectedToRoute('dms::package.dashboard', ['package' => 'auth']);
+        $this->assertRedirectedToRoute('dms::package.dashboard', ['package' => 'admin']);
     }
 }

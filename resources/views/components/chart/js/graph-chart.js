@@ -8,7 +8,7 @@ Dms.chart.initializeCallbacks.push(function () {
         var verticalAxisLabels = JSON.parse(chart.attr('data-vertical-axis-labels'));
 
         if (!chart.attr('id')) {
-            chart.attr('id', Dms.utilities.guidGenerator());
+            chart.attr('id', Dms.utilities.idGenerator());
         }
 
         var morrisConfig = {

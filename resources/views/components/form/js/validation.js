@@ -2,16 +2,17 @@ Dms.form.initializeValidationCallbacks.push(function (element) {
 
     element.find('.dms-form-fields').each(function () {
         if (!$(this).attr('id')) {
-            $(this).attr('id', Dms.utilities.guidGenerator());
+            $(this).attr('id', Dms.utilities.idGenerator());
         }
     });
 
     element.find('.dms-form-fields').each(function () {
-        var formFieldsGroupId = $(this).attr('id');
+        var formFieldSection = $(this);
+        var formFieldsGroupId = formFieldSection.attr('id');
 
 
-        var buildElementSelect = function (fieldName) {
-            return '#' + formFieldsGroupId + '*[type="' + fieldName + '"]:input';
+        var buildElementSelector = function (fieldName) {
+            return '#' + formFieldsGroupId + ' *[name="' + fieldName + '"]';
         };
 
         var fieldValidations = {
@@ -23,11 +24,12 @@ Dms.form.initializeValidationCallbacks.push(function (element) {
         };
 
         $.each(fieldValidations, function (validationAttr, parsleyAttr) {
-            var fieldsMap = $(this).attr(validationAttr);
+            var fieldsMap = formFieldSection.attr(validationAttr);
 
             if (fieldsMap) {
                 $.each(JSON.parse(fieldsMap), function (fieldName, otherFieldName) {
-                    $(this).find(buildElementSelect(fieldName)).attr(parsleyAttr, buildElementSelect(otherFieldName));
+                    var field = $(buildElementSelector(fieldName));
+                    field.attr(parsleyAttr, buildElementSelector(otherFieldName));
                 });
             }
         });
@@ -35,7 +37,7 @@ Dms.form.initializeValidationCallbacks.push(function (element) {
 
     element.find('form.dms-staged-form').each(function () {
         var form = $(this);
-        form.parsley();
+        form.parsley(window.ParsleyConfig);
 
         form.find('.dms-form-fields').each(function (index) {
             $(this).find(':input').attr('data-parsley-group', 'validation-group-' + index);
@@ -43,6 +45,6 @@ Dms.form.initializeValidationCallbacks.push(function (element) {
     });
 
     element.find('form.dms-form').each(function () {
-        $(this).parsley();
+        $(this).parsley(window.ParsleyConfig);
     });
 });

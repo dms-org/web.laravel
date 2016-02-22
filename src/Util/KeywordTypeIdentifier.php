@@ -1,4 +1,4 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Util;
 
@@ -29,6 +29,11 @@ class KeywordTypeIdentifier
     /**
      * @var string[]
      */
+    protected $primaryStrings;
+
+    /**
+     * @var string[]
+     */
     protected $overridesMap;
 
     /**
@@ -41,6 +46,7 @@ class KeywordTypeIdentifier
         $this->dangerStrings  = $config->get('dms.keywords.danger', []);
         $this->successStrings = $config->get('dms.keywords.success', []);
         $this->infoStrings    = $config->get('dms.keywords.info', []);
+        $this->primaryStrings = $config->get('dms.keywords.primary', []);
         $this->overridesMap   = $config->get('dms.keywords.overrides', []);
     }
 
@@ -84,6 +90,10 @@ class KeywordTypeIdentifier
 
         if (str_contains($name, $this->infoStrings)) {
             return 'info';
+        }
+
+        if (str_contains($name, $this->primaryStrings)) {
+            return 'primary';
         }
 
         return null;

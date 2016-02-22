@@ -1,7 +1,8 @@
 Dms.form.initializeCallbacks.push(function (element) {
 
-    element.find('form.dms-staged-form').each(function () {
+    element.find('form.dms-staged-form, form.dms-run-action-form').each(function () {
         var form = $(this);
+        var afterRunCallbacks = [];
         var submitButtons = form.find('input[type=submit], button[type=submit]');
         var submitMethod = form.attr('method');
         var submitUrl = form.attr('action');
@@ -14,6 +15,9 @@ Dms.form.initializeCallbacks.push(function (element) {
             var formData = new FormData(form.get(0));
 
             submitButtons.prop('disabled', true);
+            submitButtons.addClass('ladda-button').attr('data-style', 'expand-right');
+            var ladda = Ladda.create(submitButtons.get(0));
+            ladda.start();
 
             var currentAjaxRequest = $.ajax({
                 url: submitUrl,
@@ -21,11 +25,27 @@ Dms.form.initializeCallbacks.push(function (element) {
                 processData: false,
                 contentType: false,
                 dataType: 'json',
-                data: formData
+                data: formData,
+                xhr: function() {
+                    var xhr = $.ajaxSettings.xhr();
+
+                    if(xhr.upload){
+                        xhr.upload.addEventListener('progress', function (event) {
+                            if (event.lengthComputable) {
+                                ladda.setProgress(event.loaded / event.total);
+                            }
+                        }, false);
+                    }
+
+                    return xhr;
+                }
             });
 
             currentAjaxRequest.done(function (data) {
                 Dms.action.responseHandler(data);
+                $.each(afterRunCallbacks, function (index, callback) {
+                    callback(data);
+                });
             });
 
             currentAjaxRequest.fail(function (xhr) {
@@ -51,7 +71,19 @@ Dms.form.initializeCallbacks.push(function (element) {
 
             currentAjaxRequest.always(function () {
                 submitButtons.prop('disabled', false);
+                ladda.stop();
             });
+        });
+
+        var parentToRemove = form.attr('data-after-run-remove-closest');
+        if (parentToRemove) {
+            afterRunCallbacks.push(function () {
+                form.closest(parentToRemove).fadeOut(100);
+            });
+        }
+
+        afterRunCallbacks.push(function () {
+            form.find('input[type=password]').val('');
         });
     });
 });

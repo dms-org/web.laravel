@@ -29,8 +29,10 @@ return [
                 Dms\Web\Laravel\Action\InputTransformer\TempUploadedFileToUploadedFileTransformer::class,
             ],
             'result-handlers'    => [
+                Dms\Web\Laravel\Action\ResultHandler\ViewDetailsResultHandler::class,
                 Dms\Web\Laravel\Action\ResultHandler\CreatedEntityResultHandler::class,
                 Dms\Web\Laravel\Action\ResultHandler\EditedEntityResultHandler::class,
+                Dms\Web\Laravel\Action\ResultHandler\DeletedEntityResultHandler::class,
                 Dms\Web\Laravel\Action\ResultHandler\NullResultHandler::class,
                 Dms\Web\Laravel\Action\ResultHandler\MessageResultHandler::class,
                 Dms\Web\Laravel\Action\ResultHandler\FileResultHandler::class,
@@ -86,10 +88,17 @@ return [
         ],
     ],
 
+    'actions' => [
+        'safe' => [
+            Dms\Core\Common\Crud\Action\Crud\ViewDetailsAction::class
+        ],
+    ],
+
     'keywords' => [
         'danger'    => ['delete', 'remove', 'trash', 'drop', 'cancel', 'reset'],
         'success'   => ['confirm', 'approve', 'accept', 'verify'],
-        'info'      => ['download', 'stats', 'display'],
+        'info'      => ['download', 'stats', 'display', 'details', 'view'],
+        'primary'   => ['edit'],
         'overrides' => [
             'example-name' => 'danger',
         ],

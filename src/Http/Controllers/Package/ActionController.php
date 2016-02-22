@@ -8,6 +8,7 @@ use Dms\Core\Common\Crud\IReadModule;
 use Dms\Core\Form\InvalidFormSubmissionException;
 use Dms\Core\ICms;
 use Dms\Core\Language\ILanguageProvider;
+use Dms\Core\Model\Object\Entity;
 use Dms\Core\Module\ActionNotFoundException;
 use Dms\Core\Module\IAction;
 use Dms\Core\Module\IModule;
@@ -21,7 +22,9 @@ use Dms\Web\Laravel\Action\ActionResultHandlerCollection;
 use Dms\Web\Laravel\Action\UnhandleableActionExceptionException;
 use Dms\Web\Laravel\Action\UnhandleableActionResultException;
 use Dms\Web\Laravel\Http\Controllers\DmsController;
+use Dms\Web\Laravel\Renderer\Action\ObjectActionButtonBuilder;
 use Dms\Web\Laravel\Renderer\Form\ActionFormRenderer;
+use Dms\Web\Laravel\Util\ActionSafetyChecker;
 use Dms\Web\Laravel\Util\StringHumanizer;
 use Illuminate\Http\Exception\HttpResponseException;
 use Illuminate\Http\Request;
@@ -54,9 +57,19 @@ class ActionController extends DmsController
     protected $exceptionHandlers;
 
     /**
+     * @var ActionSafetyChecker
+     */
+    protected $actionSafetyChecker;
+
+    /**
      * @var ActionFormRenderer
      */
     protected $actionFormRenderer;
+
+    /**
+     * @var ObjectActionButtonBuilder
+     */
+    protected $actionButtonBuilder;
 
     /**
      * ActionController constructor.
@@ -65,22 +78,28 @@ class ActionController extends DmsController
      * @param ActionInputTransformerCollection $inputTransformers
      * @param ActionResultHandlerCollection    $resultHandlers
      * @param ActionExceptionHandlerCollection $exceptionHandlers
+     * @param ActionSafetyChecker              $actionSafetyChecker
      * @param ActionFormRenderer               $actionFormRenderer
+     * @param ObjectActionButtonBuilder        $actionButtonBuilder
      */
     public function __construct(
         ICms $cms,
         ActionInputTransformerCollection $inputTransformers,
         ActionResultHandlerCollection $resultHandlers,
         ActionExceptionHandlerCollection $exceptionHandlers,
-        ActionFormRenderer $actionFormRenderer
+        ActionSafetyChecker $actionSafetyChecker,
+        ActionFormRenderer $actionFormRenderer,
+        ObjectActionButtonBuilder $actionButtonBuilder
     )
     {
         parent::__construct($cms);
-        $this->lang               = $cms->getLang();
-        $this->inputTransformers  = $inputTransformers;
-        $this->resultHandlers     = $resultHandlers;
-        $this->exceptionHandlers  = $exceptionHandlers;
-        $this->actionFormRenderer = $actionFormRenderer;
+        $this->lang                = $cms->getLang();
+        $this->inputTransformers   = $inputTransformers;
+        $this->resultHandlers      = $resultHandlers;
+        $this->exceptionHandlers   = $exceptionHandlers;
+        $this->actionSafetyChecker = $actionSafetyChecker;
+        $this->actionFormRenderer  = $actionFormRenderer;
+        $this->actionButtonBuilder = $actionButtonBuilder;
     }
 
     public function showForm($packageName, $moduleName, $actionName, $objectId = null)
@@ -92,10 +111,6 @@ class ActionController extends DmsController
 
         if (!($action instanceof IParameterizedAction)) {
             abort(404);
-        }
-
-        if (!$action->isAuthorized()) {
-            abort(401);
         }
 
         $hiddenValues = [];
@@ -114,23 +129,28 @@ class ActionController extends DmsController
             ]);
 
             $hiddenValues[IObjectAction::OBJECT_FIELD_NAME] = $objectId;
-            $extraTitle = $module->getLabelFor($object);
+            $objectLabel                                    = $module->getLabelFor($object);
+            $actionButtons                                  = $this->actionButtonBuilder->buildActionButtons($module, $object, $actionName);
         } else {
-            $extraTitle = null;
+            $objectLabel   = null;
+            $actionButtons = [];
         }
 
         return view('dms::package.module.action')
             ->with([
-                'pageTitle'       => StringHumanizer::title(implode(' :: ', $titleParts)) . ($extraTitle ? ' :: ' . $extraTitle : ''),
+                'pageTitle'       => StringHumanizer::title(implode(' :: ', $titleParts)),
                 'breadcrumbs'     => [
                     route('dms::index')                                                 => 'Home',
                     route('dms::package.dashboard', [$packageName])                     => StringHumanizer::title($packageName),
                     route('dms::package.module.dashboard', [$packageName, $moduleName]) => StringHumanizer::title($moduleName),
                 ],
                 'finalBreadcrumb' => StringHumanizer::title($actionName),
+                'objectLabel'     => $objectLabel ? str_singular(StringHumanizer::title($moduleName)) . ': ' . $objectLabel : null,
                 'action'          => $action,
                 'formRenderer'    => $this->actionFormRenderer,
                 'hiddenValues'    => $hiddenValues,
+                'actionButtons'   => $actionButtons,
+                'objectId'        => $objectId,
             ]);
     }
 
@@ -172,6 +192,55 @@ class ActionController extends DmsController
         return response($this->actionFormRenderer->renderFormFields($form), 200);
     }
 
+    public function showActionResult(Request $request, $packageName, $moduleName, $actionName, $objectId = null)
+    {
+        /** @var IModule $module */
+        list($module, $action) = $this->loadAction($packageName, $moduleName, $actionName);
+
+        if (!$this->actionSafetyChecker->isSafeToShowActionResultViaGetRequest($action)) {
+            abort(404);
+        }
+
+        $titleParts = [$packageName, $moduleName, $actionName];
+
+
+        try {
+            $result = $this->runActionWithDataFromRequest($request, $action, [IObjectAction::OBJECT_FIELD_NAME => $objectId]);
+        } catch (InvalidFormSubmissionException $e) {
+            abort(404);
+        }
+
+        $response = $this->resultHandlers->handle($action, $result);
+
+        if ($objectId && $module instanceof IReadModule) {
+            /** @var IReadModule $module */
+            $object        = $module->getDataSource()->matching(
+                $module->getDataSource()->criteria()->where(Entity::ID, '=', (int)$objectId)
+            )[0];
+            $objectLabel   = $module->getLabelFor($object);
+            $actionButtons = $this->actionButtonBuilder->buildActionButtons($module, $object, $actionName);
+        } else {
+            $objectLabel   = null;
+            $actionButtons = [];
+        }
+
+        return view('dms::package.module.details')
+            ->with([
+                'pageTitle'       => StringHumanizer::title(implode(' :: ', $titleParts)),
+                'breadcrumbs'     => [
+                    route('dms::index')                                                 => 'Home',
+                    route('dms::package.dashboard', [$packageName])                     => StringHumanizer::title($packageName),
+                    route('dms::package.module.dashboard', [$packageName, $moduleName]) => StringHumanizer::title($moduleName),
+                ],
+                'finalBreadcrumb' => StringHumanizer::title($actionName),
+                'objectLabel'     => $objectLabel ? str_singular(StringHumanizer::title($moduleName)) . ': ' . $objectLabel : null,
+                'action'          => $action,
+                'actionResult'    => $response,
+                'actionButtons'   => $actionButtons,
+                'objectId'        => $objectId,
+            ]);
+    }
+
     public function runAction(Request $request, $packageName, $moduleName, $actionName)
     {
         /** @var IModule $module */
@@ -179,15 +248,7 @@ class ActionController extends DmsController
         list($module, $action) = $this->loadAction($packageName, $moduleName, $actionName);
 
         try {
-            if ($action instanceof IParameterizedAction) {
-                /** @var IParameterizedAction $action */
-                $input  = $this->inputTransformers->transform($action, $request->all());
-                $result = $action->run($input);
-            } else {
-                /** @var IUnparameterizedAction $action */
-                $result = $action->run();
-            }
-
+            $result = $this->runActionWithDataFromRequest($request, $action);
         } catch (\Exception $e) {
             return $this->handleActionException($action, $e);
         }
@@ -196,6 +257,27 @@ class ActionController extends DmsController
             return $this->resultHandlers->handle($action, $result);
         } catch (UnhandleableActionResultException $e) {
             return $this->handleUnknownHandlerException($e);
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @param IAction $action
+     * @param array   $extraData
+     *
+     * @return mixed
+     */
+    protected function runActionWithDataFromRequest(Request $request, IAction $action, array $extraData = [])
+    {
+        if ($action instanceof IParameterizedAction) {
+            /** @var IParameterizedAction $action */
+            $input  = $this->inputTransformers->transform($action, $request->all() + $extraData);
+            $result = $action->run($input);
+            return $result;
+        } else {
+            /** @var IUnparameterizedAction $action */
+            $result = $action->run();
+            return $result;
         }
     }
 
@@ -243,6 +325,10 @@ class ActionController extends DmsController
         try {
             $module = $this->cms->loadPackage($packageName)->loadModule($moduleName);
             $action = $module->getAction($actionName);
+
+            if (!$action->isAuthorized()) {
+                abort(401);
+            }
 
             return [$module, $action];
         } catch (PackageNotFoundException $e) {

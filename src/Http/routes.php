@@ -61,6 +61,11 @@ $router->group(['prefix' => 'dms', 'middleware' => 'dms.web', 'as' => 'dms::', '
                 'Package\ActionController@runAction'
             )->name('package.module.action.run');
 
+            $router->get(
+                'package/{package}/{module}/action/{action}/show/{object_id?}',
+                'Package\ActionController@showActionResult'
+            )->name('package.module.action.show');
+
             // Tables
             $router->get(
                 'package/{package}/{module}/table/{table}/{view}',

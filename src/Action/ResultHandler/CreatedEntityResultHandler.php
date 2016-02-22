@@ -28,6 +28,7 @@ class CreatedEntityResultHandler extends ActionResultHandler
      */
     public function __construct(EntityModuleMap $entityModuleMap)
     {
+        parent::__construct();
         $this->entityModuleMap = $entityModuleMap;
     }
 
@@ -47,7 +48,6 @@ class CreatedEntityResultHandler extends ActionResultHandler
      */
     protected function canHandleResult(IAction $action, $result) : bool
     {
-        parent::__construct();
         return $action instanceof CreateAction;
     }
 

@@ -43,6 +43,7 @@ Dms.table.initializeCallbacks.push(function (element) {
             currentAjaxRequest.done(function (tableData) {
                 table.html(tableData);
                 Dms.table.initialize(tableContainer);
+                Dms.form.initialize(tableContainer);
 
                 if (table.find('tbody tr').length < criteria.max_rows) {
                     paginationNextButton.attr('disabled', true);

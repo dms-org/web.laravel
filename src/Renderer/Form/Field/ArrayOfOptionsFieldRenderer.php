@@ -1,4 +1,4 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Renderer\Form\Field;
 
@@ -79,10 +79,9 @@ class ArrayOfOptionsFieldRenderer extends BladeFieldRenderer
 
         return $this->renderValueViewWithNullDefault(
             $field, $value,
-            'dms::components.field.list-of-fields.value',
+            'dms::components.field.checkbox-group.value',
             [
-                'elementField'  => $elementField,
-                'fieldRenderer' => $this->fieldRendererCollection->findRendererFor($elementField),
+                'options' => $elementField->getType()->get(ArrayOfType::ATTR_OPTIONS)->getAll(),
             ]
         );
     }

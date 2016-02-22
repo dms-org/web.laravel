@@ -2,20 +2,24 @@ Dms.form.initializeCallbacks.push(function (element) {
 
     element.find('form.dms-staged-form').each(function () {
         var form = $(this);
-        var parsley = form.parsley();
+        var parsley = form.parsley(window.ParsleyConfig);
         var stageElements = form.find('.dms-form-stage');
         var submitButtons = form.find('input[type=submit], button[type=submit]');
 
-        var updateFormValidity = function () {
-            var isValid = parsley.isValid()
+        var isFormValid = function () {
+            return parsley.isValid()
                 && form.find('.has-error').length === 0
                 && form.find('.dms-form-stage').length === form.find('.dms-form-stage.loaded').length;
-
-            submitButtons.prop('disabled', !isValid);
         };
 
-        form.on('change input', '*[name]:input', updateFormValidity);
-        updateFormValidity();
+        submitButtons.on('click before-confirmation', function (e) {
+            parsley.validate();
+
+            if (!isFormValid()) {
+                e.stopImmediatePropagation();
+                return false;
+            }
+        });
 
         stageElements.each(function () {
             var currentStage = $(this);
@@ -111,8 +115,6 @@ Dms.form.initializeCallbacks.push(function (element) {
                             break;
                     }
                 });
-
-                currentAjaxRequest.always(updateFormValidity);
             });
         });
     });

@@ -2,17 +2,14 @@
 
 namespace Dms\Web\Laravel\Renderer\Table;
 
-use Dms\Core\Common\Crud\Action\Object\IObjectAction;
 use Dms\Core\Common\Crud\IReadModule;
 use Dms\Core\Common\Crud\Table\ISummaryTable;
 use Dms\Core\Model\Criteria\Condition\ConditionOperator;
 use Dms\Core\Module\IModule;
 use Dms\Core\Module\ITableDisplay;
 use Dms\Core\Table\IDataTable;
-use Dms\Core\Table\ITableRow;
 use Dms\Core\Table\ITableStructure;
-use Dms\Web\Laravel\Renderer\Table\RowAction\RowActionButton;
-use Dms\Web\Laravel\Util\StringHumanizer;
+use Dms\Web\Laravel\Renderer\Action\ObjectActionButtonBuilder;
 
 /**
  * The table renderer class.
@@ -27,13 +24,20 @@ class TableRenderer
     protected $columnRendererFactories;
 
     /**
+     * @var ObjectActionButtonBuilder
+     */
+    private $actionButtonBuilder;
+
+    /**
      * TableRenderer constructor.
      *
      * @param ColumnRendererFactoryCollection $columnRendererFactories
+     * @param ObjectActionButtonBuilder       $actionButtonBuilder
      */
-    public function __construct(ColumnRendererFactoryCollection $columnRendererFactories)
+    public function __construct(ColumnRendererFactoryCollection $columnRendererFactories, ObjectActionButtonBuilder $actionButtonBuilder)
     {
         $this->columnRendererFactories = $columnRendererFactories;
+        $this->actionButtonBuilder     = $actionButtonBuilder;
     }
 
     /**
@@ -55,12 +59,12 @@ class TableRenderer
         }
 
 
+        $rowActionButtons = [];
         if ($module instanceof IReadModule && $table instanceof ISummaryTable) {
-            $rowActionButtons = $this->buildRowActions($module);
-        } else {
-            $rowActionButtons = [];
+            foreach ($this->actionButtonBuilder->buildActionButtons($module) as $actionButton) {
+                $rowActionButtons[$actionButton->getName()] = $actionButton;
+            }
         }
-
         return view('dms::components.table.data-table')
             ->with([
                 'columns'          => $tableData->getStructure()->getColumns(),
@@ -69,41 +73,6 @@ class TableRenderer
                 'rowActionButtons' => $rowActionButtons,
             ])
             ->render();
-    }
-
-    /**
-     * @param IReadModule $module
-     *
-     * @return callable[]
-     */
-    protected function buildRowActions(IReadModule $module) : array
-    {
-        $rowActions = [];
-
-        foreach ($module->getObjectActions() as $action) {
-            $requiresExtraFormSubmission = $action->getStagedForm()->getAmountOfStages() > 1;
-
-            if ($requiresExtraFormSubmission) {
-                $formUrl = route('dms::package.module.action.form', [$module->getPackageName(), $module->getName(), $action->getName(), '__object__']);
-            } else {
-                $formUrl = route('dms::package.module.action.run', [$module->getPackageName(), $module->getName(), $action->getName(),
-                    IObjectAction::OBJECT_FIELD_NAME => '__object__'
-                ]);
-            }
-
-            $rowActions[$action->getName()] = new RowActionButton(
-                !$requiresExtraFormSubmission,
-                $action->getName(),
-                StringHumanizer::humanize($action->getName()),
-                function (ITableRow $row) use ($formUrl) {
-                    $objectId = $row->getCellComponentData(IReadModule::SUMMARY_TABLE_ID_COLUMN);
-
-                    return str_replace('__object__', $objectId, $formUrl);
-                }
-            );
-        }
-
-        return $rowActions;
     }
 
     /**

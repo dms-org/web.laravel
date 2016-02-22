@@ -30,3 +30,26 @@ window.ParsleyValidator
             en: 'This value should have a maximum of %d decimal places'
         }
     });
+
+window.ParsleyValidator
+    .addValidator('min-elements', {
+        requirementType: 'number',
+        validateMultiple: function (value, requirement) {
+            return value.length >= requirement;
+        },
+        messages: {
+            en: 'At least %s options must be selected'
+        }
+    });
+
+window.ParsleyValidator
+    .addValidator('max-elements', {
+        requirementType: 'number',
+        validateMultiple: function (value, requirement) {
+            return value.length <= requirement;
+        },
+        messages: {
+            en: 'No more than %s options can be selected'
+        }
+    });
+

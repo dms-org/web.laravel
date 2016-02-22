@@ -32,7 +32,7 @@
     <?php $stageNumber++ ?>
     @endforeach
 
-    <button class="btn btn-{{ \Dms\Web\Laravel\Util\KeywordTypeIdentifier::getClass($action->getName()) ?? 'default' }}" type="submit">
+    <button class="btn btn-{{ \Dms\Web\Laravel\Util\KeywordTypeIdentifier::getClass($action->getName()) ?? 'primary' }}" type="submit">
         {{ \Dms\Web\Laravel\Util\StringHumanizer::humanize($action->getName()) }}
         <i class="fa fa-arrow-right"></i>
     </button>

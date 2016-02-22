@@ -1,14 +1,15 @@
 <?php
 
-namespace Dms\Web\Laravel\Renderer\Table\RowAction;
+namespace Dms\Web\Laravel\Renderer\Action;
+
 use Dms\Core\Table\ITableRow;
 
 /**
- * The row action button class.
+ * The action button class.
  *
  * @author Elliot Levin <elliotlevin@hotmail.com>
  */
-class RowActionButton
+class ActionButton
 {
     /**
      * @var bool
@@ -55,13 +56,13 @@ class RowActionButton
     }
 
     /**
-     * @param ITableRow $row
+     * @param int $objectId
      *
      * @return string
      */
-    public function getUrl(ITableRow $row) : string
+    public function getUrl(int $objectId) : string
     {
-        return call_user_func($this->urlCallback, $row);
+        return call_user_func($this->urlCallback, $objectId);
     }
 
     /**

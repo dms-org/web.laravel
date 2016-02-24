@@ -4,11 +4,11 @@
 <?php /** @var \Dms\Core\Module\ITableView[] $summaryTableViews */ ?>
 <div class="row">
     <div class="col-xs-12">
-        <div class="nav-tabs-custom">
+        <div class="nav-tabs-custom dms-table-tabs">
             <ul class="nav nav-tabs">
                 @foreach($summaryTableViews as $view)
                     <li class="{{ $view->isDefault() ? 'active' : '' }}">
-                        <a href="#summary-table-tab-{{ $view->getName() }}" data-toggle="tab">{{ $view->getLabel() }}</a>
+                        <a class="dms-table-tab-show-button" href="#summary-table-tab-{{ $view->getName() }}" data-toggle="tab">{{ $view->getLabel() }}</a>
                     </li>
                 @endforeach
                 @if($createActionName ?? false)
@@ -21,7 +21,7 @@
             </ul>
             <div class="tab-content">
                 @foreach($summaryTableViews as $view)
-                    <div class="tab-pane active" id="summary-table-tab-{{ $view->getName() }}">
+                    <div class="tab-pane {{ $view->isDefault() ? 'active' : '' }}" id="summary-table-tab-{{ $view->getName() }}">
                         {!! $tableRenderer->renderTableControl($module, $summaryTable, $view->getName()) !!}
                     </div>
                     <!-- /.tab-pane -->

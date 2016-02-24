@@ -2,12 +2,13 @@
 
 namespace Dms\Web\Laravel\Action\ResultHandler;
 
-use Dms\Core\Common\Crud\Action\Crud\CreateAction;
-use Dms\Core\Model\Object\Entity;
+use Dms\Core\Common\Crud\Action\Crud\ViewDetailsAction;
+use Dms\Core\Form\IForm;
 use Dms\Core\Module\IAction;
 use Dms\Web\Laravel\Action\ActionResultHandler;
+use Dms\Web\Laravel\Renderer\Form\ActionFormRenderer;
+use Dms\Web\Laravel\Renderer\Form\FormRenderer;
 use Dms\Web\Laravel\Util\EntityModuleMap;
-use Dms\Web\Laravel\Util\StringHumanizer;
 use Illuminate\Http\Response;
 
 /**
@@ -15,7 +16,7 @@ use Illuminate\Http\Response;
  *
  * @author Elliot Levin <elliotlevin@hotmail.com>
  */
-class CreatedEntityResultHandler extends ActionResultHandler
+class ViewDetailsResultHandler extends ActionResultHandler
 {
     /**
      * @var EntityModuleMap
@@ -23,14 +24,21 @@ class CreatedEntityResultHandler extends ActionResultHandler
     protected $entityModuleMap;
 
     /**
+     * @var ActionFormRenderer
+     */
+    protected $formRenderer;
+
+    /**
      * CreatedEntityResultHandler constructor.
      *
      * @param EntityModuleMap $entityModuleMap
+     * @param FormRenderer    $formRenderer
      */
-    public function __construct(EntityModuleMap $entityModuleMap)
+    public function __construct(EntityModuleMap $entityModuleMap, FormRenderer $formRenderer)
     {
         parent::__construct();
         $this->entityModuleMap = $entityModuleMap;
+        $this->formRenderer    = $formRenderer;
     }
 
     /**
@@ -38,7 +46,7 @@ class CreatedEntityResultHandler extends ActionResultHandler
      */
     protected function supportedResultType()
     {
-        return Entity::class;
+        return null;
     }
 
     /**
@@ -49,7 +57,7 @@ class CreatedEntityResultHandler extends ActionResultHandler
      */
     protected function canHandleResult(IAction $action, $result) : bool
     {
-        return $action instanceof CreateAction;
+        return $action instanceof ViewDetailsAction;
     }
 
     /**
@@ -60,17 +68,7 @@ class CreatedEntityResultHandler extends ActionResultHandler
      */
     protected function handleResult(IAction $action, $result)
     {
-        $module = $this->entityModuleMap->loadModuleFor(get_class($result));
-        $label  = $module->getLabelFor($result);
-        $type   = str_singular(StringHumanizer::humanize($module->getName()));
-
-        return \response()->json([
-            'message'      => "The '{$label}' {$type} has been created.",
-            'message_type' => 'info',
-            'redirect'     => route('dms::package.module.dashboard', [
-                $module->getPackageName(),
-                $module->getName(),
-            ]),
-        ]);
+        /** @var IForm $result */
+        return $this->formRenderer->renderFieldsAsValues($result);
     }
 }

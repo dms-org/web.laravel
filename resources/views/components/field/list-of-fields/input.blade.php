@@ -1,8 +1,8 @@
 <?php /** @var \Dms\Web\Laravel\Renderer\Form\IFieldRenderer $fieldRenderer */ ?>
 <?php /** @var \Dms\Core\Form\IField $elementField */ ?>
-<?php $elementField = $elementField->withName($name . '[]', $label); ?>
+<?php $elementField = $elementField->withName($name . '[]', str_singular($label)); ?>
 <ul
-        class="list-group list-fields"
+        class="list-group dms-field-list"
         @if($exactElements !== null)
         data-min-elements="{{ $exactElements }}"
         data-max-elements="{{ $exactElements }}"
@@ -11,21 +11,33 @@
         @if($maxElements !== null) data-max-elements="{{ $maxElements }}" @endif
         @endif
 >
-    <li class="list-group-item hidden list-field-template">
-        <div class="list-field-input">{{ $fieldRenderer->render($elementField->withInitialValue(null)) }}</div>
-        <button class="btn btn-danger btn-remove-field"><span class="fa fa-cross"></span></button>
+    <li class="list-group-item hidden field-list-template clearfix dms-no-validation dms-form-no-submit">
+        <div class="row">
+            <div class="col-xs-10 col-md-11 field-list-input">
+                {{ $fieldRenderer->render($elementField->withInitialValue(null)) }}
+            </div>
+            <div class="col-xs-2 col-md-1 field-list-button-container">
+                <button class="btn btn-danger btn-block btn-remove-field"><span class="fa fa-times"></span></button>
+            </div>
+        </div>
     </li>
 
     @if ($value !== null)
         @foreach ($value as $valueElement)
-            <li class="list-group-item list-field-item">
-                <div class="list-field-input">{{ $fieldRenderer->render($elementField->withInitialValue($valueElement)) }}</div>
-                <button class="btn btn-danger btn-remove-field"><span class="fa fa-cross"></span></button>
+            <li class="list-group-item field-list-item clearfix">
+                <div class="row">
+                    <div class="col-xs-10 col-md-11 field-list-input">
+                        {!! $fieldRenderer->render($elementField->withInitialValue($valueElement)) !!}
+                    </div>
+                    <div class="col-xs-2 col-md-1 field-list-button-container">
+                        <button class="btn btn-danger btn-block btn-remove-field"><span class="fa fa-times"></span></button>
+                    </div>
+                </div>
             </li>
         @endforeach
     @endif
 
-    <li class="list-group-item list-field-add">
-        <button class="btn btn-success btn-add-field">Add <span class="fa fa-plus"></span></button>
+    <li class="list-group-item field-list-add">
+        <button type="button" class="btn btn-success btn-add-field">Add <span class="fa fa-plus"></span></button>
     </li>
 </ul>

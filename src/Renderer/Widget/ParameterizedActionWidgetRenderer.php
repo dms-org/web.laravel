@@ -58,7 +58,7 @@ class ParameterizedActionWidgetRenderer extends WidgetRenderer
      * @param IModule $module
      * @param IWidget $widget
      *
-     * @return string
+     * @return array
      */
     protected function getWidgetLinks(IModule $module, IWidget $widget) : array
     {

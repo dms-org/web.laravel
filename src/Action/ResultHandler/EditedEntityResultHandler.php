@@ -7,6 +7,7 @@ use Dms\Core\Model\Object\Entity;
 use Dms\Core\Module\IAction;
 use Dms\Web\Laravel\Action\ActionResultHandler;
 use Dms\Web\Laravel\Util\EntityModuleMap;
+use Dms\Web\Laravel\Util\StringHumanizer;
 use Illuminate\Http\Response;
 
 /**
@@ -61,7 +62,7 @@ class EditedEntityResultHandler extends ActionResultHandler
     {
         $module = $this->entityModuleMap->loadModuleFor(get_class($result));
         $label  = $module->getLabelFor($result);
-        $type   = str_singular($module->getName());
+        $type   = str_singular(StringHumanizer::humanize($module->getName()));
 
         return \response()->json([
             'message' => "The '{$label}' {$type} has been updated.",

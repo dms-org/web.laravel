@@ -39,6 +39,7 @@ return [
     'filled'               => 'The :field field is required.',
     'image'                => 'The :field must be an image.',
     'in'                   => 'The selected :field is invalid.',
+    'int'                  => 'The :field must be a whole number.',
     'integer'              => 'The :field must be an integer.',
     'ip'                   => 'The :field must be a valid IP address.',
     'json'                 => 'The :field must be a valid JSON string.',
@@ -91,10 +92,10 @@ return [
     */
 
     'custom' => [
-    'field-name' => [
-        'rule-name' => 'custom-message',
+        'field-name' => [
+            'rule-name' => 'custom-message',
+        ],
     ],
-],
 
     /*
     |--------------------------------------------------------------------------

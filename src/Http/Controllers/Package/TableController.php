@@ -87,16 +87,18 @@ class TableController extends DmsController
 
         $criteria = $tableView->getCriteriaCopy() ?: $table->getDataSource()->criteria();
 
-        $this->filterCriteriaFromRequest($request, $table->getDataSource()->getStructure(), $criteria);
+        $isFiltered = $this->filterCriteriaFromRequest($request, $table->getDataSource()->getStructure(), $criteria);
 
         return $this->tableRenderer->renderTableData(
             $module,
             $table,
-            $table->getDataSource()->load($criteria)
+            $table->getDataSource()->load($criteria),
+            $viewName,
+            $isFiltered
         );
     }
 
-    protected function filterCriteriaFromRequest(Request $request, ITableStructure $structure, RowCriteria $criteria)
+    protected function filterCriteriaFromRequest(Request $request, ITableStructure $structure, RowCriteria $criteria) : bool
     {
         $validComponentIds = [];
 
@@ -125,7 +127,11 @@ class TableController extends DmsController
             $criteria->maxRows(min($request->input('amount'), $criteria->getAmountOfRows() ?: PHP_INT_MAX));
         }
 
+        $isFiltered = false;
+
         if ($request->has('conditions')) {
+            $isFiltered = true;
+
             $criteria->setConditionMode($request->input('condition_mode'));
 
             foreach ($request->input('conditions') as $condition) {
@@ -134,10 +140,14 @@ class TableController extends DmsController
         }
 
         if ($request->has('orderings')) {
+            $isFiltered = true;
+
             foreach ($request->input('orderings') as $ordering) {
                 $criteria->orderBy($ordering['component'], $ordering['direction']);
             }
         }
+
+        return $isFiltered;
     }
 
     /**

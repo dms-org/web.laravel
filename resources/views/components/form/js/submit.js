@@ -2,17 +2,47 @@ Dms.form.initializeCallbacks.push(function (element) {
 
     element.find('form.dms-staged-form, form.dms-run-action-form').each(function () {
         var form = $(this);
+        var parsley = form.parsley(window.ParsleyConfig);
         var afterRunCallbacks = [];
         var submitButtons = form.find('input[type=submit], button[type=submit]');
         var submitMethod = form.attr('method');
         var submitUrl = form.attr('action');
+
+        var isFormValid = function () {
+            return parsley.isValid()
+                && form.find('.dms-validation-message *').length === 0
+                && form.find('.dms-form-stage').length === form.find('.dms-form-stage.loaded').length;
+        };
+
+        submitButtons.on('click before-confirmation', function (e) {
+            parsley.validate();
+
+            if (!isFormValid()) {
+                e.stopImmediatePropagation();
+                return false;
+            }
+        });
 
         form.on('submit', function (e) {
             e.preventDefault();
 
             Dms.form.validation.clearMessages(form);
 
+            var fieldsToReappend = [];
+            form.find('.dms-form-no-submit').each(function () {
+                var removedFields = $(this).children().detach();
+
+                fieldsToReappend.push({
+                    parentElement: $(this),
+                    children: removedFields
+                });
+            });
+
             var formData = new FormData(form.get(0));
+
+            $.each(fieldsToReappend, function (index, elements) {
+                elements.parentElement.append(elements.children);
+            });
 
             submitButtons.prop('disabled', true);
             submitButtons.addClass('ladda-button').attr('data-style', 'expand-right');
@@ -29,7 +59,7 @@ Dms.form.initializeCallbacks.push(function (element) {
                 xhr: function() {
                     var xhr = $.ajaxSettings.xhr();
 
-                    if(xhr.upload){
+                    if(form.find('input[type=file]').length && xhr.upload){
                         xhr.upload.addEventListener('progress', function (event) {
                             if (event.lengthComputable) {
                                 ladda.setProgress(event.loaded / event.total);
@@ -73,6 +103,8 @@ Dms.form.initializeCallbacks.push(function (element) {
                 submitButtons.prop('disabled', false);
                 ladda.stop();
             });
+
+            return false;
         });
 
         var parentToRemove = form.attr('data-after-run-remove-closest');

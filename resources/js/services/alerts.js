@@ -1,4 +1,4 @@
-Dms.alerts.add = function (type, title, message) {
+Dms.alerts.add = function (type, title, message, timeout) {
     var alertsList = $('.alerts-list');
     var templates = alertsList.find('.alert-templates');
 
@@ -17,6 +17,12 @@ Dms.alerts.add = function (type, title, message) {
 
     alertsList.append(alert.hide());
     alert.fadeIn();
+
+    setTimeout(function () {
+        if (alert.is(':visible')) {
+            alert.fadeOut();
+        }
+    }, timeout || 15000);
 };
 
 Dms.global.initializeCallbacks.push(function () {

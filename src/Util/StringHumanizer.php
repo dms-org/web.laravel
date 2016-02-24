@@ -15,11 +15,11 @@ class StringHumanizer
      */
     public static function humanize(string $input) : string
     {
-        return ucfirst(strtr($input, [
+        return strtr($input, [
             '.' => ' ',
             '-' => ' ',
             '_' => ' ',
-        ]));
+        ]);
     }
 
     /**

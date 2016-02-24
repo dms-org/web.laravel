@@ -24,7 +24,7 @@ class UserForbiddenExceptionHandlerTest extends ExceptionHandlerTest
                 $this->mockAction(),
                 $this->getMockForAbstractClass(UserForbiddenException::class, [], '', false),
                 new JsonResponse([
-                    'message' => 'User is forbidden from running this action',
+                    'message' => 'The current account is forbidden from running this action',
                 ], 403),
             ],
         ];

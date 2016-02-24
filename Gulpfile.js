@@ -40,10 +40,13 @@ var bowerFilesConfig = {
             ]
         },
         "font-awesome": {
-            "main": ["fonts/fontawesome-webfont.woff", "fonts/fontawesome-webfont.woff2"]
+            "main": ["css/font-awesome.css", "fonts/fontawesome-webfont.woff", "fonts/fontawesome-webfont.woff2"]
         },
         "iCheck": {
             "main": ["icheck.min.js", "skins/square/blue.css"]
+        },
+        "Sortable": {
+            "main": ["Sortable.js"]
         }
     }
 };

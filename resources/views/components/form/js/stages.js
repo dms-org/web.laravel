@@ -4,22 +4,12 @@ Dms.form.initializeCallbacks.push(function (element) {
         var form = $(this);
         var parsley = form.parsley(window.ParsleyConfig);
         var stageElements = form.find('.dms-form-stage');
-        var submitButtons = form.find('input[type=submit], button[type=submit]');
 
-        var isFormValid = function () {
-            return parsley.isValid()
-                && form.find('.has-error').length === 0
-                && form.find('.dms-form-stage').length === form.find('.dms-form-stage.loaded').length;
-        };
-
-        submitButtons.on('click before-confirmation', function (e) {
+        var arePreviousFieldsValid = function (fields) {
             parsley.validate();
 
-            if (!isFormValid()) {
-                e.stopImmediatePropagation();
-                return false;
-            }
-        });
+            return fields.closest('.form-group').find('.dms-validation-message *').length === 0;
+        };
 
         stageElements.each(function () {
             var currentStage = $(this);
@@ -28,37 +18,47 @@ Dms.form.initializeCallbacks.push(function (element) {
                 return;
             }
 
-            var previousStages = currentStage.prevAll('.dms-form-stage');
-            var loadStageUrl = currentStage.attr('data-stage-load-url');
+            var container = currentStage.closest('.dms-form-stage-container');
+            var previousStages = container.prevAll('.dms-form-stage-container').find('.dms-form-stage');
+            var loadStageUrl = currentStage.attr('data-load-stage-url');
             var dependentFields = currentStage.attr('data-stage-dependent-fields');
-            var dependentFieldsSelector = null;
             var currentAjaxRequest = null;
 
-            if (dependentFields) {
-                var dependentFieldNames = JSON.parse(dependentFields);
+            var makeDependentFieldSelectorFor = function (selector) {
+                if (dependentFields) {
+                    var dependentFieldNames = JSON.parse(dependentFields);
 
-                var selectors = [];
-                $.each(dependentFieldNames, function (index, fieldName) {
-                    selectors.push('*[name="' + fieldName + '"]:input');
-                    selectors.push('*[name^="' + fieldName + '["][name$="]"]:input');
-                });
+                    var selectors = [];
+                    $.each(dependentFieldNames, function (index, fieldName) {
+                        selectors.push(selector + '[name="' + fieldName + '"]:input');
+                        selectors.push(selector + '[name^="' + fieldName + '["][name$="]"]:input');
+                    });
 
-                dependentFieldsSelector = selectors.join(',');
-            } else {
-                dependentFieldsSelector = '*[name]:input';
-            }
+                    return selectors.join(',');
+                } else {
+                    return selector + '[name]:input';
+                }
+            };
 
-            previousStages.on('change input', dependentFieldsSelector, function () {
+            var loadNextStage = function () {
+                var previousFields = previousStages.find(makeDependentFieldSelectorFor('*'));
+
+                if (!arePreviousFieldsValid(previousFields)) {
+                    return;
+                }
+
+                Dms.form.validation.clearMessages(form);
+
                 if (currentAjaxRequest) {
                     currentAjaxRequest.abort();
                 }
 
-                currentStage.removeClass('loaded');
-                currentStage.addClass('loading');
+                container.removeClass('loaded');
+                container.addClass('loading');
 
                 var formData = new FormData();
 
-                previousStages.find(dependentFieldsSelector).each(function () {
+                previousFields.each(function () {
                     var fieldName = $(this).attr('name');
 
                     if ($(this).is('[type=file]')) {
@@ -80,9 +80,7 @@ Dms.form.initializeCallbacks.push(function (element) {
                 });
 
                 currentAjaxRequest.done(function (html) {
-                    currentStage.removeClass('loading');
-                    currentStage.addClass('loaded');
-                    Dms.form.validation.clearMessages(form);
+                    container.addClass('loaded');
                     currentStage.html(html);
                     Dms.form.initialize(currentStage);
                 });
@@ -115,7 +113,14 @@ Dms.form.initializeCallbacks.push(function (element) {
                             break;
                     }
                 });
-            });
+
+                currentAjaxRequest.always(function () {
+                    container.removeClass('loading');
+                });
+            };
+
+            previousStages.on('input', makeDependentFieldSelectorFor('input'), loadNextStage);
+            previousStages.on('change', makeDependentFieldSelectorFor('select'), loadNextStage);
         });
     });
 });

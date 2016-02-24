@@ -3,16 +3,16 @@
 namespace Dms\Web\Laravel\Renderer\Form\Field;
 
 use Dms\Core\Form\Field\Type\FieldType;
-use Dms\Core\Form\Field\Type\FloatType;
+use Dms\Core\Form\Field\Type\StringType;
 use Dms\Core\Form\IField;
 use Dms\Core\Form\IFieldType;
 
 /**
- * The decimal field renderer
+ * The textarea field renderer
  *
  * @author Elliot Levin <elliotlevin@hotmail.com>
  */
-class DecimalFieldRenderer extends BladeFieldRenderer
+class TextareaFieldRenderer extends BladeFieldRenderer
 {
     /**
      * Gets the expected class of the field type for the field.
@@ -21,7 +21,7 @@ class DecimalFieldRenderer extends BladeFieldRenderer
      */
     public function getFieldTypeClass() : string
     {
-        return FloatType::class;
+        return StringType::class;
     }
 
     /**
@@ -32,7 +32,9 @@ class DecimalFieldRenderer extends BladeFieldRenderer
      */
     protected function canRender(IField $field, IFieldType $fieldType) : bool
     {
-        return !$fieldType->has(FieldType::ATTR_OPTIONS);
+        return !$fieldType->has(FieldType::ATTR_OPTIONS)
+        && $fieldType->get(StringType::ATTR_MULTILINE)
+        && $fieldType->get(StringType::ATTR_STRING_TYPE) !== StringType::TYPE_HTML;
     }
 
     /**
@@ -45,18 +47,13 @@ class DecimalFieldRenderer extends BladeFieldRenderer
     {
         return $this->renderView(
             $field,
-            'dms::components.field.number.input',
+            'dms::components.field.textarea.input',
             [
-                FloatType::ATTR_MIN                => 'min',
-                FloatType::ATTR_MAX                => 'max',
-                FloatType::ATTR_MIN                => 'min',
-                FloatType::ATTR_GREATER_THAN       => 'greaterThan',
-                FloatType::ATTR_LESS_THAN          => 'lessThan',
-                FloatType::ATTR_MAX_DECIMAL_POINTS => 'maxDecimalPlaces',
+                StringType::ATTR_EXACT_LENGTH => 'exactLength',
+                StringType::ATTR_MIN_LENGTH   => 'minLength',
+                StringType::ATTR_MAX_LENGTH   => 'maxLength',
             ],
-            [
-                'decimalNumber' => true
-            ]
+            ['type' => $inputType]
         );
     }
 
@@ -71,7 +68,7 @@ class DecimalFieldRenderer extends BladeFieldRenderer
     {
         return $this->renderValueViewWithNullDefault(
             $field, $value,
-            'dms::components.field.number.value'
+            'dms::components.field.textarea.value'
         );
     }
 }

@@ -55,7 +55,8 @@ class DmsNavigationViewComposer
             self::NAVIGATION_CACHE_EXPIRY_MINUTES,
             function () {
                 return $this->loadNavigation();
-            }));
+            }
+        ));
     }
 
     private function loadNavigation() : array
@@ -65,9 +66,11 @@ class DmsNavigationViewComposer
         ];
 
         foreach ($this->cms->loadPackages() as $package) {
-            $packageNavigation = [
-                route('dms::package.dashboard', [$package->getName()]) => 'Dashboard',
-            ];
+            $packageNavigation = [];
+
+            if ($package->hasDashboard()) {
+                $packageNavigation[route('dms::package.dashboard', [$package->getName()])] = 'Dashboard';
+            }
 
             $packageLabel = StringHumanizer::title($package->getName());
 
@@ -77,7 +80,11 @@ class DmsNavigationViewComposer
                 $packageNavigation[$moduleDashboardUrl] = $moduleLabel;
             }
 
-            $navigation[$packageLabel] = $packageNavigation;
+            if (count($packageNavigation) === 1) {
+                $navigation += $packageNavigation;
+            } else {
+                $navigation[$packageLabel] = $packageNavigation;
+            }
         }
 
         return $navigation;

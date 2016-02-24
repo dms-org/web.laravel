@@ -9,7 +9,6 @@ Dms.table.initializeCallbacks.push(function (element) {
         var paginationPreviousButton = control.find('.dms-table-pagination .dms-pagination-previous');
         var paginationNextButton = control.find('.dms-table-pagination .dms-pagination-next');
         var loadRowsUrl = control.attr('data-load-rows-url');
-        var reorderRowsUrl = control.attr('data-reorder-row-action-url');
         var stringFilterableComponentIds = JSON.parse(control.attr('data-string-filterable-component-ids')) || [];
 
         var currentPage = 0;
@@ -25,11 +24,11 @@ Dms.table.initializeCallbacks.push(function (element) {
         var currentAjaxRequest;
 
         var loadCurrentPage = function () {
-            tableContainer.addClass('loading');
-
             if (currentAjaxRequest) {
                 currentAjaxRequest.abort();
             }
+
+            tableContainer.addClass('loading');
 
             criteria.offset = currentPage * criteria.max_rows;
 
@@ -42,8 +41,11 @@ Dms.table.initializeCallbacks.push(function (element) {
 
             currentAjaxRequest.done(function (tableData) {
                 table.html(tableData);
-                Dms.table.initialize(tableContainer);
-                Dms.form.initialize(tableContainer);
+                Dms.table.initialize(table);
+                Dms.form.initialize(table);
+
+                control.data('dms-table-criteria', criteria);
+                control.attr('data-has-loaded-table-data', true);
 
                 if (table.find('tbody tr').length < criteria.max_rows) {
                     paginationNextButton.attr('disabled', true);
@@ -55,7 +57,7 @@ Dms.table.initializeCallbacks.push(function (element) {
                     return;
                 }
 
-                tableContainer.addClass('error');
+                tableContainer.addClass('has-error');
 
                 swal({
                     title: "Could not load table data",
@@ -127,6 +129,20 @@ Dms.table.initializeCallbacks.push(function (element) {
 
         paginationPreviousButton.attr('disabled', true);
 
-        loadCurrentPage();
+        if (table.is(':visible')) {
+            loadCurrentPage();
+        }
+
+        table.on('dms-load-table-data', loadCurrentPage);
+    });
+
+    $('.dms-table-tabs').each(function () {
+        var tabs = $(this);
+
+        tabs.find('.dms-table-tab-show-button').on('click', function () {
+            var linkedTablePane = $($(this).attr('href'));
+
+            linkedTablePane.find('.dms-table-control:not([data-has-loaded-table-data]) .dms-table-container:not(.loading) .dms-table').triggerHandler('dms-load-table-data');
+        });
     });
 });

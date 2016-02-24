@@ -105,9 +105,13 @@
                                 </ul>
                             </li>
                         @else
-                            <li @if($url === request()->url()) class="active" @endif>
+                            <li @if(starts_with(request()->url(), $url)) class="active" @endif>
                                 <a href="{{ $url }}">
-                                    @if($url === route('dms::index'))<i class="fa fa-dashboard"></i>@endif
+                                    @if($url === route('dms::index'))
+                                        <i class="fa fa-dashboard"></i>
+                                    @else
+                                        <i class="fa fa-circle-o"></i>
+                                    @endif
                                     <span class="dms-nav-label">
                                         {{ $label }}
                                     </span>

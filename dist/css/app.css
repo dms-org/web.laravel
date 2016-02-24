@@ -24,11 +24,36 @@ a[disabled] {
     left: 50%;
     top: calc(50% - 10px);
     left: calc(50% - 35px); }
+  .dms-table-container table thead:first-child h4 {
+    margin-top: 0; }
   .dms-table-container table th[data-column-name="id"], .dms-table-container table td[data-column-name="id"] {
     display: none !important; }
+  .dms-table-container table .dropdown-container {
+    position: relative;
+    padding-bottom: 3px; }
+  .dms-table-container table .dms-drag-handle {
+    cursor: move;
+    cursor: -webkit-grabbing;
+    -webkit-user-drag: none; }
 
 .dms-staged-form .help-block-error {
   color: #a94442; }
+
+.dms-staged-form .list-group.dms-field-list {
+  margin-bottom: 0; }
+
+.dms-staged-form .dms-form-stage-container {
+  position: relative; }
+  .dms-staged-form .dms-form-stage-container.loading .dms-form-stage {
+    min-height: 50px;
+    opacity: .3; }
+  .dms-staged-form .dms-form-stage-container.loading .spinner {
+    display: block;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    top: calc(50% - 10px);
+    left: calc(50% - 35px); }
 
 .spinner {
   margin: 0 auto 0;

@@ -76,7 +76,7 @@ Dms.action.responseHandler = function (response) {
     }
 
     if (typeof response.message !== 'undefined') {
-        Dms.alerts.add('success', response.message);
+        Dms.alerts.add(response.message_type || 'success', response.message);
     }
 
     if (typeof response.files !== 'undefined') {
@@ -117,7 +117,7 @@ Dms.action.responseHandler = function (response) {
         checkIfDownloadsHaveBegun();
     }
 };
-Dms.alerts.add = function (type, title, message) {
+Dms.alerts.add = function (type, title, message, timeout) {
     var alertsList = $('.alerts-list');
     var templates = alertsList.find('.alert-templates');
 
@@ -136,6 +136,12 @@ Dms.alerts.add = function (type, title, message) {
 
     alertsList.append(alert.hide());
     alert.fadeIn();
+
+    setTimeout(function () {
+        if (alert.is(':visible')) {
+            alert.fadeOut();
+        }
+    }, timeout || 15000);
 };
 
 Dms.global.initializeCallbacks.push(function () {
@@ -377,10 +383,11 @@ Dms.form.validation.displayMessages = function (form, fieldMessages, generalMess
 window.ParsleyConfig = {
     successClass: "has-success",
     errorClass: "has-error",
+    excluded: "input[type=button], input[type=submit], input[type=reset], input[type=hidden], [disabled], :hidden",
     classHandler: function (el) {
         return el.$element.closest(".form-group");
     },
-    errorsWrapper: "<span class='help-block'></span>",
+    errorsWrapper: "<span class='help-block dms-validation-message'></span>",
     errorTemplate: "<span></span>"
 };
 Dms.global.initializeCallbacks.push(function () {
@@ -510,12 +517,6 @@ Dms.chart.initializeCallbacks.push(function () {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-    element.find('input[type=checkbox].single-checkbox').iCheck({
-        checkboxClass: 'icheckbox_square-blue',
-        increaseArea: '20%'
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
 
     element.find('.list-of-checkboxes').each(function () {
         var listOfCheckboxes = $(this);
@@ -527,6 +528,12 @@ Dms.form.initializeCallbacks.push(function (element) {
         var firstCheckbox = listOfCheckboxes.find('input[type=checkbox]').first();
         firstCheckbox.attr('data-parsley-min-elements', listOfCheckboxes.attr('data-min-elements'));
         firstCheckbox.attr('data-parsley-max-elements', listOfCheckboxes.attr('data-max-elements'));
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+    element.find('input[type=checkbox].single-checkbox').iCheck({
+        checkboxClass: 'icheckbox_square-blue',
+        increaseArea: '20%'
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -621,18 +628,24 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
+    element.find('select[multiple]').multiselect({
+        enableFiltering: true,
+        includeSelectAllOption: true
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
 
-    element.find('ul.list-field').each(function () {
+    element.find('ul.dms-field-list').each(function () {
         var listOfFields = $(this);
-        var templateField = $(this).find('.list-field-template');
-        var addButton = $(this).find('.btn-add-field');
+        var templateField = listOfFields.find('.field-list-template');
+        var addButton = listOfFields.find('.btn-add-field');
         var isInvalidating = false;
 
         var minFields = listOfFields.attr('data-min-elements');
         var maxFields = listOfFields.attr('data-max-elements');
 
         var getAmountOfInputs = function () {
-            return listOfFields.children('.list-field-item').length;
+            return listOfFields.children('.field-list-item').length;
         };
 
         var invalidateControl = function () {
@@ -656,33 +669,41 @@ Dms.form.initializeCallbacks.push(function (element) {
         };
 
         var addNewField = function () {
-            listOfFields.append(
-                templateField.clone()
-                    .removeClass('list-field-template')
-                    .addClass('list-field-item')
-            );
+            var newField = templateField.clone()
+                .removeClass('field-list-template')
+                .removeClass('hidden')
+                .removeClass('dms-form-no-submit')
+                .addClass('field-list-item');
+
+            var fieldInputElement = newField.find('.field-list-input');
+            fieldInputElement.html(fieldInputElement.text());
+
+            addButton.closest('.field-list-add').before(newField);
+
+            Dms.form.initialize(fieldInputElement);
 
             invalidateControl();
         };
 
         listOfFields.on('click', '.btn-remove-field', function () {
-            $(this).closest('.list-field-item').remove();
+            var field = $(this).closest('.field-list-item');
+            field.remove();
+            field.find('select').trigger('change');
+            field.find('input').trigger('input');
 
             invalidateControl();
         });
 
+        addButton.on('click', addNewField);
+
         invalidateControl();
 
-        if (minFields !== null && minFields === maxFields) {
-            addButton.closest('.list-field-add').remove();
-            listOfFields.find('.btn-remove-field').remove();
+        var requiresAnExactAmountOfFields = typeof minFields !== 'undefined' && minFields === maxFields;
+        if (requiresAnExactAmountOfFields) {
+            addButton.closest('.field-list-add').remove();
+            listOfFields.find('.btn-remove-field').closest('.field-list-button-container').remove();
+            listOfFields.find('.field-list-input').removeClass('col-xs-10 col-md-11').addClass('col-xs-12');
         }
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
-    element.find('select[multiple]').multiselect({
-        enableFiltering: true,
-        includeSelectAllOption: true
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -696,6 +717,19 @@ Dms.form.initializeCallbacks.push(function (element) {
 
     element.find('input[type="number"][data-less-than]').each(function () {
         $(this).attr('data-parsley-lt', $(this).attr('data-less-than'));
+    });
+
+    element.find('input[type="number"]').each(function () {
+        if ($(this).attr('data-decimal-number')) {
+            $(this).attr({
+                'type': $(this).attr('step') ? 'number' : 'text',
+                'data-parsley-type': 'number'
+            });
+        } else {
+            $(this).attr({
+                'data-parsley-type': 'integer'
+            });
+        }
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -711,138 +745,6 @@ Dms.form.initializeCallbacks.push(function (element) {
 });
 Dms.form.initializeCallbacks.push(function (element) {
 
-});
-Dms.table.initializeCallbacks.push(function (element) {
-
-    element.find('.dms-table-control').each(function () {
-        var control = $(this);
-        var tableContainer = control.find('.dms-table-container');
-        var table = tableContainer.find('table.dms-table');
-        var filterForm = control.find('.dms-table-quick-filter-form');
-        var rowsPerPageSelect = control.find('.dms-table-rows-per-page-form select');
-        var paginationPreviousButton = control.find('.dms-table-pagination .dms-pagination-previous');
-        var paginationNextButton = control.find('.dms-table-pagination .dms-pagination-next');
-        var loadRowsUrl = control.attr('data-load-rows-url');
-        var reorderRowsUrl = control.attr('data-reorder-row-action-url');
-        var stringFilterableComponentIds = JSON.parse(control.attr('data-string-filterable-component-ids')) || [];
-
-        var currentPage = 0;
-
-        var criteria = {
-            orderings: [],
-            condition_mode: 'or',
-            conditions: [],
-            offset: 0,
-            max_rows: rowsPerPageSelect.val()
-        };
-
-        var currentAjaxRequest;
-
-        var loadCurrentPage = function () {
-            tableContainer.addClass('loading');
-
-            if (currentAjaxRequest) {
-                currentAjaxRequest.abort();
-            }
-
-            criteria.offset = currentPage * criteria.max_rows;
-
-            currentAjaxRequest = $.ajax({
-                url: loadRowsUrl,
-                type: 'post',
-                dataType: 'html',
-                data: criteria
-            });
-
-            currentAjaxRequest.done(function (tableData) {
-                table.html(tableData);
-                Dms.table.initialize(tableContainer);
-                Dms.form.initialize(tableContainer);
-
-                if (table.find('tbody tr').length < criteria.max_rows) {
-                    paginationNextButton.attr('disabled', true);
-                }
-            });
-
-            currentAjaxRequest.fail(function () {
-                if (currentAjaxRequest.statusText === 'abort') {
-                    return;
-                }
-
-                tableContainer.addClass('error');
-
-                swal({
-                    title: "Could not load table data",
-                    text: "An unexpected error occurred",
-                    type: "error"
-                });
-            });
-
-            currentAjaxRequest.always(function () {
-                tableContainer.removeClass('loading');
-            });
-        };
-
-        filterForm.find('button').click(function () {
-            criteria.orderings = [
-                {
-                    component: filterForm.find('[name=component]').val(),
-                    direction: filterForm.find('[name=direction]').val()
-                }
-            ];
-
-            criteria.conditions = [];
-
-            var filterByString = filterForm.find('[name=filter]').val();
-
-            if (filterByString) {
-                $.each(stringFilterableComponentIds, function (index, componentId) {
-                    criteria.conditions.push({
-                        component: componentId,
-                        operator: 'string-contains-case-insensitive',
-                        value: filterByString
-                    });
-                });
-            }
-
-            loadCurrentPage();
-        });
-
-        filterForm.find('input[name=filter]').on('keyup', function (event) {
-            var enterKey = 13;
-
-            if (event.keyCode === enterKey) {
-                filterForm.find('button').click();
-            }
-        });
-
-        rowsPerPageSelect.on('change', function () {
-            criteria.max_rows = $(this).val();
-
-            loadCurrentPage();
-        });
-
-        paginationPreviousButton.click(function () {
-            paginationNextButton.attr('disabled', false);
-            currentPage--;
-            loadCurrentPage();
-        });
-
-        paginationNextButton.click(function () {
-            paginationPreviousButton.attr('disabled', false);
-            currentPage++;
-            loadCurrentPage();
-        });
-
-        paginationPreviousButton.click(function () {
-            currentPage--;
-            loadCurrentPage();
-        });
-
-        paginationPreviousButton.attr('disabled', true);
-
-        loadCurrentPage();
-    });
 });
 Dms.form.initializeCallbacks.push(function (element) {
 
@@ -870,22 +772,12 @@ Dms.form.initializeCallbacks.push(function (element) {
         var form = $(this);
         var parsley = form.parsley(window.ParsleyConfig);
         var stageElements = form.find('.dms-form-stage');
-        var submitButtons = form.find('input[type=submit], button[type=submit]');
 
-        var isFormValid = function () {
-            return parsley.isValid()
-                && form.find('.has-error').length === 0
-                && form.find('.dms-form-stage').length === form.find('.dms-form-stage.loaded').length;
-        };
-
-        submitButtons.on('click before-confirmation', function (e) {
+        var arePreviousFieldsValid = function (fields) {
             parsley.validate();
 
-            if (!isFormValid()) {
-                e.stopImmediatePropagation();
-                return false;
-            }
-        });
+            return fields.closest('.form-group').find('.dms-validation-message *').length === 0;
+        };
 
         stageElements.each(function () {
             var currentStage = $(this);
@@ -894,37 +786,47 @@ Dms.form.initializeCallbacks.push(function (element) {
                 return;
             }
 
-            var previousStages = currentStage.prevAll('.dms-form-stage');
-            var loadStageUrl = currentStage.attr('data-stage-load-url');
+            var container = currentStage.closest('.dms-form-stage-container');
+            var previousStages = container.prevAll('.dms-form-stage-container').find('.dms-form-stage');
+            var loadStageUrl = currentStage.attr('data-load-stage-url');
             var dependentFields = currentStage.attr('data-stage-dependent-fields');
-            var dependentFieldsSelector = null;
             var currentAjaxRequest = null;
 
-            if (dependentFields) {
-                var dependentFieldNames = JSON.parse(dependentFields);
+            var makeDependentFieldSelectorFor = function (selector) {
+                if (dependentFields) {
+                    var dependentFieldNames = JSON.parse(dependentFields);
 
-                var selectors = [];
-                $.each(dependentFieldNames, function (index, fieldName) {
-                    selectors.push('*[name="' + fieldName + '"]:input');
-                    selectors.push('*[name^="' + fieldName + '["][name$="]"]:input');
-                });
+                    var selectors = [];
+                    $.each(dependentFieldNames, function (index, fieldName) {
+                        selectors.push(selector + '[name="' + fieldName + '"]:input');
+                        selectors.push(selector + '[name^="' + fieldName + '["][name$="]"]:input');
+                    });
 
-                dependentFieldsSelector = selectors.join(',');
-            } else {
-                dependentFieldsSelector = '*[name]:input';
-            }
+                    return selectors.join(',');
+                } else {
+                    return selector + '[name]:input';
+                }
+            };
 
-            previousStages.on('change input', dependentFieldsSelector, function () {
+            var loadNextStage = function () {
+                var previousFields = previousStages.find(makeDependentFieldSelectorFor('*'));
+
+                if (!arePreviousFieldsValid(previousFields)) {
+                    return;
+                }
+
+                Dms.form.validation.clearMessages(form);
+
                 if (currentAjaxRequest) {
                     currentAjaxRequest.abort();
                 }
 
-                currentStage.removeClass('loaded');
-                currentStage.addClass('loading');
+                container.removeClass('loaded');
+                container.addClass('loading');
 
                 var formData = new FormData();
 
-                previousStages.find(dependentFieldsSelector).each(function () {
+                previousFields.each(function () {
                     var fieldName = $(this).attr('name');
 
                     if ($(this).is('[type=file]')) {
@@ -946,9 +848,7 @@ Dms.form.initializeCallbacks.push(function (element) {
                 });
 
                 currentAjaxRequest.done(function (html) {
-                    currentStage.removeClass('loading');
-                    currentStage.addClass('loaded');
-                    Dms.form.validation.clearMessages(form);
+                    container.addClass('loaded');
                     currentStage.html(html);
                     Dms.form.initialize(currentStage);
                 });
@@ -981,7 +881,14 @@ Dms.form.initializeCallbacks.push(function (element) {
                             break;
                     }
                 });
-            });
+
+                currentAjaxRequest.always(function () {
+                    container.removeClass('loading');
+                });
+            };
+
+            previousStages.on('input', makeDependentFieldSelectorFor('input'), loadNextStage);
+            previousStages.on('change', makeDependentFieldSelectorFor('select'), loadNextStage);
         });
     });
 });
@@ -989,21 +896,50 @@ Dms.form.initializeCallbacks.push(function (element) {
 
     element.find('form.dms-staged-form, form.dms-run-action-form').each(function () {
         var form = $(this);
+        var parsley = form.parsley(window.ParsleyConfig);
         var afterRunCallbacks = [];
         var submitButtons = form.find('input[type=submit], button[type=submit]');
         var submitMethod = form.attr('method');
         var submitUrl = form.attr('action');
+
+        var isFormValid = function () {
+            return parsley.isValid()
+                && form.find('.dms-validation-message *').length === 0
+                && form.find('.dms-form-stage').length === form.find('.dms-form-stage.loaded').length;
+        };
+
+        submitButtons.on('click before-confirmation', function (e) {
+            parsley.validate();
+
+            if (!isFormValid()) {
+                e.stopImmediatePropagation();
+                return false;
+            }
+        });
 
         form.on('submit', function (e) {
             e.preventDefault();
 
             Dms.form.validation.clearMessages(form);
 
+            var fieldsToReappend = [];
+            form.find('.dms-form-no-submit').each(function () {
+                var removedFields = $(this).children().detach();
+
+                fieldsToReappend.push({
+                    parentElement: $(this),
+                    children: removedFields
+                });
+            });
+
             var formData = new FormData(form.get(0));
+
+            $.each(fieldsToReappend, function (index, elements) {
+                elements.parentElement.append(elements.children);
+            });
 
             submitButtons.prop('disabled', true);
             submitButtons.addClass('ladda-button').attr('data-style', 'expand-right');
-            submitButtons.addClass('ladda-button');
             var ladda = Ladda.create(submitButtons.get(0));
             ladda.start();
 
@@ -1017,11 +953,10 @@ Dms.form.initializeCallbacks.push(function (element) {
                 xhr: function() {
                     var xhr = $.ajaxSettings.xhr();
 
-                    if(xhr.upload){
+                    if(form.find('input[type=file]').length && xhr.upload){
                         xhr.upload.addEventListener('progress', function (event) {
                             if (event.lengthComputable) {
-                                var percentComplete = event.loaded / event.total;
-                                ladda.setProgress(percentComplete);
+                                ladda.setProgress(event.loaded / event.total);
                             }
                         }, false);
                     }
@@ -1062,6 +997,8 @@ Dms.form.initializeCallbacks.push(function (element) {
                 submitButtons.prop('disabled', false);
                 ladda.stop();
             });
+
+            return false;
         });
 
         var parentToRemove = form.attr('data-after-run-remove-closest');
@@ -1155,6 +1092,212 @@ Dms.widget.initializeCallbacks.push(function () {
                 return false;
             });
         }
+    });
+});
+Dms.table.initializeCallbacks.push(function (element) {
+    var groupCounter = 0;
+
+    element.find('.dms-table-body-sortable').each(function () {
+        var tableBody = $(this);
+        var control = tableBody.closest('.dms-table-control');
+        var reorderRowsUrl = control.attr('data-reorder-row-action-url');
+
+        var performReorder = function (event) {
+            var newIndex = typeof event.newIndex === 'undefined' ? event.oldIndex : event.newIndex;
+
+            var criteria = control.data('dms-table-criteria');
+            var row = $(event.item);
+            var objectId = row.find('.dms-row-action-column').attr('data-object-id');
+            var reorderButtonHandle = row.find('.dms-drag-handle');
+
+            var reorderRequest = $.ajax({
+                url: reorderRowsUrl,
+                type: 'post',
+                dataType: 'html',
+                data: {
+                    object: objectId,
+                    index: criteria.offset + newIndex + 1
+                }
+            });
+
+            if (reorderButtonHandle.is('button')) {
+                reorderButtonHandle.addClass('ladda-button').attr('data-style', 'expand-right');
+                var ladda = Ladda.create(reorderButtonHandle.get(0));
+                ladda.start();
+
+                reorderRequest.always(ladda.stop)
+            }
+
+            reorderRequest.fail(function () {
+                swal({
+                    title: "Could not reorder item",
+                    text: "An unexpected error occurred",
+                    type: "error"
+                });
+            });
+        };
+
+        var sortable = new Sortable(tableBody.get(0), {
+            group: "sortable-group" + groupCounter++,
+            sort: true,  // sorting inside list
+            animation: 150,  // ms, animation speed moving items when sorting, `0` — without animation
+            handle: ".dms-drag-handle",  // Drag handle selector within list items
+            draggable: "tr",  // Specifies which items inside the element should be sortable
+            ghostClass: "sortable-ghost",  // Class name for the drop placeholder
+            chosenClass: "sortable-chosen",  // Class name for the chosen item
+            dataIdAttr: 'data-id',
+
+            onEnd: performReorder
+
+        });
+    });
+});
+Dms.table.initializeCallbacks.push(function (element) {
+
+    element.find('.dms-table-control').each(function () {
+        var control = $(this);
+        var tableContainer = control.find('.dms-table-container');
+        var table = tableContainer.find('table.dms-table');
+        var filterForm = control.find('.dms-table-quick-filter-form');
+        var rowsPerPageSelect = control.find('.dms-table-rows-per-page-form select');
+        var paginationPreviousButton = control.find('.dms-table-pagination .dms-pagination-previous');
+        var paginationNextButton = control.find('.dms-table-pagination .dms-pagination-next');
+        var loadRowsUrl = control.attr('data-load-rows-url');
+        var stringFilterableComponentIds = JSON.parse(control.attr('data-string-filterable-component-ids')) || [];
+
+        var currentPage = 0;
+
+        var criteria = {
+            orderings: [],
+            condition_mode: 'or',
+            conditions: [],
+            offset: 0,
+            max_rows: rowsPerPageSelect.val()
+        };
+
+        var currentAjaxRequest;
+
+        var loadCurrentPage = function () {
+            if (currentAjaxRequest) {
+                currentAjaxRequest.abort();
+            }
+
+            tableContainer.addClass('loading');
+
+            criteria.offset = currentPage * criteria.max_rows;
+
+            currentAjaxRequest = $.ajax({
+                url: loadRowsUrl,
+                type: 'post',
+                dataType: 'html',
+                data: criteria
+            });
+
+            currentAjaxRequest.done(function (tableData) {
+                table.html(tableData);
+                Dms.table.initialize(table);
+                Dms.form.initialize(table);
+
+                control.data('dms-table-criteria', criteria);
+                control.attr('data-has-loaded-table-data', true);
+
+                if (table.find('tbody tr').length < criteria.max_rows) {
+                    paginationNextButton.attr('disabled', true);
+                }
+            });
+
+            currentAjaxRequest.fail(function () {
+                if (currentAjaxRequest.statusText === 'abort') {
+                    return;
+                }
+
+                tableContainer.addClass('has-error');
+
+                swal({
+                    title: "Could not load table data",
+                    text: "An unexpected error occurred",
+                    type: "error"
+                });
+            });
+
+            currentAjaxRequest.always(function () {
+                tableContainer.removeClass('loading');
+            });
+        };
+
+        filterForm.find('button').click(function () {
+            criteria.orderings = [
+                {
+                    component: filterForm.find('[name=component]').val(),
+                    direction: filterForm.find('[name=direction]').val()
+                }
+            ];
+
+            criteria.conditions = [];
+
+            var filterByString = filterForm.find('[name=filter]').val();
+
+            if (filterByString) {
+                $.each(stringFilterableComponentIds, function (index, componentId) {
+                    criteria.conditions.push({
+                        component: componentId,
+                        operator: 'string-contains-case-insensitive',
+                        value: filterByString
+                    });
+                });
+            }
+
+            loadCurrentPage();
+        });
+
+        filterForm.find('input[name=filter]').on('keyup', function (event) {
+            var enterKey = 13;
+
+            if (event.keyCode === enterKey) {
+                filterForm.find('button').click();
+            }
+        });
+
+        rowsPerPageSelect.on('change', function () {
+            criteria.max_rows = $(this).val();
+
+            loadCurrentPage();
+        });
+
+        paginationPreviousButton.click(function () {
+            paginationNextButton.attr('disabled', false);
+            currentPage--;
+            loadCurrentPage();
+        });
+
+        paginationNextButton.click(function () {
+            paginationPreviousButton.attr('disabled', false);
+            currentPage++;
+            loadCurrentPage();
+        });
+
+        paginationPreviousButton.click(function () {
+            currentPage--;
+            loadCurrentPage();
+        });
+
+        paginationPreviousButton.attr('disabled', true);
+
+        if (table.is(':visible')) {
+            loadCurrentPage();
+        }
+
+        table.on('dms-load-table-data', loadCurrentPage);
+    });
+
+    $('.dms-table-tabs').each(function () {
+        var tabs = $(this);
+
+        tabs.find('.dms-table-tab-show-button').on('click', function () {
+            var linkedTablePane = $($(this).attr('href'));
+
+            linkedTablePane.find('.dms-table-control:not([data-has-loaded-table-data]) .dms-table-container:not(.loading) .dms-table').triggerHandler('dms-load-table-data');
+        });
     });
 });
 //# sourceMappingURL=app.js.map

@@ -39,25 +39,26 @@ class ActionFormRenderer
      * Renders the action form as a staged form.
      *
      * @param IParameterizedAction $action
-     *
      * @param array                $hiddenValues
+     * @param int                  $initialStageNumber
      *
      * @return string
      * @throws \Exception
      * @throws \Throwable
      */
-    public function renderActionForm(IParameterizedAction $action, array $hiddenValues = []) : string
+    public function renderActionForm(IParameterizedAction $action, array $hiddenValues = [], int $initialStageNumber = 1) : string
     {
         return view('dms::components.form.staged-form')
             ->with([
-                'action'            => $action,
-                'stagedForm'        => $action->getStagedForm(),
-                'formRenderer'      => $this->formRenderer,
-                'packageName'       => $action->getPackageName(),
-                'moduleName'        => $action->getModuleName(),
-                'actionName'        => $action->getName(),
-                'submitButtonClass' => $this->keywordTypeIdentifier->getTypeFromName($action->getName()),
-                'hiddenValues'      => $hiddenValues,
+                'action'             => $action,
+                'stagedForm'         => $action->getStagedForm(),
+                'formRenderer'       => $this->formRenderer,
+                'packageName'        => $action->getPackageName(),
+                'moduleName'         => $action->getModuleName(),
+                'actionName'         => $action->getName(),
+                'submitButtonClass'  => $this->keywordTypeIdentifier->getTypeFromName($action->getName()),
+                'hiddenValues'       => $hiddenValues,
+                'initialStageNumber' => $initialStageNumber,
             ])
             ->render();
     }

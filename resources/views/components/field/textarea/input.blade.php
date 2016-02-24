@@ -1,5 +1,4 @@
 <textarea
-        type="{{ $inputType }}"
         name="{{ $name }}"
         placeholder="{{ $label }}"
         @if($required) required @endif

@@ -98,10 +98,11 @@ class LaravelMigrationGenerator extends MigrationGenerator
         $this->removeIgnoredTables($diff->removedTables);
         $this->removeIgnoredTables($diff->changedTables);
 
-        // TODO: verify
-        // $this->orderTablesByForeignKeyDependency($diff->newTables);
-        // $this->orderTablesByForeignKeyDependency($diff->changedTables);
-        // $this->orderTablesByForeignKeyDependency($diff->removedTables, $reverse = true);
+        $orderedTableNames = $this->orderTablesByForeignKeyDependency(array_merge($diff->fromSchema->getTables(), $diff->newTables));
+
+        $this->orderTablesBy($orderedTableNames, $diff->newTables);
+        $this->orderTablesBy($orderedTableNames, $diff->changedTables);
+        $this->orderTablesBy(array_reverse($orderedTableNames), $diff->removedTables);
     }
 
     protected function removeIgnoredTables(array &$tables)
@@ -116,20 +117,40 @@ class LaravelMigrationGenerator extends MigrationGenerator
     }
 
     /**
-     * @param Table[]|TableDiff[] $tables
-     * @param bool                $reverse
+     * @param string[]            $orderedTableNames
+     * @param Table[]|TableDiff[] $tablesToReorder
      *
      * @return void
      */
-    protected function orderTablesByForeignKeyDependency(array &$tables, bool $reverse = false)
+    protected function orderTablesBy(array $orderedTableNames, array &$tablesToReorder)
+    {
+        $indexedTables = [];
+
+        foreach ($tablesToReorder as $table) {
+            $indexedTables[$this->getNameFromTableOrDiff($table)] = $table;
+        }
+
+        $tablesToReorder = [];
+
+        foreach ($orderedTableNames as $name) {
+            if (isset($indexedTables[$name])) {
+                $tablesToReorder[] = $indexedTables[$name];
+            }
+        }
+    }
+
+    /**
+     * @param Table[]|TableDiff[] $tables
+     *
+     * @return array
+     */
+    protected function orderTablesByForeignKeyDependency(array $tables) : array
     {
         if (empty($tables)) {
-            return;
+            return [];
         }
 
         $topologicalSorter = new StringSort();
-
-        $indexedTables = [];
 
         foreach ($tables as $table) {
             $tableName = $this->getNameFromTableOrDiff($table);
@@ -139,19 +160,9 @@ class LaravelMigrationGenerator extends MigrationGenerator
                 : $table;
 
             $topologicalSorter->add($tableName, $this->getTableDependencies($originalTable));
-            $indexedTables[$tableName] = $table;
         }
 
-        $sortedTableNames = $topologicalSorter->sort();
-        $sortedTables     = [];
-
-        foreach ($sortedTableNames as $tableName) {
-            $sortedTables[$tableName] = $indexedTables[$tableName];
-        }
-
-        $tables = $reverse
-            ? array_reverse($sortedTables)
-            : $sortedTables;
+        return $topologicalSorter->sort();
     }
 
     /**
@@ -319,12 +330,14 @@ class LaravelMigrationGenerator extends MigrationGenerator
 
     private function createAddColumnCode(Column $column, $change = false, &$hasAutoIncrement = false)
     {
-        $code          = '$table->';
-        $type          = $column->getType();
-        $name          = var_export($column->getName(), true);
-        $ignoreDefault = false;
+        $code                        = '$table->';
+        $type                        = $column->getType();
+        $name                        = var_export($column->getName(), true);
+        $ignoreDefault               = false;
+        $requiresDoctrineTypeComment = false;
 
         if ($type instanceof BaseEnumType) {
+            $requiresDoctrineTypeComment = true;
             /** @var BaseEnumType $type */
             $options = $this->exportSimpleArray($type->getValues());
             $code .= "enum({$name}, {$options})";
@@ -358,12 +371,14 @@ class LaravelMigrationGenerator extends MigrationGenerator
                     $code .= "integer({$name})";
                     break;
                 case MediumIntType::MEDIUMINT:
+                    $requiresDoctrineTypeComment = true;
                     $code .= "mediumInteger({$name})";
                     break;
                 case Type::SMALLINT:
                     $code .= "smallInteger({$name})";
                     break;
                 case TinyIntType::TINYINT:
+                    $requiresDoctrineTypeComment = true;
                     $code .= "tinyInteger({$name})";
                     break;
                 case Type::TEXT:
@@ -384,6 +399,11 @@ class LaravelMigrationGenerator extends MigrationGenerator
                 default:
                     throw InvalidArgumentException::format('Unknown column type: \'%s\'', $column->getType());
             }
+        }
+
+        if ($requiresDoctrineTypeComment) {
+            $doctrineTypeComment = '(DC2Type:' . $type->getName() . ')';
+            $code .= '->comment(' . var_export(addslashes($doctrineTypeComment), true) . ')';
         }
 
         if (!$column->getNotnull()) {

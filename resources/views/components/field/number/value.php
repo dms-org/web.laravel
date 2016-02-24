@@ -1,1 +1,0 @@
-<span class="dms-display-number">{{ $value }}</span>

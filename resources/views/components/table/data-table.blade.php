@@ -1,41 +1,64 @@
 <?php /** @var \Dms\Core\Table\IColumn[] $columns */ ?>
 <?php /** @var \Dms\Core\Table\ITableSection[] $sections */ ?>
 <?php /** @var \Dms\Web\Laravel\Renderer\Table\IColumnRenderer[] $columnRenderers */ ?>
-<?php /** @var \Dms\Web\Laravel\Renderer\Table\RowAction\RowActionButton[] $rowActionButtons */ ?>
+<?php /** @var \Dms\Web\Laravel\Renderer\Action\ActionButton[] $rowActionButtons */ ?>
+<?php /** @var bool $allowsReorder */ ?>
 <table class="table dms-table">
-    <thead>
-    <tr>
-        @foreach ($columns as $column)
-            <th data-column-name="{{ $column->getName() }}">{!! $columnRenderers[$column->getName()]->renderHeader() !!}</th>
-        @endforeach
-        @if($rowActionButtons)
-            <th class="dms-row-action-column"><span class="pull-right">Actions</span></th>
-        @endif
-    </tr>
-    </thead>
+    @if ($sections && !$sections[0]->hasGroupData())
+        <thead>
+        <tr>
+            @foreach ($columns as $column)
+                <th data-column-name="{{ $column->getName() }}"
+                    @if($column->isHidden()) class="hidden" @endif>{!! $columnRenderers[$column->getName()]->renderHeader() !!}</th>
+            @endforeach
+            @if($rowActionButtons)
+                <th class="dms-row-action-column"><span class="pull-right">Actions</span></th>
+            @endif
+        </tr>
+        </thead>
+    @endif
     @foreach($sections as $section)
         @if ($section->hasGroupData())
+            <?php $groupData = $section->getGroupData()->getData()?>
             <thead>
             <tr>
-                @foreach ($section->getGroupData()->getData() as $columnName => $value)
-                    <td data-column-name="{{ $columnName }}">{!! $columnRenderers[$columnName]->render($value) !!}</td>
+                <td colspan="{{ count($columns) + ($rowActionButtons || $allowsReorder ? 1 : 0)}}">
+                    @foreach ($groupData as $columnName => $value)
+                        <h4>
+                            {{ $columns[$columnName]->getLabel() }}
+                            : {!! $columnRenderers[$columnName]->render($value) !!}
+                        </h4>
+                    @endforeach
+                </td>
+            </tr>
+            <tr>
+                @foreach ($columns as $columnName => $column)
+                    @unless($groupData[$columnName] ?? false)
+                        <th data-column-name="{{ $column->getName() }}" @if($column->isHidden()) class="hidden" @endif>
+                            {!! $columnRenderers[$column->getName()]->renderHeader() !!}
+                        </th>
+                    @endunless
                 @endforeach
                 @if($rowActionButtons)
-                    <td class="dms-row-action-column"><span class="pull-right">Actions</span></td>
+                    <th class="dms-row-action-column"><span class="pull-right">Actions</span></th>
                 @endif
             </tr>
             </thead>
         @endif
 
-        <tbody>
+        <tbody class="@if($allowsReorder) dms-table-body-sortable @endif">
         @foreach ($section->getRows() as $row)
             <tr>
                 @foreach ($row->getData() as $columnName => $value)
-                    <td data-column-name="{{ $columnName }}">{!! $columnRenderers[$columnName]->render($value) !!}</td>
+                    @unless($groupData[$columnName] ?? false)
+                        <td data-column-name="{{ $columnName }}" @if($columns[$columnName]->isHidden()) class="hidden" @endif>
+                            {!! $columnRenderers[$columnName]->render($value) !!}
+                        </td>
+                    @endunless
                 @endforeach
-                @if($rowActionButtons)
+                @if($rowActionButtons || $allowsReorder)
                     <?php $objectId = $row->getCellComponentData(\Dms\Core\Common\Crud\IReadModule::SUMMARY_TABLE_ID_COLUMN) ?>
-                    <td class="dms-row-action-column">
+                    <td class="dms-row-action-column" data-object-id="{{ $objectId }}">
                         <div class="dms-row-button-control pull-right">
                             @if(isset($rowActionButtons['details']))
                                 <a href="{{ $rowActionButtons['details']->getUrl($objectId) }}" title="View Details"
@@ -62,7 +85,7 @@
                             @endif
 
                             @if(array_diff_key($rowActionButtons, ['details' => true, 'edit' => true, 'remove' => true]))
-                                <div class="inline" style="position: relative">
+                                <div class="inline dropdown-container">
                                     <button type="button" class="btn btn-xs btn-default dropdown-toggle"
                                             data-toggle="dropdown"
                                             aria-expanded="false">
@@ -85,6 +108,12 @@
                                         @endforeach
                                     </ul>
                                 </div>
+                            @endif
+
+                            @if ($allowsReorder)
+                                <button title="Reorder" class="btn btn-xs btn-success dms-drag-handle">
+                                    <i class="fa fa-arrows"></i>
+                                </button>
                             @endif
                         </div>
                     </td>

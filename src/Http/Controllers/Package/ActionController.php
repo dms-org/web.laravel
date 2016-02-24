@@ -6,6 +6,7 @@ use Dms\Core\Auth\UserForbiddenException;
 use Dms\Core\Common\Crud\Action\Object\IObjectAction;
 use Dms\Core\Common\Crud\IReadModule;
 use Dms\Core\Form\InvalidFormSubmissionException;
+use Dms\Core\Form\InvalidInputException;
 use Dms\Core\ICms;
 use Dms\Core\Language\ILanguageProvider;
 use Dms\Core\Model\Object\Entity;
@@ -120,7 +121,7 @@ class ActionController extends DmsController
             /** @var IObjectAction $action */
             try {
                 $object = $action->getObjectForm()->getField(IObjectAction::OBJECT_FIELD_NAME)->process($objectId);
-            } catch (InvalidFormSubmissionException $e) {
+            } catch (InvalidInputException $e) {
                 abort(404);
             }
 
@@ -131,26 +132,29 @@ class ActionController extends DmsController
             $hiddenValues[IObjectAction::OBJECT_FIELD_NAME] = $objectId;
             $objectLabel                                    = $module->getLabelFor($object);
             $actionButtons                                  = $this->actionButtonBuilder->buildActionButtons($module, $object, $actionName);
+            $initialStageNumber                             = 2;
         } else {
-            $objectLabel   = null;
-            $actionButtons = [];
+            $objectLabel        = null;
+            $actionButtons      = [];
+            $initialStageNumber = 1;
         }
 
         return view('dms::package.module.action')
             ->with([
-                'pageTitle'       => StringHumanizer::title(implode(' :: ', $titleParts)),
-                'breadcrumbs'     => [
+                'pageTitle'          => StringHumanizer::title(implode(' :: ', $titleParts)),
+                'breadcrumbs'        => [
                     route('dms::index')                                                 => 'Home',
                     route('dms::package.dashboard', [$packageName])                     => StringHumanizer::title($packageName),
                     route('dms::package.module.dashboard', [$packageName, $moduleName]) => StringHumanizer::title($moduleName),
                 ],
-                'finalBreadcrumb' => StringHumanizer::title($actionName),
-                'objectLabel'     => $objectLabel ? str_singular(StringHumanizer::title($moduleName)) . ': ' . $objectLabel : null,
-                'action'          => $action,
-                'formRenderer'    => $this->actionFormRenderer,
-                'hiddenValues'    => $hiddenValues,
-                'actionButtons'   => $actionButtons,
-                'objectId'        => $objectId,
+                'finalBreadcrumb'    => StringHumanizer::title($actionName),
+                'objectLabel'        => $objectLabel ? str_singular(StringHumanizer::title($moduleName)) . ': ' . $objectLabel : null,
+                'action'             => $action,
+                'formRenderer'       => $this->actionFormRenderer,
+                'hiddenValues'       => $hiddenValues,
+                'actionButtons'      => $actionButtons,
+                'objectId'           => $objectId,
+                'initialStageNumber' => $initialStageNumber,
             ]);
     }
 

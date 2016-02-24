@@ -2,4 +2,28 @@
     .help-block-error {
         color: #a94442;
     }
+
+    .list-group.dms-field-list {
+        margin-bottom: 0;
+    }
+
+    .dms-form-stage-container {
+        position: relative;
+
+        &.loading {
+            .dms-form-stage {
+                min-height: 50px;
+                opacity: .3;
+            }
+
+            .spinner {
+                display: block;
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                top: calc(50% - 10px);
+                left: calc(50% - 35px);
+            }
+        }
+    }
 }

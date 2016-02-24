@@ -1,16 +1,16 @@
 Dms.form.initializeCallbacks.push(function (element) {
 
-    element.find('ul.list-field').each(function () {
+    element.find('ul.dms-field-list').each(function () {
         var listOfFields = $(this);
-        var templateField = $(this).find('.list-field-template');
-        var addButton = $(this).find('.btn-add-field');
+        var templateField = listOfFields.find('.field-list-template');
+        var addButton = listOfFields.find('.btn-add-field');
         var isInvalidating = false;
 
         var minFields = listOfFields.attr('data-min-elements');
         var maxFields = listOfFields.attr('data-max-elements');
 
         var getAmountOfInputs = function () {
-            return listOfFields.children('.list-field-item').length;
+            return listOfFields.children('.field-list-item').length;
         };
 
         var invalidateControl = function () {
@@ -34,26 +34,40 @@ Dms.form.initializeCallbacks.push(function (element) {
         };
 
         var addNewField = function () {
-            listOfFields.append(
-                templateField.clone()
-                    .removeClass('list-field-template')
-                    .addClass('list-field-item')
-            );
+            var newField = templateField.clone()
+                .removeClass('field-list-template')
+                .removeClass('hidden')
+                .removeClass('dms-form-no-submit')
+                .addClass('field-list-item');
+
+            var fieldInputElement = newField.find('.field-list-input');
+            fieldInputElement.html(fieldInputElement.text());
+
+            addButton.closest('.field-list-add').before(newField);
+
+            Dms.form.initialize(fieldInputElement);
 
             invalidateControl();
         };
 
         listOfFields.on('click', '.btn-remove-field', function () {
-            $(this).closest('.list-field-item').remove();
+            var field = $(this).closest('.field-list-item');
+            field.remove();
+            field.find('select').trigger('change');
+            field.find('input').trigger('input');
 
             invalidateControl();
         });
 
+        addButton.on('click', addNewField);
+
         invalidateControl();
 
-        if (minFields !== null && minFields === maxFields) {
-            addButton.closest('.list-field-add').remove();
-            listOfFields.find('.btn-remove-field').remove();
+        var requiresAnExactAmountOfFields = typeof minFields !== 'undefined' && minFields === maxFields;
+        if (requiresAnExactAmountOfFields) {
+            addButton.closest('.field-list-add').remove();
+            listOfFields.find('.btn-remove-field').closest('.field-list-button-container').remove();
+            listOfFields.find('.field-list-input').removeClass('col-xs-10 col-md-11').addClass('col-xs-12');
         }
     });
 });

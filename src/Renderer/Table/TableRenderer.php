@@ -46,11 +46,13 @@ class TableRenderer
      * @param IModule       $module
      * @param ITableDisplay $table
      * @param IDataTable    $tableData
+     * @param string        $viewName
+     * @param bool          $isFiltered
      *
      * @return string
      * @throws UnrenderableColumnComponentException
      */
-    public function renderTableData(IModule $module, ITableDisplay $table, IDataTable $tableData) : string
+    public function renderTableData(IModule $module, ITableDisplay $table, IDataTable $tableData, string $viewName = null, bool $isFiltered = false) : string
     {
         $columnRenderers = [];
 
@@ -58,19 +60,20 @@ class TableRenderer
             $columnRenderers[$column->getName()] = $this->columnRendererFactories->buildRendererFor($column);
         }
 
-
         $rowActionButtons = [];
         if ($module instanceof IReadModule && $table instanceof ISummaryTable) {
             foreach ($this->actionButtonBuilder->buildActionButtons($module) as $actionButton) {
                 $rowActionButtons[$actionButton->getName()] = $actionButton;
             }
         }
+
         return view('dms::components.table.data-table')
             ->with([
                 'columns'          => $tableData->getStructure()->getColumns(),
                 'columnRenderers'  => $columnRenderers,
                 'sections'         => $tableData->getSections(),
                 'rowActionButtons' => $rowActionButtons,
+                'allowsReorder'    => !$isFiltered && $viewName && $this->allowsRowReorder($table, $viewName),
             ])
             ->render();
     }
@@ -92,12 +95,9 @@ class TableRenderer
             unset($columns[IReadModule::SUMMARY_TABLE_ID_COLUMN]);
         }
 
-        if ($table instanceof ISummaryTable
-            && $table->hasReorderAction($viewName)
-            && $table->getReorderAction($table)->isAuthorized()
-        ) {
+        if ($this->allowsRowReorder($table, $viewName)) {
             $reorderRowActionUrl = route(
-                'dms::package.module.action',
+                'dms::package.module.action.run',
                 [$module->getPackageName(), $module->getName(), $table->getReorderAction($viewName)->getName()]
             );
         } else {
@@ -131,5 +131,18 @@ class TableRenderer
         }
 
         return $componentIds;
+    }
+
+    /**
+     * @param ITableDisplay $table
+     * @param string        $viewName
+     *
+     * @return bool
+     */
+    protected function allowsRowReorder(ITableDisplay $table, string $viewName) : bool
+    {
+        return $table instanceof ISummaryTable
+        && $table->hasReorderAction($viewName)
+        && $table->getReorderAction($viewName)->isAuthorized();
     }
 }

@@ -12,7 +12,7 @@ Dms.action.responseHandler = function (response) {
     }
 
     if (typeof response.message !== 'undefined') {
-        Dms.alerts.add('success', response.message);
+        Dms.alerts.add(response.message_type || 'success', response.message);
     }
 
     if (typeof response.files !== 'undefined') {

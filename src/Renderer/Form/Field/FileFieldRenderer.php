@@ -1,10 +1,9 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Renderer\Form\Field;
 
-use Dms\Common\Structure\DateTime\Form\DateOrTimeRangeType;
 use Dms\Common\Structure\FileSystem\Form\FileUploadType;
-use Dms\Common\Structure\FileSystem\Form\ImageUploadType;
+use Dms\Core\File\IFile;
 use Dms\Core\Form\Field\Type\FieldType;
 use Dms\Core\Form\Field\Type\InnerFormType;
 use Dms\Core\Form\IField;
@@ -12,11 +11,11 @@ use Dms\Core\Form\IFieldType;
 use Dms\Web\Laravel\Renderer\Form\FormRenderer;
 
 /**
- * The inner-form field renderer
+ * The file field renderer
  *
  * @author Elliot Levin <elliotlevin@hotmail.com>
  */
-class InnerFormFieldRenderer extends BladeFieldRenderer
+class FileFieldRenderer extends BladeFieldRenderer
 {
     /**
      * Gets the expected class of the field type for the field.
@@ -25,7 +24,7 @@ class InnerFormFieldRenderer extends BladeFieldRenderer
      */
     public function getFieldTypeClass() : string
     {
-        return InnerFormType::class;
+        return FileUploadType::class;
     }
 
     /**
@@ -36,9 +35,7 @@ class InnerFormFieldRenderer extends BladeFieldRenderer
      */
     protected function canRender(IField $field, IFieldType $fieldType) : bool
     {
-        return !$fieldType->has(FieldType::ATTR_OPTIONS)
-        && !($fieldType instanceof DateOrTimeRangeType)
-        && !($fieldType instanceof FileUploadType);
+        return !$fieldType->has(FieldType::ATTR_OPTIONS);
     }
 
     /**
@@ -49,19 +46,33 @@ class InnerFormFieldRenderer extends BladeFieldRenderer
      */
     protected function renderField(IField $field, IFieldType $fieldType) : string
     {
-        /** @var InnerFormType $fieldType */
-        $formWithArrayFields = $fieldType->getInnerArrayForm($field->getName());
-        $formRenderer = new FormRenderer($this->fieldRendererCollection);
-
-
         return $this->renderView(
             $field,
-            'dms::components.field.inner-form.input',
-            [],
+            'dms::components.field.dropzone.input',
             [
-                'formContent' => $formRenderer->renderFields($formWithArrayFields),
+                'maxFileSize' => FileUploadType::ATTR_MAX_SIZE,
+                'minFileSize' => FileUploadType::ATTR_MIN_SIZE,
+                'extensions'  => FileUploadType::ATTR_EXTENSIONS,
+            ],
+            [
+
+                'existingFile' => $this->getExistingFile($field->getUnprocessedInitialValue())
             ]
         );
+    }
+
+    private function getExistingFile(array $initialValue = null)
+    {
+        if (empty($initialValue['file'])) {
+            return null;
+        }
+
+        /** @var IFile $file */
+        $file = $initialValue['file'];
+        return [
+            'name' => $file->getClientFileNameWithFallback(),
+            'size' => $file->getSize(),
+        ];
     }
 
     /**
@@ -74,13 +85,13 @@ class InnerFormFieldRenderer extends BladeFieldRenderer
     {
         /** @var InnerFormType $fieldType */
         $formWithArrayFields = $fieldType->getInnerArrayForm($field->getName());
-        $formRenderer = new FormRenderer($this->fieldRendererCollection);
+        $formRenderer        = new FormRenderer($this->fieldRendererCollection);
 
         return $this->renderValueViewWithNullDefault(
             $field, $value,
-            'dms::components.field.inner-form.value',
+            'dms::components.field.dropzone.value',
             [
-                'formContent' => $formRenderer->renderFields($formWithArrayFields),
+
             ]
         );
     }

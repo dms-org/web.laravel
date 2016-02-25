@@ -75,10 +75,12 @@ return [
     ],
     'string'               => 'The :field must be a string.',
     'timezone'             => 'The :field must be a valid zone.',
-    'type'                 => 'The :field must be of a :type type',
+    'type'                 => 'The :field must be of a :type type, :input given',
     'unique'               => 'The :field has already been taken.',
     'url'                  => 'The :field format is invalid.',
     'matching-fields'      => 'The \':field1\' and \':field2\' fields must match.',
+    'exact-array-length'   => 'The :field must contain exactly :length items',
+    'one-of'               => 'The :field must be one of :options',
 
     /*
     |--------------------------------------------------------------------------

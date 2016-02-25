@@ -12,8 +12,8 @@
     {!! csrf_field() !!}
 
     @if($hiddenValues)
-        <div class="dms-form-stage-container hidden">
-            <div class="dms-form-stage loaded">
+        <div class="dms-form-stage-container loaded hidden">
+            <div class="dms-form-stage">
                 @foreach($hiddenValues ?? [] as $name => $value)
                     <input type="hidden" name="{{ $name }}" value="{{ $value }}"/>
                 @endforeach
@@ -21,36 +21,43 @@
         </div>
     @endif
 
-    <?php $stageNumber = $initialStageNumber ?? 1 ?>
-    @foreach ($stagedForm->getAllStages() as $stage)
+    <?php $currentData = [] ?>
+    @for ($stageNumber = 1; $stageNumber <= $stagedForm->getAmountOfStages(); $stageNumber++)
+        <?php $stage = $stagedForm->getStage($stageNumber) ?>
         @if ($stage instanceof \Dms\Core\Form\Stage\IndependentFormStage)
+            <?php $form = $stage->loadForm() ?>
             <div class="dms-form-stage-container loaded">
                 <div class="dms-form-stage">
-                    {!!  $formRenderer->renderFields($stage->loadForm()) !!}
+                    {!!  $formRenderer->renderFields($form) !!}
                 </div>
             </div>
+            <?php $currentData += $form->getInitialValues() ?>
         @else
-
-            <div class="dms-form-stage-container">
+                <?php $form = $stagedForm->tryLoadFormForStage($stageNumber, $currentData, true) ?>
+            <div class="dms-form-stage-container {{ $form ? 'loaded' : '' }}">
                 <div
-                        class="dms-form-stage"
-                        data-load-stage-url="{{ route('dms::package.module.action.form.stage', [$packageName, $moduleName, $actionName, $stageNumber]) }}"
+                        class="dms-form-stage dms-dependent-form-stage"
+                        data-load-stage-url="{{ route('dms::package.module.action.form.stage', [$packageName, $moduleName, $actionName, $stageNumber + ($initialStageNumber ?? 1) - 1]) }}"
                         @if($stage->getRequiredFieldNames() !== null) data-stage-dependent-fields="{{ json_encode($stage->getRequiredFieldNames()) }}" @endif
                 >
-                    <div class="row">
-                        <div class="col-lg-offset-2 col-lg-10 col-md-offset-3 col-md-9 col-sm-offset-4 col-sm-8">
-                            <p class="help-block">
-                                The following fields are not shown because they require you to enter the values for the previous fields in
-                                this form.
-                            </p>
+                    @if ($form)
+                        {!!  $formRenderer->renderFields($form) !!}
+                        <?php $currentData += $form->getInitialValues() ?>
+                    @else
+                        <div class="row">
+                            <div class="col-lg-offset-2 col-lg-10 col-md-offset-3 col-md-9 col-sm-offset-4 col-sm-8">
+                                <p class="help-block">
+                                    The following fields are not shown because they require you to enter the values for the previous fields in
+                                    this form.
+                                </p>
+                            </div>
                         </div>
-                    </div>
+                    @endif
                 </div>
                 @include('dms::partials.spinner')
             </div>
         @endif
-        <?php $stageNumber++ ?>
-    @endforeach
+    @endfor
 
     <button class="btn btn-{{ \Dms\Web\Laravel\Util\KeywordTypeIdentifier::getClass($action->getName()) ?? 'primary' }}" type="submit">
         {{ \Dms\Web\Laravel\Util\StringHumanizer::title($action->getName()) }}

@@ -4,5 +4,5 @@
         @if($required) data-required="1" @endif
         @if($readonly) data-readonly="1" @endif
 >
-        {{ $formContent }}
+        {!! $formContent !!}
 </div>

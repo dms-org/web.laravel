@@ -58,8 +58,10 @@ class TemporaryFileService implements ITemporaryFileService
     {
         $tempUploadDirectory = $this->config->get('dms.storage.temp-files.dir');
 
+        $fileName = str_random(32);
+
         if ($file instanceof IUploadedFile) {
-            $file = $file->moveTo($tempUploadDirectory);
+            $file = $file->moveTo($tempUploadDirectory . '/' . $fileName);
         }
 
         $tempFile = new TemporaryFile(

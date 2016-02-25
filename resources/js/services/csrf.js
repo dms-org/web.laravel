@@ -1,7 +1,11 @@
+Dms.utilities.getCsrfHeaders = function () {
+    return {
+        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+    };
+};
+
 Dms.global.initializeCallbacks.push(function () {
     $.ajaxSetup({
-        headers: {
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-        }
+        headers: Dms.utilities.getCsrfHeaders()
     });
 });

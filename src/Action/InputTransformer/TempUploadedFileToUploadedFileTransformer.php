@@ -2,6 +2,9 @@
 
 namespace Dms\Web\Laravel\Action\InputTransformer;
 
+use Dms\Core\File\IImage;
+use Dms\Core\File\UploadedFileProxy;
+use Dms\Core\File\UploadedImageProxy;
 use Dms\Core\Module\IParameterizedAction;
 use Dms\Web\Laravel\Action\IActionInputTransformer;
 use Dms\Web\Laravel\File\ITemporaryFileService;
@@ -50,7 +53,9 @@ class TempUploadedFileToUploadedFileTransformer implements IActionInputTransform
 
             $uploadedFiles = [];
             foreach ($this->tempFileService->getTempFiles($uploadedFileTokens) as $file) {
-                $uploadedFiles[$file->getToken()] = $file->getFile();
+                $uploadedFiles[$file->getToken()] = $file->getFile() instanceof IImage
+                    ? new UploadedImageProxy($file->getFile())
+                    : new UploadedFileProxy($file->getFile());
             }
 
             $uploadedFileStructure = $uploadedTokenStructure;
@@ -62,7 +67,7 @@ class TempUploadedFileToUploadedFileTransformer implements IActionInputTransform
 
             return array_replace_recursive($input, $uploadedFileStructure);
         } else {
-             return $input;
+            return $input;
         }
     }
 }

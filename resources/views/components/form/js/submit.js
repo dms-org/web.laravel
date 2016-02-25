@@ -11,7 +11,7 @@ Dms.form.initializeCallbacks.push(function (element) {
         var isFormValid = function () {
             return parsley.isValid()
                 && form.find('.dms-validation-message *').length === 0
-                && form.find('.dms-form-stage').length === form.find('.dms-form-stage.loaded').length;
+                && form.find('.dms-form-stage-container').length === form.find('.dms-form-stage-container.loaded').length;
         };
 
         submitButtons.on('click before-confirmation', function (e) {

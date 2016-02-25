@@ -2,6 +2,7 @@ Dms.form.initializeCallbacks.push(function (element) {
 
     element.find('ul.dms-field-list').each(function () {
         var listOfFields = $(this);
+        var formGroup = listOfFields.closest('.form-group');
         var templateField = listOfFields.find('.field-list-template');
         var addButton = listOfFields.find('.btn-add-field');
         var isInvalidating = false;
@@ -43,6 +44,14 @@ Dms.form.initializeCallbacks.push(function (element) {
             var fieldInputElement = newField.find('.field-list-input');
             fieldInputElement.html(fieldInputElement.text());
 
+            var currentIndex = getAmountOfInputs();
+
+            $.each(['name', 'data-name', 'data-field-name'], function (index, attr) {
+                fieldInputElement.find('[' + attr + '*="::index::"]').each(function () {
+                    $(this).attr(attr, $(this).attr(attr).replace('::index::', currentIndex));
+                });
+            });
+
             addButton.closest('.field-list-add').before(newField);
 
             Dms.form.initialize(fieldInputElement);
@@ -53,8 +62,7 @@ Dms.form.initializeCallbacks.push(function (element) {
         listOfFields.on('click', '.btn-remove-field', function () {
             var field = $(this).closest('.field-list-item');
             field.remove();
-            field.find('select').trigger('change');
-            field.find('input').trigger('input');
+            formGroup.trigger('dms-change');
 
             invalidateControl();
         });
@@ -64,7 +72,7 @@ Dms.form.initializeCallbacks.push(function (element) {
         invalidateControl();
 
         var requiresAnExactAmountOfFields = typeof minFields !== 'undefined' && minFields === maxFields;
-        if (requiresAnExactAmountOfFields) {
+        if (requiresAnExactAmountOfFields && getAmountOfInputs() == minFields) {
             addButton.closest('.field-list-add').remove();
             listOfFields.find('.btn-remove-field').closest('.field-list-button-container').remove();
             listOfFields.find('.field-list-input').removeClass('col-xs-10 col-md-11').addClass('col-xs-12');

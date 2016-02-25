@@ -6,28 +6,26 @@ Dms.form.initializeCallbacks.push(function (element) {
         var stageElements = form.find('.dms-form-stage');
 
         var arePreviousFieldsValid = function (fields) {
+            var originalScroll = $(document).scrollTop();
+            var focusedElement = $(document.activeElement);
             parsley.validate();
+            focusedElement.focus();
+            $(document).scrollTop(originalScroll);
 
             return fields.closest('.form-group').find('.dms-validation-message *').length === 0;
         };
 
-        stageElements.each(function () {
+        stageElements.filter('.dms-dependent-form-stage').each(function () {
             var currentStage = $(this);
-
-            if (currentStage.is('.loaded')) {
-                return;
-            }
-
             var container = currentStage.closest('.dms-form-stage-container');
             var previousStages = container.prevAll('.dms-form-stage-container').find('.dms-form-stage');
             var loadStageUrl = currentStage.attr('data-load-stage-url');
             var dependentFields = currentStage.attr('data-stage-dependent-fields');
+            var dependentFieldNames = dependentFields ? JSON.parse(dependentFields) : null;
             var currentAjaxRequest = null;
 
             var makeDependentFieldSelectorFor = function (selector) {
-                if (dependentFields) {
-                    var dependentFieldNames = JSON.parse(dependentFields);
-
+                if (dependentFieldNames) {
                     var selectors = [];
                     $.each(dependentFieldNames, function (index, fieldName) {
                         selectors.push(selector + '[name="' + fieldName + '"]:input');
@@ -81,8 +79,10 @@ Dms.form.initializeCallbacks.push(function (element) {
 
                 currentAjaxRequest.done(function (html) {
                     container.addClass('loaded');
+                    var currentValues = currentStage.values();
                     currentStage.html(html);
                     Dms.form.initialize(currentStage);
+                    currentStage.values(currentValues);
                 });
 
                 currentAjaxRequest.fail(function (xhr) {
@@ -120,7 +120,19 @@ Dms.form.initializeCallbacks.push(function (element) {
             };
 
             previousStages.on('input', makeDependentFieldSelectorFor('input'), loadNextStage);
+            previousStages.on('input', makeDependentFieldSelectorFor('textarea'), loadNextStage);
             previousStages.on('change', makeDependentFieldSelectorFor('select'), loadNextStage);
+
+            if (dependentFieldNames) {
+                var selectors = [];
+                $.each(dependentFieldNames, function (index, fieldName) {
+                    selectors.push('.form-group[data-field-name="' + fieldName + '"]');
+                });
+
+                previousStages.on('dms-change', selectors.join(','), loadNextStage);
+            } else {
+                previousStages.on('dms-change', '.form-group[data-field-name]', loadNextStage);
+            }
         });
     });
 });

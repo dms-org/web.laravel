@@ -185,17 +185,86 @@ Dms.form.initializeCallbacks.push(function () {
         return false;
     });
 });
+Dms.utilities.getCsrfHeaders = function () {
+    return {
+        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+    };
+};
+
 Dms.global.initializeCallbacks.push(function () {
     $.ajaxSetup({
-        headers: {
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-        }
+        headers: Dms.utilities.getCsrfHeaders()
     });
 });
 $(document).ready(function () {
     <!-- Resolve conflict in jQuery UI tooltip with Bootstrap tooltip -->
     $.widget.bridge('uibutton', $.ui.button);
 });
+Dropzone.autoDiscover = false;
+/* jQuery.values: get or set all of the name/value pairs from child input controls
+ * @argument data {array} If included, will populate all child controls.
+ * @returns element if data was provided, or array of values if not
+ */
+
+$.fn.values = function(data) {
+    var $els = this.find(':input');
+    var els = $els.get();
+
+    var getAbsoluteName = function (element) {
+        var name = element.name;
+
+        if (name.substr(-2) === '[]') {
+            var inputsWithSameNameBefore = $els
+                .filter(function (index, otherElement) {
+                    return otherElement.name === name;
+                })
+                .filter(function (index, otherElement) {
+                    var preceding = 4;
+                    return otherElement.compareDocumentPosition(element) & preceding;
+                });
+
+            name = name.substr(0, name.length - 2) + '[' + inputsWithSameNameBefore.length + ']';
+        }
+
+        return name;
+    };
+
+    if(arguments.length === 0) {
+        // return all data
+        data = {};
+
+        $.each(els, function() {
+            if (this.name && !this.disabled && (this.checked
+                || /select|textarea/i.test(this.nodeName)
+                || /text|hidden|password/i.test(this.type))) {
+                data[getAbsoluteName(this)] = $(this).val();
+            }
+        });
+        return data;
+    } else {
+
+        $.each(els, function() {
+            if (!this.name) {
+                return;
+            }
+
+            var name = getAbsoluteName(this);
+
+            if (data[name]) {
+                var value = data[name];
+                var $this = $(this);
+
+                if(this.type == 'checkbox' || this.type == 'radio') {
+                    $this.attr("checked", value === $.val());
+                } else {
+                    $this.val(value);
+                }
+            }
+        });
+
+        return this;
+    }
+};
 Dms.global.initializeCallbacks.push(function () {
     $('a').click(function (e) {
         if ($(this).attr('disabled')) {
@@ -261,6 +330,17 @@ Dms.utilities.idGenerator = function() {
         return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
     };
     return 'id' + (S4()+S4()+"-"+S4()+"-"+S4()+"-"+S4()+"-"+S4()+S4()+S4());
+};
+
+Dms.utilities.combineFieldNames = function(outer, inner) {
+    if (inner.indexOf('[') === -1) {
+        return outer + '[' + inner + ']';
+    }
+
+    var firstInner = inner.substring(0, inner.indexOf('['));
+    var afterFirstInner = inner.substring(inner.indexOf('['));
+
+    return outer + '[' + firstInner + ']' + afterFirstInner;
 };
 window.ParsleyValidator
     .addValidator('ip-address', {
@@ -368,15 +448,21 @@ Dms.form.validation.displayMessages = function (form, fieldMessages, generalMess
     $.each(fieldMessages, visitMessages);
 
     $.each(flattenedFieldMessages, function (fieldName, messages) {
-        var fieldMessages = form.find('.form-group[data-field-name="' + fieldName + '"]');
-        var validationMessagesContainer = fieldMessages.find('.dms-validation-messages-container');
+        var fieldGroup = form.find('.form-group[data-field-name="' + fieldName + '"]').add(
+            form.find('.form-group *[data-field-validation-for]')
+                .filter(function () {
+                    return $(this).attr('data-field-validation-for').indexOf(fieldName) !== -1;
+                })
+                .closest('.form-group')
+        );
+        var validationMessagesContainer = fieldGroup.find('.dms-validation-messages-container');
 
         var helpBlock = makeHelpBlock();
         $.each(messages, function (index, message) {
             helpBlock.append($('<strong />').text(message));
         });
 
-        fieldMessages.addClass('has-error');
+        fieldGroup.addClass('has-error');
         validationMessagesContainer.prepend(helpBlock);
     });
 };
@@ -517,20 +603,6 @@ Dms.chart.initializeCallbacks.push(function () {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-
-    element.find('.list-of-checkboxes').each(function () {
-        var listOfCheckboxes = $(this);
-        listOfCheckboxes.find('input[type=checkbox]').iCheck({
-            checkboxClass: 'icheckbox_square-blue',
-            increaseArea: '20%'
-        });
-
-        var firstCheckbox = listOfCheckboxes.find('input[type=checkbox]').first();
-        firstCheckbox.attr('data-parsley-min-elements', listOfCheckboxes.attr('data-min-elements'));
-        firstCheckbox.attr('data-parsley-max-elements', listOfCheckboxes.attr('data-max-elements'));
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
     element.find('input[type=checkbox].single-checkbox').iCheck({
         checkboxClass: 'icheckbox_square-blue',
         increaseArea: '20%'
@@ -550,6 +622,20 @@ Dms.form.initializeCallbacks.push(function (element) {
         }
 
         $(this).spectrum(config);
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+
+    element.find('.list-of-checkboxes').each(function () {
+        var listOfCheckboxes = $(this);
+        listOfCheckboxes.find('input[type=checkbox]').iCheck({
+            checkboxClass: 'icheckbox_square-blue',
+            increaseArea: '20%'
+        });
+
+        var firstCheckbox = listOfCheckboxes.find('input[type=checkbox]').first();
+        firstCheckbox.attr('data-parsley-min-elements', listOfCheckboxes.attr('data-min-elements'));
+        firstCheckbox.attr('data-parsley-max-elements', listOfCheckboxes.attr('data-max-elements'));
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -619,24 +705,98 @@ Dms.form.initializeCallbacks.push(function (element) {
         });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-    element.find('.dms-inner-form').each(function () {
-        var innerForm = $(this);
 
-        if (innerForm.attr('data-readonly')) {
-            innerForm.find(':input').attr('readonly', 'readonly');
-        }
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
-    element.find('select[multiple]').multiselect({
-        enableFiltering: true,
-        includeSelectAllOption: true
+    element.find('.dropzone-container').each(function () {
+        var container = $(this);
+        var form = container.closest('form');
+        var dropzone = container.find('.dms-dropzone');
+        var fieldName = container.attr('data-name');
+        var required = container.attr('data-required');
+        var tempFilePrefix = container.attr('data-tempfile-key-prefix');
+        var existingFile = JSON.parse(container.attr('data-file'));
+
+        var uniqueId = Dms.utilities.idGenerator();
+
+        var action = existingFile ? 'keep-existing' : 'store-new';
+        var tempFileToken = null;
+
+        var updateSubmissionState = function () {
+            form.find('#file-action-' + uniqueId).remove();
+            form.find('#file-token-' + uniqueId).remove();
+
+            form.append($('<input />').attr({
+                'id': 'file-action-' + uniqueId,
+                'type': 'hidden',
+                'name': Dms.utilities.combineFieldNames(fieldName, 'action'),
+                'value': action
+            }));
+
+            if (tempFileToken) {
+                form.append($('<input />').attr({
+                    'id': 'file-token-' + uniqueId,
+                    'type': 'hidden',
+                    'name': Dms.utilities.combineFieldNames(tempFilePrefix, fieldName + '[file]'),
+                    'value': tempFileToken
+                }));
+            }
+        };
+
+        dropzone.attr('id', 'dropzone-' + uniqueId);
+        new Dropzone('#dropzone-' + uniqueId,  {
+            url: container.attr('data-upload-temp-file-url'),
+            maxFilesize: container.attr('data-max-size'),
+            maxFiles: 1,
+            headers: Dms.utilities.getCsrfHeaders(),
+            acceptedFiles: JSON.parse(container.attr('data-allowed-extensions') || '[]').map(function (extension) {
+                return '.' + extension;
+            }).join(','),
+            init: function () {
+
+                this.on("addedfile", function (file) {
+                    var removeButton = Dropzone.createElement('<button type="button" class="btn btn-sm btn-danger"><i class="fa fa-times"></i></button>');
+                    var _this = this;
+
+                    removeButton.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+
+                        _this.removeFile(file);
+                        tempFileToken = null;
+                        action = 'delete-existing';
+                        updateSubmissionState();
+
+                        if (_this.options.maxFiles === 0) {
+                            _this.options.maxFiles++;
+                        }
+                    });
+
+                    file.previewElement.appendChild(removeButton);
+                });
+
+                this.on('success', function (file, response) {
+                    tempFileToken = response.tokens[fieldName];
+                    action = 'store-new';
+                    updateSubmissionState();
+                });
+
+                if (existingFile) {
+                    this.emit("addedfile", existingFile);
+                    //  this.createThumbnailFromUrl(existingFile, existingFile.url);
+                    this.emit("complete", existingFile);
+                    this.options.maxFiles--;
+                }
+            }
+        });
+
+        dropzone.addClass('dropzone');
+        updateSubmissionState();
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
 
     element.find('ul.dms-field-list').each(function () {
         var listOfFields = $(this);
+        var formGroup = listOfFields.closest('.form-group');
         var templateField = listOfFields.find('.field-list-template');
         var addButton = listOfFields.find('.btn-add-field');
         var isInvalidating = false;
@@ -678,6 +838,14 @@ Dms.form.initializeCallbacks.push(function (element) {
             var fieldInputElement = newField.find('.field-list-input');
             fieldInputElement.html(fieldInputElement.text());
 
+            var currentIndex = getAmountOfInputs();
+
+            $.each(['name', 'data-name', 'data-field-name'], function (index, attr) {
+                fieldInputElement.find('[' + attr + '*="::index::"]').each(function () {
+                    $(this).attr(attr, $(this).attr(attr).replace('::index::', currentIndex));
+                });
+            });
+
             addButton.closest('.field-list-add').before(newField);
 
             Dms.form.initialize(fieldInputElement);
@@ -688,8 +856,7 @@ Dms.form.initializeCallbacks.push(function (element) {
         listOfFields.on('click', '.btn-remove-field', function () {
             var field = $(this).closest('.field-list-item');
             field.remove();
-            field.find('select').trigger('change');
-            field.find('input').trigger('input');
+            formGroup.trigger('dms-change');
 
             invalidateControl();
         });
@@ -699,11 +866,26 @@ Dms.form.initializeCallbacks.push(function (element) {
         invalidateControl();
 
         var requiresAnExactAmountOfFields = typeof minFields !== 'undefined' && minFields === maxFields;
-        if (requiresAnExactAmountOfFields) {
+        if (requiresAnExactAmountOfFields && getAmountOfInputs() == minFields) {
             addButton.closest('.field-list-add').remove();
             listOfFields.find('.btn-remove-field').closest('.field-list-button-container').remove();
             listOfFields.find('.field-list-input').removeClass('col-xs-10 col-md-11').addClass('col-xs-12');
         }
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+    element.find('.dms-inner-form').each(function () {
+        var innerForm = $(this);
+
+        if (innerForm.attr('data-readonly')) {
+            innerForm.find(':input').attr('readonly', 'readonly');
+        }
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+    element.find('select[multiple]').multiselect({
+        enableFiltering: true,
+        includeSelectAllOption: true
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -745,354 +927,6 @@ Dms.form.initializeCallbacks.push(function (element) {
 });
 Dms.form.initializeCallbacks.push(function (element) {
 
-});
-Dms.form.initializeCallbacks.push(function (element) {
-
-    var fieldCounter = 1;
-
-    element.find('.dms-form-fieldset .form-group').each(function () {
-        var fieldLabel = $(this).children('label[data-for]');
-        var forFieldName = fieldLabel.attr('data-for');
-
-        if (forFieldName) {
-            var forField = $(this).first('*[name="' + forFieldName + '"], .dms-inner-form[data-name="' + forFieldName + '"]');
-
-            if (!forField.attr('id')) {
-                forField.attr('id', 'dms-field-' + fieldCounter);
-                fieldCounter++;
-            }
-
-            fieldLabel.attr('for', forField.attr('id'));
-        }
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
-
-    element.find('form.dms-staged-form').each(function () {
-        var form = $(this);
-        var parsley = form.parsley(window.ParsleyConfig);
-        var stageElements = form.find('.dms-form-stage');
-
-        var arePreviousFieldsValid = function (fields) {
-            parsley.validate();
-
-            return fields.closest('.form-group').find('.dms-validation-message *').length === 0;
-        };
-
-        stageElements.each(function () {
-            var currentStage = $(this);
-
-            if (currentStage.is('.loaded')) {
-                return;
-            }
-
-            var container = currentStage.closest('.dms-form-stage-container');
-            var previousStages = container.prevAll('.dms-form-stage-container').find('.dms-form-stage');
-            var loadStageUrl = currentStage.attr('data-load-stage-url');
-            var dependentFields = currentStage.attr('data-stage-dependent-fields');
-            var currentAjaxRequest = null;
-
-            var makeDependentFieldSelectorFor = function (selector) {
-                if (dependentFields) {
-                    var dependentFieldNames = JSON.parse(dependentFields);
-
-                    var selectors = [];
-                    $.each(dependentFieldNames, function (index, fieldName) {
-                        selectors.push(selector + '[name="' + fieldName + '"]:input');
-                        selectors.push(selector + '[name^="' + fieldName + '["][name$="]"]:input');
-                    });
-
-                    return selectors.join(',');
-                } else {
-                    return selector + '[name]:input';
-                }
-            };
-
-            var loadNextStage = function () {
-                var previousFields = previousStages.find(makeDependentFieldSelectorFor('*'));
-
-                if (!arePreviousFieldsValid(previousFields)) {
-                    return;
-                }
-
-                Dms.form.validation.clearMessages(form);
-
-                if (currentAjaxRequest) {
-                    currentAjaxRequest.abort();
-                }
-
-                container.removeClass('loaded');
-                container.addClass('loading');
-
-                var formData = new FormData();
-
-                previousFields.each(function () {
-                    var fieldName = $(this).attr('name');
-
-                    if ($(this).is('[type=file]')) {
-                        $.each(this.files, function (index, file) {
-                            formData.append(fieldName, file);
-                        });
-                    } else {
-                        formData.append(fieldName, $(this).val());
-                    }
-                });
-
-                currentAjaxRequest = $.ajax({
-                    url: loadStageUrl,
-                    type: 'post',
-                    processData: false,
-                    contentType: false,
-                    dataType: 'html',
-                    data: formData
-                });
-
-                currentAjaxRequest.done(function (html) {
-                    container.addClass('loaded');
-                    currentStage.html(html);
-                    Dms.form.initialize(currentStage);
-                });
-
-                currentAjaxRequest.fail(function (xhr) {
-                    if (currentAjaxRequest.statusText === 'abort') {
-                        return;
-                    }
-
-                    switch (xhr.status) {
-                        case 422: // Unprocessable Entity (validation failure)
-                            var validation = JSON.parse(xhr.responseText);
-                            Dms.form.validation.displayMessages(form, validation.messages.fields, validation.messages.constraints);
-                            break;
-
-                        case 400: // Bad request
-                            swal({
-                                title: "Could not load form",
-                                text: JSON.parse(xhr.responseText).message,
-                                type: "error"
-                            });
-                            break;
-
-                        default: // Unknown error
-                            swal({
-                                title: "Could not load form",
-                                text: "An unexpected error occurred",
-                                type: "error"
-                            });
-                            break;
-                    }
-                });
-
-                currentAjaxRequest.always(function () {
-                    container.removeClass('loading');
-                });
-            };
-
-            previousStages.on('input', makeDependentFieldSelectorFor('input'), loadNextStage);
-            previousStages.on('change', makeDependentFieldSelectorFor('select'), loadNextStage);
-        });
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
-
-    element.find('form.dms-staged-form, form.dms-run-action-form').each(function () {
-        var form = $(this);
-        var parsley = form.parsley(window.ParsleyConfig);
-        var afterRunCallbacks = [];
-        var submitButtons = form.find('input[type=submit], button[type=submit]');
-        var submitMethod = form.attr('method');
-        var submitUrl = form.attr('action');
-
-        var isFormValid = function () {
-            return parsley.isValid()
-                && form.find('.dms-validation-message *').length === 0
-                && form.find('.dms-form-stage').length === form.find('.dms-form-stage.loaded').length;
-        };
-
-        submitButtons.on('click before-confirmation', function (e) {
-            parsley.validate();
-
-            if (!isFormValid()) {
-                e.stopImmediatePropagation();
-                return false;
-            }
-        });
-
-        form.on('submit', function (e) {
-            e.preventDefault();
-
-            Dms.form.validation.clearMessages(form);
-
-            var fieldsToReappend = [];
-            form.find('.dms-form-no-submit').each(function () {
-                var removedFields = $(this).children().detach();
-
-                fieldsToReappend.push({
-                    parentElement: $(this),
-                    children: removedFields
-                });
-            });
-
-            var formData = new FormData(form.get(0));
-
-            $.each(fieldsToReappend, function (index, elements) {
-                elements.parentElement.append(elements.children);
-            });
-
-            submitButtons.prop('disabled', true);
-            submitButtons.addClass('ladda-button').attr('data-style', 'expand-right');
-            var ladda = Ladda.create(submitButtons.get(0));
-            ladda.start();
-
-            var currentAjaxRequest = $.ajax({
-                url: submitUrl,
-                type: submitMethod,
-                processData: false,
-                contentType: false,
-                dataType: 'json',
-                data: formData,
-                xhr: function() {
-                    var xhr = $.ajaxSettings.xhr();
-
-                    if(form.find('input[type=file]').length && xhr.upload){
-                        xhr.upload.addEventListener('progress', function (event) {
-                            if (event.lengthComputable) {
-                                ladda.setProgress(event.loaded / event.total);
-                            }
-                        }, false);
-                    }
-
-                    return xhr;
-                }
-            });
-
-            currentAjaxRequest.done(function (data) {
-                Dms.action.responseHandler(data);
-                $.each(afterRunCallbacks, function (index, callback) {
-                    callback(data);
-                });
-            });
-
-            currentAjaxRequest.fail(function (xhr) {
-                if (currentAjaxRequest.statusText === 'abort') {
-                    return;
-                }
-
-                switch (xhr.status) {
-                    case 422: // Unprocessable Entity (validation failure)
-                        var validation = JSON.parse(xhr.responseText);
-                        Dms.form.validation.displayMessages(form, validation.messages.fields, validation.messages.constraints);
-                        break;
-
-                    default: // Unknown error
-                        swal({
-                            title: "Could not submit form",
-                            text: "An unexpected error occurred",
-                            type: "error"
-                        });
-                        break;
-                }
-            });
-
-            currentAjaxRequest.always(function () {
-                submitButtons.prop('disabled', false);
-                ladda.stop();
-            });
-
-            return false;
-        });
-
-        var parentToRemove = form.attr('data-after-run-remove-closest');
-        if (parentToRemove) {
-            afterRunCallbacks.push(function () {
-                form.closest(parentToRemove).fadeOut(100);
-            });
-        }
-
-        afterRunCallbacks.push(function () {
-            form.find('input[type=password]').val('');
-        });
-    });
-});
-Dms.form.initializeValidationCallbacks.push(function (element) {
-
-    element.find('.dms-form-fields').each(function () {
-        if (!$(this).attr('id')) {
-            $(this).attr('id', Dms.utilities.idGenerator());
-        }
-    });
-
-    element.find('.dms-form-fields').each(function () {
-        var formFieldSection = $(this);
-        var formFieldsGroupId = formFieldSection.attr('id');
-
-
-        var buildElementSelector = function (fieldName) {
-            return '#' + formFieldsGroupId + ' *[name="' + fieldName + '"]';
-        };
-
-        var fieldValidations = {
-            'data-equal-fields': 'data-parsley-equalto',
-            'data-greater-than-fields': 'data-parsley-gt',
-            'data-greater-than-or-equal-fields': 'data-parsley-gte',
-            'data-less-than-fields': 'data-parsley-lt',
-            'data-less-than-or-equal-fields': 'data-parsley-lte'
-        };
-
-        $.each(fieldValidations, function (validationAttr, parsleyAttr) {
-            var fieldsMap = formFieldSection.attr(validationAttr);
-
-            if (fieldsMap) {
-                $.each(JSON.parse(fieldsMap), function (fieldName, otherFieldName) {
-                    var field = $(buildElementSelector(fieldName));
-                    field.attr(parsleyAttr, buildElementSelector(otherFieldName));
-                });
-            }
-        });
-    });
-
-    element.find('form.dms-staged-form').each(function () {
-        var form = $(this);
-        form.parsley(window.ParsleyConfig);
-
-        form.find('.dms-form-fields').each(function (index) {
-            $(this).find(':input').attr('data-parsley-group', 'validation-group-' + index);
-        });
-    });
-
-    element.find('form.dms-form').each(function () {
-        $(this).parsley(window.ParsleyConfig);
-    });
-});
-Dms.widget.initializeCallbacks.push(function () {
-    $('.dms-widget-unparameterized-action, .dms-widget-parameterized-action').each(function () {
-        var widget = $(this);
-        var button = widget.find('button');
-
-        if (button.is('.btn-danger')) {
-            var isConfirmed = false;
-
-            button.click(function () {
-                if (isConfirmed) {
-                    isConfirmed = false;
-                    return;
-                }
-
-                swal({
-                    title: "Are you sure?",
-                    text: "This will execute the '" + widget.attr('data-action-label') + "' action",
-                    type: "warning",
-                    showCancelButton: true,
-                    confirmButtonColor: "#DD6B55",
-                    confirmButtonText: "Yes proceed!"
-                }, function () {
-                    isConfirmed = true;
-                    $(this).click();
-                });
-
-                return false;
-            });
-        }
-    });
 });
 Dms.table.initializeCallbacks.push(function (element) {
     var groupCounter = 0;
@@ -1298,6 +1132,366 @@ Dms.table.initializeCallbacks.push(function (element) {
 
             linkedTablePane.find('.dms-table-control:not([data-has-loaded-table-data]) .dms-table-container:not(.loading) .dms-table').triggerHandler('dms-load-table-data');
         });
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+
+    var fieldCounter = 1;
+
+    element.find('.dms-form-fieldset .form-group').each(function () {
+        var fieldLabel = $(this).children('label[data-for]');
+        var forFieldName = fieldLabel.attr('data-for');
+
+        if (forFieldName) {
+            var forField = $(this).first('*[name="' + forFieldName + '"], .dms-inner-form[data-name="' + forFieldName + '"]');
+
+            if (!forField.attr('id')) {
+                forField.attr('id', 'dms-field-' + fieldCounter);
+                fieldCounter++;
+            }
+
+            fieldLabel.attr('for', forField.attr('id'));
+        }
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+
+    element.find('form.dms-staged-form').each(function () {
+        var form = $(this);
+        var parsley = form.parsley(window.ParsleyConfig);
+        var stageElements = form.find('.dms-form-stage');
+
+        var arePreviousFieldsValid = function (fields) {
+            var originalScroll = $(document).scrollTop();
+            var focusedElement = $(document.activeElement);
+            parsley.validate();
+            focusedElement.focus();
+            $(document).scrollTop(originalScroll);
+
+            return fields.closest('.form-group').find('.dms-validation-message *').length === 0;
+        };
+
+        stageElements.filter('.dms-dependent-form-stage').each(function () {
+            var currentStage = $(this);
+            var container = currentStage.closest('.dms-form-stage-container');
+            var previousStages = container.prevAll('.dms-form-stage-container').find('.dms-form-stage');
+            var loadStageUrl = currentStage.attr('data-load-stage-url');
+            var dependentFields = currentStage.attr('data-stage-dependent-fields');
+            var dependentFieldNames = dependentFields ? JSON.parse(dependentFields) : null;
+            var currentAjaxRequest = null;
+
+            var makeDependentFieldSelectorFor = function (selector) {
+                if (dependentFieldNames) {
+                    var selectors = [];
+                    $.each(dependentFieldNames, function (index, fieldName) {
+                        selectors.push(selector + '[name="' + fieldName + '"]:input');
+                        selectors.push(selector + '[name^="' + fieldName + '["][name$="]"]:input');
+                    });
+
+                    return selectors.join(',');
+                } else {
+                    return selector + '[name]:input';
+                }
+            };
+
+            var loadNextStage = function () {
+                var previousFields = previousStages.find(makeDependentFieldSelectorFor('*'));
+
+                if (!arePreviousFieldsValid(previousFields)) {
+                    return;
+                }
+
+                Dms.form.validation.clearMessages(form);
+
+                if (currentAjaxRequest) {
+                    currentAjaxRequest.abort();
+                }
+
+                container.removeClass('loaded');
+                container.addClass('loading');
+
+                var formData = new FormData();
+
+                previousFields.each(function () {
+                    var fieldName = $(this).attr('name');
+
+                    if ($(this).is('[type=file]')) {
+                        $.each(this.files, function (index, file) {
+                            formData.append(fieldName, file);
+                        });
+                    } else {
+                        formData.append(fieldName, $(this).val());
+                    }
+                });
+
+                currentAjaxRequest = $.ajax({
+                    url: loadStageUrl,
+                    type: 'post',
+                    processData: false,
+                    contentType: false,
+                    dataType: 'html',
+                    data: formData
+                });
+
+                currentAjaxRequest.done(function (html) {
+                    container.addClass('loaded');
+                    var currentValues = currentStage.values();
+                    currentStage.html(html);
+                    Dms.form.initialize(currentStage);
+                    currentStage.values(currentValues);
+                });
+
+                currentAjaxRequest.fail(function (xhr) {
+                    if (currentAjaxRequest.statusText === 'abort') {
+                        return;
+                    }
+
+                    switch (xhr.status) {
+                        case 422: // Unprocessable Entity (validation failure)
+                            var validation = JSON.parse(xhr.responseText);
+                            Dms.form.validation.displayMessages(form, validation.messages.fields, validation.messages.constraints);
+                            break;
+
+                        case 400: // Bad request
+                            swal({
+                                title: "Could not load form",
+                                text: JSON.parse(xhr.responseText).message,
+                                type: "error"
+                            });
+                            break;
+
+                        default: // Unknown error
+                            swal({
+                                title: "Could not load form",
+                                text: "An unexpected error occurred",
+                                type: "error"
+                            });
+                            break;
+                    }
+                });
+
+                currentAjaxRequest.always(function () {
+                    container.removeClass('loading');
+                });
+            };
+
+            previousStages.on('input', makeDependentFieldSelectorFor('input'), loadNextStage);
+            previousStages.on('input', makeDependentFieldSelectorFor('textarea'), loadNextStage);
+            previousStages.on('change', makeDependentFieldSelectorFor('select'), loadNextStage);
+
+            if (dependentFieldNames) {
+                var selectors = [];
+                $.each(dependentFieldNames, function (index, fieldName) {
+                    selectors.push('.form-group[data-field-name="' + fieldName + '"]');
+                });
+
+                previousStages.on('dms-change', selectors.join(','), loadNextStage);
+            } else {
+                previousStages.on('dms-change', '.form-group[data-field-name]', loadNextStage);
+            }
+        });
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+
+    element.find('form.dms-staged-form, form.dms-run-action-form').each(function () {
+        var form = $(this);
+        var parsley = form.parsley(window.ParsleyConfig);
+        var afterRunCallbacks = [];
+        var submitButtons = form.find('input[type=submit], button[type=submit]');
+        var submitMethod = form.attr('method');
+        var submitUrl = form.attr('action');
+
+        var isFormValid = function () {
+            return parsley.isValid()
+                && form.find('.dms-validation-message *').length === 0
+                && form.find('.dms-form-stage-container').length === form.find('.dms-form-stage-container.loaded').length;
+        };
+
+        submitButtons.on('click before-confirmation', function (e) {
+            parsley.validate();
+
+            if (!isFormValid()) {
+                e.stopImmediatePropagation();
+                return false;
+            }
+        });
+
+        form.on('submit', function (e) {
+            e.preventDefault();
+
+            Dms.form.validation.clearMessages(form);
+
+            var fieldsToReappend = [];
+            form.find('.dms-form-no-submit').each(function () {
+                var removedFields = $(this).children().detach();
+
+                fieldsToReappend.push({
+                    parentElement: $(this),
+                    children: removedFields
+                });
+            });
+
+            var formData = new FormData(form.get(0));
+
+            $.each(fieldsToReappend, function (index, elements) {
+                elements.parentElement.append(elements.children);
+            });
+
+            submitButtons.prop('disabled', true);
+            submitButtons.addClass('ladda-button').attr('data-style', 'expand-right');
+            var ladda = Ladda.create(submitButtons.get(0));
+            ladda.start();
+
+            var currentAjaxRequest = $.ajax({
+                url: submitUrl,
+                type: submitMethod,
+                processData: false,
+                contentType: false,
+                dataType: 'json',
+                data: formData,
+                xhr: function() {
+                    var xhr = $.ajaxSettings.xhr();
+
+                    if(form.find('input[type=file]').length && xhr.upload){
+                        xhr.upload.addEventListener('progress', function (event) {
+                            if (event.lengthComputable) {
+                                ladda.setProgress(event.loaded / event.total);
+                            }
+                        }, false);
+                    }
+
+                    return xhr;
+                }
+            });
+
+            currentAjaxRequest.done(function (data) {
+                Dms.action.responseHandler(data);
+                $.each(afterRunCallbacks, function (index, callback) {
+                    callback(data);
+                });
+            });
+
+            currentAjaxRequest.fail(function (xhr) {
+                if (currentAjaxRequest.statusText === 'abort') {
+                    return;
+                }
+
+                switch (xhr.status) {
+                    case 422: // Unprocessable Entity (validation failure)
+                        var validation = JSON.parse(xhr.responseText);
+                        Dms.form.validation.displayMessages(form, validation.messages.fields, validation.messages.constraints);
+                        break;
+
+                    default: // Unknown error
+                        swal({
+                            title: "Could not submit form",
+                            text: "An unexpected error occurred",
+                            type: "error"
+                        });
+                        break;
+                }
+            });
+
+            currentAjaxRequest.always(function () {
+                submitButtons.prop('disabled', false);
+                ladda.stop();
+            });
+
+            return false;
+        });
+
+        var parentToRemove = form.attr('data-after-run-remove-closest');
+        if (parentToRemove) {
+            afterRunCallbacks.push(function () {
+                form.closest(parentToRemove).fadeOut(100);
+            });
+        }
+
+        afterRunCallbacks.push(function () {
+            form.find('input[type=password]').val('');
+        });
+    });
+});
+Dms.form.initializeValidationCallbacks.push(function (element) {
+
+    element.find('.dms-form-fields').each(function () {
+        if (!$(this).attr('id')) {
+            $(this).attr('id', Dms.utilities.idGenerator());
+        }
+    });
+
+    element.find('.dms-form-fields').each(function () {
+        var formFieldSection = $(this);
+        var formFieldsGroupId = formFieldSection.attr('id');
+
+
+        var buildElementSelector = function (fieldName) {
+            return '#' + formFieldsGroupId + ' *[name="' + fieldName + '"]';
+        };
+
+        var fieldValidations = {
+            'data-equal-fields': 'data-parsley-equalto',
+            'data-greater-than-fields': 'data-parsley-gt',
+            'data-greater-than-or-equal-fields': 'data-parsley-gte',
+            'data-less-than-fields': 'data-parsley-lt',
+            'data-less-than-or-equal-fields': 'data-parsley-lte'
+        };
+
+        $.each(fieldValidations, function (validationAttr, parsleyAttr) {
+            var fieldsMap = formFieldSection.attr(validationAttr);
+
+            if (fieldsMap) {
+                $.each(JSON.parse(fieldsMap), function (fieldName, otherFieldName) {
+                    var field = $(buildElementSelector(fieldName));
+                    field.attr(parsleyAttr, buildElementSelector(otherFieldName));
+                });
+            }
+        });
+    });
+
+    element.find('form.dms-staged-form').each(function () {
+        var form = $(this);
+        form.parsley(window.ParsleyConfig);
+
+        form.find('.dms-form-fields').each(function (index) {
+            $(this).find(':input').attr('data-parsley-group', 'validation-group-' + index);
+        });
+    });
+
+    element.find('form.dms-form').each(function () {
+        $(this).parsley(window.ParsleyConfig);
+    });
+});
+Dms.widget.initializeCallbacks.push(function () {
+    $('.dms-widget-unparameterized-action, .dms-widget-parameterized-action').each(function () {
+        var widget = $(this);
+        var button = widget.find('button');
+
+        if (button.is('.btn-danger')) {
+            var isConfirmed = false;
+
+            button.click(function () {
+                if (isConfirmed) {
+                    isConfirmed = false;
+                    return;
+                }
+
+                swal({
+                    title: "Are you sure?",
+                    text: "This will execute the '" + widget.attr('data-action-label') + "' action",
+                    type: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#DD6B55",
+                    confirmButtonText: "Yes proceed!"
+                }, function () {
+                    isConfirmed = true;
+                    $(this).click();
+                });
+
+                return false;
+            });
+        }
     });
 });
 //# sourceMappingURL=app.js.map

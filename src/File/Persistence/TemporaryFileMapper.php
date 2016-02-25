@@ -31,7 +31,7 @@ class TemporaryFileMapper extends EntityMapper
         $map->property(TemporaryFile::TOKEN)->to('token')->unique()->asVarchar(40);
 
         $map->embedded(TemporaryFile::FILE)
-            ->using(new FileAndSubclassesMapper());
+            ->using(new FileAndSubclassesMapper('file', 'client_file_name'));
 
         $map->embedded(TemporaryFile::EXPIRY)
             ->using(new DateTimeMapper('expiry_time'));

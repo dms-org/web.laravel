@@ -48,15 +48,21 @@ Dms.form.validation.displayMessages = function (form, fieldMessages, generalMess
     $.each(fieldMessages, visitMessages);
 
     $.each(flattenedFieldMessages, function (fieldName, messages) {
-        var fieldMessages = form.find('.form-group[data-field-name="' + fieldName + '"]');
-        var validationMessagesContainer = fieldMessages.find('.dms-validation-messages-container');
+        var fieldGroup = form.find('.form-group[data-field-name="' + fieldName + '"]').add(
+            form.find('.form-group *[data-field-validation-for]')
+                .filter(function () {
+                    return $(this).attr('data-field-validation-for').indexOf(fieldName) !== -1;
+                })
+                .closest('.form-group')
+        );
+        var validationMessagesContainer = fieldGroup.find('.dms-validation-messages-container');
 
         var helpBlock = makeHelpBlock();
         $.each(messages, function (index, message) {
             helpBlock.append($('<strong />').text(message));
         });
 
-        fieldMessages.addClass('has-error');
+        fieldGroup.addClass('has-error');
         validationMessagesContainer.prepend(helpBlock);
     });
 };

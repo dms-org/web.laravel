@@ -56,7 +56,7 @@ class FileController extends DmsController
                     $file->getClientMimeType()
                 ),
                 $this->config->get('dms.storage.temp-files.upload-expiry')
-            );
+            )->getToken();
         }
 
         return response()->json([

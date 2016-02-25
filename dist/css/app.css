@@ -55,6 +55,11 @@ a[disabled] {
     top: calc(50% - 10px);
     left: calc(50% - 35px); }
 
+.dms-staged-form .dropzone {
+  border: 2px dashed #0087F7;
+  border-radius: 5px;
+  background: white; }
+
 .spinner {
   margin: 0 auto 0;
   width: 70px;

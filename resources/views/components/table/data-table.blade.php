@@ -4,7 +4,7 @@
 <?php /** @var \Dms\Web\Laravel\Renderer\Action\ActionButton[] $rowActionButtons */ ?>
 <?php /** @var bool $allowsReorder */ ?>
 <table class="table dms-table">
-    @if ($sections && !$sections[0]->hasGroupData())
+    @if (!$sections || !$sections[0]->hasGroupData())
         <thead>
         <tr>
             @foreach ($columns as $column)
@@ -17,12 +17,12 @@
         </tr>
         </thead>
     @endif
-    @foreach($sections as $section)
+    @forelse($sections as $section)
         @if ($section->hasGroupData())
             <?php $groupData = $section->getGroupData()->getData()?>
             <thead>
             <tr>
-                <td colspan="{{ count($columns) + ($rowActionButtons || $allowsReorder ? 1 : 0)}}">
+                <td colspan="{{ count($columns) + ($rowActionButtons || $allowsReorder ? 1 : 0) }}">
                     @foreach ($groupData as $columnName => $value)
                         <h4>
                             {{ $columns[$columnName]->getLabel() }}
@@ -121,5 +121,13 @@
             </tr>
         @endforeach
         </tbody>
-    @endforeach
+    @empty
+        <tbody>
+        <tr>
+            <td colspan="{{ count($columns) + ($rowActionButtons || $allowsReorder ? 1 : 0) }}">
+                <div class="help-block text-center">There are no items</div>
+            </td>
+        </tr>
+        </tbody>
+    @endforelse
 </table>

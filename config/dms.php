@@ -54,6 +54,7 @@ return [
                 Dms\Web\Laravel\Renderer\Form\Field\DecimalFieldRenderer::class,
                 Dms\Web\Laravel\Renderer\Form\Field\InnerFormFieldRenderer::class,
                 Dms\Web\Laravel\Renderer\Form\Field\IntFieldRenderer::class,
+                Dms\Web\Laravel\Renderer\Form\Field\FileFieldRenderer::class,
                 Dms\Web\Laravel\Renderer\Form\Field\RadioOptionsFieldRender::class,
                 Dms\Web\Laravel\Renderer\Form\Field\SelectOptionsFieldRender::class,
                 Dms\Web\Laravel\Renderer\Form\Field\RgbaColourFieldRenderer::class,

@@ -12,3 +12,14 @@ Dms.utilities.idGenerator = function() {
     };
     return 'id' + (S4()+S4()+"-"+S4()+"-"+S4()+"-"+S4()+"-"+S4()+S4()+S4());
 };
+
+Dms.utilities.combineFieldNames = function(outer, inner) {
+    if (inner.indexOf('[') === -1) {
+        return outer + '[' + inner + ']';
+    }
+
+    var firstInner = inner.substring(0, inner.indexOf('['));
+    var afterFirstInner = inner.substring(inner.indexOf('['));
+
+    return outer + '[' + firstInner + ']' + afterFirstInner;
+};

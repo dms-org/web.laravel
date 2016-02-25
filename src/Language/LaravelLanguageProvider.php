@@ -6,6 +6,7 @@ use Dms\Core\Exception\InvalidArgumentException;
 use Dms\Core\Language\ILanguageProvider;
 use Dms\Core\Language\Message;
 use Dms\Core\Language\MessageNotFoundException;
+use Dms\Core\Util\Debug;
 use Symfony\Component\Translation\TranslatorInterface;
 
 /**
@@ -45,11 +46,14 @@ class LaravelLanguageProvider implements ILanguageProvider
 
         $response = $this->laravelTranslator->trans(
             $messageId,
-            $this->processParameters($message->getParameters())
+            $params = $this->processParameters($message->getParameters())
         );
 
         if ($response === $messageId) {
-            throw MessageNotFoundException::format('Could not translate message: unknown message id \'%s\'', $messageId);
+            throw MessageNotFoundException::format(
+                'Could not translate message: unknown message id \'%s\' with params %s',
+                $messageId, $this->debugFormatParams($params)
+            );
         }
 
         return $response;
@@ -89,5 +93,16 @@ class LaravelLanguageProvider implements ILanguageProvider
         }
 
         return $processedParams;
+    }
+
+    private function debugFormatParams(array $parameters) : string
+    {
+        $elements = [];
+
+        foreach ($parameters as $name => $value) {
+            $elements[] = $name . ': ' . $value;
+        }
+
+        return '[' . implode(', ', $elements) . ']';
     }
 }

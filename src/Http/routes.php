@@ -8,7 +8,6 @@ $namespace = __NAMESPACE__ . '\\Controllers';
 
 $router->group(['prefix' => 'dms', 'middleware' => 'dms.web', 'as' => 'dms::', 'namespace' => $namespace],
     function () use ($router) {
-
         $router->group(['prefix' => 'auth', 'as' => 'auth.', 'namespace' => 'Auth'], function () use ($router) {
             // Authentication Routes...
             $router->get('login', 'AuthController@showLoginForm')->name('login');
@@ -25,7 +24,7 @@ $router->group(['prefix' => 'dms', 'middleware' => 'dms.web', 'as' => 'dms::', '
         $router->group(['middleware' => 'dms.auth'], function () use ($router) {
 
             // Files
-            $router->get('/file/upload', 'FileController@upload')->name('file.upload');
+            $router->post('/file/upload', 'FileController@upload')->name('file.upload');
             $router->get('/file/download/{token}', 'FileController@download')->name('file.download');
 
             // Account

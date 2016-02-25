@@ -79,6 +79,10 @@ class InvalidFormSubmissionExceptionHandler extends ActionExceptionHandler
         ];
 
         foreach ($exception->getFieldMessageMap() as $field => $messages) {
+            if (!empty($messages) && is_array(reset($messages))) {
+                continue;
+            }
+
             $validation['fields'][$field] = $this->lang->formatAll($messages);
         }
 

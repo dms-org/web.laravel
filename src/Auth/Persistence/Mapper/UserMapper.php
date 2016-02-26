@@ -34,9 +34,8 @@ class UserMapper extends EntityMapper
         $map->idToPrimaryKey('id');
 
         $map->embedded(User::EMAIL_ADDRESS)
+            ->unique()
             ->using(new EmailAddressMapper('email'));
-
-        $map->unique('users_email_unique_index')->on('email');
 
         $map->property(User::USERNAME)
             ->to(self::AUTH_IDENTIFIER_COLUMN)

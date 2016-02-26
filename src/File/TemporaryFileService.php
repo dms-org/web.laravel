@@ -79,7 +79,7 @@ class TemporaryFileService implements ITemporaryFileService
         foreach ($files as $key => $file) {
             if ($file instanceof IUploadedFile) {
                 $fileName = str_random(32);
-                $file     = $file->moveTo($tempUploadDirectory . '/' . $fileName);
+                $file     = $file->moveTo(realpath($tempUploadDirectory) . DIRECTORY_SEPARATOR . $fileName);
             }
 
             $tempFiles[$key] = new TemporaryFile(

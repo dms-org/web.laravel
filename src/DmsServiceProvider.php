@@ -196,7 +196,7 @@ class DmsServiceProvider extends ServiceProvider
         $router = $this->app['router'];
 
         $router->middlewareGroup('dms.web', [
-            EncryptCookies::class,
+            //EncryptCookies::class,
             AddQueuedCookiesToResponse::class,
             StartSession::class,
             ShareErrorsFromSession::class,

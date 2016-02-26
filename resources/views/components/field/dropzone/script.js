@@ -50,7 +50,6 @@ Dms.form.initializeCallbacks.push(function (element) {
             imageEditor.find('.modal-title').text(options.title || 'Edit Image');
 
             var canvasContainer = imageEditor.find('.dms-canvas-container');
-            canvasContainer.find('img').remove();
 
             var imageSrc = getDownloadUrlForFile(file);
 
@@ -84,8 +83,7 @@ Dms.form.initializeCallbacks.push(function (element) {
                 });
 
                 imageEditor.on('hide.bs.modal', function () {
-                    darkroom.selfDestroy();
-                    canvasContainer.find('img').remove();
+                    canvasContainer.empty();
                     alwaysCallback();
 
                     imageEditor.unbind('hide.bs.modal');
@@ -242,6 +240,10 @@ Dms.form.initializeCallbacks.push(function (element) {
             },
 
             accept: function (file, done) {
+                if (file.type.indexOf('image') === -1) {
+                    done();
+                }
+
                 file.acceptDimensions = done;
                 file.rejectDimensions = function () {
                     showImageEditor(file, function (editedFile) {

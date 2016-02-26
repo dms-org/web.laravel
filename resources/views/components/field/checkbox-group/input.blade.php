@@ -15,7 +15,7 @@
         <div class="row">
         @foreach ($options as $option)
             <div class="col-md-4 col-lg-3">
-                <label class="">
+                <label>
                     <input
                             type="checkbox"
                             value="{{ $option->getValue() }}"

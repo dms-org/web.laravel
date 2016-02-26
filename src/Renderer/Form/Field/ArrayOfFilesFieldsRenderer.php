@@ -4,7 +4,6 @@ namespace Dms\Web\Laravel\Renderer\Form\Field;
 
 use Dms\Common\Structure\FileSystem\Form\FileUploadType;
 use Dms\Common\Structure\FileSystem\Form\ImageUploadType;
-use Dms\Core\Form\Field\Builder\Field;
 use Dms\Core\Form\Field\Type\ArrayOfType;
 use Dms\Core\Form\Field\Type\FieldType;
 use Dms\Core\Form\IField;
@@ -77,35 +76,22 @@ class ArrayOfFilesFieldsRenderer extends FileFieldRenderer
     }
 
     /**
-     * Renders the supplied field value display as a html string.
-     *
      * @param IField     $field
      * @param mixed      $value
      * @param IFieldType $fieldType
      *
      * @return string
-     * @throws \Dms\Web\Laravel\Renderer\Form\UnrenderableFieldException
      */
-    public function renderFieldValue(IField $field, $value, IFieldType $fieldType) : string
+    protected function renderFieldValue(IField $field, $value, IFieldType $fieldType) : string
     {
-        /** @var ArrayOfType $fieldType */
-        $elementField = $this->makeElementField($fieldType);
-
         return $this->renderValueViewWithNullDefault(
             $field, $value,
-            'dms::components.field.list-of-fields.value',
+            'dms::components.field.dropzone.value',
             [
-                'elementField'  => $elementField,
-                'fieldRenderer' => $this->fieldRendererCollection->findRendererFor($elementField),
+                'existingFiles' => $value !== null
+                    ? $this->getExistingFilesArray($field->getUnprocessedInitialValue())
+                    : null
             ]
         );
-    }
-
-    protected function makeElementField(ArrayOfType $fieldType)
-    {
-        return Field::element()
-            ->type($fieldType->getElementType())
-            ->attrs($fieldType->getAll([FieldType::ATTR_READ_ONLY]))
-            ->build();
     }
 }

@@ -86,7 +86,7 @@ class FileFieldRenderer extends BladeFieldRenderer
         );
     }
 
-    protected function getExistingFilesArray(array $files)
+    protected function getExistingFilesArray(array $files) : array
     {
         /** @var IFile[] $existingFiles */
         $existingFiles = [];
@@ -125,21 +125,20 @@ class FileFieldRenderer extends BladeFieldRenderer
 
     /**
      * @param IField     $field
+     * @param mixed      $value
      * @param IFieldType $fieldType
      *
      * @return string
      */
     protected function renderFieldValue(IField $field, $value, IFieldType $fieldType) : string
     {
-        /** @var InnerFormType $fieldType */
-        $formWithArrayFields = $fieldType->getInnerArrayForm($field->getName());
-        $formRenderer        = new FormRenderer($this->fieldRendererCollection);
-
         return $this->renderValueViewWithNullDefault(
             $field, $value,
             'dms::components.field.dropzone.value',
             [
-
+                'existingFiles' => $value !== null
+                    ? $this->getExistingFilesArray([$field->getUnprocessedInitialValue()])
+                    : null
             ]
         );
     }

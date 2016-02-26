@@ -342,6 +342,13 @@ Dms.utilities.combineFieldNames = function(outer, inner) {
 
     return outer + '[' + firstInner + ']' + afterFirstInner;
 };
+
+Dms.utilities.downloadFileFromUrl = function(url) {
+    $('<iframe />')
+        .attr({ 'src': url })
+        .hide()
+        .appendTo('body');
+};
 window.ParsleyValidator
     .addValidator('ip-address', {
         requirementType: 'string',
@@ -502,6 +509,12 @@ Dms.global.initializeCallbacks.push(function () {
         equalto: "This must match the confirmation field."
     }, true);
 });
+Dms.form.initializeCallbacks.push(function (element) {
+    element.find('input[type=checkbox].single-checkbox').iCheck({
+        checkboxClass: 'icheckbox_square-blue',
+        increaseArea: '20%'
+    });
+});
 Dms.chart.initializeCallbacks.push(function (element) {
 
     element.find('.dms-chart-control').each(function () {
@@ -603,9 +616,17 @@ Dms.chart.initializeCallbacks.push(function () {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-    element.find('input[type=checkbox].single-checkbox').iCheck({
-        checkboxClass: 'icheckbox_square-blue',
-        increaseArea: '20%'
+
+    element.find('.list-of-checkboxes').each(function () {
+        var listOfCheckboxes = $(this);
+        listOfCheckboxes.find('input[type=checkbox]').iCheck({
+            checkboxClass: 'icheckbox_square-blue',
+            increaseArea: '20%'
+        });
+
+        var firstCheckbox = listOfCheckboxes.find('input[type=checkbox]').first();
+        firstCheckbox.attr('data-parsley-min-elements', listOfCheckboxes.attr('data-min-elements'));
+        firstCheckbox.attr('data-parsley-max-elements', listOfCheckboxes.attr('data-max-elements'));
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -622,20 +643,6 @@ Dms.form.initializeCallbacks.push(function (element) {
         }
 
         $(this).spectrum(config);
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
-
-    element.find('.list-of-checkboxes').each(function () {
-        var listOfCheckboxes = $(this);
-        listOfCheckboxes.find('input[type=checkbox]').iCheck({
-            checkboxClass: 'icheckbox_square-blue',
-            increaseArea: '20%'
-        });
-
-        var firstCheckbox = listOfCheckboxes.find('input[type=checkbox]').first();
-        firstCheckbox.attr('data-parsley-min-elements', listOfCheckboxes.attr('data-min-elements'));
-        firstCheckbox.attr('data-parsley-max-elements', listOfCheckboxes.attr('data-max-elements'));
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -705,90 +712,357 @@ Dms.form.initializeCallbacks.push(function (element) {
         });
 });
 Dms.form.initializeCallbacks.push(function (element) {
+    element.find('.dms-inner-form').each(function () {
+        var innerForm = $(this);
+
+        if (innerForm.attr('data-readonly')) {
+            innerForm.find(':input').attr('readonly', 'readonly');
+        }
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
 
     element.find('.dropzone-container').each(function () {
         var container = $(this);
+        var uniqueId = Dms.utilities.idGenerator();
         var form = container.closest('form');
-        var dropzone = container.find('.dms-dropzone');
+        var dropzoneElement = container.find('.dms-dropzone');
         var fieldName = container.attr('data-name');
         var required = container.attr('data-required');
-        var tempFilePrefix = container.attr('data-tempfile-key-prefix');
-        var existingFile = JSON.parse(container.attr('data-file'));
+        var tempFilePrefix = container.attr('data-temp-file-key-prefix');
+        var uploadTempFileUrl = container.attr('data-upload-temp-file-url');
+        var maxFileSize = container.attr('data-max-size');
+        var maxFiles = container.attr('max-files');
+        var existingFiles = JSON.parse(container.attr('data-files') || '[]');
+        var isMultiple = container.attr('data-multi-upload');
 
-        var uniqueId = Dms.utilities.idGenerator();
+        var maxImageWidth = container.attr('data-max-width');
+        var minImageWidth = container.attr('data-min-width');
+        var maxImageHeight = container.attr('data-max-height');
+        var minImageHeight = container.attr('data-min-height');
+        var imageEditor = container.find('.dms-image-editor');
 
-        var action = existingFile ? 'keep-existing' : 'store-new';
-        var tempFileToken = null;
+        var getDownloadUrlForFile = function (file) {
+            if (file.downloadUrl) {
+                return file.downloadUrl;
+            }
 
-        var updateSubmissionState = function () {
-            form.find('#file-action-' + uniqueId).remove();
-            form.find('#file-token-' + uniqueId).remove();
+            if (file.tempFileToken) {
+                return container.attr('data-download-temp-file-url').replace('__token__', file.tempFileToken);
+            }
 
-            form.append($('<input />').attr({
-                'id': 'file-action-' + uniqueId,
-                'type': 'hidden',
-                'name': Dms.utilities.combineFieldNames(fieldName, 'action'),
-                'value': action
-            }));
+            return null;
+        };
 
-            if (tempFileToken) {
-                form.append($('<input />').attr({
-                    'id': 'file-token-' + uniqueId,
-                    'type': 'hidden',
-                    'name': Dms.utilities.combineFieldNames(tempFilePrefix, fieldName + '[file]'),
-                    'value': tempFileToken
-                }));
+        var editedImagesQueue = [];
+        var isEditingImage = false;
+
+        var showImageEditor = function (file, saveCallback, alwaysCallback, options) {
+
+            if (isEditingImage) {
+                editedImagesQueue.push(arguments);
+                return;
+            }
+
+            isEditingImage = true;
+            if (!options) {
+                options = {};
+            }
+
+            imageEditor.find('.modal-title').text(options.title || 'Edit Image');
+
+            var canvasContainer = imageEditor.find('.dms-canvas-container');
+            canvasContainer.find('img').remove();
+
+            var imageSrc = getDownloadUrlForFile(file);
+
+            var loadDarkroom = function (imageSrc) {
+                var imageElement = $('<img />').attr('src', imageSrc);
+                canvasContainer.append(imageElement);
+
+                var darkroom = new Darkroom(imageElement.get(0), {
+                    // Canvas initialization size
+                    minWidth: options.minWidth,
+                    minHeight: options.minHeight,
+                    maxWidth: options.maxWidth,
+                    maxHeight: options.maxHeight,
+                    plugins: {
+                        save: false // disable plugin
+                    },
+
+                    initialize: function () {
+                        imageEditor.modal('show');
+                    }
+                });
+
+                imageEditor.find('.btn-save-changes').on('click', function () {
+                    var blob = window.dataURLtoBlob(darkroom.canvas.toDataURL());
+
+                    imageEditor.modal('hide');
+
+                    blob.name = file.name;
+                    saveCallback(blob);
+                    alwaysCallback();
+                });
+
+                imageEditor.on('hide.bs.modal', function () {
+                    darkroom.selfDestroy();
+                    canvasContainer.find('img').remove();
+                    alwaysCallback();
+
+                    imageEditor.unbind('hide.bs.modal');
+                    imageEditor.find('.btn-save-changes').unbind('click');
+
+                    isEditingImage = false;
+
+                    if (editedImagesQueue.length > 0) {
+                        showImageEditor.apply(null, editedImagesQueue.pop());
+                    }
+                });
+            };
+
+            if (imageSrc) {
+                loadDarkroom(imageSrc);
+            } else {
+                var reader = new FileReader();
+
+                reader.addEventListener("load", function () {
+                    loadDarkroom(reader.result);
+                }, false);
+
+                reader.readAsDataURL(file);
             }
         };
 
-        dropzone.attr('id', 'dropzone-' + uniqueId);
-        new Dropzone('#dropzone-' + uniqueId,  {
-            url: container.attr('data-upload-temp-file-url'),
-            maxFilesize: container.attr('data-max-size'),
-            maxFiles: 1,
+        var acceptedFiles = JSON.parse(container.attr('data-allowed-extensions') || '[]').map(function (extension) {
+            return '.' + extension;
+        });
+
+        if (container.attr('data-images-only')) {
+            acceptedFiles.push('image/*')
+        }
+
+        dropzoneElement.attr('id', 'dropzone-' + uniqueId);
+        var dropzone = new Dropzone('#dropzone-' + uniqueId, {
+            url: uploadTempFileUrl,
+            paramName: 'file',
+            maxFilesize: maxFileSize,
+            maxFiles: isMultiple ? maxFiles : 1,
             headers: Dms.utilities.getCsrfHeaders(),
-            acceptedFiles: JSON.parse(container.attr('data-allowed-extensions') || '[]').map(function (extension) {
-                return '.' + extension;
-            }).join(','),
+            acceptedFiles: acceptedFiles.join(','),
+
             init: function () {
+                var dropzone = this;
 
                 this.on("addedfile", function (file) {
-                    var removeButton = Dropzone.createElement('<button type="button" class="btn btn-sm btn-danger"><i class="fa fa-times"></i></button>');
-                    var _this = this;
+                    var removeButton = Dropzone.createElement(
+                        '<button type="button" class="btn btn-sm btn-danger btn-remove-file"><i class="fa fa-times"></i></button>'
+                    );
 
                     removeButton.addEventListener('click', function (e) {
                         e.preventDefault();
                         e.stopPropagation();
 
-                        _this.removeFile(file);
-                        tempFileToken = null;
-                        action = 'delete-existing';
-                        updateSubmissionState();
+                        dropzone.removeFile(file);
 
-                        if (_this.options.maxFiles === 0) {
-                            _this.options.maxFiles++;
+                        if (file.action === 'keep-existing') {
+                            file.action = 'delete-existing';
+                            updateSubmissionState();
+                        }
+
+                        if (dropzone.options.maxFiles === 0) {
+                            dropzone.options.maxFiles++;
                         }
                     });
 
                     file.previewElement.appendChild(removeButton);
                 });
 
-                this.on('success', function (file, response) {
-                    tempFileToken = response.tokens[fieldName];
-                    action = 'store-new';
+                this.on("removedfile", function (file) {
+                    if (file.action === 'keep-existing') {
+                        file.action = 'delete-existing';
+                    }
+
                     updateSubmissionState();
                 });
 
-                if (existingFile) {
-                    this.emit("addedfile", existingFile);
-                    //  this.createThumbnailFromUrl(existingFile, existingFile.url);
-                    this.emit("complete", existingFile);
-                    this.options.maxFiles--;
-                }
+                this.on("complete", function (file) {
+                    var downloadButton = Dropzone.createElement(
+                        '<button type="button" class="btn btn-sm btn-success btn-download-file"><i class="fa fa-download"></i></button>'
+                    );
+
+                    downloadButton.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+
+                        Dms.utilities.downloadFileFromUrl(getDownloadUrlForFile(file));
+                    });
+
+                    file.previewElement.appendChild(downloadButton);
+
+                    if (file.width && file.height) {
+                        var editImageButton = Dropzone.createElement(
+                            '<button type="button" class="btn btn-sm btn-info btn-edit-file"><i class="fa fa-pencil-square-o"></i></button>'
+                        );
+
+                        editImageButton.addEventListener('click', function (e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            $(editImageButton).prop('disabled', true);
+
+                            showImageEditor(file, function (newFile) {
+                                dropzone.removeFile(file);
+
+                                if (dropzone.options.maxFiles === 0) {
+                                    dropzone.options.maxFiles++;
+                                }
+
+                                dropzone.addFile(newFile);
+                            }, function () {
+                                $(editImageButton).prop('disabled', false);
+                            });
+                        });
+
+                        file.previewElement.appendChild(editImageButton);
+                    }
+                });
+
+                this.on('success', function (file, response) {
+                    file.action = 'store-new';
+                    file.tempFileToken = response.tokens['file'];
+                    updateSubmissionState();
+                });
+
+                this.on("thumbnail", function (file) {
+                    if (!file.acceptDimensions && !file.rejectDimensions) {
+                        return;
+                    }
+
+                    if ((maxImageWidth && file.width > maxImageWidth) || (maxImageHeight && file.height > maxImageHeight)
+                        || (minImageWidth && file.width < minImageWidth) || (minImageHeight && file.height < minImageHeight)) {
+                        file.rejectDimensions();
+                    }
+                    else {
+                        file.acceptDimensions();
+                    }
+                });
+
+                $.each(existingFiles, function (index, existingFile) {
+                    existingFile.originalIndex = index;
+                    existingFile.action = 'keep-existing';
+                    existingFile.tempFileToken = null;
+
+                    dropzone.emit("addedfile", existingFile);
+                    dropzone.createThumbnailFromUrl(existingFile, existingFile.previewUrl);
+                    dropzone.emit("complete", existingFile);
+
+                    if (dropzone.options.maxFiles > 0) {
+                        dropzone.options.maxFiles--;
+                    }
+                });
+
+            },
+
+            accept: function (file, done) {
+                file.acceptDimensions = done;
+                file.rejectDimensions = function () {
+                    showImageEditor(file, function (editedFile) {
+                        dropzone.addFile(editedFile);
+                    }, function () {
+                        try {
+                            dropzone.removeFile(file);
+                        } catch (e) {
+                        }
+                    }, {
+                        title: 'The supplied image does not match the required dimensions so it has been resized to: (' + formatRequiredDimensions(file) + ')',
+                        minWidth: minImageWidth,
+                        minHeight: minImageHeight,
+                        maxWidth: maxImageWidth,
+                        maxHeight: maxImageHeight
+                    })
+                };
             }
         });
 
-        dropzone.addClass('dropzone');
+        var formatRequiredDimensions = function (file) {
+            var min = '', max = '';
+
+            if (minImageWidth && minImageHeight) {
+                min = 'min: ' + minImageWidth + 'x' + minImageHeight + 'px';
+            }
+            else if (minImageWidth) {
+                min = 'min width: ' + minImageWidth + 'px';
+            }
+            else if (minImageHeight) {
+                min = 'min height: ' + minImageHeight + 'px';
+            }
+
+            if (maxImageWidth && minImageHeight) {
+                max = 'max: ' + maxImageWidth + 'x' + minImageHeight + 'px';
+            }
+            else if (maxImageWidth) {
+                max = 'max width: ' + maxImageWidth + 'px';
+            }
+            else if (minImageHeight) {
+                max = 'max height: ' + minImageHeight + 'px';
+            }
+
+            return (min + ' ' + max).trim();
+        };
+
+        dropzoneElement.addClass('dropzone');
+
+        var updateSubmissionState = function () {
+            form.find('.file-action-' + uniqueId).remove();
+            form.find('.file-token-' + uniqueId).remove();
+
+            var allFiles = [];
+
+            $.each(existingFiles.concat(dropzone.getAcceptedFiles()), function (index, file) {
+                if (file.action === 'delete-existing') {
+                    return;
+                }
+
+                if (typeof file.originalIndex !== 'undefined') {
+                    allFiles[file.originalIndex] = file;
+                    return;
+                }
+
+                while (typeof allFiles[index] !== 'undefined') {
+                    index++;
+                }
+
+                allFiles[index] = file;
+            });
+
+            $.each(allFiles, function (index, file) {
+                if (!file) {
+                    return;
+                }
+
+                var fileFieldName;
+                fileFieldName = isMultiple
+                    ? fieldName + '[' + index + ']'
+                    : fieldName;
+
+                form.append($('<input />').attr({
+                    'class': 'file-action-' + uniqueId,
+                    'type': 'hidden',
+                    'name': fileFieldName + '[action]',
+                    'value': file.action
+                }));
+
+                if (file.tempFileToken) {
+                    form.append($('<input />').attr({
+                        'class': 'file-token-' + uniqueId,
+                        'type': 'hidden',
+                        'name': Dms.utilities.combineFieldNames(tempFilePrefix, fileFieldName + '[file]'),
+                        'value': file.tempFileToken
+                    }));
+                }
+            });
+        };
+
         updateSubmissionState();
     });
 });
@@ -874,19 +1148,13 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-    element.find('.dms-inner-form').each(function () {
-        var innerForm = $(this);
-
-        if (innerForm.attr('data-readonly')) {
-            innerForm.find(':input').attr('readonly', 'readonly');
-        }
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
     element.find('select[multiple]').multiselect({
         enableFiltering: true,
         includeSelectAllOption: true
     });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+
 });
 Dms.form.initializeCallbacks.push(function (element) {
     element.find('input[type="number"][data-max-decimal-places]').each(function () {
@@ -918,221 +1186,12 @@ Dms.form.initializeCallbacks.push(function (element) {
 
 });
 Dms.form.initializeCallbacks.push(function (element) {
-
-});
-Dms.form.initializeCallbacks.push(function (element) {
     element.find('input[type="ip-address"]')
         .attr('type', 'text')
         .attr('data-parsley-ip-address', '1');
 });
 Dms.form.initializeCallbacks.push(function (element) {
 
-});
-Dms.table.initializeCallbacks.push(function (element) {
-    var groupCounter = 0;
-
-    element.find('.dms-table-body-sortable').each(function () {
-        var tableBody = $(this);
-        var control = tableBody.closest('.dms-table-control');
-        var reorderRowsUrl = control.attr('data-reorder-row-action-url');
-
-        var performReorder = function (event) {
-            var newIndex = typeof event.newIndex === 'undefined' ? event.oldIndex : event.newIndex;
-
-            var criteria = control.data('dms-table-criteria');
-            var row = $(event.item);
-            var objectId = row.find('.dms-row-action-column').attr('data-object-id');
-            var reorderButtonHandle = row.find('.dms-drag-handle');
-
-            var reorderRequest = $.ajax({
-                url: reorderRowsUrl,
-                type: 'post',
-                dataType: 'html',
-                data: {
-                    object: objectId,
-                    index: criteria.offset + newIndex + 1
-                }
-            });
-
-            if (reorderButtonHandle.is('button')) {
-                reorderButtonHandle.addClass('ladda-button').attr('data-style', 'expand-right');
-                var ladda = Ladda.create(reorderButtonHandle.get(0));
-                ladda.start();
-
-                reorderRequest.always(ladda.stop)
-            }
-
-            reorderRequest.fail(function () {
-                swal({
-                    title: "Could not reorder item",
-                    text: "An unexpected error occurred",
-                    type: "error"
-                });
-            });
-        };
-
-        var sortable = new Sortable(tableBody.get(0), {
-            group: "sortable-group" + groupCounter++,
-            sort: true,  // sorting inside list
-            animation: 150,  // ms, animation speed moving items when sorting, `0` — without animation
-            handle: ".dms-drag-handle",  // Drag handle selector within list items
-            draggable: "tr",  // Specifies which items inside the element should be sortable
-            ghostClass: "sortable-ghost",  // Class name for the drop placeholder
-            chosenClass: "sortable-chosen",  // Class name for the chosen item
-            dataIdAttr: 'data-id',
-
-            onEnd: performReorder
-
-        });
-    });
-});
-Dms.table.initializeCallbacks.push(function (element) {
-
-    element.find('.dms-table-control').each(function () {
-        var control = $(this);
-        var tableContainer = control.find('.dms-table-container');
-        var table = tableContainer.find('table.dms-table');
-        var filterForm = control.find('.dms-table-quick-filter-form');
-        var rowsPerPageSelect = control.find('.dms-table-rows-per-page-form select');
-        var paginationPreviousButton = control.find('.dms-table-pagination .dms-pagination-previous');
-        var paginationNextButton = control.find('.dms-table-pagination .dms-pagination-next');
-        var loadRowsUrl = control.attr('data-load-rows-url');
-        var stringFilterableComponentIds = JSON.parse(control.attr('data-string-filterable-component-ids')) || [];
-
-        var currentPage = 0;
-
-        var criteria = {
-            orderings: [],
-            condition_mode: 'or',
-            conditions: [],
-            offset: 0,
-            max_rows: rowsPerPageSelect.val()
-        };
-
-        var currentAjaxRequest;
-
-        var loadCurrentPage = function () {
-            if (currentAjaxRequest) {
-                currentAjaxRequest.abort();
-            }
-
-            tableContainer.addClass('loading');
-
-            criteria.offset = currentPage * criteria.max_rows;
-
-            currentAjaxRequest = $.ajax({
-                url: loadRowsUrl,
-                type: 'post',
-                dataType: 'html',
-                data: criteria
-            });
-
-            currentAjaxRequest.done(function (tableData) {
-                table.html(tableData);
-                Dms.table.initialize(table);
-                Dms.form.initialize(table);
-
-                control.data('dms-table-criteria', criteria);
-                control.attr('data-has-loaded-table-data', true);
-
-                if (table.find('tbody tr').length < criteria.max_rows) {
-                    paginationNextButton.attr('disabled', true);
-                }
-            });
-
-            currentAjaxRequest.fail(function () {
-                if (currentAjaxRequest.statusText === 'abort') {
-                    return;
-                }
-
-                tableContainer.addClass('has-error');
-
-                swal({
-                    title: "Could not load table data",
-                    text: "An unexpected error occurred",
-                    type: "error"
-                });
-            });
-
-            currentAjaxRequest.always(function () {
-                tableContainer.removeClass('loading');
-            });
-        };
-
-        filterForm.find('button').click(function () {
-            criteria.orderings = [
-                {
-                    component: filterForm.find('[name=component]').val(),
-                    direction: filterForm.find('[name=direction]').val()
-                }
-            ];
-
-            criteria.conditions = [];
-
-            var filterByString = filterForm.find('[name=filter]').val();
-
-            if (filterByString) {
-                $.each(stringFilterableComponentIds, function (index, componentId) {
-                    criteria.conditions.push({
-                        component: componentId,
-                        operator: 'string-contains-case-insensitive',
-                        value: filterByString
-                    });
-                });
-            }
-
-            loadCurrentPage();
-        });
-
-        filterForm.find('input[name=filter]').on('keyup', function (event) {
-            var enterKey = 13;
-
-            if (event.keyCode === enterKey) {
-                filterForm.find('button').click();
-            }
-        });
-
-        rowsPerPageSelect.on('change', function () {
-            criteria.max_rows = $(this).val();
-
-            loadCurrentPage();
-        });
-
-        paginationPreviousButton.click(function () {
-            paginationNextButton.attr('disabled', false);
-            currentPage--;
-            loadCurrentPage();
-        });
-
-        paginationNextButton.click(function () {
-            paginationPreviousButton.attr('disabled', false);
-            currentPage++;
-            loadCurrentPage();
-        });
-
-        paginationPreviousButton.click(function () {
-            currentPage--;
-            loadCurrentPage();
-        });
-
-        paginationPreviousButton.attr('disabled', true);
-
-        if (table.is(':visible')) {
-            loadCurrentPage();
-        }
-
-        table.on('dms-load-table-data', loadCurrentPage);
-    });
-
-    $('.dms-table-tabs').each(function () {
-        var tabs = $(this);
-
-        tabs.find('.dms-table-tab-show-button').on('click', function () {
-            var linkedTablePane = $($(this).attr('href'));
-
-            linkedTablePane.find('.dms-table-control:not([data-has-loaded-table-data]) .dms-table-container:not(.loading) .dms-table').triggerHandler('dms-load-table-data');
-        });
-    });
 });
 Dms.form.initializeCallbacks.push(function (element) {
 
@@ -1492,6 +1551,212 @@ Dms.widget.initializeCallbacks.push(function () {
                 return false;
             });
         }
+    });
+});
+Dms.table.initializeCallbacks.push(function (element) {
+    var groupCounter = 0;
+
+    element.find('.dms-table-body-sortable').each(function () {
+        var tableBody = $(this);
+        var control = tableBody.closest('.dms-table-control');
+        var reorderRowsUrl = control.attr('data-reorder-row-action-url');
+
+        var performReorder = function (event) {
+            var newIndex = typeof event.newIndex === 'undefined' ? event.oldIndex : event.newIndex;
+
+            var criteria = control.data('dms-table-criteria');
+            var row = $(event.item);
+            var objectId = row.find('.dms-row-action-column').attr('data-object-id');
+            var reorderButtonHandle = row.find('.dms-drag-handle');
+
+            var reorderRequest = $.ajax({
+                url: reorderRowsUrl,
+                type: 'post',
+                dataType: 'html',
+                data: {
+                    object: objectId,
+                    index: criteria.offset + newIndex + 1
+                }
+            });
+
+            if (reorderButtonHandle.is('button')) {
+                reorderButtonHandle.addClass('ladda-button').attr('data-style', 'expand-right');
+                var ladda = Ladda.create(reorderButtonHandle.get(0));
+                ladda.start();
+
+                reorderRequest.always(ladda.stop)
+            }
+
+            reorderRequest.fail(function () {
+                swal({
+                    title: "Could not reorder item",
+                    text: "An unexpected error occurred",
+                    type: "error"
+                });
+            });
+        };
+
+        var sortable = new Sortable(tableBody.get(0), {
+            group: "sortable-group" + groupCounter++,
+            sort: true,  // sorting inside list
+            animation: 150,  // ms, animation speed moving items when sorting, `0` — without animation
+            handle: ".dms-drag-handle",  // Drag handle selector within list items
+            draggable: "tr",  // Specifies which items inside the element should be sortable
+            ghostClass: "sortable-ghost",  // Class name for the drop placeholder
+            chosenClass: "sortable-chosen",  // Class name for the chosen item
+            dataIdAttr: 'data-id',
+
+            onEnd: performReorder
+
+        });
+    });
+});
+Dms.table.initializeCallbacks.push(function (element) {
+
+    element.find('.dms-table-control').each(function () {
+        var control = $(this);
+        var tableContainer = control.find('.dms-table-container');
+        var table = tableContainer.find('table.dms-table');
+        var filterForm = control.find('.dms-table-quick-filter-form');
+        var rowsPerPageSelect = control.find('.dms-table-rows-per-page-form select');
+        var paginationPreviousButton = control.find('.dms-table-pagination .dms-pagination-previous');
+        var paginationNextButton = control.find('.dms-table-pagination .dms-pagination-next');
+        var loadRowsUrl = control.attr('data-load-rows-url');
+        var stringFilterableComponentIds = JSON.parse(control.attr('data-string-filterable-component-ids')) || [];
+
+        var currentPage = 0;
+
+        var criteria = {
+            orderings: [],
+            condition_mode: 'or',
+            conditions: [],
+            offset: 0,
+            max_rows: rowsPerPageSelect.val()
+        };
+
+        var currentAjaxRequest;
+
+        var loadCurrentPage = function () {
+            if (currentAjaxRequest) {
+                currentAjaxRequest.abort();
+            }
+
+            tableContainer.addClass('loading');
+
+            criteria.offset = currentPage * criteria.max_rows;
+
+            currentAjaxRequest = $.ajax({
+                url: loadRowsUrl,
+                type: 'post',
+                dataType: 'html',
+                data: criteria
+            });
+
+            currentAjaxRequest.done(function (tableData) {
+                table.html(tableData);
+                Dms.table.initialize(table);
+                Dms.form.initialize(table);
+
+                control.data('dms-table-criteria', criteria);
+                control.attr('data-has-loaded-table-data', true);
+
+                if (table.find('tbody tr').length < criteria.max_rows) {
+                    paginationNextButton.attr('disabled', true);
+                }
+            });
+
+            currentAjaxRequest.fail(function () {
+                if (currentAjaxRequest.statusText === 'abort') {
+                    return;
+                }
+
+                tableContainer.addClass('has-error');
+
+                swal({
+                    title: "Could not load table data",
+                    text: "An unexpected error occurred",
+                    type: "error"
+                });
+            });
+
+            currentAjaxRequest.always(function () {
+                tableContainer.removeClass('loading');
+            });
+        };
+
+        filterForm.find('button').click(function () {
+            criteria.orderings = [
+                {
+                    component: filterForm.find('[name=component]').val(),
+                    direction: filterForm.find('[name=direction]').val()
+                }
+            ];
+
+            criteria.conditions = [];
+
+            var filterByString = filterForm.find('[name=filter]').val();
+
+            if (filterByString) {
+                $.each(stringFilterableComponentIds, function (index, componentId) {
+                    criteria.conditions.push({
+                        component: componentId,
+                        operator: 'string-contains-case-insensitive',
+                        value: filterByString
+                    });
+                });
+            }
+
+            loadCurrentPage();
+        });
+
+        filterForm.find('input[name=filter]').on('keyup', function (event) {
+            var enterKey = 13;
+
+            if (event.keyCode === enterKey) {
+                filterForm.find('button').click();
+            }
+        });
+
+        rowsPerPageSelect.on('change', function () {
+            criteria.max_rows = $(this).val();
+
+            loadCurrentPage();
+        });
+
+        paginationPreviousButton.click(function () {
+            paginationNextButton.attr('disabled', false);
+            currentPage--;
+            loadCurrentPage();
+        });
+
+        paginationNextButton.click(function () {
+            paginationPreviousButton.attr('disabled', false);
+            currentPage++;
+            loadCurrentPage();
+        });
+
+        paginationPreviousButton.click(function () {
+            currentPage--;
+            loadCurrentPage();
+        });
+
+        paginationPreviousButton.attr('disabled', true);
+
+        if (table.is(':visible')) {
+            loadCurrentPage();
+        }
+
+        table.on('dms-load-table-data', loadCurrentPage);
+    });
+
+    $('.dms-table-tabs').each(function () {
+        var tabs = $(this);
+
+        tabs.find('.dms-table-tab-show-button').on('click', function () {
+            var linkedTablePane = $($(this).attr('href'));
+
+            linkedTablePane.find('.dms-table-control:not([data-has-loaded-table-data]) .dms-table-container:not(.loading) .dms-table').triggerHandler('dms-load-table-data');
+        });
     });
 });
 //# sourceMappingURL=app.js.map

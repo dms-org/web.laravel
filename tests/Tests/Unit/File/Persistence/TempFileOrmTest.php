@@ -34,18 +34,19 @@ class TempFileOrmTest extends DbIntegrationTest
     {
         $this->repo->save(new TemporaryFile(
             'some_token',
-            new File(__FILE__),
+            new File(__FILE__, 'abc.png'),
             DateTime::fromString('2010-01-01 00:00:01')
         ));
 
         $this->assertDatabaseDataSameAs([
             'temp_files' => [
                 [
-                    'id'          => 1,
-                    'token'       => 'some_token',
-                    'file'        => str_replace('\\', '/', __FILE__),
-                    'type'        => 'stored-file',
-                    'expiry_time' => '2010-01-01 00:00:01',
+                    'id'               => 1,
+                    'token'            => 'some_token',
+                    'file'             => str_replace('\\', '/', __FILE__),
+                    'client_file_name' => 'abc.png',
+                    'type'             => 'stored-file',
+                    'expiry_time'      => '2010-01-01 00:00:01',
                 ],
             ],
         ]);
@@ -60,6 +61,7 @@ class TempFileOrmTest extends DbIntegrationTest
                     'token'       => 'some_token',
                     'file'        => str_replace('\\', '/', __FILE__),
                     'type'        => 'stored-file',
+                    'client_file_name' => null,
                     'expiry_time' => '2010-01-01 00:00:01',
                 ],
             ],

@@ -1,4 +1,4 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\File;
 
@@ -15,12 +15,26 @@ interface ITemporaryFileService
     /**
      * Stores the supplied file as a temporary file.
      *
+     * This will only move the file if it is an uploaded file.
+     *
      * @param IFile $file
      * @param int   $expirySeconds The amount of seconds from now for the file to expire
      *
      * @return TemporaryFile
      */
     public function storeTempFile(IFile $file, int $expirySeconds) : TemporaryFile;
+
+    /**
+     * Stores the supplied files as temporary files.
+     *
+     * This will only move the file if it is an uploaded file.
+     *
+     * @param IFile[] $files
+     * @param int     $expirySeconds The amount of seconds from now for the file to expire
+     *
+     * @return TemporaryFile[]
+     */
+    public function storeTempFiles(array $files, int $expirySeconds) : array;
 
     /**
      * Gets the temp file from the supplied token

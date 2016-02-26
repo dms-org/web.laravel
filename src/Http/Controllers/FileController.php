@@ -7,6 +7,7 @@ use Dms\Core\ICms;
 use Dms\Core\Model\EntityNotFoundException;
 use Dms\Web\Laravel\File\ITemporaryFileService;
 use Illuminate\Contracts\Config\Repository;
+use Illuminate\Cookie\CookieJar;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
@@ -65,14 +66,32 @@ class FileController extends DmsController
         ]);
     }
 
-    public function download($token)
+    public function preview($token)
     {
         try {
             $file = $this->tempFileService->getTempFile($token);
 
+            $isImage = @getimagesize($file->getFile()->getFullPath()) !== false;
+
+            if ($isImage) {
+                return \response()
+                    ->download($file->getFile()->getInfo(), $file->getFile()->getClientFileNameWithFallback());
+            }
+
+            return \response('', 404);
+        } catch (EntityNotFoundException $e) {
+            abort(404);
+        }
+    }
+
+    public function download($token, CookieJar $cookieJar)
+    {
+        try {
+            $file = $this->tempFileService->getTempFile($token);
+
+            $cookieJar->queue('file-download-' . $token, true);
             return \response()
-                ->withCookie(cookie('file-download-' . $token, true))
-                ->download($file->getFile()->getInfo());
+                ->download($file->getFile()->getInfo(), $file->getFile()->getClientFileNameWithFallback());
         } catch (EntityNotFoundException $e) {
             abort(404);
         }

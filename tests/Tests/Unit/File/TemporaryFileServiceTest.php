@@ -66,10 +66,10 @@ class TemporaryFileServiceTest extends CmsTestCase
 
     public function testStoreTempFile()
     {
-        $file = new File(__FILE__);
+        $file          = new File(__FILE__);
         $expirySeconds = 10;
 
-        $tempFile      = $this->tempFileService->storeTempFile($file, $expirySeconds);
+        $tempFile = $this->tempFileService->storeTempFile($file, $expirySeconds);
 
         $this->assertSame($file, $tempFile->getFile());
         $this->assertSame('2000-01-01 00:00:10', $tempFile->getExpiry()->format('Y-m-d H:i:s'));
@@ -77,9 +77,24 @@ class TemporaryFileServiceTest extends CmsTestCase
         $this->assertContains($tempFile, $this->tempFileRepo->getAll());
     }
 
+    public function testStoreTempFiles()
+    {
+        $files         = [new File(__FILE__), new File(__FILE__), new File(__FILE__)];
+        $expirySeconds = 10;
+
+        $tempFiles = $this->tempFileService->storeTempFiles($files, $expirySeconds);
+
+        $this->assertSame($files[0], $tempFiles[0]->getFile());
+        $this->assertSame($files[1], $tempFiles[1]->getFile());
+        $this->assertSame($files[2], $tempFiles[2]->getFile());
+        $this->assertSame('2000-01-01 00:00:10', $tempFiles[0]->getExpiry()->format('Y-m-d H:i:s'));
+
+        $this->assertEquals($tempFiles, $this->tempFileRepo->getAll());
+    }
+
     public function testGetTempFile()
     {
-        $expiredTime = DateTime::fromString('1999-12-31 23:59:59');
+        $expiredTime    = DateTime::fromString('1999-12-31 23:59:59');
         $notExpiredTime = DateTime::fromString('2000-01-01 00:00:01');
 
         $notExpiredFile = new TemporaryFile(

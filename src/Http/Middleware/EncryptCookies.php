@@ -14,4 +14,15 @@ class EncryptCookies extends BaseEncrypter
     protected $except = [
         //
     ];
+
+    public function isDisabled($name)
+    {
+        if (starts_with($name, 'file-download')) {
+            return true;
+        }
+
+        return parent::isDisabled($name);
+    }
+
+
 }

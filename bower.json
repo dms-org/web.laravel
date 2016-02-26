@@ -27,6 +27,8 @@
     "js-cookie": "^2.1.0",
     "ladda-bootstrap": "~0.1.0",
     "Sortable": "^1.4.2",
-    "dropzone": "^4.3.0"
+    "dropzone": "^4.3.0",
+    "JavaScript-Canvas-to-Blob": "blueimp/JavaScript-Canvas-to-Blob#^3.3.0",
+    "darkroom": "^2.0.1"
   }
 }

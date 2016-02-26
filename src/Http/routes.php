@@ -25,6 +25,7 @@ $router->group(['prefix' => 'dms', 'middleware' => 'dms.web', 'as' => 'dms::', '
 
             // Files
             $router->post('/file/upload', 'FileController@upload')->name('file.upload');
+            $router->get('/file/preview/{token}', 'FileController@preview')->name('file.preview');
             $router->get('/file/download/{token}', 'FileController@download')->name('file.download');
 
             // Account

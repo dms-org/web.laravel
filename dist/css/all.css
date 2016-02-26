@@ -15370,6 +15370,7 @@ table.text-center th {
 .ladda-button[data-style=contract-overlay][data-loading] .ladda-spinner {
   opacity: 1; }
 
+.darkroom-container{position:relative;}.darkroom-image-container{top:0;left:0;}.darkroom-toolbar{display:block;position:absolute;top:-45px;left:0;background:#444;height:40px;min-width:40px;z-index:99;border-radius:2px;white-space:nowrap;padding:0 5px;}.darkroom-toolbar:before{content:"";position:absolute;bottom:-7px;left:20px;width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-top:7px solid #444;}.darkroom-button-group{display:inline-block;margin:0;padding:0;}.darkroom-button-group:last-child{border-right:none;}.darkroom-button{box-sizing:border-box;background:transparent;border:none;outline:none;padding:2px 0 0 0;width:40px;height:40px;}.darkroom-button:hover{cursor:pointer;background:#555;}.darkroom-button:active{cursor:pointer;background:#333;}.darkroom-button:disabled .darkroom-icon{fill:#666;}.darkroom-button:disabled:hover{cursor:default;background:transparent;}.darkroom-button.darkroom-button-active .darkroom-icon{fill:#33b5e5;}.darkroom-button.darkroom-button-hidden{display:none;}.darkroom-button.darkroom-button-success .darkroom-icon{fill:#99cc00;}.darkroom-button.darkroom-button-warning .darkroom-icon{fill:#FFBB33;}.darkroom-button.darkroom-button-danger .darkroom-icon{fill:#FF4444;}.darkroom-icon{width:24px;height:24px;fill:#fff;}
 /*# sourceMappingURL=vendor.css.map */
 
 .dms-background-checkered {
@@ -15433,6 +15434,36 @@ a[disabled] {
   border: 2px dashed #0087F7;
   border-radius: 5px;
   background: white; }
+  .dms-staged-form .dropzone .dz-message {
+    position: absolute;
+    left: 0;
+    right: 0;
+    text-align: center;
+    color: #aaa;
+    display: block !important; }
+  .dms-staged-form .dropzone .dz-details {
+    padding-top: 3em !important;
+    padding-bottom: 1em !important; }
+  .dms-staged-form .dropzone .dz-image {
+    background: #ddd; }
+  .dms-staged-form .dropzone .btn {
+    position: absolute;
+    top: 0;
+    z-index: 100;
+    cursor: pointer; }
+  .dms-staged-form .dropzone .btn-download-file {
+    left: 0;
+    border-top-left-radius: 20px; }
+  .dms-staged-form .dropzone .btn-remove-file {
+    right: 0;
+    border-top-right-radius: 20px; }
+  .dms-staged-form .dropzone .btn-edit-file {
+    left: calc(50% - 15px); }
+
+.dms-staged-form .dms-image-editor .dms-canvas-container {
+  max-width: 100%;
+  padding-top: 40px;
+  overflow: auto; }
 
 .spinner {
   margin: 0 auto 0;

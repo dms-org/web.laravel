@@ -8,6 +8,7 @@ use Dms\Core\File\UploadedImageProxy;
 use Dms\Core\Module\IParameterizedAction;
 use Dms\Web\Laravel\Action\IActionInputTransformer;
 use Dms\Web\Laravel\File\ITemporaryFileService;
+use Dms\Web\Laravel\File\TemporaryFile;
 
 /**
  * Transforms any temp uploaded files referenced by token to the equivalent uploaded file input.
@@ -53,9 +54,7 @@ class TempUploadedFileToUploadedFileTransformer implements IActionInputTransform
 
             $uploadedFiles = [];
             foreach ($this->tempFileService->getTempFiles($uploadedFileTokens) as $file) {
-                $uploadedFiles[$file->getToken()] = $file->getFile() instanceof IImage
-                    ? new UploadedImageProxy($file->getFile())
-                    : new UploadedFileProxy($file->getFile());
+                $uploadedFiles[$file->getToken()] = $this->buildUploadedFileProxy($file);
             }
 
             $uploadedFileStructure = $uploadedTokenStructure;
@@ -69,5 +68,21 @@ class TempUploadedFileToUploadedFileTransformer implements IActionInputTransform
         } else {
             return $input;
         }
+    }
+
+    /**
+     * @param $tempFile
+     *
+     * @return UploadedFileProxy|UploadedImageProxy
+     */
+    protected function buildUploadedFileProxy(TemporaryFile $tempFile)
+    {
+        $file = $tempFile->getFile();
+
+        $moveCallback = [$file, 'copyTo'];
+
+        return $file instanceof IImage
+            ? new UploadedImageProxy($file, $moveCallback)
+            : new UploadedFileProxy($file, $moveCallback);
     }
 }

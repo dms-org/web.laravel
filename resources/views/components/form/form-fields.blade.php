@@ -9,7 +9,7 @@
 >
     @foreach($groupedFields as $groupTitle => $fields)
         <fieldset class="dms-form-fieldset">
-            @if(1|| count($groupedFields) > 1)<legend>{{ $groupTitle }}</legend>@endif
+            <legend>{{ $groupTitle }}</legend>
             @foreach($fields as $label => $field)
                 <div class="form-group clearfix" data-field-name="{{ $field['name'] }}">
                     <div class="col-lg-2 col-md-3 col-sm-4">

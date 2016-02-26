@@ -46,6 +46,7 @@ return [
 
         'renderers' => [
             'form-fields' => [
+                Dms\Web\Laravel\Renderer\Form\Field\ArrayOfFilesFieldsRenderer::class,
                 Dms\Web\Laravel\Renderer\Form\Field\ArrayOfOptionsFieldRenderer::class,
                 Dms\Web\Laravel\Renderer\Form\Field\ArrayOfFieldRenderer::class,
                 Dms\Web\Laravel\Renderer\Form\Field\BoolFieldRenderer::class,

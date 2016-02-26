@@ -31,5 +31,52 @@
         border: 2px dashed #0087F7;
         border-radius: 5px;
         background: white;
+
+        .dz-message {
+            position: absolute;
+            left: 0;
+            right: 0;
+            text-align: center;
+            color: #aaa;
+            display: block!important;
+        }
+
+        .dz-details {
+            padding-top: 3em!important;
+            padding-bottom: 1em!important;
+        }
+
+        .dz-image {
+            background: #ddd;
+        }
+
+        .btn {
+            position: absolute;
+            top: 0;
+            z-index: 100;
+            cursor: pointer;
+        }
+
+        .btn-download-file {
+            left: 0;
+            border-top-left-radius: 20px;
+        }
+
+        .btn-remove-file {
+            right: 0;
+            border-top-right-radius: 20px;
+        }
+
+        .btn-edit-file {
+            left: calc(50% - 15px);
+        }
+    }
+
+    .dms-image-editor {
+        .dms-canvas-container {
+            max-width: 100%;
+            padding-top: 40px;
+            overflow: auto;
+        }
     }
 }

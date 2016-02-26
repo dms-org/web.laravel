@@ -3,6 +3,7 @@
 namespace Dms\Web\Laravel\File;
 
 use Dms\Common\Structure\DateTime\DateTime;
+use Dms\Core\Exception\InvalidArgumentException;
 use Dms\Core\File\IFile;
 use Dms\Core\File\IUploadedFile;
 use Dms\Core\Model\EntityNotFoundException;
@@ -56,23 +57,41 @@ class TemporaryFileService implements ITemporaryFileService
      */
     public function storeTempFile(IFile $file, int $expirySeconds) : TemporaryFile
     {
+        return $this->storeTempFiles([$file], $expirySeconds)[0];
+    }
+
+    /**
+     * Stores the supplied files as temporary files.
+     *
+     * @param IFile[] $files
+     * @param int     $expirySeconds The amount of seconds from now for the file to expire
+     *
+     * @return TemporaryFile[]
+     */
+    public function storeTempFiles(array $files, int $expirySeconds) : array
+    {
+        InvalidArgumentException::verifyAllInstanceOf(__METHOD__, 'files', $files, IFile::class);
+
         $tempUploadDirectory = $this->config->get('dms.storage.temp-files.dir');
 
-        $fileName = str_random(32);
+        $tempFiles = [];
 
-        if ($file instanceof IUploadedFile) {
-            $file = $file->moveTo($tempUploadDirectory . '/' . $fileName);
+        foreach ($files as $key => $file) {
+            if ($file instanceof IUploadedFile) {
+                $fileName = str_random(32);
+                $file     = $file->moveTo($tempUploadDirectory . '/' . $fileName);
+            }
+
+            $tempFiles[$key] = new TemporaryFile(
+                str_random(40),
+                $file,
+                (new DateTime($this->clock->utcNow()))->addSeconds($expirySeconds)
+            );
         }
 
-        $tempFile = new TemporaryFile(
-            str_random(40),
-            $file,
-            (new DateTime($this->clock->utcNow()))->addSeconds($expirySeconds)
-        );
+        $this->repo->saveAll($tempFiles);
 
-        $this->repo->save($tempFile);
-
-        return $tempFile;
+        return $tempFiles;
     }
 
     /**

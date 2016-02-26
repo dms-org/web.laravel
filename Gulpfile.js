@@ -47,6 +47,9 @@ var bowerFilesConfig = {
         },
         "Sortable": {
             "main": ["Sortable.js"]
+        },
+        "JavaScript-Canvas-to-Blob": {
+            "main": ["js/canvas-to-blob.min.js"]
         }
     }
 };

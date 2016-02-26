@@ -33,7 +33,7 @@
             </div>
             <?php $currentData += $form->getInitialValues() ?>
         @else
-                <?php $form = $stagedForm->tryLoadFormForStage($stageNumber, $currentData, true) ?>
+            <?php $form = $stagedForm->tryLoadFormForStage($stageNumber, $currentData, true) ?>
             <div class="dms-form-stage-container {{ $form ? 'loaded' : '' }}">
                 <div
                         class="dms-form-stage dms-dependent-form-stage"

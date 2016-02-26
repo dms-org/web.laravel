@@ -59,6 +59,36 @@ a[disabled] {
   border: 2px dashed #0087F7;
   border-radius: 5px;
   background: white; }
+  .dms-staged-form .dropzone .dz-message {
+    position: absolute;
+    left: 0;
+    right: 0;
+    text-align: center;
+    color: #aaa;
+    display: block !important; }
+  .dms-staged-form .dropzone .dz-details {
+    padding-top: 3em !important;
+    padding-bottom: 1em !important; }
+  .dms-staged-form .dropzone .dz-image {
+    background: #ddd; }
+  .dms-staged-form .dropzone .btn {
+    position: absolute;
+    top: 0;
+    z-index: 100;
+    cursor: pointer; }
+  .dms-staged-form .dropzone .btn-download-file {
+    left: 0;
+    border-top-left-radius: 20px; }
+  .dms-staged-form .dropzone .btn-remove-file {
+    right: 0;
+    border-top-right-radius: 20px; }
+  .dms-staged-form .dropzone .btn-edit-file {
+    left: calc(50% - 15px); }
+
+.dms-staged-form .dms-image-editor .dms-canvas-container {
+  max-width: 100%;
+  padding-top: 40px;
+  overflow: auto; }
 
 .spinner {
   margin: 0 auto 0;

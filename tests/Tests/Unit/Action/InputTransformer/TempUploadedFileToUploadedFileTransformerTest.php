@@ -4,6 +4,8 @@ namespace Dms\Web\Laravel\Tests\Unit\Action\InputTransformer;
 
 use Dms\Common\Structure\DateTime\DateTime;
 use Dms\Common\Structure\FileSystem\UploadedFile;
+use Dms\Core\File\IFile;
+use Dms\Core\File\UploadedFileProxy;
 use Dms\Web\Laravel\Action\IActionInputTransformer;
 use Dms\Web\Laravel\Action\InputTransformer\TempUploadedFileToUploadedFileTransformer;
 use Dms\Web\Laravel\File\ITemporaryFileService;
@@ -49,16 +51,24 @@ class TempUploadedFileToUploadedFileTransformerTest extends ActionInputTransform
             [
                 $this->mockAction(),
                 [$tempFilesKey => ['file' => 'some-token']],
-                ['file' => $this->mockTempFile('some-token')->getFile()],
+                ['file' => $this->mockFileProxyWithCopyCallback($this->mockTempFile('some-token')->getFile())],
             ],
             [
                 $this->mockAction(),
                 [$tempFilesKey => ['file' => 'some-token', 'inner' => ['one-file-token', 'another-file-token']]],
                 [
-                    'file'  => $this->mockTempFile('some-token')->getFile(),
-                    'inner' => [$this->mockTempFile('one-file-token')->getFile(), $this->mockTempFile('another-file-token')->getFile()],
+                    'file'  => $this->mockFileProxyWithCopyCallback($this->mockTempFile('some-token')->getFile()),
+                    'inner' => [
+                        $this->mockFileProxyWithCopyCallback($this->mockTempFile('one-file-token')->getFile()),
+                        $this->mockFileProxyWithCopyCallback($this->mockTempFile('another-file-token')->getFile())
+                    ],
                 ],
             ],
         ];
+    }
+
+    protected function mockFileProxyWithCopyCallback(IFile $file)
+    {
+        return new UploadedFileProxy($file, [$file, 'copyTo']);
     }
 }

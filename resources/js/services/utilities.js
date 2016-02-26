@@ -23,3 +23,10 @@ Dms.utilities.combineFieldNames = function(outer, inner) {
 
     return outer + '[' + firstInner + ']' + afterFirstInner;
 };
+
+Dms.utilities.downloadFileFromUrl = function(url) {
+    $('<iframe />')
+        .attr({ 'src': url })
+        .hide()
+        .appendTo('body');
+};

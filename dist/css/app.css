@@ -58,7 +58,10 @@ a[disabled] {
 .dms-staged-form .dropzone {
   border: 2px dashed #0087F7;
   border-radius: 5px;
-  background: white; }
+  background: white;
+  transition: .3s; }
+  .dms-staged-form .dropzone.dz-drag-hover {
+    box-shadow: inset 0 0 8px #000; }
   .dms-staged-form .dropzone .dz-message {
     position: absolute;
     left: 0;

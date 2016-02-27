@@ -120,11 +120,11 @@ class TableController extends DmsController
         ]);
 
         if ($request->has('offset')) {
-            $criteria->skipRows($request->input('offset') + $criteria->getRowsToSkip());
+            $criteria->skipRows((int)$request->input('offset') + $criteria->getRowsToSkip());
         }
 
-        if ($request->has('amount')) {
-            $criteria->maxRows(min($request->input('amount'), $criteria->getAmountOfRows() ?: PHP_INT_MAX));
+        if ($request->has('max_rows')) {
+            $criteria->maxRows(min((int)$request->input('max_rows'), $criteria->getAmountOfRows() ?: PHP_INT_MAX));
         }
 
         $isFiltered = false;

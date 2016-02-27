@@ -100,7 +100,6 @@ class FileFieldRenderer extends BladeFieldRenderer
             $existingFiles[] = $file['file'];
         }
 
-
         $tempFiles = $this->tempFileService->storeTempFiles(
             $existingFiles,
             $this->config->get('dms.storage.temp-files.download-expiry')

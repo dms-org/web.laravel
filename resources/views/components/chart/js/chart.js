@@ -2,7 +2,8 @@ Dms.chart.initializeCallbacks.push(function (element) {
 
     element.find('.dms-chart-control').each(function () {
         var control = $(this);
-        var chartContainer = control.find('chart.dms-chart-container');
+        var chartContainer = control.find('.dms-chart-container');
+        var chartElement = chartContainer.find('.dms-chart');
         var loadChartUrl = control.attr('data-load-chart-url');
 
         var criteria = {
@@ -27,8 +28,8 @@ Dms.chart.initializeCallbacks.push(function (element) {
             });
 
             currentAjaxRequest.done(function (chartData) {
-                chartContainer.html(chartData);
-                Dms.chart.initialize(chartContainer);
+                chartElement.html(chartData);
+                Dms.chart.initialize(chartElement);
             });
 
             currentAjaxRequest.fail(function () {

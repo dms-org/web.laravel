@@ -1,4 +1,4 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Renderer\Chart;
 
@@ -52,11 +52,11 @@ class ChartControlRenderer
      */
     public function renderChartControl(string $packageName, string $moduleName, IChartDisplay $chart, string $viewName) : string
     {
-        return view('dms::components.table.chart-control')
+        return view('dms::components.chart.chart-control')
             ->with([
-                'structure'    => $chart->getDataSource()->getStructure(),
-                'table'        => $chart->getView($viewName),
-                'loadChartUrl' => route(
+                'structure'        => $chart->getDataSource()->getStructure(),
+                'table'            => $chart->hasView($viewName) ? $chart->getView($viewName) : $chart->getDefaultView(),
+                'loadChartDataUrl' => route(
                     'dms::package.module.chart.view.load',
                     [$packageName, $moduleName, $chart->getName(), $viewName]
                 ),

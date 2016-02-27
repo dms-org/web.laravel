@@ -33,7 +33,7 @@ class ChartController extends DmsController
     /**
      * ChartController constructor.
      *
-     * @param ICms $cms
+     * @param ICms                 $cms
      * @param ChartControlRenderer $chartRenderer
      */
     public function __construct(
@@ -56,9 +56,9 @@ class ChartController extends DmsController
                 'pageTitle'       => StringHumanizer::title($packageName . ' :: ' . $moduleName . ' :: ' . $chartName),
                 'pageSubTitle'    => $viewName,
                 'breadcrumbs'     => [
-                    route('dms::index')                                 => 'Home',
-                    route('dms::package.dashboard', $packageName)       => StringHumanizer::title($packageName),
-                    route('dms::package.module.dashboard', $moduleName) => $moduleName,
+                    route('dms::index')                                                 => 'Home',
+                    route('dms::package.dashboard', [$packageName])                     => StringHumanizer::title($packageName),
+                    route('dms::package.module.dashboard', [$packageName, $moduleName]) => $moduleName,
                 ],
                 'finalBreadcrumb' => StringHumanizer::title($chartName),
                 'chartRenderer'   => $this->chartRenderer,
@@ -69,7 +69,7 @@ class ChartController extends DmsController
             ]);
     }
 
-    public function loadChartRows(Request $request, string $packageName, string $moduleName, string $chartName, string $viewName)
+    public function loadChartData(Request $request, string $packageName, string $moduleName, string $chartName, string $viewName)
     {
         $chart = $this->loadChart($packageName, $moduleName, $chartName);
 
@@ -118,13 +118,14 @@ class ChartController extends DmsController
 
     /**
      * @param IChartDisplay $chart
-     * @param string $chartView
+     * @param string        $chartView
+     *
      * @return IChartView
      */
     protected function loadChartView(IChartDisplay $chart, string $chartView) : IChartView
     {
         try {
-            return $chart->getView($chartView);
+            return $chart->hasView($chartView) ? $chart->getView($chartView) : $chart->getDefaultView();
         } catch (InvalidArgumentException $e) {
             abort(404);
         }

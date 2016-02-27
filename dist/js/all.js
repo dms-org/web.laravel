@@ -59856,7 +59856,8 @@ Dms.chart.initializeCallbacks.push(function (element) {
 
     element.find('.dms-chart-control').each(function () {
         var control = $(this);
-        var chartContainer = control.find('chart.dms-chart-container');
+        var chartContainer = control.find('.dms-chart-container');
+        var chartElement = chartContainer.find('.dms-chart');
         var loadChartUrl = control.attr('data-load-chart-url');
 
         var criteria = {
@@ -59881,8 +59882,8 @@ Dms.chart.initializeCallbacks.push(function (element) {
             });
 
             currentAjaxRequest.done(function (chartData) {
-                chartContainer.html(chartData);
-                Dms.chart.initialize(chartContainer);
+                chartElement.html(chartData);
+                Dms.chart.initialize(chartElement);
             });
 
             currentAjaxRequest.fail(function () {
@@ -60113,12 +60114,7 @@ Dms.form.initializeCallbacks.push(function (element) {
                 var imageElement = $('<img />').attr('src', imageSrc);
                 canvasContainer.append(imageElement);
 
-                var darkroom = new Darkroom(imageElement.get(0), {
-                    // Canvas initialization size
-                    minWidth: options.minWidth,
-                    minHeight: options.minHeight,
-                    maxWidth: options.maxWidth,
-                    maxHeight: options.maxHeight,
+                var darkroom = new Darkroom(imageElement.get(0), $.extend({}, {
                     plugins: {
                         save: false // disable plugin
                     },
@@ -60126,7 +60122,7 @@ Dms.form.initializeCallbacks.push(function (element) {
                     initialize: function () {
                         imageEditor.modal('show');
                     }
-                });
+                }, options));
 
                 imageEditor.find('.btn-save-changes').on('click', function () {
                     var blob = window.dataURLtoBlob(darkroom.canvas.toDataURL());
@@ -60333,8 +60329,8 @@ Dms.form.initializeCallbacks.push(function (element) {
                 min = 'min height: ' + minImageHeight + 'px';
             }
 
-            if (maxImageWidth && minImageHeight) {
-                max = 'max: ' + maxImageWidth + 'x' + minImageHeight + 'px';
+            if (maxImageWidth && maxImageHeight) {
+                max = 'max: ' + maxImageWidth + 'x' + maxImageHeight + 'px';
             }
             else if (maxImageWidth) {
                 max = 'max width: ' + maxImageWidth + 'px';
@@ -60978,7 +60974,7 @@ Dms.table.initializeCallbacks.push(function (element) {
                 control.attr('data-has-loaded-table-data', true);
 
                 if (table.find('tbody tr').length < criteria.max_rows) {
-                    paginationNextButton.attr('disabled', true);
+                    paginationNextButton.prop('disabled', true);
                 }
             });
 
@@ -61041,23 +61037,19 @@ Dms.table.initializeCallbacks.push(function (element) {
         });
 
         paginationPreviousButton.click(function () {
-            paginationNextButton.attr('disabled', false);
             currentPage--;
+            paginationNextButton.prop('disabled', false);
+            paginationPreviousButton.prop('disabled', currentPage === 0);
             loadCurrentPage();
         });
 
         paginationNextButton.click(function () {
-            paginationPreviousButton.attr('disabled', false);
             currentPage++;
+            paginationPreviousButton.prop('disabled', false);
             loadCurrentPage();
         });
 
-        paginationPreviousButton.click(function () {
-            currentPage--;
-            loadCurrentPage();
-        });
-
-        paginationPreviousButton.attr('disabled', true);
+        paginationPreviousButton.prop('disabled', true);
 
         if (table.is(':visible')) {
             loadCurrentPage();

@@ -57,12 +57,7 @@ Dms.form.initializeCallbacks.push(function (element) {
                 var imageElement = $('<img />').attr('src', imageSrc);
                 canvasContainer.append(imageElement);
 
-                var darkroom = new Darkroom(imageElement.get(0), {
-                    // Canvas initialization size
-                    minWidth: options.minWidth,
-                    minHeight: options.minHeight,
-                    maxWidth: options.maxWidth,
-                    maxHeight: options.maxHeight,
+                var darkroom = new Darkroom(imageElement.get(0), $.extend({}, {
                     plugins: {
                         save: false // disable plugin
                     },
@@ -70,7 +65,7 @@ Dms.form.initializeCallbacks.push(function (element) {
                     initialize: function () {
                         imageEditor.modal('show');
                     }
-                });
+                }, options));
 
                 imageEditor.find('.btn-save-changes').on('click', function () {
                     var blob = window.dataURLtoBlob(darkroom.canvas.toDataURL());
@@ -277,8 +272,8 @@ Dms.form.initializeCallbacks.push(function (element) {
                 min = 'min height: ' + minImageHeight + 'px';
             }
 
-            if (maxImageWidth && minImageHeight) {
-                max = 'max: ' + maxImageWidth + 'x' + minImageHeight + 'px';
+            if (maxImageWidth && maxImageHeight) {
+                max = 'max: ' + maxImageWidth + 'x' + maxImageHeight + 'px';
             }
             else if (maxImageWidth) {
                 max = 'max width: ' + maxImageWidth + 'px';

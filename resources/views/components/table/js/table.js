@@ -48,7 +48,7 @@ Dms.table.initializeCallbacks.push(function (element) {
                 control.attr('data-has-loaded-table-data', true);
 
                 if (table.find('tbody tr').length < criteria.max_rows) {
-                    paginationNextButton.attr('disabled', true);
+                    paginationNextButton.prop('disabled', true);
                 }
             });
 
@@ -111,23 +111,19 @@ Dms.table.initializeCallbacks.push(function (element) {
         });
 
         paginationPreviousButton.click(function () {
-            paginationNextButton.attr('disabled', false);
             currentPage--;
+            paginationNextButton.prop('disabled', false);
+            paginationPreviousButton.prop('disabled', currentPage === 0);
             loadCurrentPage();
         });
 
         paginationNextButton.click(function () {
-            paginationPreviousButton.attr('disabled', false);
             currentPage++;
+            paginationPreviousButton.prop('disabled', false);
             loadCurrentPage();
         });
 
-        paginationPreviousButton.click(function () {
-            currentPage--;
-            loadCurrentPage();
-        });
-
-        paginationPreviousButton.attr('disabled', true);
+        paginationPreviousButton.prop('disabled', true);
 
         if (table.is(':visible')) {
             loadCurrentPage();

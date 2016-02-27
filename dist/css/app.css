@@ -36,6 +36,19 @@ a[disabled] {
     cursor: -webkit-grabbing;
     -webkit-user-drag: none; }
 
+.dms-chart-container {
+  position: relative;
+  min-height: 50px; }
+  .dms-chart-container.loading table {
+    opacity: .3; }
+  .dms-chart-container.loading .spinner {
+    display: block;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    top: calc(50% - 10px);
+    left: calc(50% - 35px); }
+
 .dms-staged-form .help-block-error {
   color: #a94442; }
 

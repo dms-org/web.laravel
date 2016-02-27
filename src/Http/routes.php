@@ -89,7 +89,7 @@ $router->group(['prefix' => 'dms', 'middleware' => 'dms.web', 'as' => 'dms::', '
             )->name('package.module.chart.view.show');
 
             $router->post(
-                'package/{package}/{module}/chart/{chart}/{view}/reorder',
+                'package/{package}/{module}/chart/{chart}/{view}/load',
                 'Package\ChartController@loadChartData'
             )->name('package.module.chart.view.load');
         });

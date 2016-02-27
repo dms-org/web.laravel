@@ -79,10 +79,11 @@ Dms.form.initializeCallbacks.push(function (element) {
 
                 currentAjaxRequest.done(function (html) {
                     container.addClass('loaded');
-                    var currentValues = currentStage.values();
+                    var currentValues = currentStage.getValues(true);
                     currentStage.html(html);
                     Dms.form.initialize(currentStage);
-                    currentStage.values(currentValues);
+                    currentStage.restoreValues(currentValues);
+                    form.triggerHandler('dms-form-updated');
                 });
 
                 currentAjaxRequest.fail(function (xhr) {

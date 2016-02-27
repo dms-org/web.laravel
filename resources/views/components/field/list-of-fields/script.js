@@ -55,6 +55,7 @@ Dms.form.initializeCallbacks.push(function (element) {
             addButton.closest('.field-list-add').before(newField);
 
             Dms.form.initialize(fieldInputElement);
+            listOfFields.closest('form').triggerHandler('dms-form-updated');
 
             invalidateControl();
         };
@@ -63,6 +64,7 @@ Dms.form.initializeCallbacks.push(function (element) {
             var field = $(this).closest('.field-list-item');
             field.remove();
             formGroup.trigger('dms-change');
+            listOfFields.closest('form').triggerHandler('dms-form-updated');
 
             invalidateControl();
         });

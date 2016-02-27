@@ -201,60 +201,85 @@ $(document).ready(function () {
     $.widget.bridge('uibutton', $.ui.button);
 });
 Dropzone.autoDiscover = false;
-/* jQuery.values: get or set all of the name/value pairs from child input controls
- * @argument data {array} If included, will populate all child controls.
- * @returns element if data was provided, or array of values if not
- */
+var getAbsoluteName = function (allElements, element) {
+    var name = element.name;
 
-$.fn.values = function(data) {
-    var $els = this.find(':input');
-    var els = $els.get();
+    if (name.substr(-2) === '[]') {
+        var inputsWithSameNameBefore = allElements
+            .filter(function (index, otherElement) {
+                return otherElement.name === name;
+            })
+            .filter(function (index, otherElement) {
+                var preceding = 4;
+                return otherElement.compareDocumentPosition(element) & preceding;
+            });
 
-    var getAbsoluteName = function (element) {
-        var name = element.name;
+        name = name.substr(0, name.length - 2) + '[' + inputsWithSameNameBefore.length + ']';
+    }
 
-        if (name.substr(-2) === '[]') {
-            var inputsWithSameNameBefore = $els
-                .filter(function (index, otherElement) {
-                    return otherElement.name === name;
-                })
-                .filter(function (index, otherElement) {
-                    var preceding = 4;
-                    return otherElement.compareDocumentPosition(element) & preceding;
-                });
+    return name;
+};
 
-            name = name.substr(0, name.length - 2) + '[' + inputsWithSameNameBefore.length + ']';
-        }
+Dms.form.initializeCallbacks.push(function (element) {
+    element.find('form').each(function () {
+        var form = $(this);
 
-        return name;
-    };
+        var allInputs = form.find(':input');
+        form.on('dms-form-updated', function () {
+            allInputs = form.find(':input');
+        });
 
-    if(arguments.length === 0) {
-        // return all data
-        data = {};
+        var changedInputs = {};
+        form.data('dms-changed-inputs', changedInputs);
 
-        $.each(els, function() {
+        form.on('change input', '*[name]:input', function () {
+            changedInputs[getAbsoluteName(allInputs, this)] = true;
+        })
+    });
+});
+
+Dms.global.initializeCallbacks.push(function () {
+
+    $.fn.getValues = function (onlyChanged) {
+        var $els = this.find(':input');
+        var els = $els.get();
+        var changedInputs = $(this).closest('form').data('dms-changed-inputs') || {};
+
+        var data = {};
+
+        $.each(els, function () {
             if (this.name && !this.disabled && (this.checked
                 || /select|textarea/i.test(this.nodeName)
                 || /text|hidden|password/i.test(this.type))) {
-                data[getAbsoluteName(this)] = $(this).val();
+                var absoluteName = getAbsoluteName($els, this);
+
+                if (onlyChanged && !changedInputs[absoluteName]) {
+                    return;
+                }
+
+                data[absoluteName] = $(this).val();
             }
         });
-        return data;
-    } else {
 
-        $.each(els, function() {
+        return data;
+    };
+
+    $.fn.restoreValues = function (data) {
+        var $els = this.find(':input');
+        var els = $els.get();
+
+        $.each(els, function () {
             if (!this.name) {
                 return;
             }
 
-            var name = getAbsoluteName(this);
+            var name = getAbsoluteName($els, this);
 
             if (data[name]) {
                 var value = data[name];
                 var $this = $(this);
 
-                if(this.type == 'checkbox' || this.type == 'radio') {
+                if (this.type == 'checkbox' || this.type == 'radio') {
                     $this.attr("checked", value === $.val());
                 } else {
                     $this.val(value);
@@ -263,8 +288,8 @@ $.fn.values = function(data) {
         });
 
         return this;
-    }
-};
+    };
+});
 Dms.global.initializeCallbacks.push(function () {
     $('a').click(function (e) {
         if ($(this).attr('disabled')) {
@@ -1125,6 +1150,7 @@ Dms.form.initializeCallbacks.push(function (element) {
             addButton.closest('.field-list-add').before(newField);
 
             Dms.form.initialize(fieldInputElement);
+            listOfFields.closest('form').triggerHandler('dms-form-updated');
 
             invalidateControl();
         };
@@ -1133,6 +1159,7 @@ Dms.form.initializeCallbacks.push(function (element) {
             var field = $(this).closest('.field-list-item');
             field.remove();
             formGroup.trigger('dms-change');
+            listOfFields.closest('form').triggerHandler('dms-form-updated');
 
             invalidateControl();
         });
@@ -1296,10 +1323,11 @@ Dms.form.initializeCallbacks.push(function (element) {
 
                 currentAjaxRequest.done(function (html) {
                     container.addClass('loaded');
-                    var currentValues = currentStage.values();
+                    var currentValues = currentStage.getValues(true);
                     currentStage.html(html);
                     Dms.form.initialize(currentStage);
-                    currentStage.values(currentValues);
+                    currentStage.restoreValues(currentValues);
+                    form.triggerHandler('dms-form-updated');
                 });
 
                 currentAjaxRequest.fail(function (xhr) {

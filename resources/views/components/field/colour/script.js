@@ -1,16 +1,16 @@
 Dms.form.initializeCallbacks.push(function (element) {
     element.find('input.dms-colour-input').each(function () {
         var config = {
-            showInput: true,
-            showPalette: true
+            theme: 'bootstrap'
         };
 
         if ($(this).hasClass('dms-colour-input-rgb')) {
-            config.preferredFormat = 'rgb';
+            config.format = 'rgb';
         } else if ($(this).hasClass('dms-colour-input-rgba')) {
-            config.preferredFormat = 'rgba';
+            config.format = 'rgb';
+            config.opacity = true;
         }
 
-        $(this).spectrum(config);
+        $(this).addClass('minicolors').minicolors(config);
     });
 });

@@ -1,6 +1,6 @@
 <input
         type="text"
-        class="dms-colour-input dms-colour-input-rgba"
+        class="form-control dms-colour-input dms-colour-input-rgba"
         name="{{ $name }}"
         placeholder="{{ $label }}"
         @if($required) required @endif

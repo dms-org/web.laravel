@@ -61,6 +61,7 @@ return [
                 Dms\Web\Laravel\Renderer\Form\Field\RgbaColourFieldRenderer::class,
                 Dms\Web\Laravel\Renderer\Form\Field\RgbColourFieldRenderer::class,
                 Dms\Web\Laravel\Renderer\Form\Field\StringFieldRenderer::class,
+                Dms\Web\Laravel\Renderer\Form\Field\TextareaFieldRenderer::class,
             ],
             'table'       => [
                 'columns'           => [

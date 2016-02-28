@@ -1,7 +1,12 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Renderer\Form\Field;
 
+use Dms\Common\Structure\DateTime\Form\DateTimeType;
+use Dms\Common\Structure\DateTime\Form\DateType;
+use Dms\Common\Structure\DateTime\Form\TimeOfDayType;
+use Dms\Common\Structure\DateTime\Form\TimezonedDateTimeType;
+use Dms\Core\Exception\InvalidArgumentException;
 use Dms\Core\Form\Field\Type\DateTimeTypeBase;
 use Dms\Core\Form\Field\Type\FieldType;
 use Dms\Core\Form\IField;
@@ -43,6 +48,8 @@ class DateOrTimeFieldRenderer extends BladeFieldRenderer
      */
     protected function renderField(IField $field, IFieldType $fieldType) : string
     {
+        $mode = $this->getMode($fieldType);
+
         return $this->renderView(
             $field,
             'dms::components.field.date-or-time.single.input',
@@ -51,6 +58,9 @@ class DateOrTimeFieldRenderer extends BladeFieldRenderer
                 DateTimeTypeBase::ATTR_MIN    => 'min',
                 DateTimeTypeBase::ATTR_MAX    => 'max',
                 // TODO: less_than and greater_than
+            ],
+            [
+                'mode' => $mode,
             ]
         );
     }
@@ -71,5 +81,26 @@ class DateOrTimeFieldRenderer extends BladeFieldRenderer
                 'format' => $fieldType->get(DateTimeTypeBase::ATTR_FORMAT),
             ]
         );
+    }
+
+    private function getMode(IFieldType $fieldType) : string
+    {
+        if ($fieldType instanceof DateType) {
+            return 'date';
+        }
+
+        if ($fieldType instanceof TimeOfDayType) {
+            return 'time';
+        }
+
+        if ($fieldType instanceof DateTimeType) {
+            return 'date-time';
+        }
+
+        if ($fieldType instanceof TimezonedDateTimeType) {
+            return 'timezoned-date-time';
+        }
+
+        throw InvalidArgumentException::format('Unknown date field type: %s', get_class($fieldType));
     }
 }

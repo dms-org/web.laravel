@@ -1,1 +1,1 @@
-<span class="dms-display-date-or-time">{{ $value['start']->format($format) }} - {{ $value['end']->format($format) }}</span>
+<span class="dms-display-date-or-time">{{ $value['start'] }} to {{ $value['end'] }}</span>

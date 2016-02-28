@@ -84,4 +84,8 @@
             overflow: auto;
         }
     }
+
+    textarea.form-control {
+        max-width: 100%;
+    }
 }

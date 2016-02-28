@@ -28,6 +28,10 @@ return [
         'array'   => 'The :field must have between :min and :max items.',
     ],
     'boolean'              => 'The :field field must be true or false.',
+    'colour'               => [
+        'rgb'  => 'The :field must be a valid RGB colour.',
+        'rgba' => 'The :field must be a valid RGBA colour.',
+    ],
     'confirmed'            => 'The :field confirmation does not match.',
     'date'                 => 'The :field is not a valid date.',
     'date_format'          => 'The :field does not match the format :format.',
@@ -41,7 +45,7 @@ return [
     'in'                   => 'The selected :field is invalid.',
     'int'                  => 'The :field must be a whole number.',
     'integer'              => 'The :field must be an integer.',
-    'ip'                   => 'The :field must be a valid IP address.',
+    'ip-address'           => 'The :field must be a valid IP address.',
     'json'                 => 'The :field must be a valid JSON string.',
     'max'                  => [
         'numeric' => 'The :field may not be greater than :max.',

@@ -1,5 +1,5 @@
 Dms.global.initializeCallbacks.push(function () {
-    window.ParsleyValidator.addCatalog('en', {
+    window.Parsley.addCatalog('en', {
         defaultMessage: "This value seems to be invalid.",
         type: {
             email: "This value should be a valid email.",

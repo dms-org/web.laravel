@@ -53,7 +53,7 @@ class TextareaFieldRenderer extends BladeFieldRenderer
                 StringType::ATTR_MIN_LENGTH   => 'minLength',
                 StringType::ATTR_MAX_LENGTH   => 'maxLength',
             ],
-            ['type' => $inputType]
+            []
         );
     }
 

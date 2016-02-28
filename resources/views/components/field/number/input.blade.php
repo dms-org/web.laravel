@@ -7,10 +7,12 @@
         @if($readonly) readonly @endif
         @if($value !== null) value="{{ $value }}" @endif
 
-        @if(($min ?? null) !== null) min="{{ $min }}" @endif
-        @if(($max ?? null) !== null) min="{{ $max }}" @endif
-        @if(($decimalNumber ?? null) !== null) data-decimal-number="1" @endif
-        @if(($greaterThan ?? null) !== null) data-greater-than="{{ $greaterThan }}" @endif
-        @if(($lessThan ?? null) !== null) data-less-than="{{ $lessThan }}" @endif
-        @if(($maxDecimalPlaces ?? null) !== null) step="{{ pow(.1, $maxDecimalPlaces) }}" data-max-decimal-places="{{ $maxDecimalPlaces }}" @endif
+        @if(isset($min)) min="{{ $min }}" @endif
+        @if(isset($max)) min="{{ $max }}" @endif
+        @if(isset($greaterThan)) data-greater-than="{{ $greaterThan }}" @endif
+        @if(isset($lessThan)) data-less-than="{{ $lessThan }}" @endif
+
+        @if(isset($decimalNumber)) data-decimal-number="1" @endif
+        @if(isset($maxDecimalPlaces)) step="{{ pow(.1, $maxDecimalPlaces) }}" data-max-decimal-places="{{ $maxDecimalPlaces }}" @endif
+        @if(isset($decimalNumber) && !isset($maxDecimalPlaces)) step="any" @endif
 />

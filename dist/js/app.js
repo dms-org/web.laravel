@@ -374,60 +374,56 @@ Dms.utilities.downloadFileFromUrl = function(url) {
         .hide()
         .appendTo('body');
 };
-window.ParsleyValidator
-    .addValidator('ip-address', {
-        requirementType: 'string',
-        validateString: function (value) {
-            var ipV4Regex = /^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){4}$/;
-            var ipV6Regex = /^(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))$/;
+window.Parsley.addValidator('ipAddress', {
+    requirementType: 'boolean',
+    validateString: function (value) {
+        var ipV4Regex = /^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){4}$/;
+        var ipV6Regex = /^(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))$/;
 
-            if (!ipV4Regex.test(value)) {
-                return true;
-            }
-
-            if (ipV4Regex.test(value)) {
-                return true;
-            }
-
-            return false;
-        },
-        messages: {
-            en: 'This value should be a valid ip address'
+        if (ipV4Regex.test(value)) {
+            return true;
         }
-    });
 
-window.ParsleyValidator
-    .addValidator('max-decimal-points', {
-        requirementType: 'number',
-        validateString: function (value, requirement) {
-            return Dms.utilities.countDecimals(value) <= requirement;
-        },
-        messages: {
-            en: 'This value should have a maximum of %d decimal places'
+        if (ipV6Regex.test(value)) {
+            return true;
         }
-    });
 
-window.ParsleyValidator
-    .addValidator('min-elements', {
-        requirementType: 'number',
-        validateMultiple: function (value, requirement) {
-            return value.length >= requirement;
-        },
-        messages: {
-            en: 'At least %s options must be selected'
-        }
-    });
+        return false;
+    },
+    messages: {
+        en: 'This value should be a valid ip address'
+    }
+});
 
-window.ParsleyValidator
-    .addValidator('max-elements', {
-        requirementType: 'number',
-        validateMultiple: function (value, requirement) {
-            return value.length <= requirement;
-        },
-        messages: {
-            en: 'No more than %s options can be selected'
-        }
-    });
+window.Parsley.addValidator('maxDecimalPoints', {
+    requirementType: 'integer',
+    validateString: function (value, requirement) {
+        return Dms.utilities.countDecimals(value) <= requirement;
+    },
+    messages: {
+        en: 'This value should have a maximum of %d decimal places'
+    }
+});
+
+window.Parsley.addValidator('minElements', {
+    requirementType: 'integer',
+    validateMultiple: function (value, requirement) {
+        return value.length >= requirement;
+    },
+    messages: {
+        en: 'At least %s options must be selected'
+    }
+});
+
+window.Parsley.addValidator('maxElements', {
+    requirementType: 'integer',
+    validateMultiple: function (value, requirement) {
+        return value.length <= requirement;
+    },
+    messages: {
+        en: 'No more than %s options can be selected'
+    }
+});
 
 
 Dms.form.validation.clearMessages = function (form) {
@@ -509,7 +505,7 @@ window.ParsleyConfig = {
     errorTemplate: "<span></span>"
 };
 Dms.global.initializeCallbacks.push(function () {
-    window.ParsleyValidator.addCatalog('en', {
+    window.Parsley.addCatalog('en', {
         defaultMessage: "This value seems to be invalid.",
         type: {
             email: "This value should be a valid email.",
@@ -642,33 +638,19 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-
-    element.find('.list-of-checkboxes').each(function () {
-        var listOfCheckboxes = $(this);
-        listOfCheckboxes.find('input[type=checkbox]').iCheck({
-            checkboxClass: 'icheckbox_square-blue',
-            increaseArea: '20%'
-        });
-
-        var firstCheckbox = listOfCheckboxes.find('input[type=checkbox]').first();
-        firstCheckbox.attr('data-parsley-min-elements', listOfCheckboxes.attr('data-min-elements'));
-        firstCheckbox.attr('data-parsley-max-elements', listOfCheckboxes.attr('data-max-elements'));
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
     element.find('input.dms-colour-input').each(function () {
         var config = {
-            showInput: true,
-            showPalette: true
+            theme: 'bootstrap'
         };
 
         if ($(this).hasClass('dms-colour-input-rgb')) {
-            config.preferredFormat = 'rgb';
+            config.format = 'rgb';
         } else if ($(this).hasClass('dms-colour-input-rgba')) {
-            config.preferredFormat = 'rgba';
+            config.format = 'rgb';
+            config.opacity = true;
         }
 
-        $(this).spectrum(config);
+        $(this).addClass('minicolors').minicolors(config);
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -706,35 +688,114 @@ Dms.form.initializeCallbacks.push(function (element) {
             'U': 'X'
         };
 
-        $.each(replacements, function (phpToken, momentToken) {
-            format = format.replace(phpToken, momentToken);
+        var newFormat = '';
+
+        $.each(format.split(''), function (index, char) {
+            if (replacements[char]) {
+                newFormat += replacements[char];
+            } else {
+                newFormat += char;
+            }
         });
 
-        return format;
+        return newFormat;
     };
 
     element.find('input.date-or-time')
         .each(function () {
-            $(this).datetimepicker({
-                format: convertPhpDateFormatToMomentFormat($(this).attr('data-date-format')),
-                minDate: $(this).attr('data-min-date') ? new Date($(this).attr('data-min-date')) : null,
-                maxDate: $(this).attr('data-max-date') ? new Date($(this).attr('data-max-date')) : null,
-                useCurrent: !$(this).attr('data-dont-use-current')
+            var inputElement = $(this);
+            var dateFormat = convertPhpDateFormatToMomentFormat(inputElement.attr('data-date-format'));
+            var mode = inputElement.attr('data-mode');
+
+            var config = {
+                locale: {
+                    format: dateFormat
+                },
+                parentEl: inputElement.parent(),
+                singleDatePicker: true,
+                showDropdowns: true,
+                autoApply: true,
+                linkedCalendars: false,
+                autoUpdateInput: false
+            };
+
+            if (mode === 'date-time') {
+                config.timePicker = true;
+                config.timePickerSeconds = true;
+            }
+
+            if (mode === 'time') {
+                config.timePicker = true;
+                config.timePickerSeconds = true;
+            }
+            // TODO: timezoned-date-time
+
+            inputElement.daterangepicker(config, function (date) {
+                inputElement.val(date.format(dateFormat));
             });
+
+            var picker = inputElement.data('daterangepicker');
+
+            if (inputElement.val()) {
+                picker.setStartDate(inputElement.val());
+            }
+
+            if (mode === 'time') {
+                inputElement.parent().find('.calendar-table').hide();
+            }
         });
 
     element.find('.date-or-time-range')
         .each(function () {
-            var startInput = $(this).find('input.date-or-time.start-input');
-            var endInput = $(this).find('input.date-or-time.end-input');
+            var rangeElement = $(this);
+            var startInput = rangeElement.find('.start-input');
+            var endInput = rangeElement.find('.end-input');
+            var dateFormat = convertPhpDateFormatToMomentFormat(startInput.attr('data-date-format'));
+            var mode = rangeElement.attr('data-mode');
 
-            startInput.on("dp.change", function (e) {
-                endInput.data("DateTimePicker").minDate(e.date);
+            var config = {
+                locale: {
+                    format: dateFormat
+                },
+                parentEl: rangeElement,
+                showDropdowns: true,
+                autoApply: true,
+                linkedCalendars: false,
+                autoUpdateInput: false
+            };
+
+            if (mode === 'date-time') {
+                config.timePicker = true;
+                config.timePickerSeconds = true;
+            }
+
+            if (mode === 'time') {
+                config.timePicker = true;
+                config.timePickerSeconds = true;
+            }
+            // TODO: timezoned-date-time
+
+            startInput.daterangepicker(config, function (start, end, label) {
+                startInput.val(start.format(dateFormat));
+                endInput.val(end.format(dateFormat));
             });
 
-            endInput.on("dp.change", function (e) {
-                startInput.data("DateTimePicker").maxDate(e.date);
+            var picker = startInput.data('daterangepicker');
+
+            if (startInput.val()) {
+                picker.setStartDate(startInput.val());
+            }
+            if (endInput.val()) {
+                picker.setEndDate(endInput.val());
+            }
+
+            endInput.on('focus click', function () {
+                startInput.focus();
             });
+
+            if (mode === 'time') {
+                rangeElement.find('.calendar-table').hide();
+            }
         });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -1218,356 +1279,6 @@ Dms.form.initializeCallbacks.push(function (element) {
 Dms.form.initializeCallbacks.push(function (element) {
 
 });
-Dms.form.initializeCallbacks.push(function (element) {
-
-    var fieldCounter = 1;
-
-    element.find('.dms-form-fieldset .form-group').each(function () {
-        var fieldLabel = $(this).children('label[data-for]');
-        var forFieldName = fieldLabel.attr('data-for');
-
-        if (forFieldName) {
-            var forField = $(this).first('*[name="' + forFieldName + '"], .dms-inner-form[data-name="' + forFieldName + '"]');
-
-            if (!forField.attr('id')) {
-                forField.attr('id', 'dms-field-' + fieldCounter);
-                fieldCounter++;
-            }
-
-            fieldLabel.attr('for', forField.attr('id'));
-        }
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
-
-    element.find('form.dms-staged-form').each(function () {
-        var form = $(this);
-        var parsley = form.parsley(window.ParsleyConfig);
-        var stageElements = form.find('.dms-form-stage');
-
-        var arePreviousFieldsValid = function (fields) {
-            var originalScroll = $(document).scrollTop();
-            var focusedElement = $(document.activeElement);
-            parsley.validate();
-            focusedElement.focus();
-            $(document).scrollTop(originalScroll);
-
-            return fields.closest('.form-group').find('.dms-validation-message *').length === 0;
-        };
-
-        stageElements.filter('.dms-dependent-form-stage').each(function () {
-            var currentStage = $(this);
-            var container = currentStage.closest('.dms-form-stage-container');
-            var previousStages = container.prevAll('.dms-form-stage-container').find('.dms-form-stage');
-            var loadStageUrl = currentStage.attr('data-load-stage-url');
-            var dependentFields = currentStage.attr('data-stage-dependent-fields');
-            var dependentFieldNames = dependentFields ? JSON.parse(dependentFields) : null;
-            var currentAjaxRequest = null;
-            var previousLoadAttempt = 0;
-            var minMillisecondsBetweenLoads = 2000;
-            var isWaitingForNextLoadAttempt = false;
-
-            var makeDependentFieldSelectorFor = function (selector) {
-                if (dependentFieldNames) {
-                    var selectors = [];
-                    $.each(dependentFieldNames, function (index, fieldName) {
-                        selectors.push(selector + '[name="' + fieldName + '"]:input');
-                        selectors.push(selector + '[name^="' + fieldName + '["][name$="]"]:input');
-                    });
-
-                    return selectors.join(',');
-                } else {
-                    return selector + '[name]:input';
-                }
-            };
-
-            var loadNextStage = function () {
-
-                if (currentAjaxRequest) {
-                    currentAjaxRequest.abort();
-                }
-
-                container.removeClass('loaded');
-                container.addClass('loading');
-
-                var currentTime = new Date().getTime();
-                var millisecondsBetweenLastLoad = currentTime - previousLoadAttempt;
-
-                if (millisecondsBetweenLastLoad >= minMillisecondsBetweenLoads) {
-                    isWaitingForNextLoadAttempt = false;
-                    previousLoadAttempt = currentTime;
-                }
-                else {
-                    if (!isWaitingForNextLoadAttempt) {
-                        isWaitingForNextLoadAttempt = true;
-                        setTimeout(loadNextStage, minMillisecondsBetweenLoads - millisecondsBetweenLastLoad);
-                    }
-                    return;
-                }
-
-                var previousFields = previousStages.find(makeDependentFieldSelectorFor('*'));
-
-                if (!arePreviousFieldsValid(previousFields)) {
-                    container.removeClass('loading');
-                    return;
-                }
-
-                Dms.form.validation.clearMessages(form);
-
-                var formData = new FormData();
-
-                previousFields.each(function () {
-                    var fieldName = $(this).attr('name');
-
-                    if ($(this).is('[type=file]')) {
-                        $.each(this.files, function (index, file) {
-                            formData.append(fieldName, file);
-                        });
-                    } else {
-                        formData.append(fieldName, $(this).val());
-                    }
-                });
-
-                currentAjaxRequest = $.ajax({
-                    url: loadStageUrl,
-                    type: 'post',
-                    processData: false,
-                    contentType: false,
-                    dataType: 'html',
-                    data: formData
-                });
-
-                currentAjaxRequest.done(function (html) {
-                    container.addClass('loaded');
-                    var currentValues = currentStage.getValues(true);
-                    currentStage.html(html);
-                    Dms.form.initialize(currentStage);
-                    currentStage.restoreValues(currentValues);
-                    form.triggerHandler('dms-form-updated');
-                });
-
-                currentAjaxRequest.fail(function (xhr) {
-                    if (currentAjaxRequest.statusText === 'abort') {
-                        return;
-                    }
-
-                    switch (xhr.status) {
-                        case 422: // Unprocessable Entity (validation failure)
-                            var validation = JSON.parse(xhr.responseText);
-                            Dms.form.validation.displayMessages(form, validation.messages.fields, validation.messages.constraints);
-                            break;
-
-                        case 400: // Bad request
-                            swal({
-                                title: "Could not load form",
-                                text: JSON.parse(xhr.responseText).message,
-                                type: "error"
-                            });
-                            break;
-
-                        default: // Unknown error
-                            swal({
-                                title: "Could not load form",
-                                text: "An unexpected error occurred",
-                                type: "error"
-                            });
-                            break;
-                    }
-                });
-
-                currentAjaxRequest.always(function () {
-                    container.removeClass('loading');
-                });
-            };
-
-            previousStages.on('input', makeDependentFieldSelectorFor('input'), loadNextStage);
-            previousStages.on('input', makeDependentFieldSelectorFor('textarea'), loadNextStage);
-            previousStages.on('change', makeDependentFieldSelectorFor('select'), loadNextStage);
-
-            if (dependentFieldNames) {
-                var selectors = [];
-                $.each(dependentFieldNames, function (index, fieldName) {
-                    selectors.push('.form-group[data-field-name="' + fieldName + '"]');
-                });
-
-                previousStages.on('dms-change', selectors.join(','), loadNextStage);
-            } else {
-                previousStages.on('dms-change', '.form-group[data-field-name]', loadNextStage);
-            }
-        });
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
-
-    element.find('form.dms-staged-form, form.dms-run-action-form').each(function () {
-        var form = $(this);
-        var parsley = form.parsley(window.ParsleyConfig);
-        var afterRunCallbacks = [];
-        var submitButtons = form.find('input[type=submit], button[type=submit]');
-        var submitMethod = form.attr('method');
-        var submitUrl = form.attr('action');
-
-        var isFormValid = function () {
-            return parsley.isValid()
-                && form.find('.dms-validation-message *').length === 0
-                && form.find('.dms-form-stage-container').length === form.find('.dms-form-stage-container.loaded').length;
-        };
-
-        submitButtons.on('click before-confirmation', function (e) {
-            parsley.validate();
-
-            if (!isFormValid()) {
-                e.stopImmediatePropagation();
-                return false;
-            }
-        });
-
-        form.on('submit', function (e) {
-            e.preventDefault();
-
-            Dms.form.validation.clearMessages(form);
-
-            var fieldsToReappend = [];
-            form.find('.dms-form-no-submit').each(function () {
-                var removedFields = $(this).children().detach();
-
-                fieldsToReappend.push({
-                    parentElement: $(this),
-                    children: removedFields
-                });
-            });
-
-            var formData = new FormData(form.get(0));
-
-            $.each(fieldsToReappend, function (index, elements) {
-                elements.parentElement.append(elements.children);
-            });
-
-            submitButtons.prop('disabled', true);
-            submitButtons.addClass('ladda-button').attr('data-style', 'expand-right');
-            var ladda = Ladda.create(submitButtons.get(0));
-            ladda.start();
-
-            var currentAjaxRequest = $.ajax({
-                url: submitUrl,
-                type: submitMethod,
-                processData: false,
-                contentType: false,
-                dataType: 'json',
-                data: formData,
-                xhr: function() {
-                    var xhr = $.ajaxSettings.xhr();
-
-                    if(form.find('input[type=file]').length && xhr.upload){
-                        xhr.upload.addEventListener('progress', function (event) {
-                            if (event.lengthComputable) {
-                                ladda.setProgress(event.loaded / event.total);
-                            }
-                        }, false);
-                    }
-
-                    return xhr;
-                }
-            });
-
-            currentAjaxRequest.done(function (data) {
-                Dms.action.responseHandler(data);
-                $.each(afterRunCallbacks, function (index, callback) {
-                    callback(data);
-                });
-            });
-
-            currentAjaxRequest.fail(function (xhr) {
-                if (currentAjaxRequest.statusText === 'abort') {
-                    return;
-                }
-
-                switch (xhr.status) {
-                    case 422: // Unprocessable Entity (validation failure)
-                        var validation = JSON.parse(xhr.responseText);
-                        Dms.form.validation.displayMessages(form, validation.messages.fields, validation.messages.constraints);
-                        break;
-
-                    default: // Unknown error
-                        swal({
-                            title: "Could not submit form",
-                            text: "An unexpected error occurred",
-                            type: "error"
-                        });
-                        break;
-                }
-            });
-
-            currentAjaxRequest.always(function () {
-                submitButtons.prop('disabled', false);
-                ladda.stop();
-            });
-
-            return false;
-        });
-
-        var parentToRemove = form.attr('data-after-run-remove-closest');
-        if (parentToRemove) {
-            afterRunCallbacks.push(function () {
-                form.closest(parentToRemove).fadeOut(100);
-            });
-        }
-
-        afterRunCallbacks.push(function () {
-            form.find('input[type=password]').val('');
-        });
-    });
-});
-Dms.form.initializeValidationCallbacks.push(function (element) {
-
-    element.find('.dms-form-fields').each(function () {
-        if (!$(this).attr('id')) {
-            $(this).attr('id', Dms.utilities.idGenerator());
-        }
-    });
-
-    element.find('.dms-form-fields').each(function () {
-        var formFieldSection = $(this);
-        var formFieldsGroupId = formFieldSection.attr('id');
-
-
-        var buildElementSelector = function (fieldName) {
-            return '#' + formFieldsGroupId + ' *[name="' + fieldName + '"]';
-        };
-
-        var fieldValidations = {
-            'data-equal-fields': 'data-parsley-equalto',
-            'data-greater-than-fields': 'data-parsley-gt',
-            'data-greater-than-or-equal-fields': 'data-parsley-gte',
-            'data-less-than-fields': 'data-parsley-lt',
-            'data-less-than-or-equal-fields': 'data-parsley-lte'
-        };
-
-        $.each(fieldValidations, function (validationAttr, parsleyAttr) {
-            var fieldsMap = formFieldSection.attr(validationAttr);
-
-            if (fieldsMap) {
-                $.each(JSON.parse(fieldsMap), function (fieldName, otherFieldName) {
-                    var field = $(buildElementSelector(fieldName));
-                    field.attr(parsleyAttr, buildElementSelector(otherFieldName));
-                });
-            }
-        });
-    });
-
-    element.find('form.dms-staged-form').each(function () {
-        var form = $(this);
-        form.parsley(window.ParsleyConfig);
-
-        form.find('.dms-form-fields').each(function (index) {
-            $(this).find(':input').attr('data-parsley-group', 'validation-group-' + index);
-        });
-    });
-
-    element.find('form.dms-form').each(function () {
-        $(this).parsley(window.ParsleyConfig);
-    });
-});
 Dms.table.initializeCallbacks.push(function (element) {
     var groupCounter = 0;
 
@@ -1768,6 +1479,385 @@ Dms.table.initializeCallbacks.push(function (element) {
 
             linkedTablePane.find('.dms-table-control:not([data-has-loaded-table-data]) .dms-table-container:not(.loading) .dms-table').triggerHandler('dms-load-table-data');
         });
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+
+    var fieldCounter = 1;
+
+    element.find('.dms-form-fieldset .form-group').each(function () {
+        var fieldLabel = $(this).children('label[data-for]');
+        var forFieldName = fieldLabel.attr('data-for');
+
+        if (forFieldName) {
+            var forField = $(this).first('*[name="' + forFieldName + '"], .dms-inner-form[data-name="' + forFieldName + '"]');
+
+            if (!forField.attr('id')) {
+                forField.attr('id', 'dms-field-' + fieldCounter);
+                fieldCounter++;
+            }
+
+            fieldLabel.attr('for', forField.attr('id'));
+        }
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+
+    element.find('form.dms-staged-form').each(function () {
+        var form = $(this);
+        var parsley = form.parsley(window.ParsleyConfig);
+        var stageElements = form.find('.dms-form-stage');
+
+        var arePreviousFieldsValid = function (fields) {
+            var originalScroll = $(document).scrollTop();
+            var focusedElement = $(document.activeElement);
+            parsley.validate();
+            focusedElement.focus();
+            $(document).scrollTop(originalScroll);
+
+            return fields.closest('.form-group').find('.dms-validation-message *').length === 0;
+        };
+
+        stageElements.filter('.dms-dependent-form-stage').each(function () {
+            var currentStage = $(this);
+            var container = currentStage.closest('.dms-form-stage-container');
+            var previousStages = container.prevAll('.dms-form-stage-container').find('.dms-form-stage');
+            var loadStageUrl = currentStage.attr('data-load-stage-url');
+            var dependentFields = currentStage.attr('data-stage-dependent-fields');
+            var dependentFieldNames = dependentFields ? JSON.parse(dependentFields) : null;
+            var currentAjaxRequest = null;
+            var previousLoadAttempt = 0;
+            var minMillisecondsBetweenLoads = 2000;
+            var isWaitingForNextLoadAttempt = false;
+
+            var makeDependentFieldSelectorFor = function (selector) {
+                if (dependentFieldNames) {
+                    var selectors = [];
+                    $.each(dependentFieldNames, function (index, fieldName) {
+                        selectors.push(selector + '[name="' + fieldName + '"]:input');
+                        selectors.push(selector + '[name^="' + fieldName + '["][name$="]"]:input');
+                    });
+
+                    return selectors.join(',');
+                } else {
+                    return selector + '[name]:input';
+                }
+            };
+
+            var loadNextStage = function () {
+
+                if (currentAjaxRequest) {
+                    currentAjaxRequest.abort();
+                }
+
+                container.removeClass('loaded');
+                container.addClass('loading');
+
+                var currentTime = new Date().getTime();
+                var millisecondsBetweenLastLoad = currentTime - previousLoadAttempt;
+
+                if (millisecondsBetweenLastLoad >= minMillisecondsBetweenLoads) {
+                    isWaitingForNextLoadAttempt = false;
+                    previousLoadAttempt = currentTime;
+                }
+                else {
+                    if (!isWaitingForNextLoadAttempt) {
+                        isWaitingForNextLoadAttempt = true;
+                        setTimeout(loadNextStage, minMillisecondsBetweenLoads - millisecondsBetweenLastLoad);
+                    }
+                    return;
+                }
+
+                var previousFields = previousStages.find(makeDependentFieldSelectorFor('*'));
+
+                if (!arePreviousFieldsValid(previousFields)) {
+                    container.removeClass('loading');
+                    return;
+                }
+
+                Dms.form.validation.clearMessages(form);
+
+                var formData = new FormData();
+
+                previousFields.each(function () {
+                    var fieldName = $(this).attr('name');
+
+                    if ($(this).is('[type=file]')) {
+                        $.each(this.files, function (index, file) {
+                            formData.append(fieldName, file);
+                        });
+                    } else {
+                        var value = $(this).val();
+                        if (value !== '') {
+                            formData.append(fieldName, $(this).val());
+                        }
+                    }
+                });
+
+                currentAjaxRequest = $.ajax({
+                    url: loadStageUrl,
+                    type: 'post',
+                    processData: false,
+                    contentType: false,
+                    dataType: 'html',
+                    data: formData
+                });
+
+                currentAjaxRequest.done(function (html) {
+                    container.addClass('loaded');
+                    var currentValues = currentStage.getValues(true);
+                    currentStage.html(html);
+                    Dms.form.initialize(currentStage);
+                    currentStage.restoreValues(currentValues);
+                    form.triggerHandler('dms-form-updated');
+                });
+
+                currentAjaxRequest.fail(function (xhr) {
+                    if (currentAjaxRequest.statusText === 'abort') {
+                        return;
+                    }
+
+                    switch (xhr.status) {
+                        case 422: // Unprocessable Entity (validation failure)
+                            var validation = JSON.parse(xhr.responseText);
+                            Dms.form.validation.displayMessages(form, validation.messages.fields, validation.messages.constraints);
+                            break;
+
+                        case 400: // Bad request
+                            swal({
+                                title: "Could not load form",
+                                text: JSON.parse(xhr.responseText).message,
+                                type: "error"
+                            });
+                            break;
+
+                        default: // Unknown error
+                            swal({
+                                title: "Could not load form",
+                                text: "An unexpected error occurred",
+                                type: "error"
+                            });
+                            break;
+                    }
+                });
+
+                currentAjaxRequest.always(function () {
+                    container.removeClass('loading');
+                });
+            };
+
+            previousStages.on('input', makeDependentFieldSelectorFor('input'), loadNextStage);
+            previousStages.on('input', makeDependentFieldSelectorFor('textarea'), loadNextStage);
+            previousStages.on('change', makeDependentFieldSelectorFor('select'), loadNextStage);
+
+            if (dependentFieldNames) {
+                var selectors = [];
+                $.each(dependentFieldNames, function (index, fieldName) {
+                    selectors.push('.form-group[data-field-name="' + fieldName + '"]');
+                });
+
+                previousStages.on('dms-change', selectors.join(','), loadNextStage);
+            } else {
+                previousStages.on('dms-change', '.form-group[data-field-name]', loadNextStage);
+            }
+        });
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+
+    element.find('form.dms-staged-form, form.dms-run-action-form').each(function () {
+        var form = $(this);
+        var parsley = form.parsley(window.ParsleyConfig);
+        var afterRunCallbacks = [];
+        var submitButtons = form.find('input[type=submit], button[type=submit]');
+        var submitMethod = form.attr('method');
+        var submitUrl = form.attr('action');
+
+        var isFormValid = function () {
+            return parsley.isValid()
+                && form.find('.dms-validation-message *').length === 0
+                && form.find('.dms-form-stage-container').length === form.find('.dms-form-stage-container.loaded').length;
+        };
+
+        submitButtons.on('click before-confirmation', function (e) {
+            parsley.validate();
+
+            if (!isFormValid()) {
+                e.stopImmediatePropagation();
+                return false;
+            }
+        });
+
+        form.on('submit', function (e) {
+            e.preventDefault();
+
+            Dms.form.validation.clearMessages(form);
+
+            var fieldsToReappend = [];
+            form.find('.dms-form-no-submit').each(function () {
+                var removedFields = $(this).children().detach();
+
+                fieldsToReappend.push({
+                    parentElement: $(this),
+                    children: removedFields
+                });
+            });
+
+            form.find('input[name][type]').each(function () {
+                if ($(this).val() === '' && /text|email|url|color/i.test($(this).attr('type'))) {
+                    $(this).attr('data-temp-name', $(this).attr('name'));
+                    $(this).removeAttr('name')
+                }
+            });
+
+            var formData = new FormData(form.get(0));
+
+            form.find('input[data-temp-name]').each(function () {
+                $(this).attr('name', $(this).attr('data-temp-name'));
+                $(this).removeAttr('data-temp-name')
+            });
+
+            $.each(fieldsToReappend, function (index, elements) {
+                elements.parentElement.append(elements.children);
+            });
+
+            submitButtons.prop('disabled', true);
+            submitButtons.addClass('ladda-button').attr('data-style', 'expand-right');
+            var ladda = Ladda.create(submitButtons.get(0));
+            ladda.start();
+
+            var currentAjaxRequest = $.ajax({
+                url: submitUrl,
+                type: submitMethod,
+                processData: false,
+                contentType: false,
+                dataType: 'json',
+                data: formData,
+                xhr: function () {
+                    var xhr = $.ajaxSettings.xhr();
+
+                    if (form.find('input[type=file]').length && xhr.upload) {
+                        xhr.upload.addEventListener('progress', function (event) {
+                            if (event.lengthComputable) {
+                                ladda.setProgress(event.loaded / event.total);
+                            }
+                        }, false);
+                    }
+
+                    return xhr;
+                }
+            });
+
+            currentAjaxRequest.done(function (data) {
+                Dms.action.responseHandler(data);
+                $.each(afterRunCallbacks, function (index, callback) {
+                    callback(data);
+                });
+            });
+
+            currentAjaxRequest.fail(function (xhr) {
+                if (currentAjaxRequest.statusText === 'abort') {
+                    return;
+                }
+
+                switch (xhr.status) {
+                    case 422: // Unprocessable Entity (validation failure)
+                        var validation = JSON.parse(xhr.responseText);
+                        Dms.form.validation.displayMessages(form, validation.messages.fields, validation.messages.constraints);
+                        break;
+
+                    default: // Unknown error
+                        swal({
+                            title: "Could not submit form",
+                            text: "An unexpected error occurred",
+                            type: "error"
+                        });
+                        break;
+                }
+            });
+
+            currentAjaxRequest.always(function () {
+                submitButtons.prop('disabled', false);
+                ladda.stop();
+            });
+
+            return false;
+        });
+
+        var parentToRemove = form.attr('data-after-run-remove-closest');
+        if (parentToRemove) {
+            afterRunCallbacks.push(function () {
+                form.closest(parentToRemove).fadeOut(100);
+            });
+        }
+
+        afterRunCallbacks.push(function () {
+            form.find('input[type=password]').val('');
+        });
+    });
+});
+Dms.form.initializeValidationCallbacks.push(function (element) {
+
+    element.find('.dms-form-fields').each(function () {
+        if (!$(this).attr('id')) {
+            $(this).attr('id', Dms.utilities.idGenerator());
+        }
+    });
+
+    element.find('.dms-form-fields').each(function () {
+        var formFieldSection = $(this);
+        var formFieldsGroupId = formFieldSection.attr('id');
+
+
+        var buildElementSelector = function (fieldName) {
+            return '#' + formFieldsGroupId + ' *[name="' + fieldName + '"]';
+        };
+
+        var fieldValidations = {
+            'data-equal-fields': 'data-parsley-equalto',
+            'data-greater-than-fields': 'data-parsley-gt',
+            'data-greater-than-or-equal-fields': 'data-parsley-gte',
+            'data-less-than-fields': 'data-parsley-lt',
+            'data-less-than-or-equal-fields': 'data-parsley-lte'
+        };
+
+        $.each(fieldValidations, function (validationAttr, parsleyAttr) {
+            var fieldsMap = formFieldSection.attr(validationAttr);
+
+            if (fieldsMap) {
+                $.each(JSON.parse(fieldsMap), function (fieldName, otherFieldName) {
+                    var field = $(buildElementSelector(fieldName));
+                    field.attr(parsleyAttr, buildElementSelector(otherFieldName));
+                });
+            }
+        });
+    });
+
+    element.find('form.dms-staged-form').each(function () {
+        var form = $(this);
+        form.parsley(window.ParsleyConfig);
+
+        form.find('.dms-form-fields').each(function (index) {
+            $(this).find(':input').attr('data-parsley-group', 'validation-group-' + index);
+        });
+    });
+
+    element.find('form.dms-form').each(function () {
+        $(this).parsley(window.ParsleyConfig);
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+
+    element.find('.list-of-checkboxes').each(function () {
+        var listOfCheckboxes = $(this);
+        listOfCheckboxes.find('input[type=checkbox]').iCheck({
+            checkboxClass: 'icheckbox_square-blue',
+            increaseArea: '20%'
+        });
+
+        var firstCheckbox = listOfCheckboxes.find('input[type=checkbox]').first();
+        firstCheckbox.attr('data-parsley-min-elements', listOfCheckboxes.attr('data-min-elements'));
+        firstCheckbox.attr('data-parsley-max-elements', listOfCheckboxes.attr('data-max-elements'));
     });
 });
 Dms.widget.initializeCallbacks.push(function () {

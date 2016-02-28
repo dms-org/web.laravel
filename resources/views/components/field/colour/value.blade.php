@@ -1,1 +1,0 @@
-<div class="dms-display-colour" style="background-color: {{ $value or 'inherit' }}"></div>

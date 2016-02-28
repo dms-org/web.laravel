@@ -33,34 +33,113 @@ Dms.form.initializeCallbacks.push(function (element) {
             'U': 'X'
         };
 
-        $.each(replacements, function (phpToken, momentToken) {
-            format = format.replace(phpToken, momentToken);
+        var newFormat = '';
+
+        $.each(format.split(''), function (index, char) {
+            if (replacements[char]) {
+                newFormat += replacements[char];
+            } else {
+                newFormat += char;
+            }
         });
 
-        return format;
+        return newFormat;
     };
 
     element.find('input.date-or-time')
         .each(function () {
-            $(this).datetimepicker({
-                format: convertPhpDateFormatToMomentFormat($(this).attr('data-date-format')),
-                minDate: $(this).attr('data-min-date') ? new Date($(this).attr('data-min-date')) : null,
-                maxDate: $(this).attr('data-max-date') ? new Date($(this).attr('data-max-date')) : null,
-                useCurrent: !$(this).attr('data-dont-use-current')
+            var inputElement = $(this);
+            var dateFormat = convertPhpDateFormatToMomentFormat(inputElement.attr('data-date-format'));
+            var mode = inputElement.attr('data-mode');
+
+            var config = {
+                locale: {
+                    format: dateFormat
+                },
+                parentEl: inputElement.parent(),
+                singleDatePicker: true,
+                showDropdowns: true,
+                autoApply: true,
+                linkedCalendars: false,
+                autoUpdateInput: false
+            };
+
+            if (mode === 'date-time') {
+                config.timePicker = true;
+                config.timePickerSeconds = true;
+            }
+
+            if (mode === 'time') {
+                config.timePicker = true;
+                config.timePickerSeconds = true;
+            }
+            // TODO: timezoned-date-time
+
+            inputElement.daterangepicker(config, function (date) {
+                inputElement.val(date.format(dateFormat));
             });
+
+            var picker = inputElement.data('daterangepicker');
+
+            if (inputElement.val()) {
+                picker.setStartDate(inputElement.val());
+            }
+
+            if (mode === 'time') {
+                inputElement.parent().find('.calendar-table').hide();
+            }
         });
 
     element.find('.date-or-time-range')
         .each(function () {
-            var startInput = $(this).find('input.date-or-time.start-input');
-            var endInput = $(this).find('input.date-or-time.end-input');
+            var rangeElement = $(this);
+            var startInput = rangeElement.find('.start-input');
+            var endInput = rangeElement.find('.end-input');
+            var dateFormat = convertPhpDateFormatToMomentFormat(startInput.attr('data-date-format'));
+            var mode = rangeElement.attr('data-mode');
 
-            startInput.on("dp.change", function (e) {
-                endInput.data("DateTimePicker").minDate(e.date);
+            var config = {
+                locale: {
+                    format: dateFormat
+                },
+                parentEl: rangeElement,
+                showDropdowns: true,
+                autoApply: true,
+                linkedCalendars: false,
+                autoUpdateInput: false
+            };
+
+            if (mode === 'date-time') {
+                config.timePicker = true;
+                config.timePickerSeconds = true;
+            }
+
+            if (mode === 'time') {
+                config.timePicker = true;
+                config.timePickerSeconds = true;
+            }
+            // TODO: timezoned-date-time
+
+            startInput.daterangepicker(config, function (start, end, label) {
+                startInput.val(start.format(dateFormat));
+                endInput.val(end.format(dateFormat));
             });
 
-            endInput.on("dp.change", function (e) {
-                startInput.data("DateTimePicker").maxDate(e.date);
+            var picker = startInput.data('daterangepicker');
+
+            if (startInput.val()) {
+                picker.setStartDate(startInput.val());
+            }
+            if (endInput.val()) {
+                picker.setEndDate(endInput.val());
+            }
+
+            endInput.on('focus click', function () {
+                startInput.focus();
             });
+
+            if (mode === 'time') {
+                rangeElement.find('.calendar-table').hide();
+            }
         });
 });

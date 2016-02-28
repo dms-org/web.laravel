@@ -3,6 +3,10 @@
 namespace Dms\Web\Laravel\Renderer\Form\Field;
 
 use Dms\Common\Structure\DateTime\Form\DateOrTimeRangeType;
+use Dms\Common\Structure\DateTime\Form\DateRangeType;
+use Dms\Common\Structure\DateTime\Form\TimeRangeType;
+use Dms\Common\Structure\DateTime\Form\TimezonedDateTimeRangeType;
+use Dms\Core\Exception\InvalidArgumentException;
 use Dms\Core\Form\Field\Type\DateTimeTypeBase;
 use Dms\Core\Form\Field\Type\FieldType;
 use Dms\Core\Form\IField;
@@ -44,6 +48,8 @@ class DateOrTimeRangeFieldRenderer extends BladeFieldRenderer
      */
     protected function renderField(IField $field, IFieldType $fieldType) : string
     {
+        $mode = $this->getMode($fieldType);
+
         return $this->renderView(
             $field,
             'dms::components.field.date-or-time.range.input',
@@ -52,6 +58,9 @@ class DateOrTimeRangeFieldRenderer extends BladeFieldRenderer
                 DateTimeTypeBase::ATTR_MIN    => 'min',
                 DateTimeTypeBase::ATTR_MAX    => 'max',
                 // TODO: less_than and greater_than
+            ],
+            [
+                'mode' => $mode,
             ]
         );
     }
@@ -67,10 +76,31 @@ class DateOrTimeRangeFieldRenderer extends BladeFieldRenderer
     {
         return $this->renderValueViewWithNullDefault(
             $field, $value,
-            'dms::components.field.date-or-time.single.value',
+            'dms::components.field.date-or-time.range.value',
             [
                 'format' => $fieldType->get(DateTimeTypeBase::ATTR_FORMAT),
             ]
         );
+    }
+
+    private function getMode(IFieldType $fieldType) : string
+    {
+        if ($fieldType instanceof DateRangeType) {
+            return 'date';
+        }
+
+        if ($fieldType instanceof TimeRangeType) {
+            return 'time';
+        }
+
+        if ($fieldType instanceof DateOrTimeRangeType) {
+            return 'date-time';
+        }
+
+        if ($fieldType instanceof TimezonedDateTimeRangeType) {
+            return 'timezoned-date-time';
+        }
+
+        throw InvalidArgumentException::format('Unknown date range field type: %s', get_class($fieldType));
     }
 }

@@ -106,6 +106,9 @@ a[disabled] {
   padding-top: 40px;
   overflow: auto; }
 
+.dms-staged-form textarea.form-control {
+  max-width: 100%; }
+
 .spinner {
   margin: 0 auto 0;
   width: 70px;

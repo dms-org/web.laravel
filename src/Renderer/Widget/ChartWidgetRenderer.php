@@ -55,6 +55,10 @@ class ChartWidgetRenderer extends WidgetRenderer
             $links[route('dms::package.module.chart.view.show', $viewParams)] = $chartView->getLabel();
         }
 
+        if (!$links) {
+            $links[route('dms::package.module.chart.view.show', [$module->getPackageName(), $module->getName(), $chartDisplay->getName(), 'all'])] = 'All';
+        }
+
         return $links;
     }
 

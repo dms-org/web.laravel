@@ -53,9 +53,10 @@ class TableController extends DmsController
         /** @var ITableDisplay $table */
         list($module, $table) = $this->loadTable($packageName, $moduleName, $tableName);
 
-
         if ($table instanceof ISummaryTable) {
-            return redirect()->route('dms::package.module.dashboard', [$packageName, $moduleName]);
+            return redirect()
+                ->route('dms::package.module.dashboard', [$packageName, $moduleName])
+                ->with('initial-view-name', $viewName);
         }
 
         $this->loadTableView($table, $viewName);

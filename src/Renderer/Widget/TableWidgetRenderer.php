@@ -62,6 +62,10 @@ class TableWidgetRenderer extends WidgetRenderer
             $links[route('dms::package.module.table.view.show', $viewParams)] = $tableView->getLabel();
         }
 
+        if (!$links) {
+            $links[route('dms::package.module.chart.view.show', [$module->getPackageName(), $module->getName(), $tableDisplay->getName(), 'all'])] = 'All';
+        }
+
         return $links;
     }
 

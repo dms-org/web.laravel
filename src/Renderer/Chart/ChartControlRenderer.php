@@ -55,6 +55,7 @@ class ChartControlRenderer
         return view('dms::components.chart.chart-control')
             ->with([
                 'structure'        => $chart->getDataSource()->getStructure(),
+                'axes'             => $chart->getDataSource()->getStructure()->getAxes(),
                 'table'            => $chart->hasView($viewName) ? $chart->getView($viewName) : $chart->getDefaultView(),
                 'loadChartDataUrl' => route(
                     'dms::package.module.chart.view.load',

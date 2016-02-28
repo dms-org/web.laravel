@@ -7,7 +7,7 @@
         <div class="nav-tabs-custom dms-table-tabs">
             <ul class="nav nav-tabs">
                 @foreach($summaryTableViews as $view)
-                    <li class="{{ $view->isDefault() ? 'active' : '' }}">
+                    <li class="{{ $activeViewName === $view->getName() ? 'active' : '' }}">
                         <a class="dms-table-tab-show-button" href="#summary-table-tab-{{ $view->getName() }}" data-toggle="tab">{{ $view->getLabel() }}</a>
                     </li>
                 @endforeach

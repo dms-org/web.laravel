@@ -68,6 +68,10 @@ class ReadModuleRenderer extends ModuleRenderer
             }
         }
 
+        $activeViewName = session('initial-view-name') && $summaryTable->hasView(session('initial-view-name'))
+            ? session('initial-view-name')
+            : $summaryTable->getDefaultView()->getName();
+
         return view('dms::package.module.dashboard.summary-table')
             ->with([
                 'packageName'       => $module->getPackageName(),
@@ -76,6 +80,7 @@ class ReadModuleRenderer extends ModuleRenderer
                 'module'            => $module,
                 'summaryTable'      => $summaryTable,
                 'summaryTableViews' => $views,
+                'activeViewName'    => $activeViewName,
                 'createActionName'  => $createActionName,
             ])
             ->render();

@@ -58,7 +58,7 @@ class ChartController extends DmsController
                 'breadcrumbs'     => [
                     route('dms::index')                                                 => 'Home',
                     route('dms::package.dashboard', [$packageName])                     => StringHumanizer::title($packageName),
-                    route('dms::package.module.dashboard', [$packageName, $moduleName]) => $moduleName,
+                    route('dms::package.module.dashboard', [$packageName, $moduleName]) => StringHumanizer::title($moduleName),
                 ],
                 'finalBreadcrumb' => StringHumanizer::title($chartName),
                 'chartRenderer'   => $this->chartRenderer,

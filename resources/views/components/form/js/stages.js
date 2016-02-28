@@ -23,6 +23,9 @@ Dms.form.initializeCallbacks.push(function (element) {
             var dependentFields = currentStage.attr('data-stage-dependent-fields');
             var dependentFieldNames = dependentFields ? JSON.parse(dependentFields) : null;
             var currentAjaxRequest = null;
+            var previousLoadAttempt = 0;
+            var minMillisecondsBetweenLoads = 2000;
+            var isWaitingForNextLoadAttempt = false;
 
             var makeDependentFieldSelectorFor = function (selector) {
                 if (dependentFieldNames) {
@@ -39,13 +42,6 @@ Dms.form.initializeCallbacks.push(function (element) {
             };
 
             var loadNextStage = function () {
-                var previousFields = previousStages.find(makeDependentFieldSelectorFor('*'));
-
-                if (!arePreviousFieldsValid(previousFields)) {
-                    return;
-                }
-
-                Dms.form.validation.clearMessages(form);
 
                 if (currentAjaxRequest) {
                     currentAjaxRequest.abort();
@@ -53,6 +49,30 @@ Dms.form.initializeCallbacks.push(function (element) {
 
                 container.removeClass('loaded');
                 container.addClass('loading');
+
+                var currentTime = new Date().getTime();
+                var millisecondsBetweenLastLoad = currentTime - previousLoadAttempt;
+
+                if (millisecondsBetweenLastLoad >= minMillisecondsBetweenLoads) {
+                    isWaitingForNextLoadAttempt = false;
+                    previousLoadAttempt = currentTime;
+                }
+                else {
+                    if (!isWaitingForNextLoadAttempt) {
+                        isWaitingForNextLoadAttempt = true;
+                        setTimeout(loadNextStage, minMillisecondsBetweenLoads - millisecondsBetweenLastLoad);
+                    }
+                    return;
+                }
+
+                var previousFields = previousStages.find(makeDependentFieldSelectorFor('*'));
+
+                if (!arePreviousFieldsValid(previousFields)) {
+                    container.removeClass('loading');
+                    return;
+                }
+
+                Dms.form.validation.clearMessages(form);
 
                 var formData = new FormData();
 

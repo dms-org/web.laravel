@@ -1,55 +1,8 @@
 Dms.form.initializeCallbacks.push(function (element) {
-    var convertPhpDateFormatToMomentFormat = function (format) {
-        var replacements = {
-            'd': 'DD',
-            'D': 'ddd',
-            'j': 'D',
-            'l': 'dddd',
-            'N': 'E',
-            'S': 'o',
-            'w': 'e',
-            'z': 'DDD',
-            'W': 'W',
-            'F': 'MMMM',
-            'm': 'MM',
-            'M': 'MMM',
-            'n': 'M',
-            'o': 'YYYY',
-            'Y': 'YYYY',
-            'y': 'YY',
-            'a': 'a',
-            'A': 'A',
-            'g': 'h',
-            'G': 'H',
-            'h': 'hh',
-            'H': 'HH',
-            'i': 'mm',
-            's': 'ss',
-            'u': 'SSS',
-            'e': 'zz', // TODO: full timezone id
-            'O': 'ZZ',
-            'P': 'Z',
-            'T': 'zz',
-            'U': 'X'
-        };
-
-        var newFormat = '';
-
-        $.each(format.split(''), function (index, char) {
-            if (replacements[char]) {
-                newFormat += replacements[char];
-            } else {
-                newFormat += char;
-            }
-        });
-
-        return newFormat;
-    };
-
     element.find('input.date-or-time')
         .each(function () {
             var inputElement = $(this);
-            var dateFormat = convertPhpDateFormatToMomentFormat(inputElement.attr('data-date-format'));
+            var dateFormat = Dms.utilities.convertPhpDateFormatToMomentFormat(inputElement.attr('data-date-format'));
             var mode = inputElement.attr('data-mode');
 
             var config = {
@@ -95,7 +48,7 @@ Dms.form.initializeCallbacks.push(function (element) {
             var rangeElement = $(this);
             var startInput = rangeElement.find('.start-input');
             var endInput = rangeElement.find('.end-input');
-            var dateFormat = convertPhpDateFormatToMomentFormat(startInput.attr('data-date-format'));
+            var dateFormat = Dms.utilities.convertPhpDateFormatToMomentFormat(startInput.attr('data-date-format'));
             var mode = rangeElement.attr('data-mode');
 
             var config = {
@@ -104,7 +57,7 @@ Dms.form.initializeCallbacks.push(function (element) {
                 },
                 parentEl: rangeElement,
                 showDropdowns: true,
-                autoApply: true,
+                autoApply: !rangeElement.attr('data-dont-auto-apply'),
                 linkedCalendars: false,
                 autoUpdateInput: false
             };
@@ -123,6 +76,7 @@ Dms.form.initializeCallbacks.push(function (element) {
             startInput.daterangepicker(config, function (start, end, label) {
                 startInput.val(start.format(dateFormat));
                 endInput.val(end.format(dateFormat));
+                rangeElement.triggerHandler('dms-range-updated');
             });
 
             var picker = startInput.data('daterangepicker');

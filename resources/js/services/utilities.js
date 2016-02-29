@@ -30,3 +30,59 @@ Dms.utilities.downloadFileFromUrl = function(url) {
         .hide()
         .appendTo('body');
 };
+
+Dms.utilities.isTouchDevice = function () {
+    try {
+        document.createEvent("TouchEvent");
+        return true;
+    } catch (e) {
+        return false;
+    }
+};
+
+Dms.utilities.convertPhpDateFormatToMomentFormat = function (format) {
+    var replacements = {
+        'd': 'DD',
+        'D': 'ddd',
+        'j': 'D',
+        'l': 'dddd',
+        'N': 'E',
+        'S': 'o',
+        'w': 'e',
+        'z': 'DDD',
+        'W': 'W',
+        'F': 'MMMM',
+        'm': 'MM',
+        'M': 'MMM',
+        'n': 'M',
+        'o': 'YYYY',
+        'Y': 'YYYY',
+        'y': 'YY',
+        'a': 'a',
+        'A': 'A',
+        'g': 'h',
+        'G': 'H',
+        'h': 'hh',
+        'H': 'HH',
+        'i': 'mm',
+        's': 'ss',
+        'u': 'SSS',
+        'e': 'zz', // TODO: full timezone id
+        'O': 'ZZ',
+        'P': 'Z',
+        'T': 'zz',
+        'U': 'X'
+    };
+
+    var newFormat = '';
+
+    $.each(format.split(''), function (index, char) {
+        if (replacements[char]) {
+            newFormat += replacements[char];
+        } else {
+            newFormat += char;
+        }
+    });
+
+    return newFormat;
+};

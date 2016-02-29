@@ -1,5 +1,5 @@
-Dms.chart.initializeCallbacks.push(function () {
-    $('.dms-chart.dms-pie-chart').each(function () {
+Dms.chart.initializeCallbacks.push(function (element) {
+    element.find('.dms-pie-chart').each(function () {
         var chart = $(this);
         var chartData = JSON.parse(chart.attr('data-chart-data'));
 
@@ -7,9 +7,17 @@ Dms.chart.initializeCallbacks.push(function () {
             chart.attr('id', Dms.utilities.idGenerator());
         }
 
-        Morris.Donut({
+        var morrisChart = Morris.Donut({
             element: chart.attr('id'),
-            data: chartData
+            data: chartData,
+            resize: true,
+            redraw: true
+        });
+
+        $(window).on('resize', function () {
+            if (morrisChart.raphael) {
+                morrisChart.redraw();
+            }
         });
     });
 });

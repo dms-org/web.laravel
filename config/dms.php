@@ -40,12 +40,13 @@ return [
             'exception-handlers' => [
                 Dms\Web\Laravel\Action\ExceptionHandler\UserForbiddenExceptionHandler::class,
                 Dms\Web\Laravel\Action\ExceptionHandler\InvalidFormSubmissionExceptionHandler::class,
-                Dms\Web\Laravel\Action\ExceptionHandler\EntityOutOfSyncExceptionHandler::class
+                Dms\Web\Laravel\Action\ExceptionHandler\EntityOutOfSyncExceptionHandler::class,
             ],
         ],
 
         'renderers' => [
             'form-fields' => [
+                Dms\Web\Laravel\Renderer\Form\Field\AddressFieldRenderer::class,
                 Dms\Web\Laravel\Renderer\Form\Field\ArrayOfFilesFieldsRenderer::class,
                 Dms\Web\Laravel\Renderer\Form\Field\ArrayOfOptionsFieldRenderer::class,
                 Dms\Web\Laravel\Renderer\Form\Field\ArrayOfFieldRenderer::class,
@@ -62,6 +63,7 @@ return [
                 Dms\Web\Laravel\Renderer\Form\Field\RgbColourFieldRenderer::class,
                 Dms\Web\Laravel\Renderer\Form\Field\StringFieldRenderer::class,
                 Dms\Web\Laravel\Renderer\Form\Field\TextareaFieldRenderer::class,
+                Dms\Web\Laravel\Renderer\Form\Field\WysiwygFieldRenderer::class,
             ],
             'table'       => [
                 'columns'           => [
@@ -94,7 +96,7 @@ return [
 
     'actions' => [
         'safe' => [
-            Dms\Core\Common\Crud\Action\Crud\ViewDetailsAction::class
+            Dms\Core\Common\Crud\Action\Crud\ViewDetailsAction::class,
         ],
     ],
 
@@ -109,11 +111,38 @@ return [
     ],
 
     'front-end' => [
-        'stylesheets' => [
-            'vendor/dms/css/all.css',
+        'global' => [
+            'stylesheets' => [
+                'vendor/dms/css/all.css',
+            ],
+            'scripts'     => [
+                'vendor/dms/js/all.js',
+            ],
         ],
-        'scripts'     => [
-            'vendor/dms/js/all.js',
+        'forms' => [
+            'stylesheets' => [
+                'vendor/dms/wysiwyg/wysiwyg.css',
+            ],
+            'scripts'     => [
+                'vendor/dms/wysiwyg/wysiwyg.js',
+                'https://maps.googleapis.com/maps/api/js?v=3.exp&libraries=places',
+            ],
+        ],
+        'tables' => [
+            'stylesheets' => [
+                //
+            ],
+            'scripts'     => [
+                //
+            ],
+        ],
+        'charts' => [
+            'stylesheets' => [
+                //
+            ],
+            'scripts'     => [
+                //
+            ],
         ],
     ],
 ];

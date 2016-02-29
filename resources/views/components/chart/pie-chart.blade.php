@@ -1,4 +1,4 @@
 <div
-        class="dms-chart dms-pi-chart"
+        class="dms-pie-chart"
         data-chart-data="{{ json_encode($data) }}"
 ></div>

@@ -1,10 +1,13 @@
 @import "components/background/patterns";
 @import "components/sidebar";
+@import "components/alerts";
 @import "components/links";
 @import "components/table";
 @import "components/chart";
 @import "components/form";
+@import "components/details";
 @import "components/spinner";
+@import "components/wysiwyg";
 
 body {
     font-family: Arial, sans-serif!important;

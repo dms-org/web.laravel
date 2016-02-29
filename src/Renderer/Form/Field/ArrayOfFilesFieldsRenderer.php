@@ -19,11 +19,11 @@ class ArrayOfFilesFieldsRenderer extends FileFieldRenderer
     /**
      * Gets the expected class of the field type for the field.
      *
-     * @return string
+     * @return array
      */
-    public function getFieldTypeClass() : string
+    public function getFieldTypeClasses() : array
     {
-        return ArrayOfType::class;
+        return [ArrayOfType::class];
     }
 
     /**

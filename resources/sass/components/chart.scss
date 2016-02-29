@@ -1,9 +1,12 @@
 .dms-chart-container {
     position: relative;
-    min-height: 50px;
+
+    .dms-chart {
+        min-height: 100px;
+    }
 
     &.loading {
-        table {
+        .dms-chart {
             opacity: .3;
         }
 

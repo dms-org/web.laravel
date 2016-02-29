@@ -21,16 +21,16 @@ abstract class FieldRenderer implements IFieldRenderer
     protected $fieldRendererCollection;
 
     /**
-     * @var string
+     * @var string[]
      */
-    protected $fieldTypeClass;
+    protected $fieldTypeClasses;
 
     /**
      * FieldRenderer constructor.
      */
     public function __construct()
     {
-        $this->fieldTypeClass = $this->getFieldTypeClass();
+        $this->fieldTypeClasses = $this->getFieldTypeClasses();
     }
 
     /**
@@ -54,7 +54,14 @@ abstract class FieldRenderer implements IFieldRenderer
     {
         $type = $field->getType();
 
-        if (!($type instanceof $this->fieldTypeClass)) {
+        $isCorrectType = false;
+        foreach ($this->fieldTypeClasses as $class) {
+            if ($type instanceof $class) {
+                $isCorrectType = true;
+            }
+        }
+
+        if (!$isCorrectType) {
             return false;
         }
 

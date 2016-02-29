@@ -17,11 +17,11 @@ class BoolFieldRenderer extends BladeFieldRenderer
     /**
      * Gets the expected class of the field type for the field.
      *
-     * @return string
+     * @return array
      */
-    public function getFieldTypeClass() : string
+    public function getFieldTypeClasses() : array
     {
-        return BoolType::class;
+        return [BoolType::class];
     }
 
     /**

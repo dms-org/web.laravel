@@ -2,8 +2,12 @@
 
 namespace Dms\Web\Laravel\Renderer\Chart;
 
+use Dms\Common\Structure\DateTime\Date;
+use Dms\Common\Structure\DateTime\DateTime;
+use Dms\Common\Structure\DateTime\TimeOfDay;
 use Dms\Core\Module\IChartDisplay;
 use Dms\Core\Table\Chart\IChartDataTable;
+use Dms\Core\Table\Chart\Structure\GraphChart;
 
 /**
  * The chart control renderer class
@@ -54,14 +58,37 @@ class ChartControlRenderer
     {
         return view('dms::components.chart.chart-control')
             ->with([
-                'structure'        => $chart->getDataSource()->getStructure(),
-                'axes'             => $chart->getDataSource()->getStructure()->getAxes(),
-                'table'            => $chart->hasView($viewName) ? $chart->getView($viewName) : $chart->getDefaultView(),
-                'loadChartDataUrl' => route(
-                    'dms::package.module.chart.view.load',
-                    [$packageName, $moduleName, $chart->getName(), $viewName]
-                ),
-            ])
+                    'structure'        => $chart->getDataSource()->getStructure(),
+                    'axes'             => $chart->getDataSource()->getStructure()->getAxes(),
+                    'table'            => $chart->hasView($viewName) ? $chart->getView($viewName) : $chart->getDefaultView(),
+                    'loadChartDataUrl' => route(
+                        'dms::package.module.chart.view.load',
+                        [$packageName, $moduleName, $chart->getName(), $viewName]
+                    ),
+                ] + $this->getDateSettings($chart))
             ->render();
+    }
+
+    private function getDateSettings(IChartDisplay $chart) : array
+    {
+        $chartStructure = $chart->getDataSource()->getStructure();
+        if (!($chartStructure instanceof GraphChart)) {
+            return [];
+        }
+
+        $horizontalAxis = $chartStructure->getHorizontalAxis();
+        $dateTimeClass  = $horizontalAxis->getType()->getPhpType()->nonNullable()->asTypeString();
+
+        return [
+            'dateAxisName' => $horizontalAxis->getName(),
+            'dateFormat'   => defined($dateTimeClass . '::DISPLAY_FORMAT')
+                ? constant($dateTimeClass . '::DISPLAY_FORMAT')
+                : DateTime::DISPLAY_FORMAT,
+            'dateMode'     => [
+                                  TimeOfDay::class => 'time',
+                                  Date::class      => 'date',
+                                  DateTime::class  => 'date-time',
+                              ][$dateTimeClass] ?? 'date-time',
+        ];
     }
 }

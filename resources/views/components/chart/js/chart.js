@@ -4,6 +4,7 @@ Dms.chart.initializeCallbacks.push(function (element) {
         var control = $(this);
         var chartContainer = control.find('.dms-chart-container');
         var chartElement = chartContainer.find('.dms-chart');
+        var chartRangePicker = chartContainer.find('.dms-chart-range-picker');
         var loadChartUrl = control.attr('data-load-chart-url');
 
         var criteria = {
@@ -52,5 +53,15 @@ Dms.chart.initializeCallbacks.push(function (element) {
         };
 
         loadCurrentData();
+
+        chartRangePicker.on('dms-range-updated', function () {
+            var horizontalAxis = chartContainer.attr('data-date-axis-name');
+            criteria.conditions = [
+                {axis: horizontalAxis, operator: '>=', value: chartRangePicker.find('.start-input').val()},
+                {axis: horizontalAxis, operator: '<=', value: chartRangePicker.find('.end-input').val()}
+            ];
+
+            loadCurrentData();
+        });
     });
 });

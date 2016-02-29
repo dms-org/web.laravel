@@ -50,6 +50,12 @@ var bowerFilesConfig = {
         },
         "JavaScript-Canvas-to-Blob": {
             "main": ["js/canvas-to-blob.min.js"]
+        },
+        "typeahead.js": {
+            "main": ["dist/typeahead.bundle.min.js"]
+        },
+        "typeahead-addresspicker": {
+            "main": ["dist/typeahead-addresspicker.min.js"]
         }
     }
 };
@@ -80,6 +86,25 @@ elixir(function (mix) {
     mix.copy(loadBowerFiles(["**/*.woff", "**/*.woff2"]), paths.distFonts);
     mix.copy(paths.bower + 'admin-lte/dist/img/', paths.distImg);
     mix.copy([paths.bower + 'iCheck/skins/square/blue.png', paths.bower + 'iCheck/skins/square/blue@2x.png'], paths.distCss);
+
+    // Wysiwyg
+    var wysiwygScripts = [
+        paths.bower + 'tinymce/tinymce.min.js',
+        paths.bower + 'tinymce/themes/modern/theme.min.js',
+    ];
+    var plugins = [
+        "advlist", "autolink", "lists", "link", "image", "charmap",
+        "print", "preview", "anchor", "searchreplace", "visualblocks",
+        "code", "insertdatetime", "media", "table", "contextmenu", "paste", "imagetools"
+    ];
+    for (var pluginIndex in plugins) {
+        wysiwygScripts.push(paths.bower + 'tinymce/plugins/' + plugins[pluginIndex] + '/plugin.min.js');
+    }
+    mix.scripts(wysiwygScripts, paths.dist + 'wysiwyg/wysiwyg.js', './');
+    mix.styles([paths.bower + 'tinymce/skins/lightgray/skin.min.css'], paths.dist + 'wysiwyg/wysiwyg.css', './');
+    mix.copy([paths.bower + 'tinymce/skins/lightgray/'], paths.dist + '/wysiwyg/skins/lightgray/');
+    mix.copy([paths.bower + 'tinymce/skins/lightgray/fonts'], paths.dist + '/wysiwyg/fonts/');
+    mix.copy([paths.bower + 'tinymce/skins/lightgray/img'], paths.dist + '/wysiwyg/img/');
 
     // Combine
     mix.styles([paths.distCss + 'vendor.css', paths.distCss + 'app.css'], paths.distCss + 'all.css', './');

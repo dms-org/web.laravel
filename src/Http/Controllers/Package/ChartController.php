@@ -53,6 +53,7 @@ class ChartController extends DmsController
 
         return view('dms::package.module.chart')
             ->with([
+                'assetGroups'     => ['charts'],
                 'pageTitle'       => StringHumanizer::title($packageName . ' :: ' . $moduleName . ' :: ' . $chartName),
                 'pageSubTitle'    => $viewName,
                 'breadcrumbs'     => [
@@ -86,26 +87,24 @@ class ChartController extends DmsController
 
     protected function filterCriteriaFromRequest(Request $request, IChartStructure $structure, ChartCriteria $criteria)
     {
-        $validComponentIds = [];
+        $axisNames = [];
 
         foreach ($structure->getAxes() as $axis) {
-            foreach ($axis->getComponents() as $component) {
-                $validComponentIds[] = $axis->getName() . '.' . $component->getName();
-            }
+            $axisNames[] = $axis->getName();
         }
 
         $this->validate($request, [
-            'conditions.*.component' => 'required|in:' . implode(',', $validComponentIds),
-            'conditions.*.operator'  => 'required|in:' . implode(',', ConditionOperator::getAll()),
-            'conditions.*.value'     => 'required',
-            'orderings.*.component'  => 'required|in:' . implode(',', $validComponentIds),
-            'orderings.*.direction'  => 'required|in' . implode(',', OrderingDirection::getAll()),
+            'conditions.*.axis'     => 'required|in:' . implode(',', $axisNames),
+            'conditions.*.operator' => 'required|in:' . implode(',', ConditionOperator::getAll()),
+            'conditions.*.value'    => 'required',
+            'orderings.*.component' => 'required|in:' . implode(',', $axisNames),
+            'orderings.*.direction' => 'required|in' . implode(',', OrderingDirection::getAll()),
         ]);
 
 
         if ($request->has('conditions')) {
             foreach ($request->input('conditions') as $condition) {
-                $criteria->where($condition['component'], $condition['operator'], $condition['value']);
+                $criteria->where($condition['axis'], $condition['operator'], $condition['value']);
             }
         }
 

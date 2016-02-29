@@ -15,9 +15,9 @@ interface IFieldRenderer
     /**
      * Gets the expected class of the field type for the field.
      *
-     * @return string
+     * @return array
      */
-    public function getFieldTypeClass() : string;
+    public function getFieldTypeClasses() : array;
 
     /**
      * Returns whether this renderer can render the supplied field.

@@ -29,6 +29,10 @@
     "JavaScript-Canvas-to-Blob": "blueimp/JavaScript-Canvas-to-Blob#^3.3.0",
     "darkroom": "^2.0.1",
     "bootstrap-daterangepicker": "^2.1.18",
-    "jquery-minicolors": "^2.2.3"
+    "jquery-minicolors": "^2.2.3",
+    "tinymce": "^4.3.4",
+    "typeahead.js": "^0.10.4",
+    "typeahead-addresspicker": "^0.1.4",
+    "typeahead.js-bootstrap3.less": "^0.2.3"
   }
 }

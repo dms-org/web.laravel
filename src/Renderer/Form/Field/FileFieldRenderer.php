@@ -6,11 +6,9 @@ use Dms\Common\Structure\FileSystem\Form\FileUploadType;
 use Dms\Common\Structure\FileSystem\Form\ImageUploadType;
 use Dms\Core\File\IFile;
 use Dms\Core\Form\Field\Type\FieldType;
-use Dms\Core\Form\Field\Type\InnerFormType;
 use Dms\Core\Form\IField;
 use Dms\Core\Form\IFieldType;
 use Dms\Web\Laravel\File\ITemporaryFileService;
-use Dms\Web\Laravel\Renderer\Form\FormRenderer;
 use Illuminate\Contracts\Config\Repository;
 
 /**
@@ -41,11 +39,11 @@ class FileFieldRenderer extends BladeFieldRenderer
     /**
      * Gets the expected class of the field type for the field.
      *
-     * @return string
+     * @return array
      */
-    public function getFieldTypeClass() : string
+    public function getFieldTypeClasses() : array
     {
-        return FileUploadType::class;
+        return [FileUploadType::class];
     }
 
     /**
@@ -137,7 +135,7 @@ class FileFieldRenderer extends BladeFieldRenderer
             [
                 'existingFiles' => $value !== null
                     ? $this->getExistingFilesArray([$field->getUnprocessedInitialValue()])
-                    : null
+                    : null,
             ]
         );
     }

@@ -7,6 +7,12 @@
 .user-panel > .info {
   position: static; }
 
+.alerts-list {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  z-index: 99999; }
+
 a[disabled] {
   opacity: .6;
   pointer-events: none;
@@ -37,9 +43,10 @@ a[disabled] {
     -webkit-user-drag: none; }
 
 .dms-chart-container {
-  position: relative;
-  min-height: 50px; }
-  .dms-chart-container.loading table {
+  position: relative; }
+  .dms-chart-container .dms-chart {
+    min-height: 100px; }
+  .dms-chart-container.loading .dms-chart {
     opacity: .3; }
   .dms-chart-container.loading .spinner {
     display: block;
@@ -109,6 +116,18 @@ a[disabled] {
 .dms-staged-form textarea.form-control {
   max-width: 100%; }
 
+.dms-staged-form .dms-map-picker {
+  margin: 15px 0;
+  height: 200px;
+  border-radius: 3px;
+  border: 1px solid #ddd; }
+
+.dms-display-map {
+  margin: 15px 0;
+  height: 200px;
+  border-radius: 3px;
+  border: 1px solid #ddd; }
+
 .spinner {
   margin: 0 auto 0;
   width: 70px;
@@ -145,6 +164,9 @@ a[disabled] {
   40% {
     -webkit-transform: scale(1);
     transform: scale(1); } }
+
+.ui-tooltip.ui-widget {
+  display: none !important; }
 
 body {
   font-family: Arial, sans-serif !important; }

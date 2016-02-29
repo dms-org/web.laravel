@@ -141,6 +141,7 @@ class ActionController extends DmsController
 
         return view('dms::package.module.action')
             ->with([
+                'assetGroups'      => ['forms'],
                 'pageTitle'          => StringHumanizer::title(implode(' :: ', $titleParts)),
                 'breadcrumbs'        => [
                     route('dms::index')                                                 => 'Home',
@@ -230,6 +231,7 @@ class ActionController extends DmsController
 
         return view('dms::package.module.details')
             ->with([
+                'assetGroups'      => ['forms'],
                 'pageTitle'       => StringHumanizer::title(implode(' :: ', $titleParts)),
                 'breadcrumbs'     => [
                     route('dms::index')                                                 => 'Home',

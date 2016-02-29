@@ -39,7 +39,7 @@ Dms.form.initializeCallbacks.push(function (element) {
             });
 
             form.find('input[name][type]').each(function () {
-                if ($(this).val() === '' && /text|email|url|color/i.test($(this).attr('type'))) {
+                if ($(this).val() === '' && /hidden|text|email|url|color/i.test($(this).attr('type'))) {
                     $(this).attr('data-temp-name', $(this).attr('name'));
                     $(this).removeAttr('name')
                 }

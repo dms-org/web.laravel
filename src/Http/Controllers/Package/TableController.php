@@ -63,6 +63,7 @@ class TableController extends DmsController
 
         return view('dms::package.module.table')
             ->with([
+                'assetGroups'      => ['tables'],
                 'pageTitle'       => StringHumanizer::title($packageName . ' :: ' . $moduleName . ' :: ' . $tableName),
                 'pageSubTitle'    => $viewName,
                 'breadcrumbs'     => [

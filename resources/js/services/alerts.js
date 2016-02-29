@@ -22,7 +22,7 @@ Dms.alerts.add = function (type, title, message, timeout) {
         if (alert.is(':visible')) {
             alert.fadeOut();
         }
-    }, timeout || 15000);
+    }, timeout || 10000);
 };
 
 Dms.global.initializeCallbacks.push(function () {

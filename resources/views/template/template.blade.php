@@ -8,14 +8,18 @@
     <title>{{ ($pageTitle ?? false) ? $pageTitle . ' - ' : '' }}{{ $title }}</title>
     <!-- Tell the browser to be responsive to screen width -->
     <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
-    @foreach (config('dms.front-end.stylesheets') as $stylesheet)
-        <link rel="stylesheet" href="{{ asset($stylesheet) }}"/>
+    @foreach (array_merge(['global'], $assetGroups ?? []) as $assetGroup)
+        @foreach (config('dms.front-end.' . $assetGroup . '.stylesheets') as $stylesheet)
+            <link rel="stylesheet" href="{{ asset($stylesheet) }}"/>
+        @endforeach
     @endforeach
 </head>
 @yield('body-content')
 
-@foreach (config('dms.front-end.scripts') as $script)
-    <script src="{{ asset($script) }}"></script>
+@foreach (array_merge(['global'], $assetGroups ?? []) as $assetGroup)
+    @foreach (config('dms.front-end.' . $assetGroup . '.scripts') as $script)
+        <script src="{{ asset($script) }}"></script>
+    @endforeach
 @endforeach
 @include('dms::partials.js-config')
 

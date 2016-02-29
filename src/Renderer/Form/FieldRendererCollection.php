@@ -1,7 +1,8 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Renderer\Form;
 
+use Dms\Common\Structure\Web\Form\HtmlType;
 use Dms\Core\Exception\InvalidArgumentException;
 use Dms\Core\Form\IField;
 
@@ -28,7 +29,9 @@ class FieldRendererCollection
             IFieldRenderer::class);
 
         foreach ($fieldRenderers as $fieldRenderer) {
-            $this->fieldRenderers[$fieldRenderer->getFieldTypeClass()][] = $fieldRenderer;
+            foreach ($fieldRenderer->getFieldTypeClasses() as $class) {
+                $this->fieldRenderers[$class][] = $fieldRenderer;
+            }
             $fieldRenderer->setRendererCollection($this);
         }
     }
@@ -44,6 +47,9 @@ class FieldRendererCollection
         $fieldType = $field->getType();
 
         $fieldTypeClass = get_class($fieldType);
+        if ($fieldTypeClass === HtmlType::class) {
+
+        }
 
         while ($fieldTypeClass) {
 

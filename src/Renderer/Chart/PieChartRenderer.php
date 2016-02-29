@@ -1,4 +1,4 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Renderer\Chart;
 
@@ -55,16 +55,23 @@ class PieChartRenderer extends ChartRenderer
         $labelComponentName,
         $valueAxisName,
         $valueComponentName
-    ) {
+    )
+    {
         $results = [];
 
         foreach ($data->getRows() as $row) {
-            $results[] = [
-                'label' => $row[$labelAxisName][$labelComponentName],
-                'value' => $row[$valueAxisName][$valueComponentName],
-            ];
+            $key = $row[$labelAxisName][$labelComponentName];
+
+            if (isset($results[$key])) {
+                $results[$key]['value'] += $row[$valueAxisName][$valueComponentName];
+            } else {
+                $results[$key] = [
+                    'label' => $key,
+                    'value' => $row[$valueAxisName][$valueComponentName],
+                ];
+            }
         }
 
-        return $results;
+        return array_values($results);
     }
 }

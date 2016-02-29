@@ -1,7 +1,9 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Renderer\Chart;
 
+use Dms\Common\Structure\DateTime\DateOrTimeObject;
+use Dms\Common\Structure\DateTime\DateTime;
 use Dms\Core\Exception\InvalidArgumentException;
 use Dms\Core\Table\Chart\IChartDataTable;
 use Dms\Core\Table\Chart\Structure\AreaChart;
@@ -38,13 +40,13 @@ class GraphChartRenderer extends ChartRenderer
         /** @var GraphChart $chartStructure */
         $chartStructure = $chartData->getStructure();
 
-        $yAxisKeys = [];
+        $yAxisKeys   = [];
         $yAxisLabels = [];
 
         $yCounter = 1;
 
         foreach ($chartStructure->getVerticalAxis()->getComponents() as $component) {
-            $yAxisKeys[] = 'y' . $yCounter++;
+            $yAxisKeys[]   = 'y' . $yCounter++;
             $yAxisLabels[] = $component->getLabel();
         }
 
@@ -55,9 +57,14 @@ class GraphChartRenderer extends ChartRenderer
             $chartStructure->getVerticalAxis()->getName()
         );
 
+        $dateTimeClass = $chartStructure->getHorizontalAxis()->getType()->getPhpType()->nonNullable()->asTypeString();
+
         return view('dms::components.chart.graph-chart')
             ->with([
                 'chartType'          => $this->getChartType($chartStructure),
+                'dateFormat'         => defined($dateTimeClass . '::DISPLAY_FORMAT')
+                    ? constant($dateTimeClass . '::DISPLAY_FORMAT')
+                    : DateTime::DISPLAY_FORMAT,
                 'data'               => $chartDataArray,
                 'horizontalAxisKey'  => 'x',
                 'verticalAxisKeys'   => $yAxisKeys,
@@ -73,12 +80,12 @@ class GraphChartRenderer extends ChartRenderer
         foreach ($data->getRows() as $row) {
             $resultRow = [];
 
-            $resultRow['x'] = $row[$xAxisName][$xComponentName];
+            $resultRow['x'] = $this->transformValue($row[$xAxisName][$xComponentName]);
 
             $yCounter = 1;
 
             foreach ($row[$yAxisName] as $yComponentValue) {
-                $resultRow['y' . $yCounter++] = $yComponentValue;
+                $resultRow['y' . $yCounter++] = $this->transformValue($yComponentValue);
             }
 
             $results[] = $resultRow;
@@ -100,5 +107,18 @@ class GraphChartRenderer extends ChartRenderer
             default:
                 throw InvalidArgumentException::format('Unknown chart type %s', get_class($chartStructure));
         }
+    }
+
+    private function transformValue($value) : string
+    {
+        if ($value instanceof \DateTimeInterface) {
+            return $value->format(DateTime::DISPLAY_FORMAT);
+        }
+
+        if ($value instanceof DateOrTimeObject) {
+            return $value->format($value::DISPLAY_FORMAT);
+        }
+
+        return (string)$value;
     }
 }

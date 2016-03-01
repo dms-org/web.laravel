@@ -89,10 +89,24 @@
         max-width: 100%;
     }
 
+    .date-picker-container {
+        position: relative;
+    }
+
     .dms-map-picker {
         margin: 15px 0;
         height: 200px;
         border-radius: 3px;
         border: 1px solid #ddd;
+    }
+
+    .dms-field-table {
+        .row-key-column {
+            width: 20%;
+        }
+
+        .daterangepicker {
+            min-width: 450px;
+        }
     }
 }

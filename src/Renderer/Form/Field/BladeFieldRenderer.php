@@ -74,7 +74,6 @@ abstract class BladeFieldRenderer extends FieldRenderer
         }
 
         return view($viewName)
-            ->with('value', $value)
             ->with('name', $field->getName())
             ->with('label', $field->getLabel())
             ->with('value', $value)

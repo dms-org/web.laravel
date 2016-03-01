@@ -23,8 +23,8 @@ Dms.form.initializeCallbacks.push(function (element) {
 
             var amountOfInputs = getAmountOfInputs();
 
-            addButton.prop('disabled', getAmountOfInputs() >= maxFields);
-            listOfFields.find('.btn-remove-field').prop('disabled', getAmountOfInputs() <= minFields);
+            addButton.prop('disabled', amountOfInputs >= maxFields);
+            listOfFields.find('.btn-remove-field').prop('disabled', amountOfInputs <= minFields);
 
             while (amountOfInputs < minFields) {
                 addNewField();
@@ -67,6 +67,7 @@ Dms.form.initializeCallbacks.push(function (element) {
             listOfFields.closest('form').triggerHandler('dms-form-updated');
 
             invalidateControl();
+            // TODO: reindex
         });
 
         addButton.on('click', addNewField);

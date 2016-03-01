@@ -84,10 +84,7 @@ Dms.form.initializeCallbacks.push(function (element) {
                             formData.append(fieldName, file);
                         });
                     } else {
-                        var value = $(this).val();
-                        if (value !== '') {
-                            formData.append(fieldName, $(this).val());
-                        }
+                        formData.append(fieldName, $(this).val());
                     }
                 });
 

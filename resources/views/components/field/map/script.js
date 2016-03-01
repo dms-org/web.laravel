@@ -75,7 +75,14 @@ Dms.form.initializeCallbacks.push(function (element) {
             }
             latitudeInput.val(result.lat());
             longitudeInput.val(result.lng());
-            fullAddressInput.val(addressSearchInput.val());
+            var address = result.address();
+
+            if (result.placeResult.name) {
+                address = result.placeResult.name + ', '. result.address();
+            }
+
+            addressSearchInput.val(address);
+            fullAddressInput.val(address);
         });
 
         google.maps.event.addListener(addressPicker.getGMarker(), "dragend", function (event) {

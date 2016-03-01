@@ -2,7 +2,9 @@
 
 namespace Dms\Web\Laravel\Renderer\Form\Field;
 
+use Dms\Core\Form\Field\Type\ArrayOfType;
 use Dms\Core\Form\Field\Type\FieldType;
+use Dms\Core\Form\Field\Type\InnerFormType;
 use Dms\Core\Form\IField;
 use Dms\Core\Form\IFieldType;
 
@@ -31,8 +33,9 @@ class RadioOptionsFieldRender extends BladeFieldRenderer
      */
     protected function canRender(IField $field, IFieldType $fieldType) : bool
     {
-        return $fieldType->has(FieldType::ATTR_OPTIONS)
-        && $fieldType->get(FieldType::ATTR_SHOW_ALL_OPTIONS);
+        return $fieldType instanceof ArrayOfType
+            && $fieldType->getElementType() instanceof InnerFormType
+            && $fieldType->getElementType();
     }
 
     /**

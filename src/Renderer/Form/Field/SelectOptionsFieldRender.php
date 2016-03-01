@@ -1,10 +1,12 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Renderer\Form\Field;
 
 use Dms\Core\Form\Field\Type\FieldType;
 use Dms\Core\Form\IField;
+use Dms\Core\Form\IFieldOptions;
 use Dms\Core\Form\IFieldType;
+use Dms\Core\Util\Hashing\ValueHasher;
 
 /**
  * The select-box options field renderer
@@ -61,8 +63,18 @@ class SelectOptionsFieldRender extends BladeFieldRenderer
      */
     protected function renderFieldValue(IField $field, $value, IFieldType $fieldType) : string
     {
+        /** @var IFieldOptions $options */
+        $options = $fieldType->get(FieldType::ATTR_OPTIONS);
+        $label   = null;
+
+        foreach ($options->getAll() as $option) {
+            if (ValueHasher::areEqual($value, $option->getValue())) {
+                $label = $option->getLabel();
+            }
+        }
+
         return $this->renderValueViewWithNullDefault(
-            $field, $value,
+            $field, $label,
             'dms::components.field.string.value'
         );
     }

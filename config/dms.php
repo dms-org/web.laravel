@@ -63,6 +63,7 @@ return [
                 Dms\Web\Laravel\Renderer\Form\Field\RgbColourFieldRenderer::class,
                 Dms\Web\Laravel\Renderer\Form\Field\StringFieldRenderer::class,
                 Dms\Web\Laravel\Renderer\Form\Field\TextareaFieldRenderer::class,
+                Dms\Web\Laravel\Renderer\Form\Field\TableOfFieldsRenderer::class,
                 Dms\Web\Laravel\Renderer\Form\Field\WysiwygFieldRenderer::class,
             ],
             'table'       => [

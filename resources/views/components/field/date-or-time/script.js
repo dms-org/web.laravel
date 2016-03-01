@@ -9,7 +9,7 @@ Dms.form.initializeCallbacks.push(function (element) {
                 locale: {
                     format: dateFormat
                 },
-                parentEl: inputElement.parent(),
+                parentEl: inputElement.closest('.date-picker-container'),
                 singleDatePicker: true,
                 showDropdowns: true,
                 autoApply: true,
@@ -39,7 +39,7 @@ Dms.form.initializeCallbacks.push(function (element) {
             }
 
             if (mode === 'time') {
-                inputElement.parent().find('.calendar-table').hide();
+                inputElement.closest('.date-picker-container').find('.calendar-table').hide();
             }
         });
 

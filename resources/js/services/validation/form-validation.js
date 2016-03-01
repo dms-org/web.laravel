@@ -58,8 +58,8 @@ Dms.form.validation.displayMessages = function (form, fieldMessages, generalMess
         var validationMessagesContainer = fieldGroup.find('.dms-validation-messages-container');
 
         var helpBlock = makeHelpBlock();
-        $.each(messages, function (index, message) {
-            helpBlock.append($('<strong />').text(message));
+        $.each($.unique(messages), function (index, message) {
+            helpBlock.append($('<p />').append($('<strong />').text(message)));
         });
 
         fieldGroup.addClass('has-error');

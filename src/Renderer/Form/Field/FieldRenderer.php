@@ -3,6 +3,7 @@
 namespace Dms\Web\Laravel\Renderer\Form\Field;
 
 use Dms\Core\Exception\InvalidArgumentException;
+use Dms\Core\Form\Field\Type\FieldType;
 use Dms\Core\Form\IField;
 use Dms\Core\Form\IFieldType;
 use Dms\Web\Laravel\Renderer\Form\FieldRendererCollection;
@@ -91,6 +92,10 @@ abstract class FieldRenderer implements IFieldRenderer
                 'Field \'%s\' cannot be rendered in renderer of type %s',
                 $field->getName(), get_class($this)
             );
+        }
+
+        if ($field->getType()->get(FieldType::ATTR_READ_ONLY)) {
+            return $this->renderValue($field);
         }
 
         return $this->renderField($field, $field->getType());

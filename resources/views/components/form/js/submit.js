@@ -38,19 +38,7 @@ Dms.form.initializeCallbacks.push(function (element) {
                 });
             });
 
-            form.find('input[name][type]').each(function () {
-                if ($(this).val() === '' && /hidden|text|email|url|color/i.test($(this).attr('type'))) {
-                    $(this).attr('data-temp-name', $(this).attr('name'));
-                    $(this).removeAttr('name')
-                }
-            });
-
             var formData = new FormData(form.get(0));
-
-            form.find('input[data-temp-name]').each(function () {
-                $(this).attr('name', $(this).attr('data-temp-name'));
-                $(this).removeAttr('data-temp-name')
-            });
 
             $.each(fieldsToReappend, function (index, elements) {
                 elements.parentElement.append(elements.children);

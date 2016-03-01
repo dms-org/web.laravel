@@ -116,17 +116,29 @@ a[disabled] {
 .dms-staged-form textarea.form-control {
   max-width: 100%; }
 
+.dms-staged-form .date-picker-container {
+  position: relative; }
+
 .dms-staged-form .dms-map-picker {
   margin: 15px 0;
   height: 200px;
   border-radius: 3px;
   border: 1px solid #ddd; }
 
+.dms-staged-form .dms-field-table .row-key-column {
+  width: 20%; }
+
+.dms-staged-form .dms-field-table .daterangepicker {
+  min-width: 450px; }
+
 .dms-display-map {
   margin: 15px 0;
   height: 200px;
   border-radius: 3px;
   border: 1px solid #ddd; }
+
+.dms-file-display img {
+  max-width: 100%; }
 
 .spinner {
   margin: 0 auto 0;

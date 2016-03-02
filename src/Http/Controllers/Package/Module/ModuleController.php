@@ -1,8 +1,9 @@
 <?php declare(strict_types = 1);
 
-namespace Dms\Web\Laravel\Http\Controllers\Package;
+namespace Dms\Web\Laravel\Http\Controllers\Package\Module;
 
 use Dms\Core\ICms;
+use Dms\Core\Module\IModule;
 use Dms\Core\Package\IPackage;
 use Dms\Web\Laravel\Http\Controllers\DmsController;
 use Dms\Web\Laravel\Renderer\Module\ModuleRendererCollection;
@@ -45,18 +46,18 @@ class ModuleController extends DmsController
 
     /**
      * @param Request $request
-     * @param string  $packageName
-     * @param string  $moduleName
+     * @param IModule $module
      *
      * @return mixed
      */
-    public function showDashboard(Request $request, string $packageName, string $moduleName)
+    public function showDashboard(Request $request, IModule $module)
     {
-        $this->loadModuleAndPackage($packageName, $moduleName);
+        $packageName = $module->getPackageName();
+        $moduleName  = $module->getName();
 
         return view('dms::package.module.dashboard')
             ->with([
-                'assetGroups'      => ['tables', 'charts'],
+                'assetGroups'     => ['tables', 'charts'],
                 'pageTitle'       => StringHumanizer::title($packageName . ' :: ' . $moduleName),
                 'breadcrumbs'     => [
                     route('dms::index')                           => 'Home',
@@ -64,22 +65,7 @@ class ModuleController extends DmsController
                 ],
                 'finalBreadcrumb' => StringHumanizer::title($moduleName),
                 'moduleRenderers' => $this->moduleRenderers,
-                'module'          => $this->module,
+                'module'          => $module,
             ]);
-    }
-
-    protected function loadModuleAndPackage($packageName, $moduleName)
-    {
-        if (!$this->cms->hasPackage($packageName)) {
-            abort(404, 'Unrecognized package name');
-        }
-
-        $this->package = $this->cms->loadPackage($packageName);
-
-        if (!$this->package->hasModule($moduleName)) {
-            abort(404, 'Unrecognized module name');
-        }
-
-        $this->module = $this->package->loadModule($moduleName);
     }
 }

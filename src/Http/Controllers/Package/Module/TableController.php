@@ -1,6 +1,6 @@
 <?php declare(strict_types = 1);
 
-namespace Dms\Web\Laravel\Http\Controllers\Package;
+namespace Dms\Web\Laravel\Http\Controllers\Package\Module;
 
 use Dms\Core\Common\Crud\Table\ISummaryTable;
 use Dms\Core\Exception\InvalidArgumentException;
@@ -10,8 +10,6 @@ use Dms\Core\Model\Criteria\OrderingDirection;
 use Dms\Core\Module\IModule;
 use Dms\Core\Module\ITableDisplay;
 use Dms\Core\Module\ITableView;
-use Dms\Core\Module\ModuleNotFoundException;
-use Dms\Core\Package\PackageNotFoundException;
 use Dms\Core\Table\Criteria\RowCriteria;
 use Dms\Core\Table\ITableStructure;
 use Dms\Web\Laravel\Http\Controllers\DmsController;
@@ -47,11 +45,12 @@ class TableController extends DmsController
         $this->tableRenderer = $tableRenderer;
     }
 
-    public function showTable(string $packageName, string $moduleName, string $tableName, string $viewName)
+    public function showTable(IModule $module, string $tableName, string $viewName)
     {
-        /** @var IModule $module */
-        /** @var ITableDisplay $table */
-        list($module, $table) = $this->loadTable($packageName, $moduleName, $tableName);
+        $packageName = $module->getPackageName();
+        $moduleName  = $module->getName();
+
+        $table = $this->loadTable($module, $tableName);
 
         if ($table instanceof ISummaryTable) {
             return redirect()
@@ -63,7 +62,7 @@ class TableController extends DmsController
 
         return view('dms::package.module.table')
             ->with([
-                'assetGroups'      => ['tables'],
+                'assetGroups'     => ['tables'],
                 'pageTitle'       => StringHumanizer::title($packageName . ' :: ' . $moduleName . ' :: ' . $tableName),
                 'pageSubTitle'    => $viewName,
                 'breadcrumbs'     => [
@@ -79,11 +78,9 @@ class TableController extends DmsController
             ]);
     }
 
-    public function loadTableRows(Request $request, string $packageName, string $moduleName, string $tableName, string $viewName)
+    public function loadTableRows(Request $request, IModule $module, string $tableName, string $viewName)
     {
-        /** @var IModule $module */
-        /** @var ITableDisplay $table */
-        list($module, $table) = $this->loadTable($packageName, $moduleName, $tableName);
+        $table = $this->loadTable($module, $tableName);
 
         $tableView = $this->loadTableView($table, $viewName);
 
@@ -161,35 +158,24 @@ class TableController extends DmsController
     protected function loadTableView(ITableDisplay $table, string $viewName) : ITableView
     {
         try {
-            $tableView = $table->getView($viewName);
-            return $tableView;
+            return $table->getView($viewName);
         } catch (InvalidArgumentException $e) {
             abort(404);
         }
     }
 
     /**
-     * @param string $packageName
-     * @param string $moduleName
-     * @param string $actionName
+     * @param IModule $module
+     * @param string  $tableName
      *
-     * @return array
+     * @return array|ITableDisplay
+     * @internal param string $packageName
+     * @internal param string $moduleName
      */
-    protected function loadTable(string $packageName, string $moduleName, string $actionName) : array
+    protected function loadTable(IModule $module, string $tableName) : ITableDisplay
     {
         try {
-            $module = $this->cms->loadPackage($packageName)->loadModule($moduleName);
-            $table  = $module->getTable($actionName);
-
-            return [$module, $table];
-        } catch (PackageNotFoundException $e) {
-            $response = response()->json([
-                'message' => 'Invalid package name',
-            ], 404);
-        } catch (ModuleNotFoundException $e) {
-            $response = response()->json([
-                'message' => 'Invalid module name',
-            ], 404);
+            return $module->getTable($tableName);
         } catch (InvalidArgumentException $e) {
             $response = response()->json([
                 'message' => 'Invalid table name',

@@ -2,7 +2,6 @@
 
 namespace Dms\Web\Laravel\Renderer\Form;
 
-use Dms\Core\Exception\InvalidArgumentException;
 use Dms\Core\Form\IField;
 use Illuminate\Http\Response;
 
@@ -14,10 +13,11 @@ use Illuminate\Http\Response;
 interface IFieldRendererWithActions
 {
     /**
+     * @param IField $field
      * @param string $actionName
      * @param array  $data
      *
      * @return Response
      */
-    public function handleAction(string $actionName, array $data) : Response;
+    public function handleAction(IField $field, string $actionName, array $data) : Response;
 }

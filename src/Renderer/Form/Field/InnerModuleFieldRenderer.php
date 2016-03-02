@@ -1,35 +1,26 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Renderer\Form\Field;
 
-use Dms\Common\Structure\DateTime\Form\DateOrTimeRangeType;
-use Dms\Common\Structure\FileSystem\Form\FileUploadType;
-use Dms\Common\Structure\FileSystem\Form\ImageUploadType;
 use Dms\Core\Common\Crud\ICrudModule;
 use Dms\Core\Form\Field\Type\FieldType;
 use Dms\Core\Form\Field\Type\InnerCrudModuleType;
-use Dms\Core\Form\Field\Type\InnerFormType;
 use Dms\Core\Form\IField;
 use Dms\Core\Form\IFieldType;
-use Dms\Web\Laravel\Renderer\Form\FormRenderer;
+use Dms\Web\Laravel\Action\ActionService;
+use Dms\Web\Laravel\Http\ModuleRequestRouter;
+use Dms\Web\Laravel\Renderer\Form\IFieldRendererWithActions;
 use Dms\Web\Laravel\Renderer\Table\TableRenderer;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 /**
  * The inner-module field renderer
  *
  * @author Elliot Levin <elliotlevin@hotmail.com>
  */
-class InnerModuleFieldRenderer extends BladeFieldRenderer
+class InnerModuleFieldRenderer extends BladeFieldRendererWithActions implements IFieldRendererWithActions
 {
-    /**
-     * InnerModuleFieldRenderer constructor.
-     */
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
-
     /**
      * Gets the expected class of the field type for the field.
      *
@@ -84,16 +75,43 @@ class InnerModuleFieldRenderer extends BladeFieldRenderer
      */
     protected function renderFieldValue(IField $field, $value, IFieldType $fieldType) : string
     {
-        /** @var InnerFormType $fieldType */
-        $formWithArrayFields = $fieldType->getInnerArrayForm($field->getName());
-        $formRenderer = new FormRenderer($this->fieldRendererCollection);
+        /** @var InnerCrudModuleType $fieldType */
+        /** @var ICrudModule $module */
+        $module = $fieldType->getModule();
 
-        return $this->renderValueViewWithNullDefault(
-            $field, $value,
-            'dms::components.field.inner-module.value',
+        /** @var TableRenderer $tableRenderer */
+        $tableRenderer = app(TableRenderer::class);
+
+        return $this->renderView(
+            $field,
+            'dms::components.field.inner-module.input',
+            [],
             [
-                'formContent' => $formRenderer->renderFields($formWithArrayFields),
+                'tableContent' => $tableRenderer->renderTableData($module, $module->getSummaryTable(), $module->getSummaryTable()->getDataSource()->load()),
             ]
         );
+    }
+
+    /**
+     * @param IField     $field
+     * @param IFieldType $fieldType
+     * @param string     $actionName
+     * @param array      $data
+     *
+     * @return Response
+     */
+    protected function handleFieldAction(IField $field, IFieldType $fieldType, string $actionName, array $data) : Response
+    {
+        /** @var InnerCrudModuleType $fieldType */
+        /** @var ICrudModule $module */
+        $module = $fieldType->getModule();
+
+        /** @var ModuleRequestRouter $moduleRequestRouter */
+        $moduleRequestRouter = app(ModuleRequestRouter::class);
+
+        /** @var Request $request */
+        $request = Request::create($actionName, $data['_method'] ?? request()->method(), $data);
+
+        return $moduleRequestRouter->dispatch($module, $request);
     }
 }

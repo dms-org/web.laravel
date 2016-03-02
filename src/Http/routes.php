@@ -39,63 +39,7 @@ $router->group(['prefix' => 'dms', 'middleware' => 'dms.web', 'as' => 'dms::', '
                 'Package\PackageController@showDashboard'
             )->name('package.dashboard');
 
-            // Modules
-            $router->get(
-                'package/{package}/{module}',
-                'Package\ModuleController@showDashboard'
-            )->name('package.module.dashboard');
-
-            // Actions
-            $router->get(
-                'package/{package}/{module}/action/{action}/form/{object_id?}',
-                'Package\ActionController@showForm'
-            )->name('package.module.action.form');
-
-            $router->post(
-                'package/{package}/{module}/action/{action}/form/stage/{number}',
-                'Package\ActionController@getFormStage'
-            )->name('package.module.action.form.stage');
-
-            $router->post(
-                'package/{package}/{module}/action/{action}/form/field/stage/{number}/{field_name}/{field_action}',
-                'Package\ActionController@runFieldRendererAction'
-            )->name('package.module.action.form.stage.field.action');
-
-            $router->post(
-                'package/{package}/{module}/action/{action}/run',
-                'Package\ActionController@runAction'
-            )->name('package.module.action.run');
-
-            $router->get(
-                'package/{package}/{module}/action/{action}/show/{object_id?}',
-                'Package\ActionController@showActionResult'
-            )->name('package.module.action.show');
-
-            // Tables
-            $router->get(
-                'package/{package}/{module}/table/{table}/{view}',
-                'Package\TableController@showTable'
-            )->name('package.module.table.view.show');
-
-            $router->post(
-                'package/{package}/{module}/table/{table}/{view}/reorder',
-                'Package\TableController@reorderRow'
-            )->name('package.module.table.view.reorder');
-
-            $router->post(
-                'package/{package}/{module}/table/{table}/{view}/load',
-                'Package\TableController@loadTableRows'
-            )->name('package.module.table.view.load');
-
-            // Charts
-            $router->get(
-                'package/{package}/{module}/chart/{chart}/{view}',
-                'Package\ChartController@showChart'
-            )->name('package.module.chart.view.show');
-
-            $router->post(
-                'package/{package}/{module}/chart/{chart}/{view}/load',
-                'Package\ChartController@loadChartData'
-            )->name('package.module.chart.view.load');
+            $moduleRouter = new ModuleRequestRouter();
+            $moduleRouter->registerOnMainRouter($router);
         });
     });

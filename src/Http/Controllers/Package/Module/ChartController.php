@@ -1,6 +1,6 @@
 <?php declare(strict_types = 1);
 
-namespace Dms\Web\Laravel\Http\Controllers\Package;
+namespace Dms\Web\Laravel\Http\Controllers\Package\Module;
 
 use Dms\Core\Exception\InvalidArgumentException;
 use Dms\Core\ICms;
@@ -8,8 +8,7 @@ use Dms\Core\Model\Criteria\Condition\ConditionOperator;
 use Dms\Core\Model\Criteria\OrderingDirection;
 use Dms\Core\Module\IChartDisplay;
 use Dms\Core\Module\IChartView;
-use Dms\Core\Module\ModuleNotFoundException;
-use Dms\Core\Package\PackageNotFoundException;
+use Dms\Core\Module\IModule;
 use Dms\Core\Table\Chart\Criteria\ChartCriteria;
 use Dms\Core\Table\Chart\IChartStructure;
 use Dms\Web\Laravel\Http\Controllers\DmsController;
@@ -45,9 +44,11 @@ class ChartController extends DmsController
         $this->chartRenderer = $chartRenderer;
     }
 
-    public function showChart(string $packageName, string $moduleName, string $chartName, string $viewName)
+    public function showChart(IModule $module, string $chartName, string $viewName)
     {
-        $chart = $this->loadChart($packageName, $moduleName, $chartName);
+        $packageName = $module->getPackageName();
+        $moduleName = $module->getPackageName();
+        $chart = $this->loadChart($module, $chartName);
 
         $this->loadChartView($chart, $viewName);
 
@@ -70,9 +71,9 @@ class ChartController extends DmsController
             ]);
     }
 
-    public function loadChartData(Request $request, string $packageName, string $moduleName, string $chartName, string $viewName)
+    public function loadChartData(Request $request, IModule $module, string $chartName, string $viewName)
     {
-        $chart = $this->loadChart($packageName, $moduleName, $chartName);
+        $chart = $this->loadChart($module, $chartName);
 
         $chartView = $this->loadChartView($chart, $viewName);
 
@@ -131,29 +132,17 @@ class ChartController extends DmsController
     }
 
     /**
-     * @param string $packageName
-     * @param string $moduleName
-     * @param string $actionName
+     * @param IModule $module
+     * @param string  $chartName
      *
      * @return IChartDisplay
      */
-    protected function loadChart(string $packageName, string $moduleName, string $actionName) : IChartDisplay
+    protected function loadChart(IModule $module, string $chartName) : IChartDisplay
     {
         try {
-            $action = $this->cms
-                ->loadPackage($packageName)
-                ->loadModule($moduleName)
-                ->getChart($actionName);
+            $action = $module->getChart($chartName);
 
             return $action;
-        } catch (PackageNotFoundException $e) {
-            $response = response()->json([
-                'message' => 'Invalid package name',
-            ], 404);
-        } catch (ModuleNotFoundException $e) {
-            $response = response()->json([
-                'message' => 'Invalid module name',
-            ], 404);
         } catch (InvalidArgumentException $e) {
             $response = response()->json([
                 'message' => 'Invalid chart name',

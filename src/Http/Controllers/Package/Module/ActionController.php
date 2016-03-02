@@ -1,6 +1,6 @@
 <?php declare(strict_types = 1);
 
-namespace Dms\Web\Laravel\Http\Controllers\Package;
+namespace Dms\Web\Laravel\Http\Controllers\Package\Module;
 
 use Dms\Core\Common\Crud\Action\Object\IObjectAction;
 use Dms\Core\Common\Crud\IReadModule;
@@ -9,14 +9,11 @@ use Dms\Core\Form\InvalidFormSubmissionException;
 use Dms\Core\Form\InvalidInputException;
 use Dms\Core\ICms;
 use Dms\Core\Language\ILanguageProvider;
-use Dms\Core\Model\Object\Entity;
 use Dms\Core\Module\ActionNotFoundException;
 use Dms\Core\Module\IAction;
 use Dms\Core\Module\IModule;
 use Dms\Core\Module\IParameterizedAction;
 use Dms\Core\Module\IUnparameterizedAction;
-use Dms\Core\Module\ModuleNotFoundException;
-use Dms\Core\Package\PackageNotFoundException;
 use Dms\Web\Laravel\Action\ActionExceptionHandlerCollection;
 use Dms\Web\Laravel\Action\ActionInputTransformerCollection;
 use Dms\Web\Laravel\Action\ActionResultHandlerCollection;
@@ -25,7 +22,6 @@ use Dms\Web\Laravel\Action\UnhandleableActionResultException;
 use Dms\Web\Laravel\Http\Controllers\DmsController;
 use Dms\Web\Laravel\Renderer\Action\ObjectActionButtonBuilder;
 use Dms\Web\Laravel\Renderer\Form\ActionFormRenderer;
-use Dms\Web\Laravel\Renderer\Form\IFieldRendererWithActions;
 use Dms\Web\Laravel\Util\ActionSafetyChecker;
 use Dms\Web\Laravel\Util\StringHumanizer;
 use Illuminate\Http\Exception\HttpResponseException;
@@ -104,11 +100,12 @@ class ActionController extends DmsController
         $this->actionButtonBuilder = $actionButtonBuilder;
     }
 
-    public function showForm($packageName, $moduleName, $actionName, $objectId = null)
+    public function showForm(IModule $module, string $actionName, int $objectId = null)
     {
-        /** @var IModule $module */
-        /** @var IAction $action */
-        list($module, $action) = $this->loadAction($packageName, $moduleName, $actionName);
+        $packageName = $module->getPackageName();
+        $moduleName  = $module->getName();
+
+        $action     = $this->loadAction($module, $actionName);
         $titleParts = [$packageName, $moduleName, $actionName];
 
         if (!($action instanceof IParameterizedAction)) {
@@ -160,40 +157,35 @@ class ActionController extends DmsController
             ]);
     }
 
-    protected function loadFormStage(Request $request, $packageName, $moduleName, $actionName, $stageNumber) : IForm
+    protected function loadFormStage(Request $request, IModule $module, string $actionName, int $stageNumber) : IForm
     {
-
-        /** @var IModule $module */
-        /** @var IParameterizedAction $action */
-        list($module, $action) = $this->loadAction($packageName, $moduleName, $actionName);
+        $action = $this->loadAction($module, $actionName);
 
         if (!($action instanceof IParameterizedAction)) {
-            return response()->json([
+            throw new HttpResponseException(response()->json([
                 'message' => 'This action does not require an input form',
-            ], 403);
+            ], 403));
         }
 
         $form        = $action->getStagedForm();
         $stageNumber = (int)$stageNumber;
 
         if ($stageNumber < 1 || $stageNumber > $form->getAmountOfStages()) {
-            return response()->json([
+            throw new HttpResponseException(response()->json([
                 'message' => 'Invalid stage number',
-            ], 404);
+            ], 404));
         }
 
         $input = $this->inputTransformers->transform($action, $request->all());
         return $form->getFormForStage($stageNumber, $input);
     }
 
-    public function getFormStage(Request $request, $packageName, $moduleName, $actionName, $stageNumber)
+    public function getFormStage(Request $request, IModule $module, string $actionName, int $stageNumber)
     {
-        /** @var IModule $module */
-        /** @var IParameterizedAction $action */
-        list($module, $action) = $this->loadAction($packageName, $moduleName, $actionName);
+        $action = $this->loadAction($module, $actionName);
 
         try {
-            $form = $this->loadFormStage($request, $packageName, $moduleName, $actionName, $stageNumber);
+            $form = $this->loadFormStage($request, $module, $stageNumber, $input);
         } catch (\Exception $e) {
             return $this->exceptionHandlers->handle($action, $e);
         }
@@ -201,37 +193,16 @@ class ActionController extends DmsController
         return response($this->actionFormRenderer->renderFormFields($form), 200);
     }
 
-    public function runFieldRendererAction(Request $request, $packageName, $moduleName, $actionName, $stageNumber, $fieldName, $fieldRendererAction)
+    public function showActionResult(Request $request, IModule $module, string $actionName, int $objectId = null)
     {
-        $this->validate($request, [
-            '__field_action_data' => 'required|array',
-        ]);
+        $packageName = $module->getPackageName();
+        $moduleName  = $module->getName();
 
-        /** @var IModule $module */
-        /** @var IParameterizedAction $action */
-        list($module, $action) = $this->loadAction($packageName, $moduleName, $actionName);
-
-        $form     = $this->loadFormStage($request, $packageName, $moduleName, $actionName, $stageNumber);
-        $renderer = $this->actionFormRenderer->getFormRenderer()->getFieldRenderers()->findRendererFor($form->getField($fieldName));
-
-        if (!($renderer instanceof IFieldRendererWithActions)) {
-            abort(404);
-        }
-
-        return $renderer->handleAction($fieldRendererAction, $request->get('__field_action_data'));
-    }
-
-    public function showActionResult(Request $request, $packageName, $moduleName, $actionName, $objectId = null)
-    {
-        /** @var IModule $module */
-        list($module, $action) = $this->loadAction($packageName, $moduleName, $actionName);
+        $action = $this->loadAction($module, $actionName);
 
         if (!$this->actionSafetyChecker->isSafeToShowActionResultViaGetRequest($action)) {
             abort(404);
         }
-
-        $titleParts = [$packageName, $moduleName, $actionName];
-
 
         try {
             $result = $this->runActionWithDataFromRequest($request, $action, [IObjectAction::OBJECT_FIELD_NAME => $objectId]);
@@ -243,9 +214,7 @@ class ActionController extends DmsController
 
         if ($objectId && $module instanceof IReadModule) {
             /** @var IReadModule $module */
-            $object        = $module->getDataSource()->matching(
-                $module->getDataSource()->criteria()->where(Entity::ID, '=', (int)$objectId)
-            )[0];
+            $object        = $module->getDataSource()->get($objectId);
             $objectLabel   = $module->getLabelFor($object);
             $actionButtons = $this->actionButtonBuilder->buildActionButtons($module, $object, $actionName);
         } else {
@@ -256,7 +225,7 @@ class ActionController extends DmsController
         return view('dms::package.module.details')
             ->with([
                 'assetGroups'     => ['forms'],
-                'pageTitle'       => StringHumanizer::title(implode(' :: ', $titleParts)),
+                'pageTitle'       => StringHumanizer::title(implode(' :: ', [$packageName, $moduleName, $actionName])),
                 'breadcrumbs'     => [
                     route('dms::index')                                                 => 'Home',
                     route('dms::package.dashboard', [$packageName])                     => StringHumanizer::title($packageName),
@@ -271,11 +240,9 @@ class ActionController extends DmsController
             ]);
     }
 
-    public function runAction(Request $request, $packageName, $moduleName, $actionName)
+    public function runAction(Request $request, IModule $module, string $actionName)
     {
-        /** @var IModule $module */
-        /** @var IAction $action */
-        list($module, $action) = $this->loadAction($packageName, $moduleName, $actionName);
+        $action = $this->loadAction($module, $actionName);
 
         try {
             $result = $this->runActionWithDataFromRequest($request, $action);
@@ -344,31 +311,21 @@ class ActionController extends DmsController
     }
 
     /**
-     * @param string $packageName
-     * @param string $moduleName
-     * @param string $actionName
+     * @param IModule $module
+     * @param string  $actionName
      *
-     * @return array
+     * @return IAction
      */
-    protected function loadAction(string $packageName, string $moduleName, string $actionName) : array
+    protected function loadAction(IModule $module, string $actionName) : IAction
     {
         try {
-            $module = $this->cms->loadPackage($packageName)->loadModule($moduleName);
             $action = $module->getAction($actionName);
 
             if (!$action->isAuthorized()) {
                 abort(401);
             }
 
-            return [$module, $action];
-        } catch (PackageNotFoundException $e) {
-            $response = response()->json([
-                'message' => 'Invalid package name',
-            ], 404);
-        } catch (ModuleNotFoundException $e) {
-            $response = response()->json([
-                'message' => 'Invalid module name',
-            ], 404);
+            return $action;
         } catch (ActionNotFoundException $e) {
             $response = response()->json([
                 'message' => 'Invalid action name',

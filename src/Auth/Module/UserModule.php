@@ -12,6 +12,7 @@ use Dms\Core\Common\Crud\Definition\CrudModuleDefinition;
 use Dms\Core\Common\Crud\Definition\Form\CrudFormDefinition;
 use Dms\Core\Common\Crud\Definition\Table\SummaryTableDefinition;
 use Dms\Core\Form\Builder\Form;
+use Dms\Core\Language\Message;
 use Dms\Core\Model\EntityIdCollection;
 use Dms\Core\Model\Object\ArrayDataObject;
 use Dms\Web\Laravel\Auth\Password\IPasswordHasherFactory;
@@ -151,11 +152,15 @@ class UserModule extends CrudModule
                             ->required(),
                     ])
                     ->fieldsMatch('new_password', 'new_password_confirmation')
-            )->handler(function (IUser $user, ArrayDataObject $input) {
+            )
+            ->returns(Message::class)
+            ->handler(function (IUser $user, ArrayDataObject $input) {
                 $this->passwordResetService->resetUserPassword($user, $input['new_password']);
+
+                return new Message('auth.user.password-reset');
             });
 
-        $module->removeAction()->deleteFromRepository();
+        $module->removeAction()->deleteFromDataSource();
 
         $module->summaryTable(function (SummaryTableDefinition $table) {
             $table->mapProperty(User::USERNAME)->to(Field::create('username', 'Username')->string());

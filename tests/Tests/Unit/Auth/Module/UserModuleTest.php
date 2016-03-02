@@ -12,8 +12,8 @@ use Dms\Core\Common\Crud\Action\Object\IObjectAction;
 use Dms\Core\Common\Crud\ICrudModule;
 use Dms\Core\Form\InvalidFormSubmissionException;
 use Dms\Core\Model\EntityIdCollection;
+use Dms\Core\Model\IMutableObjectSet;
 use Dms\Core\Persistence\ArrayRepository;
-use Dms\Core\Persistence\IRepository;
 use Dms\Core\Tests\Common\Crud\Modules\CrudModuleTest;
 use Dms\Core\Tests\Module\Mock\MockAuthSystem;
 use Dms\Core\Widget\TableWidget;
@@ -41,9 +41,9 @@ class UserModuleTest extends CrudModuleTest
     protected $hasHasherBeenCalled = false;
 
     /**
-     * @return IRepository
+     * @return IMutableObjectSet
      */
-    protected function buildRepositoryDataSource()
+    protected function buildRepositoryDataSource() : IMutableObjectSet
     {
         $admin = new User(new EmailAddress('admin@admin.com'), 'admin', $this->getMockForAbstractClass(IHashedPassword::class));
         $admin->setId(1);
@@ -57,12 +57,12 @@ class UserModuleTest extends CrudModuleTest
     }
 
     /**
-     * @param IRepository    $dataSource
-     * @param MockAuthSystem $authSystem
+     * @param IMutableObjectSet $dataSource
+     * @param MockAuthSystem    $authSystem
      *
      * @return ICrudModule
      */
-    protected function buildCrudModule(IRepository $dataSource, MockAuthSystem $authSystem)
+    protected function buildCrudModule(IMutableObjectSet $dataSource, MockAuthSystem $authSystem) : ICrudModule
     {
         return new UserModule(
             $dataSource,

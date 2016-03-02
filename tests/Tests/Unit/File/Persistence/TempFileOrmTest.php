@@ -4,6 +4,7 @@ namespace Dms\Web\Laravel\Tests\Unit\File\Persistence;
 
 use Dms\Common\Structure\DateTime\DateTime;
 use Dms\Common\Structure\FileSystem\File;
+use Dms\Common\Structure\FileSystem\PathHelper;
 use Dms\Core\Persistence\Db\Mapping\IOrm;
 use Dms\Core\Tests\Persistence\Db\Integration\Mapping\DbIntegrationTest;
 use Dms\Web\Laravel\File\Persistence\TempFileOrm;
@@ -43,7 +44,7 @@ class TempFileOrmTest extends DbIntegrationTest
                 [
                     'id'               => 1,
                     'token'            => 'some_token',
-                    'file'             => str_replace('\\', '/', __FILE__),
+                    'file'             => PathHelper::normalize(__FILE__),
                     'client_file_name' => 'abc.png',
                     'type'             => 'stored-file',
                     'expiry_time'      => '2010-01-01 00:00:01',
@@ -57,12 +58,12 @@ class TempFileOrmTest extends DbIntegrationTest
         $this->setDataInDb([
             'temp_files' => [
                 [
-                    'id'          => 1,
-                    'token'       => 'some_token',
-                    'file'        => str_replace('\\', '/', __FILE__),
-                    'type'        => 'stored-file',
+                    'id'               => 1,
+                    'token'            => 'some_token',
+                    'file'             => PathHelper::normalize(__FILE__),
+                    'type'             => 'stored-file',
                     'client_file_name' => null,
-                    'expiry_time' => '2010-01-01 00:00:01',
+                    'expiry_time'      => '2010-01-01 00:00:01',
                 ],
             ],
         ]);

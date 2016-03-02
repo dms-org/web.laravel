@@ -2,9 +2,9 @@
 
 namespace Dms\Web\Laravel\Http\Controllers\Package;
 
-use Dms\Core\Auth\UserForbiddenException;
 use Dms\Core\Common\Crud\Action\Object\IObjectAction;
 use Dms\Core\Common\Crud\IReadModule;
+use Dms\Core\Form\IForm;
 use Dms\Core\Form\InvalidFormSubmissionException;
 use Dms\Core\Form\InvalidInputException;
 use Dms\Core\ICms;
@@ -25,6 +25,7 @@ use Dms\Web\Laravel\Action\UnhandleableActionResultException;
 use Dms\Web\Laravel\Http\Controllers\DmsController;
 use Dms\Web\Laravel\Renderer\Action\ObjectActionButtonBuilder;
 use Dms\Web\Laravel\Renderer\Form\ActionFormRenderer;
+use Dms\Web\Laravel\Renderer\Form\IFieldRendererWithActions;
 use Dms\Web\Laravel\Util\ActionSafetyChecker;
 use Dms\Web\Laravel\Util\StringHumanizer;
 use Illuminate\Http\Exception\HttpResponseException;
@@ -141,7 +142,7 @@ class ActionController extends DmsController
 
         return view('dms::package.module.action')
             ->with([
-                'assetGroups'      => ['forms'],
+                'assetGroups'        => ['forms'],
                 'pageTitle'          => StringHumanizer::title(implode(' :: ', $titleParts)),
                 'breadcrumbs'        => [
                     route('dms::index')                                                 => 'Home',
@@ -159,8 +160,9 @@ class ActionController extends DmsController
             ]);
     }
 
-    public function getFormStage(Request $request, $packageName, $moduleName, $actionName, $stageNumber)
+    protected function loadFormStage(Request $request, $packageName, $moduleName, $actionName, $stageNumber) : IForm
     {
+
         /** @var IModule $module */
         /** @var IParameterizedAction $action */
         list($module, $action) = $this->loadAction($packageName, $moduleName, $actionName);
@@ -180,21 +182,43 @@ class ActionController extends DmsController
             ], 404);
         }
 
-        try {
-            if (!$action->isAuthorized()) {
-                throw new UserForbiddenException(
-                    $this->auth->getAuthenticatedUser(),
-                    $action->getRequiredPermissions()
-                );
-            }
+        $input = $this->inputTransformers->transform($action, $request->all());
+        return $form->getFormForStage($stageNumber, $input);
+    }
 
-            $input = $this->inputTransformers->transform($action, $request->all());
-            $form  = $form->getFormForStage($stageNumber, $input);
+    public function getFormStage(Request $request, $packageName, $moduleName, $actionName, $stageNumber)
+    {
+        /** @var IModule $module */
+        /** @var IParameterizedAction $action */
+        list($module, $action) = $this->loadAction($packageName, $moduleName, $actionName);
+
+        try {
+            $form = $this->loadFormStage($request, $packageName, $moduleName, $actionName, $stageNumber);
         } catch (\Exception $e) {
             return $this->exceptionHandlers->handle($action, $e);
         }
 
         return response($this->actionFormRenderer->renderFormFields($form), 200);
+    }
+
+    public function runFieldRendererAction(Request $request, $packageName, $moduleName, $actionName, $stageNumber, $fieldName, $fieldRendererAction)
+    {
+        $this->validate($request, [
+            '__field_action_data' => 'required|array',
+        ]);
+
+        /** @var IModule $module */
+        /** @var IParameterizedAction $action */
+        list($module, $action) = $this->loadAction($packageName, $moduleName, $actionName);
+
+        $form     = $this->loadFormStage($request, $packageName, $moduleName, $actionName, $stageNumber);
+        $renderer = $this->actionFormRenderer->getFormRenderer()->getFieldRenderers()->findRendererFor($form->getField($fieldName));
+
+        if (!($renderer instanceof IFieldRendererWithActions)) {
+            abort(404);
+        }
+
+        return $renderer->handleAction($fieldRendererAction, $request->get('__field_action_data'));
     }
 
     public function showActionResult(Request $request, $packageName, $moduleName, $actionName, $objectId = null)
@@ -231,7 +255,7 @@ class ActionController extends DmsController
 
         return view('dms::package.module.details')
             ->with([
-                'assetGroups'      => ['forms'],
+                'assetGroups'     => ['forms'],
                 'pageTitle'       => StringHumanizer::title(implode(' :: ', $titleParts)),
                 'breadcrumbs'     => [
                     route('dms::index')                                                 => 'Home',

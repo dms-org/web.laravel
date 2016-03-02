@@ -1,3 +1,3 @@
 <div class="dms-display-inner-form">
-    {{ $formContent }}
+    {!! $formContent !!}
 </div>

@@ -52,9 +52,14 @@ $router->group(['prefix' => 'dms', 'middleware' => 'dms.web', 'as' => 'dms::', '
             )->name('package.module.action.form');
 
             $router->post(
-                'package/{package}/{module}/action/{action}/form/stage/{number?}',
+                'package/{package}/{module}/action/{action}/form/stage/{number}',
                 'Package\ActionController@getFormStage'
             )->name('package.module.action.form.stage');
+
+            $router->post(
+                'package/{package}/{module}/action/{action}/form/field/stage/{number}/{field_name}/{field_action}',
+                'Package\ActionController@runFieldRendererAction'
+            )->name('package.module.action.form.stage.field.action');
 
             $router->post(
                 'package/{package}/{module}/action/{action}/run',

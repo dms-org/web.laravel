@@ -106,7 +106,7 @@ class RoleModule extends CrudModule
             ]);
         });
 
-        $module->removeAction()->deleteFromRepository();
+        $module->removeAction()->deleteFromDataSource();
 
         $module->summaryTable(function (SummaryTableDefinition $table) {
             $table->mapProperty(Role::NAME)->to(Field::create('name', 'Name')->string());

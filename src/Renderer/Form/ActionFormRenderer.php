@@ -36,6 +36,14 @@ class ActionFormRenderer
     }
 
     /**
+     * @return FormRenderer
+     */
+    public function getFormRenderer()
+    {
+        return $this->formRenderer;
+    }
+
+    /**
      * Renders the action form as a staged form.
      *
      * @param IParameterizedAction $action

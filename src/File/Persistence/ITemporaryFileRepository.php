@@ -1,9 +1,8 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\File\Persistence;
 
 use Dms\Core\Model\ICriteria;
-use Dms\Core\Model\IEntity;
 use Dms\Core\Model\ISpecification;
 use Dms\Core\Persistence\IRepository;
 use Dms\Web\Laravel\File\TemporaryFile;
@@ -27,7 +26,7 @@ interface ITemporaryFileRepository extends IRepository
      *
      * @return TemporaryFile
      */
-    public function get(int $id) : IEntity;
+    public function get(int $id);
 
     /**
      * {@inheritDoc}

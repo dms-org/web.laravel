@@ -78,7 +78,7 @@ Dms.form.initializeCallbacks.push(function (element) {
             var address = result.address();
 
             if (result.placeResult.name) {
-                address = result.placeResult.name + ', '. result.address();
+                address = result.placeResult.name + ', ' + address;
             }
 
             addressSearchInput.val(address);

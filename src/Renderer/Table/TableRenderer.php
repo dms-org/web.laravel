@@ -87,9 +87,10 @@ class TableRenderer
      *
      * @return string
      */
-    public function renderTableControl(IModule $module, ITableDisplay $table, string $viewName) : string
+    public function renderTableControl(IModule $module, ITableDisplay $table, string $viewName = null) : string
     {
-        $columns = $table->getDataSource()->getStructure()->getColumns();
+        $viewName = $viewName ?? $table->getDefaultView()->getName();
+        $columns  = $table->getDataSource()->getStructure()->getColumns();
 
         if ($module instanceof IReadModule && $table instanceof ISummaryTable) {
             unset($columns[IReadModule::SUMMARY_TABLE_ID_COLUMN]);

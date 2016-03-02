@@ -60945,6 +60945,15 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
+    element.find('.dms-inner-module').each(function () {
+        var innerForm = $(this);
+
+        if (innerForm.attr('data-readonly')) {
+            innerForm.find(':input').attr('readonly', 'readonly');
+        }
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
 
     element.find('ul.dms-field-list').each(function () {
         var listOfFields = $(this);
@@ -61108,7 +61117,7 @@ Dms.form.initializeCallbacks.push(function (element) {
             var address = result.address();
 
             if (result.placeResult.name) {
-                address = result.placeResult.name + ', '. result.address();
+                address = result.placeResult.name + ', ' + address;
             }
 
             addressSearchInput.val(address);

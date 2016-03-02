@@ -33,6 +33,14 @@ class FormRenderer
     }
 
     /**
+     * @return FieldRendererCollection
+     */
+    public function getFieldRenderers()
+    {
+        return $this->fieldRenderers;
+    }
+
+    /**
      * Renders the supplied form as a html string.
      *
      * @param IForm $form

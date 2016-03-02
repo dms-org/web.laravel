@@ -12,6 +12,7 @@ use Dms\Core\Common\Crud\Action\Object\IObjectAction;
 use Dms\Core\Common\Crud\ICrudModule;
 use Dms\Core\ICms;
 use Dms\Core\Model\EntityIdCollection;
+use Dms\Core\Model\IMutableObjectSet;
 use Dms\Core\Persistence\ArrayRepository;
 use Dms\Core\Persistence\IRepository;
 use Dms\Core\Tests\Common\Crud\Modules\CrudModuleTest;
@@ -26,9 +27,9 @@ use Dms\Web\Laravel\Auth\User;
 class RoleModuleTest extends CrudModuleTest
 {
     /**
-     * @return IRepository
+     * @return IMutableObjectSet
      */
-    protected function buildRepositoryDataSource()
+    protected function buildRepositoryDataSource() : IMutableObjectSet
     {
         $adminRole = new Role('admin', Permission::collection([Permission::named('a'), Permission::named('b')]), new EntityIdCollection([1]));
         $adminRole->setId(1);
@@ -43,12 +44,12 @@ class RoleModuleTest extends CrudModuleTest
     }
 
     /**
-     * @param IRepository    $dataSource
+     * @param IMutableObjectSet    $dataSource
      * @param MockAuthSystem $authSystem
      *
      * @return ICrudModule
      */
-    protected function buildCrudModule(IRepository $dataSource, MockAuthSystem $authSystem)
+    protected function buildCrudModule(IMutableObjectSet $dataSource, MockAuthSystem $authSystem) : ICrudModule
     {
         return new RoleModule($dataSource, $this->mockUserDataSource(), $authSystem, $this->mockCms());
     }

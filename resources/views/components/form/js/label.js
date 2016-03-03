@@ -3,7 +3,7 @@ Dms.form.initializeCallbacks.push(function (element) {
     var fieldCounter = 1;
 
     element.find('.dms-form-fieldset .form-group').each(function () {
-        var fieldLabel = $(this).children('label[data-for]');
+        var fieldLabel = $(this).children('.dms-label-container label[data-for]');
         var forFieldName = fieldLabel.attr('data-for');
 
         if (forFieldName) {

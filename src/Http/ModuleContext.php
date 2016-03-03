@@ -112,6 +112,14 @@ class ModuleContext
     }
 
     /**
+     * @return string
+     */
+    public function getRootUrl() : string
+    {
+        return $this->rootUrl;
+    }
+
+    /**
      * @param string $name
      * @param array  $parameters
      *

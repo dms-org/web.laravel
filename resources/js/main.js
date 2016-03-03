@@ -16,6 +16,10 @@ window.Dms = {
     alerts: {
         add: null // @see ./services/alerts.js
     },
+    ajax: {
+        interceptors: []
+        // @see ./services/ajax.js
+    },
     form: {
         initialize: function (element) {
             var callbacks = Dms.form.initializeCallbacks.concat(Dms.form.initializeValidationCallbacks);
@@ -24,7 +28,8 @@ window.Dms = {
                 callback(element);
             });
         },
-        validation: {}, // @see ./services/form-validation.js
+        stages: {}, // @see ./services/form-stages.js
+        validation: {}, // @see ./services/validation/form-validation.js
         initializeCallbacks: [],
         initializeValidationCallbacks: []
     },

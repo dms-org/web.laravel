@@ -1,3 +1,9 @@
+@if(request()->input('__content_only'))
+@yield('content')
+<?php return ?>
+@endif
+
+
 @extends('dms::template.template')
 <?php /** @var \Dms\Core\Auth\IUser $user */ ?>
 <?php /** @var array $navigation */ ?>

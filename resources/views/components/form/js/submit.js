@@ -38,7 +38,7 @@ Dms.form.initializeCallbacks.push(function (element) {
                 });
             });
 
-            var formData = new FormData(form.get(0));
+            var formData = Dms.ajax.createFormData(form.get(0));
 
             $.each(fieldsToReappend, function (index, elements) {
                 elements.parentElement.append(elements.children);
@@ -49,7 +49,7 @@ Dms.form.initializeCallbacks.push(function (element) {
             var ladda = Ladda.create(submitButtons.get(0));
             ladda.start();
 
-            var currentAjaxRequest = $.ajax({
+            var currentAjaxRequest = Dms.ajax.createRequest({
                 url: submitUrl,
                 type: submitMethod,
                 processData: false,

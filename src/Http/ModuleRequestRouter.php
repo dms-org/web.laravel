@@ -163,13 +163,18 @@ class ModuleRequestRouter
     public function dispatch(ModuleContext $moduleContext, Request $request) : Response
     {
         $this->currentModuleContextStack[] = $moduleContext;
-        $originalMiddlewareFlag            = app()->bound('middleware.disable') && app()->make('middleware.disable');
+
+        $originalMiddlewareFlag            = app()->bound('middleware.disable') ? app()->make('middleware.disable') : false;
+        $originalRequest                   = app()->bound('request') ? app()->make('request') : null;
+
         app()->instance('middleware.disable', true);
+        app()->instance('request', $request);
 
         $response = $this->router->dispatch($request);
 
-        array_pop($this->currentModuleContextStack);
         app()->instance('middleware.disable', $originalMiddlewareFlag);
+        app()->instance('request', $originalRequest);
+        array_pop($this->currentModuleContextStack);
 
         return $response;
     }

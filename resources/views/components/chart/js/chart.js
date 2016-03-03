@@ -21,7 +21,7 @@ Dms.chart.initializeCallbacks.push(function (element) {
                 currentAjaxRequest.abort();
             }
 
-            currentAjaxRequest = $.ajax({
+            currentAjaxRequest = Dms.ajax.createRequest({
                 url: loadChartUrl,
                 type: 'post',
                 dataType: 'html',

@@ -50,7 +50,8 @@ class InnerModuleFieldRenderer extends BladeFieldRendererWithActions implements 
             'dms::components.field.inner-module.input',
             [],
             [
-                'tableContent' => $renderer->render($innerModuleContext),
+                'rootUrl'       => $innerModuleContext->getRootUrl(),
+                'moduleContent' => $renderer->render($innerModuleContext),
             ]
         );
     }
@@ -70,31 +71,45 @@ class InnerModuleFieldRenderer extends BladeFieldRendererWithActions implements 
             'dms::components.field.inner-module.input',
             [],
             [
-                'tableContent' => $tableRenderer->renderTableData($innerModuleContext, $innerModule->getSummaryTable(), $innerModule->getSummaryTable()->getDataSource()->load()),
+                'moduleContent' => $tableRenderer->renderTableData($innerModuleContext, $innerModule->getSummaryTable(), $innerModule->getSummaryTable()->getDataSource()->load()),
             ]
         );
     }
 
     protected function handleFieldAction(FormRenderingContext $renderingContext, IField $field, IFieldType $fieldType, Request $request, string $actionName = null, array $data)
     {
-        $moduleContext = $this->loadInnerModuleContext($field, $renderingContext);
+        $currentState      = $data['current_state'] ?: [];
+        $requestUrl        = $data['request']['url'];
+        $requestMethod     = $data['request']['method'];
+        $requestParameters = $data['request']['parameters'];
+
+        $moduleContext = $this->loadInnerModuleContext($field, $renderingContext, $currentState);
 
         /** @var ModuleRequestRouter $moduleRequestRouter */
         $moduleRequestRouter = app(ModuleRequestRouter::class);
 
-        /** @var Request $request */
-        $request = Request::create('/' . $actionName, request()->method(), $data);
+        /** @var Request $innerModuleRequest */
+        $innerModuleRequest = Request::create($requestUrl, $requestMethod, $requestParameters);
 
-        return $moduleRequestRouter->dispatch($moduleContext, $request);
+        $innerModuleResponse = $moduleRequestRouter->dispatch($moduleContext, $innerModuleRequest);
+
+        return response()->json([
+            'new_state' => $field->unprocess($moduleContext->getModule()->getDataSource()),
+            'response'  => $innerModuleResponse->getContent(),
+        ], $innerModuleResponse->getStatusCode());
     }
 
-    protected function loadInnerModuleContext(IField $field, FormRenderingContext $renderingContext)
+    protected function loadInnerModuleContext(IField $field, FormRenderingContext $renderingContext, array $moduleState = null)
     {
         /** @var InnerCrudModuleType $fieldType */
         $fieldType = $field->getType();
 
         /** @var ICrudModule $module */
         $innerModule = $fieldType->getModule();
+
+        if ($moduleState) {
+            $innerModule = $innerModule->withDataSource($field->process($moduleState));
+        }
 
         $moduleContext = $renderingContext->getModuleContext();
 

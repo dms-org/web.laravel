@@ -28,17 +28,7 @@ Dms.form.initializeCallbacks.push(function (element) {
             var isWaitingForNextLoadAttempt = false;
 
             var makeDependentFieldSelectorFor = function (selector) {
-                if (dependentFieldNames) {
-                    var selectors = [];
-                    $.each(dependentFieldNames, function (index, fieldName) {
-                        selectors.push(selector + '[name="' + fieldName + '"]:input');
-                        selectors.push(selector + '[name^="' + fieldName + '["][name$="]"]:input');
-                    });
-
-                    return selectors.join(',');
-                } else {
-                    return selector + '[name]:input';
-                }
+                return Dms.form.stages.makeDependentFieldSelectorFor(dependentFieldNames, selector);
             };
 
             var loadNextStage = function () {
@@ -74,21 +64,9 @@ Dms.form.initializeCallbacks.push(function (element) {
 
                 Dms.form.validation.clearMessages(form);
 
-                var formData = new FormData();
+                var formData = Dms.form.stages.createFormDataFromFields(previousFields);
 
-                previousFields.each(function () {
-                    var fieldName = $(this).attr('name');
-
-                    if ($(this).is('[type=file]')) {
-                        $.each(this.files, function (index, file) {
-                            formData.append(fieldName, file);
-                        });
-                    } else {
-                        formData.append(fieldName, $(this).val());
-                    }
-                });
-
-                currentAjaxRequest = $.ajax({
+                currentAjaxRequest = Dms.ajax.createRequest({
                     url: loadStageUrl,
                     type: 'post',
                     processData: false,

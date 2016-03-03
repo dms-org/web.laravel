@@ -15,7 +15,7 @@
 
     @if($hiddenValues)
         <div class="dms-form-stage-container loaded hidden">
-            <div class="dms-form-stage">
+            <div class="dms-form-stage dms-form-stage-known-data">
                 @foreach($hiddenValues ?? [] as $name => $value)
                     <input type="hidden" name="{{ $name }}" value="{{ $value }}"/>
                 @endforeach
@@ -31,7 +31,7 @@
         @if ($stage instanceof \Dms\Core\Form\Stage\IndependentFormStage)
             <?php $form = $stage->loadForm() ?>
             <div class="dms-form-stage-container loaded">
-                <div class="dms-form-stage">
+                <div class="dms-form-stage" data-stage-number="{{ $stageNumber }}">
                     {!!  $formRenderer->renderFields($renderingContext, $form) !!}
                 </div>
             </div>
@@ -41,8 +41,12 @@
             <div class="dms-form-stage-container {{ $form ? 'loaded' : '' }}">
                 <div
                         class="dms-form-stage dms-dependent-form-stage"
+                        data-stage-number="{{ $stageNumber }}"
                         data-load-stage-url="{{ $moduleContext->getUrl('action.form.stage', [$actionName, $absoluteStageNumber]) }}"
-                        @if($stage->getRequiredFieldNames() !== null) data-stage-dependent-fields="{{ json_encode($stage->getRequiredFieldNames()) }}" @endif
+                        @if($stage->getRequiredFieldNames() !== null)
+                        data-stage-dependent-fields="{{ json_encode($stage->getRequiredFieldNames()) }}"
+                        data-stage-dependent-fields-stage-map="{{ json_encode($stagedForm->getRequiredFieldGroupedByStagesForStage($stageNumber)) }}"
+                        @endif
                 >
                     @if ($form)
                         {!!  $formRenderer->renderFields($renderingContext, $form) !!}

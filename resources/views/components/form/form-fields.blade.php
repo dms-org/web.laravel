@@ -12,7 +12,7 @@
             @if($groupTitle !== '')<legend>{{ $groupTitle }}</legend>@endif
             @foreach($fields as $label => $field)
                 <div class="form-group clearfix" data-field-name="{{ $field['name'] }}">
-                    <div class="col-lg-2 col-md-3 col-sm-4">
+                    <div class="dms-label-container col-lg-2 col-md-3 col-sm-4">
                         <label data-for="{{ $field['name'] }}">{{ $label }}</label>
                     </div>
                     <div class="col-lg-10 col-md-9 col-sm-8">

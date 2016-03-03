@@ -33,8 +33,16 @@ class FieldComponentRenderer implements IColumnComponentRenderer
      */
     public function __construct(IFieldRenderer $fieldRenderer)
     {
-        $this->fieldRenderer    = $fieldRenderer;
-        $this->renderingContext = new FormRenderingContext(ModuleRequestRouter::currentModuleContext());
+        $this->fieldRenderer = $fieldRenderer;
+    }
+
+    protected function getRenderingContext() : FormRenderingContext
+    {
+        if (!$this->renderingContext) {
+            $this->renderingContext = new FormRenderingContext(ModuleRequestRouter::currentModuleContext());
+        }
+
+        return $this->renderingContext;
     }
 
     /**
@@ -45,7 +53,7 @@ class FieldComponentRenderer implements IColumnComponentRenderer
     public function accepts(IColumnComponent $component) : bool
     {
         return $this->fieldRenderer->accepts(
-            $this->renderingContext,
+            $this->getRenderingContext(),
             $component->getType()->getOperator(ConditionOperator::EQUALS)->getField()
         );
     }
@@ -62,6 +70,6 @@ class FieldComponentRenderer implements IColumnComponentRenderer
     {
         $field = $component->getType()->getOperator(ConditionOperator::EQUALS)->getField();
 
-        return $this->fieldRenderer->renderValue($this->renderingContext, $field, $field->unprocess($value));
+        return $this->fieldRenderer->renderValue($this->getRenderingContext(), $field, $field->unprocess($value));
     }
 }

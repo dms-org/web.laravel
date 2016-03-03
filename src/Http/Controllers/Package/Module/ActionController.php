@@ -184,7 +184,7 @@ class ActionController extends DmsController
     public function getFormStage(Request $request, ModuleContext $moduleContext, string $actionName, int $stageNumber, int $objectId = null)
     {
         if (!$objectId) {
-            $objectId = $request->input(IObjectAction::OBJECT_FIELD_NAME);
+            $objectId = $request->has(IObjectAction::OBJECT_FIELD_NAME) ? (int)$request->input(IObjectAction::OBJECT_FIELD_NAME) : null;
         }
 
         $module = $moduleContext->getModule();

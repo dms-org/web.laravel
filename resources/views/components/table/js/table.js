@@ -32,7 +32,7 @@ Dms.table.initializeCallbacks.push(function (element) {
 
             criteria.offset = currentPage * criteria.max_rows;
 
-            currentAjaxRequest = $.ajax({
+            currentAjaxRequest = Dms.ajax.createRequest({
                 url: loadRowsUrl,
                 type: 'post',
                 dataType: 'html',

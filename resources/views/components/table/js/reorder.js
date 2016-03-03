@@ -14,7 +14,7 @@ Dms.table.initializeCallbacks.push(function (element) {
             var objectId = row.find('.dms-row-action-column').attr('data-object-id');
             var reorderButtonHandle = row.find('.dms-drag-handle');
 
-            var reorderRequest = $.ajax({
+            var reorderRequest = Dms.ajax.createRequest({
                 url: reorderRowsUrl,
                 type: 'post',
                 dataType: 'html',

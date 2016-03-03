@@ -4,6 +4,7 @@ namespace Dms\Web\Laravel\Renderer\Module;
 
 use Dms\Core\Exception\InvalidArgumentException;
 use Dms\Core\Module\IModule;
+use Dms\Web\Laravel\Http\ModuleContext;
 
 /**
  * The module renderer collection.
@@ -32,22 +33,22 @@ class ModuleRendererCollection
     }
 
     /**
-     * @param IModule $module
+     * @param ModuleContext $moduleContext
      *
      * @return IModuleRenderer
      * @throws UnrenderableModuleException
      */
-    public function findRendererFor(IModule $module) : IModuleRenderer
+    public function findRendererFor(ModuleContext $moduleContext) : IModuleRenderer
     {
         foreach ($this->moduleRenderers as $renderer) {
-            if ($renderer->accepts($module)) {
+            if ($renderer->accepts($moduleContext)) {
                 return $renderer;
             }
         }
 
         throw UnrenderableModuleException::format(
             'Could not render module of type %s with name \'%s\': no matching renderer could be found',
-            get_class($module), $module->getName()
+            get_class($moduleContext), $module->getName()
         );
     }
 }

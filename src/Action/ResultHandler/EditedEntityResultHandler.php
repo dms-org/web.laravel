@@ -3,9 +3,11 @@
 namespace Dms\Web\Laravel\Action\ResultHandler;
 
 use Dms\Core\Common\Crud\Action\Crud\EditAction;
+use Dms\Core\Common\Crud\IReadModule;
 use Dms\Core\Model\Object\Entity;
 use Dms\Core\Module\IAction;
 use Dms\Web\Laravel\Action\ActionResultHandler;
+use Dms\Web\Laravel\Http\ModuleContext;
 use Dms\Web\Laravel\Util\EntityModuleMap;
 use Dms\Web\Laravel\Util\StringHumanizer;
 use Illuminate\Http\Response;
@@ -42,25 +44,28 @@ class EditedEntityResultHandler extends ActionResultHandler
     }
 
     /**
-     * @param IAction $action
-     * @param mixed   $result
+     * @param ModuleContext $moduleContext
+     * @param IAction       $action
+     * @param mixed         $result
      *
      * @return bool
      */
-    protected function canHandleResult(IAction $action, $result) : bool
+    protected function canHandleResult(ModuleContext $moduleContext, IAction $action, $result) : bool
     {
-        return $action instanceof EditAction;
+        return $moduleContext->getModule() instanceof IReadModule && $action instanceof EditAction;
     }
 
     /**
-     * @param IAction $action
-     * @param mixed   $result
+     * @param ModuleContext $moduleContext
+     * @param IAction       $action
+     * @param mixed         $result
      *
      * @return Response|mixed
      */
-    protected function handleResult(IAction $action, $result)
+    protected function handleResult(ModuleContext $moduleContext, IAction $action, $result)
     {
-        $module = $this->entityModuleMap->loadModuleFor(get_class($result));
+        /** @var IReadModule $module */
+        $module = $moduleContext->getModule();
         $label  = $module->getLabelFor($result);
         $type   = str_singular(StringHumanizer::humanize($module->getName()));
 

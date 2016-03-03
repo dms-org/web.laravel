@@ -43,13 +43,17 @@ class FormRenderer
     /**
      * Renders the supplied form as a html string.
      *
-     * @param IForm $form
+     * @param FormRenderingContext $renderingContext
+     * @param IForm                $form
      *
      * @return string
      * @throws UnrenderableFieldException
      */
-    public function renderFields(IForm $form) : string
+    public function renderFields(FormRenderingContext $renderingContext, IForm $form) : string
     {
+        $originalForm = $renderingContext->getCurrentForm();
+        $renderingContext->setCurrentForm($form);
+
         $sections = [];
 
         foreach ($form->getSections() as $section) {
@@ -58,10 +62,12 @@ class FormRenderer
             foreach ($section->getFields() as $field) {
                 $sections[$title][$field->getLabel()] = [
                     'name'    => $field->getName(),
-                    'content' => $this->fieldRenderers->findRendererFor($field)->render($field),
+                    'content' => $this->fieldRenderers->findRendererFor($renderingContext, $field)->render($renderingContext, $field),
                 ];
             }
         }
+
+        $renderingContext->setCurrentForm($originalForm);
 
         return view('dms::components.form.form-fields')
             ->with([
@@ -78,13 +84,17 @@ class FormRenderer
     /**
      * Renders the supplied form as a html string.
      *
-     * @param IForm $form
+     * @param FormRenderingContext $renderingContext
+     * @param IForm                $form
      *
      * @return string
      * @throws UnrenderableFieldException
      */
-    public function renderFieldsAsValues(IForm $form) : string
+    public function renderFieldsAsValues(FormRenderingContext $renderingContext, IForm $form) : string
     {
+        $originalForm = $renderingContext->getCurrentForm();
+        $renderingContext->setCurrentForm($form);
+
         $sections = [];
 
         foreach ($form->getSections() as $section) {
@@ -93,10 +103,12 @@ class FormRenderer
             foreach ($section->getFields() as $field) {
                 $sections[$title][$field->getLabel()] = [
                     'name'    => $field->getName(),
-                    'content' => $this->fieldRenderers->findRendererFor($field)->renderValue($field),
+                    'content' => $this->fieldRenderers->findRendererFor($renderingContext, $field)->renderValue($renderingContext, $field),
                 ];
             }
         }
+
+        $renderingContext->setCurrentForm($originalForm);
 
         return view('dms::components.form.form-fields')
             ->with(['groupedFields' => $sections])

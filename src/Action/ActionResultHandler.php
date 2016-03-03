@@ -5,6 +5,7 @@ namespace Dms\Web\Laravel\Action;
 use Dms\Core\Exception\InvalidArgumentException;
 use Dms\Core\Module\IAction;
 use Dms\Core\Util\Debug;
+use Dms\Web\Laravel\Http\ModuleContext;
 use Illuminate\Http\Response;
 
 /**
@@ -33,20 +34,22 @@ abstract class ActionResultHandler implements IActionResultHandler
     abstract protected function supportedResultType();
 
     /**
-     * @param IAction $action
-     * @param mixed   $result
+     * @param ModuleContext $moduleContext
+     * @param IAction       $action
+     * @param mixed         $result
      *
      * @return bool
      */
-    abstract protected function canHandleResult(IAction $action, $result) : bool;
+    abstract protected function canHandleResult(ModuleContext $moduleContext,IAction $action, $result) : bool;
 
     /**
-     * @param IAction $action
-     * @param mixed   $result
+     * @param ModuleContext $moduleContext
+     * @param IAction       $action
+     * @param mixed         $result
      *
      * @return Response|mixed
      */
-    abstract protected function handleResult(IAction $action, $result);
+    abstract protected function handleResult(ModuleContext $moduleContext,IAction $action, $result);
 
     /**
      * @inheritdoc
@@ -59,27 +62,27 @@ abstract class ActionResultHandler implements IActionResultHandler
     /**
      * @inheritdoc
      */
-    final public function accepts(IAction $action, $result) : bool
+    final public function accepts(ModuleContext $moduleContext,IAction $action, $result) : bool
     {
         if ($this->supportedResultType && !($result instanceof $this->supportedResultType)) {
             return false;
         }
 
-        return $this->canHandleResult($action, $result);
+        return $this->canHandleResult($moduleContext, $action, $result);
     }
 
     /**
      * @inheritdoc
      */
-    final public function handle(IAction $action, $result)
+    final public function handle(ModuleContext $moduleContext, IAction $action, $result)
     {
-        if (!$this->accepts($action, $result)) {
+        if (!$this->accepts($moduleContext, $action, $result)) {
             throw InvalidArgumentException::format(
                 'Invalid call to %s: action and result of type %s not supported',
                 get_class($this) . '::' . __FUNCTION__, Debug::getType($result)
             );
         }
 
-        return $this->handleResult($action, $result);
+        return $this->handleResult($moduleContext, $action, $result);
     }
 }

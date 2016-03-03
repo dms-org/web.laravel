@@ -9,6 +9,7 @@ use Dms\Core\Module\IParameterizedAction;
 use Dms\Web\Laravel\Action\IActionInputTransformer;
 use Dms\Web\Laravel\File\ITemporaryFileService;
 use Dms\Web\Laravel\File\TemporaryFile;
+use Dms\Web\Laravel\Http\ModuleContext;
 
 /**
  * Transforms any temp uploaded files referenced by token to the equivalent uploaded file input.
@@ -37,12 +38,13 @@ class TempUploadedFileToUploadedFileTransformer implements IActionInputTransform
     /**
      * Transforms for the supplied action.
      *
+     * @param ModuleContext        $moduleContext
      * @param IParameterizedAction $action
      * @param array                $input
      *
      * @return array
      */
-    public function transform(IParameterizedAction $action, array $input) : array
+    public function transform(ModuleContext $moduleContext, IParameterizedAction $action, array $input) : array
     {
         if (isset($input[self::TEMP_FILES_KEY]) && is_array($input[self::TEMP_FILES_KEY])) {
             $uploadedTokenStructure = $input[self::TEMP_FILES_KEY];

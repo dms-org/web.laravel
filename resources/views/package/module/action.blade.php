@@ -1,8 +1,4 @@
-<?php /** @var \Dms\Web\Laravel\Renderer\Form\ActionFormRenderer $formRenderer */ ?>
-<?php /** @var \Dms\Core\Module\IParameterizedAction $action */ ?>
 <?php /** @var \Dms\Web\Laravel\Renderer\Action\ActionButton[] $actionButtons */ ?>
-<?php /** @var array $hiddenValues */ ?>
-<?php /** @var int $initialFormStage */ ?>
 @extends('dms::template.default')
 
 @section('content')
@@ -19,7 +15,7 @@
                 @endif
                 <!-- /.box-header -->
                 <div class="box-body">
-                    {!! $formRenderer->renderActionForm($action, $hiddenValues ?? [], $initialStageNumber) !!}
+                    {!! $actionFormContent !!}
                 </div>
                 <!-- /.box-footer -->
             </div>

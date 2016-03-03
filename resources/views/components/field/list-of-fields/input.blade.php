@@ -1,3 +1,4 @@
+<?php /** @var \Dms\Web\Laravel\Renderer\Form\FormRenderingContext $renderingContext */ ?>
 <?php /** @var \Dms\Web\Laravel\Renderer\Form\IFieldRenderer $fieldRenderer */ ?>
 <?php /** @var \Dms\Core\Form\IField $elementField */ ?>
 <?php $elementField = $elementField->withName($name, str_singular($label)); ?>
@@ -14,7 +15,7 @@
     <li class="list-group-item hidden field-list-template clearfix dms-no-validation dms-form-no-submit">
         <div class="row">
             <div class="col-xs-10 col-md-11 field-list-input">
-                {{ $fieldRenderer->render($elementField->withName($name . '[::index::]')->withInitialValue(null)) }}
+                {{ $fieldRenderer->render($renderingContext, $elementField->withName($name . '[::index::]')->withInitialValue(null)) }}
             </div>
             <div class="col-xs-2 col-md-1 field-list-button-container">
                 <button class="btn btn-danger btn-block btn-remove-field" tabindex="-1"><span class="fa fa-times"></span></button>
@@ -27,7 +28,7 @@
             <li class="list-group-item field-list-item clearfix">
                 <div class="row">
                     <div class="col-xs-10 col-md-11 field-list-input">
-                        {!! $fieldRenderer->render($elementField->withName($name . '[' . $key . ']')->withInitialValue($valueElement)) !!}
+                        {!! $fieldRenderer->render($renderingContext, $elementField->withName($name . '[' . $key . ']')->withInitialValue($valueElement)) !!}
                     </div>
                     <div class="col-xs-2 col-md-1 field-list-button-container">
                         <button class="btn btn-danger btn-block btn-remove-field" tabindex="-1"><span class="fa fa-times"></span></button>

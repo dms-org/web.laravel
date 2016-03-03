@@ -2,9 +2,12 @@
 
 namespace Dms\Web\Laravel\Action\ExceptionHandler;
 
+use Dms\Core\Common\Crud\IReadModule;
 use Dms\Core\Module\IAction;
 use Dms\Core\Persistence\Db\Mapping\EntityOutOfSyncException;
 use Dms\Web\Laravel\Action\ActionExceptionHandler;
+use Dms\Web\Laravel\Http\ModuleContext;
+use Dms\Web\Laravel\Http\ModuleRequestRouter;
 use Dms\Web\Laravel\Util\EntityModuleMap;
 use Dms\Web\Laravel\Util\StringHumanizer;
 use Illuminate\Http\Response;
@@ -17,22 +20,6 @@ use Illuminate\Http\Response;
 class EntityOutOfSyncExceptionHandler extends ActionExceptionHandler
 {
     /**
-     * @var EntityModuleMap
-     */
-    protected $entityModuleMap;
-
-    /**
-     * EntityOutOfSyncExceptionHandler constructor.
-     *
-     * @param EntityModuleMap $entityModuleMap
-     */
-    public function __construct(EntityModuleMap $entityModuleMap)
-    {
-        parent::__construct();
-        $this->entityModuleMap = $entityModuleMap;
-    }
-
-    /**
      * @return string|null
      */
     protected function supportedExceptionType()
@@ -41,38 +28,41 @@ class EntityOutOfSyncExceptionHandler extends ActionExceptionHandler
     }
 
     /**
-     * @param IAction    $action
-     * @param \Exception $exception
+     * @param ModuleContext $moduleContext
+     * @param IAction       $action
+     * @param \Exception    $exception
      *
      * @return bool
      */
-    protected function canHandleException(IAction $action, \Exception $exception) : bool
+    protected function canHandleException(ModuleContext $moduleContext, IAction $action, \Exception $exception) : bool
     {
         return true;
     }
 
     /**
-     * @param IAction    $action
-     * @param \Exception $exception
+     * @param ModuleContext $moduleContext
+     * @param IAction       $action
+     * @param \Exception    $exception
      *
      * @return Response|mixed
      */
-    protected function handleException(IAction $action, \Exception $exception)
+    protected function handleException(ModuleContext $moduleContext, IAction $action, \Exception $exception)
     {
         /** @var EntityOutOfSyncException $exception */
         $hasEntityBeenDeleted = !$exception->hasCurrentEntityInDb();
         $entity               = $exception->getEntityBeingPersisted();
 
-        $module = $this->entityModuleMap->loadModuleFor(get_class($entity));
-        $label  = $module->getLabelFor($entity);
-        $type   = str_singular(StringHumanizer::humanize($module->getName()));
+        /** @var IReadModule $module */
+        $module        = $moduleContext->getModule();
+        $label         = $module->getLabelFor($entity);
+        $type          = str_singular(StringHumanizer::humanize($module->getName()));
 
         // TODO: add options to resave?
         if ($hasEntityBeenDeleted) {
             return \response()->json([
                 'message'      => "The '{$label}' {$type} has been removed in another instance.",
                 'message_type' => 'danger',
-                'redirect'     => route('dms::package.module.dashboard', [$module->getPackageName(), $module->getName()]),
+                'redirect'     => $moduleContext->getUrl('dashboard'),
             ], 400);
         } else {
             return \response()->json([

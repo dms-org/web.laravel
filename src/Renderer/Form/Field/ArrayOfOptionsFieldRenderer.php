@@ -7,6 +7,7 @@ use Dms\Core\Form\Field\Type\ArrayOfType;
 use Dms\Core\Form\Field\Type\FieldType;
 use Dms\Core\Form\IField;
 use Dms\Core\Form\IFieldType;
+use Dms\Web\Laravel\Renderer\Form\FormRenderingContext;
 
 /**
  * The array of options field renderer
@@ -25,13 +26,7 @@ class ArrayOfOptionsFieldRenderer extends BladeFieldRenderer
         return [ArrayOfType::class];
     }
 
-    /**
-     * @param IField     $field
-     * @param IFieldType $fieldType
-     *
-     * @return bool
-     */
-    protected function canRender(IField $field, IFieldType $fieldType) : bool
+    protected function canRender(FormRenderingContext $renderingContext, IField $field, IFieldType $fieldType) : bool
     {
         /** @var ArrayOfType $fieldType */
         return !$fieldType->has(FieldType::ATTR_OPTIONS)
@@ -39,13 +34,7 @@ class ArrayOfOptionsFieldRenderer extends BladeFieldRenderer
         && $fieldType->get(ArrayOfType::ATTR_UNIQUE_ELEMENTS);
     }
 
-    /**
-     * @param IField     $field
-     * @param IFieldType $fieldType
-     *
-     * @return string
-     */
-    protected function renderField(IField $field, IFieldType $fieldType) : string
+    protected function renderField(FormRenderingContext $renderingContext, IField $field, IFieldType $fieldType) : string
     {
         /** @var ArrayOfType $fieldType */
         $elementField = $this->makeElementField($fieldType);
@@ -65,14 +54,7 @@ class ArrayOfOptionsFieldRenderer extends BladeFieldRenderer
         );
     }
 
-    /**
-     * @param IField     $field
-     * @param mixed      $value
-     * @param IFieldType $fieldType
-     *
-     * @return string
-     */
-    protected function renderFieldValue(IField $field, $value, IFieldType $fieldType) : string
+    protected function renderFieldValue(FormRenderingContext $renderingContext, IField $field, $value, IFieldType $fieldType) : string
     {
         /** @var ArrayOfType $fieldType */
         $elementField = $this->makeElementField($fieldType);

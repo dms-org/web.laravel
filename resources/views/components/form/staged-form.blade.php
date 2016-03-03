@@ -1,9 +1,11 @@
+<?php /** @var \Dms\Web\Laravel\Http\ModuleContext $moduleContext */ ?>
+<?php /** @var \Dms\Web\Laravel\Renderer\Form\FormRenderingContext $renderingContext */ ?>
 <?php /** @var \Dms\Core\Module\IAction $action */ ?>
 <?php /** @var \Dms\Core\Form\IStagedForm $stagedForm */ ?>
 <?php /** @var \Dms\Web\Laravel\Renderer\Form\FormRenderer $formRenderer */ ?>
 <?php /** @var array $hiddenValues */ ?>
 <form
-        action="{{ route('dms::package.module.action.run', [$packageName, $moduleName, $actionName]) }}"
+        action="{{ $moduleContext->getUrl('action.run', [$actionName]) }}"
         method="post"
         enctype="multipart/form-data"
         class="dms-staged-form form-horizontal"
@@ -23,12 +25,14 @@
 
     <?php $currentData = [] ?>
     @for ($stageNumber = 1; $stageNumber <= $stagedForm->getAmountOfStages(); $stageNumber++)
+        <?php $absoluteStageNumber =  $stageNumber + ($initialStageNumber ?? 1) - 1 ?>
+        <?php $renderingContext->setCurrentStageNumber($absoluteStageNumber) ?>
         <?php $stage = $stagedForm->getStage($stageNumber) ?>
         @if ($stage instanceof \Dms\Core\Form\Stage\IndependentFormStage)
             <?php $form = $stage->loadForm() ?>
             <div class="dms-form-stage-container loaded">
                 <div class="dms-form-stage">
-                    {!!  $formRenderer->renderFields($form) !!}
+                    {!!  $formRenderer->renderFields($renderingContext, $form) !!}
                 </div>
             </div>
             <?php $currentData += $form->getInitialValues() ?>
@@ -37,11 +41,11 @@
             <div class="dms-form-stage-container {{ $form ? 'loaded' : '' }}">
                 <div
                         class="dms-form-stage dms-dependent-form-stage"
-                        data-load-stage-url="{{ route('dms::package.module.action.form.stage', [$packageName, $moduleName, $actionName, $stageNumber + ($initialStageNumber ?? 1) - 1]) }}"
+                        data-load-stage-url="{{ $moduleContext->getUrl('action.form.stage', [$actionName, $absoluteStageNumber]) }}"
                         @if($stage->getRequiredFieldNames() !== null) data-stage-dependent-fields="{{ json_encode($stage->getRequiredFieldNames()) }}" @endif
                 >
                     @if ($form)
-                        {!!  $formRenderer->renderFields($form) !!}
+                        {!!  $formRenderer->renderFields($renderingContext, $form) !!}
                         <?php $currentData += $form->getInitialValues() ?>
                     @else
                         <div class="row">

@@ -5,6 +5,7 @@ namespace Dms\Web\Laravel\Renderer\Widget;
 use Dms\Core\Module\IModule;
 use Dms\Core\Widget\IWidget;
 use Dms\Core\Widget\TableWidget;
+use Dms\Web\Laravel\Http\ModuleContext;
 use Dms\Web\Laravel\Renderer\Table\TableRenderer;
 
 /**
@@ -32,11 +33,12 @@ class TableWidgetRenderer extends WidgetRenderer
     /**
      * Returns whether this renderer can render the supplied widget.
      *
-     * @param IWidget $widget
+     * @param ModuleContext $moduleContext
+     * @param IWidget       $widget
      *
      * @return bool
      */
-    public function accepts(IModule $module, IWidget $widget) : bool
+    public function accepts(ModuleContext $moduleContext, IWidget $widget) : bool
     {
         return $widget instanceof TableWidget;
     }
@@ -44,12 +46,12 @@ class TableWidgetRenderer extends WidgetRenderer
     /**
      * Gets an array of links for the supplied widget.
      *
-     * @param IModule $module
+     * @param ModuleContext $moduleContext
      * @param IWidget $widget
      *
      * @return array
      */
-    protected function getWidgetLinks(IModule $module, IWidget $widget) : array
+    protected function getWidgetLinks(ModuleContext $moduleContext, IWidget $widget) : array
     {
         /** @var TableWidget $widget */
         $tableDisplay = $widget->getTableDisplay();
@@ -57,13 +59,13 @@ class TableWidgetRenderer extends WidgetRenderer
         $links = [];
 
         foreach ($tableDisplay->getViews() as $tableView) {
-            $viewParams = [$module->getPackageName(), $module->getName(), $tableDisplay->getName(), $tableView->getName()];
+            $viewParams = [$tableDisplay->getName(), $tableView->getName()];
 
-            $links[route('dms::package.module.table.view.show', $viewParams)] = $tableView->getLabel();
+            $links[$moduleContext->getUrl('table.view.show', $viewParams)] = $tableView->getLabel();
         }
 
         if (!$links) {
-            $links[route('dms::package.module.chart.view.show', [$module->getPackageName(), $module->getName(), $tableDisplay->getName(), 'all'])] = 'All';
+            $links[$moduleContext->getUrl('table.view.show', [$tableDisplay->getName(), 'all'])] = 'All';
         }
 
         return $links;
@@ -72,19 +74,19 @@ class TableWidgetRenderer extends WidgetRenderer
     /**
      * Renders the supplied widget input as a html string.
      *
-     * @param IModule $module
+     * @param ModuleContext $moduleContext
      * @param IWidget $widget
      *
      * @return string
      */
-    protected function renderWidget(IModule $module, IWidget $widget) : string
+    protected function renderWidget(ModuleContext $moduleContext, IWidget $widget) : string
     {
         /** @var TableWidget $widget */
         $tableDisplay = $widget->getTableDisplay();
 
         return view('dms::components.widget.data-table')
             ->with([
-                'dataTableContent' => $this->tableRenderer->renderTableData($module, $tableDisplay, $widget->loadData()),
+                'dataTableContent' => $this->tableRenderer->renderTableData($moduleContext, $tableDisplay, $widget->loadData()),
             ])
             ->render();
     }

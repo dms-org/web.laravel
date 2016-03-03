@@ -4,6 +4,7 @@ namespace Dms\Web\Laravel\Action;
 
 use Dms\Core\Exception\InvalidArgumentException;
 use Dms\Core\Module\IAction;
+use Dms\Web\Laravel\Http\ModuleContext;
 use Illuminate\Http\Response;
 
 /**
@@ -35,25 +36,27 @@ class ActionExceptionHandlerCollection
     /**
      * Handles the supplied action exception.
      *
-     * @param IAction    $action
-     * @param \Exception $exception
+     * @param ModuleContext $moduleContext
+     * @param IAction       $action
+     * @param \Exception    $exception
      *
      * @return Response|mixed
      * @throws UnhandleableActionExceptionException
      */
-    public function handle(IAction $action, \Exception $exception)
+    public function handle(ModuleContext $moduleContext, IAction $action, \Exception $exception)
     {
-        return $this->findHandlerFor($action, $exception)->handle($action, $exception);
+        return $this->findHandlerFor($moduleContext, $action, $exception)->handle($moduleContext, $action, $exception);
     }
 
     /**
-     * @param IAction    $action
-     * @param \Exception $exception
+     * @param ModuleContext $moduleContext
+     * @param IAction       $action
+     * @param \Exception    $exception
      *
      * @return IActionExceptionHandler
      * @throws UnhandleableActionExceptionException
      */
-    public function findHandlerFor(IAction $action, \Exception $exception) : IActionExceptionHandler
+    public function findHandlerFor(ModuleContext $moduleContext, IAction $action, \Exception $exception) : IActionExceptionHandler
     {
         $exceptionClass = get_class($exception);
 
@@ -61,7 +64,7 @@ class ActionExceptionHandlerCollection
 
             if (isset($this->handlers[$exceptionClass])) {
                 foreach ($this->handlers[$exceptionClass] as $exceptionHandler) {
-                    if ($exceptionHandler->accepts($action, $exception)) {
+                    if ($exceptionHandler->accepts($moduleContext, $action, $exception)) {
                         return $exceptionHandler;
                     }
                 }

@@ -1,9 +1,9 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Action;
 
-use Dms\Core\Exception\InvalidArgumentException;
 use Dms\Core\Module\IAction;
+use Dms\Web\Laravel\Http\ModuleContext;
 use Illuminate\Http\Response;
 
 /**
@@ -25,22 +25,23 @@ interface IActionExceptionHandler
      * Returns whether the result handler can handle the supplied result from
      * the supplied action.
      *
-     * @param IAction    $action
-     * @param \Exception $exception
+     * @param ModuleContext $moduleContext
+     * @param IAction       $action
+     * @param \Exception    $exception
      *
      * @return bool
      */
-    public function accepts(IAction $action, \Exception $exception) : bool;
+    public function accepts(ModuleContext $moduleContext, IAction $action, \Exception $exception) : bool;
 
     /**
      * Handles the supplied action result and returns the appropriate HTTP response for handling
      * the exception.
      *
-     * @param IAction    $action
-     * @param \Exception $exception
+     * @param ModuleContext $moduleContext
+     * @param IAction       $action
+     * @param \Exception    $exception
      *
      * @return Response|mixed
-     * @throws InvalidArgumentException
      */
-    public function handle(IAction $action, \Exception $exception);
+    public function handle(ModuleContext $moduleContext, IAction $action, \Exception $exception);
 }

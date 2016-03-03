@@ -7,6 +7,7 @@ use Dms\Core\Form\Field\Type\FieldType;
 use Dms\Core\Form\IField;
 use Dms\Core\Form\IFieldType;
 use Dms\Web\Laravel\Renderer\Form\FieldRendererCollection;
+use Dms\Web\Laravel\Renderer\Form\FormRenderingContext;
 use Dms\Web\Laravel\Renderer\Form\IFieldRenderer;
 
 /**
@@ -47,11 +48,12 @@ abstract class FieldRenderer implements IFieldRenderer
     /**
      * Returns whether this renderer can render the supplied field.
      *
-     * @param IField $field
+     * @param FormRenderingContext $renderingContext
+     * @param IField               $field
      *
      * @return bool
      */
-    final public function accepts(IField $field) : bool
+    final public function accepts(FormRenderingContext $renderingContext, IField $field) : bool
     {
         $type = $field->getType();
 
@@ -66,28 +68,30 @@ abstract class FieldRenderer implements IFieldRenderer
             return false;
         }
 
-        return $this->canRender($field, $type);
+        return $this->canRender($renderingContext, $field, $type);
     }
 
     /**
-     * @param IField     $field
-     * @param IFieldType $fieldType
+     * @param FormRenderingContext $renderingContext
+     * @param IField               $field
+     * @param IFieldType           $fieldType
      *
      * @return bool
      */
-    abstract protected function canRender(IField $field, IFieldType $fieldType) : bool;
+    abstract protected function canRender(FormRenderingContext $renderingContext, IField $field, IFieldType $fieldType) : bool;
 
     /**
      * Renders the supplied field input as a html string.
      *
-     * @param IField $field
+     * @param FormRenderingContext $renderingContext
+     * @param IField               $field
      *
      * @return string
      * @throws InvalidArgumentException
      */
-    final public function render(IField $field) : string
+    final public function render(FormRenderingContext $renderingContext, IField $field) : string
     {
-        if (!$this->accepts($field)) {
+        if (!$this->accepts($renderingContext, $field)) {
             throw InvalidArgumentException::format(
                 'Field \'%s\' cannot be rendered in renderer of type %s',
                 $field->getName(), get_class($this)
@@ -95,47 +99,50 @@ abstract class FieldRenderer implements IFieldRenderer
         }
 
         if ($field->getType()->get(FieldType::ATTR_READ_ONLY)) {
-            return $this->renderValue($field);
+            return $this->renderValue($renderingContext, $field);
         }
 
-        return $this->renderField($field, $field->getType());
+        return $this->renderField($renderingContext, $field, $field->getType());
     }
 
     /**
-     * @param IField     $field
-     * @param IFieldType $fieldType
+     * @param FormRenderingContext $renderingContext
+     * @param IField               $field
+     * @param IFieldType           $fieldType
      *
      * @return string
      */
-    abstract protected function renderField(IField $field, IFieldType $fieldType) : string;
+    abstract protected function renderField(FormRenderingContext $renderingContext, IField $field, IFieldType $fieldType) : string;
 
     /**
      * Renders the supplied field value as a html string.
      *
-     * @param IField $field
-     * @param mixed  $overrideValue
+     * @param FormRenderingContext $renderingContext
+     * @param IField               $field
+     * @param mixed                $overrideValue
      *
      * @return string
      * @throws InvalidArgumentException
      */
-    final public function renderValue(IField $field, $overrideValue = null) : string
+    final public function renderValue(FormRenderingContext $renderingContext, IField $field, $overrideValue = null) : string
     {
-        if (!$this->accepts($field)) {
+        if (!$this->accepts($renderingContext, $field)) {
             throw InvalidArgumentException::format(
                 'Field \'%s\' cannot be rendered in renderer of type %s',
                 $field->getName(), get_class($this)
             );
         }
 
-        return $this->renderFieldValue($field, $overrideValue ?? $field->getUnprocessedInitialValue(), $field->getType());
+        return $this->renderFieldValue($renderingContext, $field, $overrideValue ?? $field->getUnprocessedInitialValue(), $field->getType());
     }
 
     /**
-     * @param IField     $field
-     * @param mixed      $value
-     * @param IFieldType $fieldType
+     * @param FormRenderingContext $renderingContext
+     * @param IField               $field
+     * @param mixed                $value
+     * @param IFieldType           $fieldType
      *
      * @return string
      */
-    abstract protected function renderFieldValue(IField $field, $value, IFieldType $fieldType) : string;
+    abstract protected function renderFieldValue(FormRenderingContext $renderingContext, IField $field, $value, IFieldType $fieldType) : string;
 }

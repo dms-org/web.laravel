@@ -1,9 +1,11 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Renderer\Table\Column\Component;
 
 use Dms\Core\Model\Criteria\Condition\ConditionOperator;
 use Dms\Core\Table\IColumnComponent;
+use Dms\Web\Laravel\Http\ModuleRequestRouter;
+use Dms\Web\Laravel\Renderer\Form\FormRenderingContext;
 use Dms\Web\Laravel\Renderer\Form\IFieldRenderer;
 use Dms\Web\Laravel\Renderer\Table\IColumnComponentRenderer;
 
@@ -20,13 +22,19 @@ class FieldComponentRenderer implements IColumnComponentRenderer
     protected $fieldRenderer;
 
     /**
+     * @var FormRenderingContext
+     */
+    protected $renderingContext;
+
+    /**
      * FieldComponentRenderer constructor.
      *
      * @param IFieldRenderer $fieldRenderer
      */
     public function __construct(IFieldRenderer $fieldRenderer)
     {
-        $this->fieldRenderer = $fieldRenderer;
+        $this->fieldRenderer    = $fieldRenderer;
+        $this->renderingContext = new FormRenderingContext(ModuleRequestRouter::currentModuleContext());
     }
 
     /**
@@ -36,7 +44,10 @@ class FieldComponentRenderer implements IColumnComponentRenderer
      */
     public function accepts(IColumnComponent $component) : bool
     {
-        return $this->fieldRenderer->accepts($component->getType()->getOperator(ConditionOperator::EQUALS)->getField());
+        return $this->fieldRenderer->accepts(
+            $this->renderingContext,
+            $component->getType()->getOperator(ConditionOperator::EQUALS)->getField()
+        );
     }
 
     /**
@@ -51,8 +62,6 @@ class FieldComponentRenderer implements IColumnComponentRenderer
     {
         $field = $component->getType()->getOperator(ConditionOperator::EQUALS)->getField();
 
-        return $this->fieldRenderer->renderValue(
-            $field, $field->unprocess($value)
-        );
+        return $this->fieldRenderer->renderValue($this->renderingContext, $field, $field->unprocess($value));
     }
 }

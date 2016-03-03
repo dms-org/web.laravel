@@ -1,10 +1,10 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Renderer\Widget;
 
 use Dms\Core\Exception\InvalidArgumentException;
-use Dms\Core\Module\IModule;
 use Dms\Core\Widget\IWidget;
+use Dms\Web\Laravel\Http\ModuleContext;
 
 /**
  * The widget renderer collection.
@@ -33,16 +33,16 @@ class WidgetRendererCollection
     }
 
     /**
-     * @param IModule $module
-     * @param IWidget $widget
+     * @param ModuleContext $moduleContext
+     * @param IWidget       $widget
      *
      * @return IWidgetRenderer
      * @throws UnrenderableWidgetException
      */
-    public function findRendererFor(IModule $module, IWidget $widget) : IWidgetRenderer
+    public function findRendererFor(ModuleContext $moduleContext, IWidget $widget) : IWidgetRenderer
     {
         foreach ($this->widgetRenderers as $renderer) {
-            if ($renderer->accepts($module, $widget)) {
+            if ($renderer->accepts($moduleContext, $widget)) {
                 return $renderer;
             }
         }

@@ -7,6 +7,7 @@ use Dms\Core\Form\IField;
 use Dms\Core\Form\IFieldOptions;
 use Dms\Core\Form\IFieldType;
 use Dms\Core\Util\Hashing\ValueHasher;
+use Dms\Web\Laravel\Renderer\Form\FormRenderingContext;
 
 /**
  * The select-box options field renderer
@@ -25,25 +26,13 @@ class SelectOptionsFieldRender extends BladeFieldRenderer
         return [FieldType::class];
     }
 
-    /**
-     * @param IField     $field
-     * @param IFieldType $fieldType
-     *
-     * @return bool
-     */
-    protected function canRender(IField $field, IFieldType $fieldType) : bool
+    protected function canRender(FormRenderingContext $renderingContext, IField $field, IFieldType $fieldType) : bool
     {
         return $fieldType->has(FieldType::ATTR_OPTIONS)
         && !$fieldType->get(FieldType::ATTR_SHOW_ALL_OPTIONS);
     }
 
-    /**
-     * @param IField     $field
-     * @param IFieldType $fieldType
-     *
-     * @return string
-     */
-    protected function renderField(IField $field, IFieldType $fieldType) : string
+    protected function renderField(FormRenderingContext $renderingContext, IField $field, IFieldType $fieldType) : string
     {
         return $this->renderView(
             $field,
@@ -54,14 +43,7 @@ class SelectOptionsFieldRender extends BladeFieldRenderer
         );
     }
 
-    /**
-     * @param IField     $field
-     * @param mixed      $value
-     * @param IFieldType $fieldType
-     *
-     * @return string
-     */
-    protected function renderFieldValue(IField $field, $value, IFieldType $fieldType) : string
+    protected function renderFieldValue(FormRenderingContext $renderingContext, IField $field, $value, IFieldType $fieldType) : string
     {
         /** @var IFieldOptions $options */
         $options = $fieldType->get(FieldType::ATTR_OPTIONS);

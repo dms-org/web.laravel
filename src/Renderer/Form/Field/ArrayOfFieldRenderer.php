@@ -1,4 +1,4 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Renderer\Form\Field;
 
@@ -7,6 +7,7 @@ use Dms\Core\Form\Field\Type\ArrayOfType;
 use Dms\Core\Form\Field\Type\FieldType;
 use Dms\Core\Form\IField;
 use Dms\Core\Form\IFieldType;
+use Dms\Web\Laravel\Renderer\Form\FormRenderingContext;
 
 /**
  * The array of field renderer
@@ -25,26 +26,14 @@ class ArrayOfFieldRenderer extends BladeFieldRenderer
         return [ArrayOfType::class];
     }
 
-    /**
-     * @param IField     $field
-     * @param IFieldType $fieldType
-     *
-     * @return bool
-     */
-    protected function canRender(IField $field, IFieldType $fieldType) : bool
+    protected function canRender(FormRenderingContext $renderingContext, IField $field, IFieldType $fieldType) : bool
     {
         /** @var ArrayOfType $fieldType */
         return !$fieldType->has(FieldType::ATTR_OPTIONS)
         && !$fieldType->get(ArrayOfType::ATTR_UNIQUE_ELEMENTS);
     }
 
-    /**
-     * @param IField     $field
-     * @param IFieldType $fieldType
-     *
-     * @return string
-     */
-    protected function renderField(IField $field, IFieldType $fieldType) : string
+    protected function renderField(FormRenderingContext $renderingContext, IField $field, IFieldType $fieldType) : string
     {
         /** @var ArrayOfType $fieldType */
         $elementField = $this->makeElementField($fieldType);
@@ -58,23 +47,14 @@ class ArrayOfFieldRenderer extends BladeFieldRenderer
                 ArrayOfType::ATTR_EXACT_ELEMENTS => 'exactElements',
             ],
             [
-                'elementField'  => $elementField,
-                'fieldRenderer' => $this->fieldRendererCollection->findRendererFor($elementField),
+                'renderingContext' => $renderingContext,
+                'elementField'     => $elementField,
+                'fieldRenderer'    => $this->fieldRendererCollection->findRendererFor($renderingContext, $elementField),
             ]
         );
     }
 
-    /**
-     * Renders the supplied field value display as a html string.
-     *
-     * @param IField     $field
-     * @param mixed      $value
-     * @param IFieldType $fieldType
-     *
-     * @return string
-     * @throws \Dms\Web\Laravel\Renderer\Form\UnrenderableFieldException
-     */
-    public function renderFieldValue(IField $field, $value, IFieldType $fieldType) : string
+    public function renderFieldValue(FormRenderingContext $renderingContext, IField $field, $value, IFieldType $fieldType) : string
     {
         /** @var ArrayOfType $fieldType */
         $elementField = $this->makeElementField($fieldType);
@@ -83,8 +63,9 @@ class ArrayOfFieldRenderer extends BladeFieldRenderer
             $field, $value,
             'dms::components.field.list-of-fields.value',
             [
-                'elementField'  => $elementField,
-                'fieldRenderer' => $this->fieldRendererCollection->findRendererFor($elementField),
+                'renderingContext' => $renderingContext,
+                'elementField'     => $elementField,
+                'fieldRenderer'    => $this->fieldRendererCollection->findRendererFor($renderingContext, $elementField),
             ]
         );
     }

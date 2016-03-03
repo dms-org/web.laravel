@@ -8,7 +8,6 @@ use Dms\Core\Auth\IUserRepository;
 use Dms\Core\Exception\InvalidOperationException;
 use Dms\Core\Language\ILanguageProvider;
 use Dms\Core\Persistence\Db\Connection\IConnection;
-use Dms\Core\Persistence\Db\Doctrine\DoctrineConnection;
 use Dms\Core\Util\DateTimeClock;
 use Dms\Core\Util\IClock;
 use Dms\Web\Laravel\Action\ActionExceptionHandlerCollection;
@@ -29,9 +28,9 @@ use Dms\Web\Laravel\File\Persistence\ITemporaryFileRepository;
 use Dms\Web\Laravel\File\Persistence\TemporaryFileRepository;
 use Dms\Web\Laravel\File\TemporaryFileService;
 use Dms\Web\Laravel\Http\Middleware\Authenticate;
-use Dms\Web\Laravel\Http\Middleware\EncryptCookies;
 use Dms\Web\Laravel\Http\Middleware\RedirectIfAuthenticated;
 use Dms\Web\Laravel\Http\Middleware\VerifyCsrfToken;
+use Dms\Web\Laravel\Http\ModuleRequestRouter;
 use Dms\Web\Laravel\Language\LaravelLanguageProvider;
 use Dms\Web\Laravel\Persistence\Db\LaravelConnection;
 use Dms\Web\Laravel\Persistence\Db\Migration\AutoGenerateMigrationCommand;
@@ -80,6 +79,7 @@ class DmsServiceProvider extends ServiceProvider
         $this->registerIocContainer();
         $this->registerAuth();
         $this->registerLang();
+        $this->registerModuleServices();
         $this->registerHttpRoutes();
         $this->registerMiddleware();
         $this->registerDbConnection();
@@ -183,6 +183,11 @@ class DmsServiceProvider extends ServiceProvider
         $this->app->bind(ILanguageProvider::class, LaravelLanguageProvider::class);
     }
 
+    public function registerModuleServices()
+    {
+        $this->app->singleton(ModuleRequestRouter::class);
+    }
+
     private function registerHttpRoutes()
     {
         if (!method_exists($this->app, 'routesAreCaches') || !$this->app->routesAreCached()) {
@@ -230,7 +235,8 @@ class DmsServiceProvider extends ServiceProvider
             $connection = $this->app->make(Connection::class);
 
             if ($connection->getPdo()->getAttribute(\PDO::ATTR_DRIVER_NAME) === 'mysql'
-                && version_compare($connection->getPdo()->getAttribute(\PDO::ATTR_SERVER_VERSION), '5.7.6', '>=')) {
+                && version_compare($connection->getPdo()->getAttribute(\PDO::ATTR_SERVER_VERSION), '5.7.6', '>=')
+            ) {
                 $connection->statement('SET optimizer_switch = \'derived_merge=off\'');
             }
 

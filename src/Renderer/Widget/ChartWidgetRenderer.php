@@ -5,6 +5,7 @@ namespace Dms\Web\Laravel\Renderer\Widget;
 use Dms\Core\Module\IModule;
 use Dms\Core\Widget\ChartWidget;
 use Dms\Core\Widget\IWidget;
+use Dms\Web\Laravel\Http\ModuleContext;
 use Dms\Web\Laravel\Renderer\Chart\ChartRendererCollection;
 
 /**
@@ -29,7 +30,7 @@ class ChartWidgetRenderer extends WidgetRenderer
         $this->chartRenderers = $chartRenderers;
     }
 
-    public function accepts(IModule $module, IWidget $widget) : bool
+    public function accepts(ModuleContext $moduleContext, IWidget $widget) : bool
     {
         return $widget instanceof ChartWidget;
     }
@@ -37,12 +38,12 @@ class ChartWidgetRenderer extends WidgetRenderer
     /**
      * Gets an array of links for the supplied widget.
      *
-     * @param IModule $module
+     * @param ModuleContext $moduleContext
      * @param IWidget $widget
      *
      * @return array
      */
-    protected function getWidgetLinks(IModule $module, IWidget $widget) : array
+    protected function getWidgetLinks(ModuleContext $moduleContext, IWidget $widget) : array
     {
         /** @var ChartWidget $widget */
         $chartDisplay = $widget->getChartDisplay();
@@ -50,13 +51,13 @@ class ChartWidgetRenderer extends WidgetRenderer
         $links = [];
 
         foreach ($chartDisplay->getViews() as $chartView) {
-            $viewParams = [$module->getPackageName(), $module->getName(), $chartDisplay->getName(), $chartView->getName()];
+            $viewParams = [$chartDisplay->getName(), $chartView->getName()];
 
-            $links[route('dms::package.module.chart.view.show', $viewParams)] = $chartView->getLabel();
+            $links[$moduleContext->getUrl('chart.view.show', $viewParams)] = $chartView->getLabel();
         }
 
         if (!$links) {
-            $links[route('dms::package.module.chart.view.show', [$module->getPackageName(), $module->getName(), $chartDisplay->getName(), 'all'])] = 'All';
+            $links[$moduleContext->getUrl('chart.view.show', [$chartDisplay->getName(), 'all'])] = 'All';
         }
 
         return $links;
@@ -65,12 +66,12 @@ class ChartWidgetRenderer extends WidgetRenderer
     /**
      * Renders the supplied widget input as a html string.
      *
-     * @param IModule $module
+     * @param ModuleContext $moduleContext
      * @param IWidget $widget
      *
      * @return string
      */
-    protected function renderWidget(IModule $module, IWidget $widget) : string
+    protected function renderWidget(ModuleContext $moduleContext, IWidget $widget) : string
     {
         /** @var ChartWidget $widget */
         $chartData = $widget->loadData();

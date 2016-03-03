@@ -5,6 +5,7 @@ namespace Dms\Web\Laravel\Tests\Unit\Action\ResultHandler;
 use Dms\Core\Exception\InvalidArgumentException;
 use Dms\Core\Module\IAction;
 use Dms\Web\Laravel\Action\IActionResultHandler;
+use Dms\Web\Laravel\Http\ModuleContext;
 use Dms\Web\Laravel\Tests\Unit\UnitTest;
 
 /**
@@ -41,11 +42,11 @@ abstract class ResultHandlerTest extends UnitTest
     public function testAcceptsResult()
     {
         foreach ($this->resultHandlingTests() as list($action, $result, $response)) {
-            $this->assertTrue($this->handler->accepts($action, $result));
+            $this->assertTrue($this->handler->accepts($this->mockModuleContext(), $action, $result));
         }
 
         foreach ($this->unhandleableResultTests() as list($action, $result)) {
-            $this->assertFalse($this->handler->accepts($action, $result));
+            $this->assertFalse($this->handler->accepts($this->mockModuleContext(), $action, $result));
         }
     }
 
@@ -55,7 +56,7 @@ abstract class ResultHandlerTest extends UnitTest
     public function testHandleThrowsOnInvalidException(IAction $action, $result)
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->handler->handle($action, $result);
+        $this->handler->handle($this->mockModuleContext(), $action, $result);
     }
 
     /**
@@ -65,12 +66,17 @@ abstract class ResultHandlerTest extends UnitTest
     {
         $this->assertResponsesMatch(
             $response,
-            $this->handler->handle($action, $result)
+            $this->handler->handle($this->mockModuleContext(), $action, $result)
         );
     }
 
     protected function assertResponsesMatch($expected, $actual)
     {
         $this->assertEquals($expected, $actual);
+    }
+
+    protected function mockModuleContext() : ModuleContext
+    {
+        return $this->getMockWithoutInvokingTheOriginalConstructor(ModuleContext::class);
     }
 }

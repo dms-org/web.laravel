@@ -22,32 +22,35 @@ interface IFieldRenderer
     /**
      * Returns whether this renderer can render the supplied field.
      *
-     * @param IField $field
+     * @param FormRenderingContext $renderingContext
+     * @param IField               $field
      *
      * @return bool
      */
-    public function accepts(IField $field) : bool;
+    public function accepts(FormRenderingContext $renderingContext, IField $field) : bool;
 
     /**
      * Renders the supplied field input as a html string.
      *
-     * @param IField $field
+     * @param FormRenderingContext $renderingContext
+     * @param IField               $field
      *
      * @return string
      * @throws InvalidArgumentException
      */
-    public function render(IField $field) : string;
+    public function render(FormRenderingContext $renderingContext, IField $field) : string;
 
     /**
      * Renders the supplied field value display as a html string.
      *
-     * @param IField     $field
-     * @param mixed|null $overrideValue
+     * @param FormRenderingContext $renderingContext
+     * @param IField               $field
+     * @param mixed|null           $overrideValue
      *
      * @return string
      * @throws InvalidArgumentException
      */
-    public function renderValue(IField $field, $overrideValue = null) : string;
+    public function renderValue(FormRenderingContext $renderingContext, IField $field, $overrideValue = null) : string;
 
     /**
      * Sets the parent field renderer.

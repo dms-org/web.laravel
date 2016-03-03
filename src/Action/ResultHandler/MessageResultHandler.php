@@ -1,4 +1,4 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Action\ResultHandler;
 
@@ -6,6 +6,7 @@ use Dms\Core\Language\ILanguageProvider;
 use Dms\Core\Language\Message;
 use Dms\Core\Module\IAction;
 use Dms\Web\Laravel\Action\ActionResultHandler;
+use Dms\Web\Laravel\Http\ModuleContext;
 use Illuminate\Http\Response;
 
 /**
@@ -41,23 +42,25 @@ class MessageResultHandler extends ActionResultHandler
     }
 
     /**
-     * @param IAction $action
-     * @param mixed   $result
+     * @param ModuleContext $moduleContext
+     * @param IAction       $action
+     * @param mixed         $result
      *
      * @return bool
      */
-    protected function canHandleResult(IAction $action, $result) : bool
+    protected function canHandleResult(ModuleContext $moduleContext, IAction $action, $result) : bool
     {
         return true;
     }
 
     /**
-     * @param IAction $action
-     * @param mixed   $result
+     * @param ModuleContext $moduleContext
+     * @param IAction       $action
+     * @param mixed         $result
      *
      * @return Response|mixed
      */
-    protected function handleResult(IAction $action, $result)
+    protected function handleResult(ModuleContext $moduleContext, IAction $action, $result)
     {
         /** @var Message $result */
         return \response()->json([

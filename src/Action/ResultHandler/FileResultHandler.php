@@ -6,6 +6,7 @@ use Dms\Core\File\IFile;
 use Dms\Core\Module\IAction;
 use Dms\Web\Laravel\Action\ActionResultHandler;
 use Dms\Web\Laravel\File\ITemporaryFileService;
+use Dms\Web\Laravel\Http\ModuleContext;
 use Illuminate\Config\Repository;
 use Illuminate\Http\Response;
 
@@ -54,18 +55,19 @@ class FileResultHandler extends ActionResultHandler
      *
      * @return bool
      */
-    protected function canHandleResult(IAction $action, $result) : bool
+    protected function canHandleResult(ModuleContext $moduleContext, IAction $action, $result) : bool
     {
         return true;
     }
 
     /**
-     * @param IAction $action
-     * @param mixed   $result
+     * @param ModuleContext $moduleContext
+     * @param IAction       $action
+     * @param mixed         $result
      *
      * @return Response|mixed
      */
-    protected function handleResult(IAction $action, $result)
+    protected function handleResult(ModuleContext $moduleContext, IAction $action, $result)
     {
         /** @var IFile $result */
         $tempFile = $this->tempFileService->storeTempFile(

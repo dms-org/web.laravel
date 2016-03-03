@@ -4,8 +4,8 @@ namespace Dms\Web\Laravel\Renderer\Module;
 
 use Dms\Core\Common\Crud\ICrudModule;
 use Dms\Core\Common\Crud\IReadModule;
-use Dms\Core\Module\IModule;
 use Dms\Core\Module\ITableView;
+use Dms\Web\Laravel\Http\ModuleContext;
 use Dms\Web\Laravel\Renderer\Table\TableRenderer;
 use Dms\Web\Laravel\Renderer\Widget\WidgetRendererCollection;
 
@@ -36,25 +36,26 @@ class ReadModuleRenderer extends ModuleRenderer
     /**
      * Returns whether this renderer can render the supplied module.
      *
-     * @param IModule $module
+     * @param ModuleContext $moduleContext
      *
      * @return bool
      */
-    public function accepts(IModule $module) : bool
+    public function accepts(ModuleContext $moduleContext) : bool
     {
-        return $module instanceof IReadModule;
+        return $moduleContext->getModule() instanceof IReadModule;
     }
 
     /**
      * Renders the supplied module dashboard as a html string.
      *
-     * @param IModule $module
+     * @param ModuleContext $moduleContext
      *
      * @return string
      */
-    protected function renderDashboard(IModule $module) : string
+    protected function renderDashboard(ModuleContext $moduleContext) : string
     {
         /** @var IReadModule $module */
+        $module       = $moduleContext->getModule();
         $summaryTable = $module->getSummaryTable();
 
         /** @var ITableView[] $views */
@@ -74,8 +75,7 @@ class ReadModuleRenderer extends ModuleRenderer
 
         return view('dms::package.module.dashboard.summary-table')
             ->with([
-                'packageName'       => $module->getPackageName(),
-                'moduleName'        => $module->getName(),
+                'moduleContext'     => $moduleContext,
                 'tableRenderer'     => $this->tableRenderer,
                 'module'            => $module,
                 'summaryTable'      => $summaryTable,

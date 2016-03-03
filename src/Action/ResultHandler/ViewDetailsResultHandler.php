@@ -6,9 +6,10 @@ use Dms\Core\Common\Crud\Action\Crud\ViewDetailsAction;
 use Dms\Core\Form\IForm;
 use Dms\Core\Module\IAction;
 use Dms\Web\Laravel\Action\ActionResultHandler;
+use Dms\Web\Laravel\Http\ModuleContext;
 use Dms\Web\Laravel\Renderer\Form\ActionFormRenderer;
 use Dms\Web\Laravel\Renderer\Form\FormRenderer;
-use Dms\Web\Laravel\Util\EntityModuleMap;
+use Dms\Web\Laravel\Renderer\Form\FormRenderingContext;
 use Illuminate\Http\Response;
 
 /**
@@ -19,26 +20,19 @@ use Illuminate\Http\Response;
 class ViewDetailsResultHandler extends ActionResultHandler
 {
     /**
-     * @var EntityModuleMap
-     */
-    protected $entityModuleMap;
-
-    /**
      * @var ActionFormRenderer
      */
     protected $formRenderer;
 
     /**
-     * CreatedEntityResultHandler constructor.
+     * ViewDetailsResultHandler constructor.
      *
-     * @param EntityModuleMap $entityModuleMap
-     * @param FormRenderer    $formRenderer
+     * @param FormRenderer $formRenderer
      */
-    public function __construct(EntityModuleMap $entityModuleMap, FormRenderer $formRenderer)
+    public function __construct(FormRenderer $formRenderer)
     {
         parent::__construct();
-        $this->entityModuleMap = $entityModuleMap;
-        $this->formRenderer    = $formRenderer;
+        $this->formRenderer = $formRenderer;
     }
 
     /**
@@ -50,25 +44,28 @@ class ViewDetailsResultHandler extends ActionResultHandler
     }
 
     /**
-     * @param IAction $action
-     * @param mixed   $result
+     * @param ModuleContext $moduleContext
+     * @param IAction       $action
+     * @param mixed         $result
      *
      * @return bool
      */
-    protected function canHandleResult(IAction $action, $result) : bool
+    protected function canHandleResult(ModuleContext $moduleContext, IAction $action, $result) : bool
     {
         return $action instanceof ViewDetailsAction;
     }
 
     /**
-     * @param IAction $action
-     * @param mixed   $result
+     * @param ModuleContext $moduleContext
+     * @param IAction       $action
+     * @param mixed         $result
      *
      * @return Response|mixed
      */
-    protected function handleResult(IAction $action, $result)
+    protected function handleResult(ModuleContext $moduleContext, IAction $action, $result)
     {
         /** @var IForm $result */
-        return $this->formRenderer->renderFieldsAsValues($result);
+        // TODO: handle stage numbers for form context
+        return $this->formRenderer->renderFieldsAsValues(new FormRenderingContext($moduleContext, $action), $result);
     }
 }

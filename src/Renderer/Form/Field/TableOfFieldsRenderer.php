@@ -7,10 +7,10 @@ use Dms\Common\Structure\Table\Form\TableType;
 use Dms\Common\Structure\Table\TableData;
 use Dms\Core\Form\Field\Builder\Field;
 use Dms\Core\Form\Field\Type\ArrayOfType;
-use Dms\Core\Form\Field\Type\EnumType;
 use Dms\Core\Form\Field\Type\FieldType;
 use Dms\Core\Form\IField;
 use Dms\Core\Form\IFieldType;
+use Dms\Web\Laravel\Renderer\Form\FormRenderingContext;
 
 /**
  * The table of fields renderer
@@ -29,25 +29,13 @@ class TableOfFieldsRenderer extends BladeFieldRenderer
         return [TableType::class];
     }
 
-    /**
-     * @param IField     $field
-     * @param IFieldType $fieldType
-     *
-     * @return bool
-     */
-    protected function canRender(IField $field, IFieldType $fieldType) : bool
+    protected function canRender(FormRenderingContext $renderingContext, IField $field, IFieldType $fieldType) : bool
     {
         /** @var ArrayOfType $fieldType */
         return !$fieldType->has(FieldType::ATTR_OPTIONS);
     }
 
-    /**
-     * @param IField     $field
-     * @param IFieldType $fieldType
-     *
-     * @return string
-     */
-    protected function renderField(IField $field, IFieldType $fieldType) : string
+    protected function renderField(FormRenderingContext $renderingContext, IField $field, IFieldType $fieldType) : string
     {
         /** @var TableType $fieldType */
         $columnField = $fieldType->getColumnField();
@@ -70,12 +58,13 @@ class TableOfFieldsRenderer extends BladeFieldRenderer
                 TableType::ATTR_PREDEFINED_ROWS    => 'predefinedRows',
             ],
             [
+                'renderingContext'    => $renderingContext,
                 'columnField'         => $columnField,
                 'rowField'            => $rowField,
                 'cellField'           => $cellField,
-                'columnFieldRenderer' => $renderers->findRendererFor($columnField),
-                'rowFieldRenderer'    => $rowField ? $renderers->findRendererFor($rowField) : null,
-                'cellFieldRenderer'   => $renderers->findRendererFor($cellField),
+                'columnFieldRenderer' => $renderers->findRendererFor($renderingContext, $columnField),
+                'rowFieldRenderer'    => $rowField ? $renderers->findRendererFor($renderingContext, $rowField) : null,
+                'cellFieldRenderer'   => $renderers->findRendererFor($renderingContext, $cellField),
                 'value'               => $this->makeDefaultValueIfHasPredefinedRowsAndColumns($fieldType, $field->getInitialValue()),
             ]
         );
@@ -123,17 +112,7 @@ class TableOfFieldsRenderer extends BladeFieldRenderer
         return $value;
     }
 
-    /**
-     * Renders the supplied field value display as a html string.
-     *
-     * @param IField     $field
-     * @param mixed      $value
-     * @param IFieldType $fieldType
-     *
-     * @return string
-     * @throws \Dms\Web\Laravel\Renderer\Form\UnrenderableFieldException
-     */
-    public function renderFieldValue(IField $field, $value, IFieldType $fieldType) : string
+    public function renderFieldValue(FormRenderingContext $renderingContext, IField $field, $value, IFieldType $fieldType) : string
     {
         /** @var TableType $fieldType */
         $columnField = $fieldType->getColumnField();
@@ -146,12 +125,13 @@ class TableOfFieldsRenderer extends BladeFieldRenderer
             $field, $value,
             'dms::components.field.table-of-fields.value',
             [
+                'renderingContext'    => $renderingContext,
                 'columnField'         => $columnField,
                 'rowField'            => $rowField,
                 'cellField'           => $cellField,
-                'columnFieldRenderer' => $renderers->findRendererFor($columnField),
-                'rowFieldRenderer'    => $rowField ? $renderers->findRendererFor($rowField) : null,
-                'cellFieldRenderer'   => $renderers->findRendererFor($cellField),
+                'columnFieldRenderer' => $renderers->findRendererFor($renderingContext, $columnField),
+                'rowFieldRenderer'    => $rowField ? $renderers->findRendererFor($renderingContext, $rowField) : null,
+                'cellFieldRenderer'   => $renderers->findRendererFor($renderingContext, $cellField),
             ]
         );
     }

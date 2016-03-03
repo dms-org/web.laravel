@@ -5,6 +5,7 @@ namespace Dms\Web\Laravel\Action;
 use Dms\Core\Exception\InvalidArgumentException;
 use Dms\Core\Module\IAction;
 use Dms\Core\Util\Debug;
+use Dms\Web\Laravel\Http\ModuleContext;
 use Illuminate\Http\Response;
 
 /**
@@ -33,20 +34,22 @@ abstract class ActionExceptionHandler implements IActionExceptionHandler
     abstract protected function supportedExceptionType();
 
     /**
-     * @param IAction    $action
-     * @param \Exception $exception
+     * @param ModuleContext $moduleContext
+     * @param IAction       $action
+     * @param \Exception    $exception
      *
      * @return bool
      */
-    abstract protected function canHandleException(IAction $action, \Exception $exception) : bool;
+    abstract protected function canHandleException(ModuleContext $moduleContext, IAction $action, \Exception $exception) : bool;
 
     /**
-     * @param IAction    $action
-     * @param \Exception $exception
+     * @param ModuleContext $moduleContext
+     * @param IAction       $action
+     * @param \Exception    $exception
      *
      * @return Response|mixed
      */
-    abstract protected function handleException(IAction $action, \Exception $exception);
+    abstract protected function handleException(ModuleContext $moduleContext, IAction $action, \Exception $exception);
 
     /**
      * @inheritdoc
@@ -59,27 +62,27 @@ abstract class ActionExceptionHandler implements IActionExceptionHandler
     /**
      * @inheritdoc
      */
-    final public function accepts(IAction $action, \Exception $exception) : bool
+    final public function accepts(ModuleContext $moduleContext, IAction $action, \Exception $exception) : bool
     {
         if ($this->supportedExceptionType && !($exception instanceof $this->supportedExceptionType)) {
             return false;
         }
 
-        return $this->canHandleException($action, $exception);
+        return $this->canHandleException($moduleContext, $action, $exception);
     }
 
     /**
      * @inheritdoc
      */
-    final public function handle(IAction $action, \Exception $exception)
+    final public function handle(ModuleContext $moduleContext, IAction $action, \Exception $exception)
     {
-        if (!$this->accepts($action, $exception)) {
+        if (!$this->accepts($moduleContext, $action, $exception)) {
             throw InvalidArgumentException::format(
                 'Invalid call to %s: action and exception of type not supported',
                 get_class($this) . '::' . __FUNCTION__, Debug::getType($exception)
             );
         }
 
-        return $this->handleException($action, $exception);
+        return $this->handleException($moduleContext, $action, $exception);
     }
 }

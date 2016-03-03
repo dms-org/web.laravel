@@ -3,8 +3,8 @@
 namespace Dms\Web\Laravel\Renderer\Widget;
 
 use Dms\Core\Exception\InvalidArgumentException;
-use Dms\Core\Module\IModule;
 use Dms\Core\Widget\IWidget;
+use Dms\Web\Laravel\Http\ModuleContext;
 
 /**
  * The widget renderer interface
@@ -16,32 +16,32 @@ interface IWidgetRenderer
     /**
      * Returns whether this renderer can render the supplied widget.
      *
-     * @param IModule $module
-     * @param IWidget $widget
+     * @param ModuleContext $moduleContext
+     * @param IWidget       $widget
      *
      * @return bool
      */
-    public function accepts(IModule $module, IWidget $widget) : bool;
+    public function accepts(ModuleContext $moduleContext, IWidget $widget) : bool;
 
     /**
      * Gets an array of links for the supplied widget.
      *
-     * @param IModule $module
-     * @param IWidget $widget
+     * @param ModuleContext $moduleContext
+     * @param IWidget       $widget
      *
      * @return array
      * @throws InvalidArgumentException
      */
-    public function getLinks(IModule $module, IWidget $widget) : array;
+    public function getLinks(ModuleContext $moduleContext, IWidget $widget) : array;
 
     /**
      * Renders the supplied widget input as a html string.
      *
-     * @param IModule $module
-     * @param IWidget $widget
+     * @param ModuleContext $moduleContext
+     * @param IWidget       $widget
      *
      * @return string
      * @throws InvalidArgumentException
      */
-    public function render(IModule $module, IWidget $widget) : string;
+    public function render(ModuleContext $moduleContext, IWidget $widget) : string;
 }

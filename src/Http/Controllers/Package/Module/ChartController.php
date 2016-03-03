@@ -12,6 +12,7 @@ use Dms\Core\Module\IModule;
 use Dms\Core\Table\Chart\Criteria\ChartCriteria;
 use Dms\Core\Table\Chart\IChartStructure;
 use Dms\Web\Laravel\Http\Controllers\DmsController;
+use Dms\Web\Laravel\Http\ModuleContext;
 use Dms\Web\Laravel\Renderer\Chart\ChartControlRenderer;
 use Dms\Web\Laravel\Util\StringHumanizer;
 use Illuminate\Http\Exception\HttpResponseException;
@@ -44,35 +45,28 @@ class ChartController extends DmsController
         $this->chartRenderer = $chartRenderer;
     }
 
-    public function showChart(IModule $module, string $chartName, string $viewName)
+    public function showChart(ModuleContext $moduleContext, string $chartName, string $viewName)
     {
-        $packageName = $module->getPackageName();
-        $moduleName = $module->getPackageName();
-        $chart = $this->loadChart($module, $chartName);
+        $module = $moduleContext->getModule();
+        $chart  = $this->loadChart($module, $chartName);
 
         $this->loadChartView($chart, $viewName);
 
         return view('dms::package.module.chart')
             ->with([
                 'assetGroups'     => ['charts'],
-                'pageTitle'       => StringHumanizer::title($packageName . ' :: ' . $moduleName . ' :: ' . $chartName),
+                'pageTitle'       => implode(' :: ', array_merge($moduleContext->getTitles(), [StringHumanizer::title($chartName)])),
                 'pageSubTitle'    => $viewName,
-                'breadcrumbs'     => [
-                    route('dms::index')                                                 => 'Home',
-                    route('dms::package.dashboard', [$packageName])                     => StringHumanizer::title($packageName),
-                    route('dms::package.module.dashboard', [$packageName, $moduleName]) => StringHumanizer::title($moduleName),
-                ],
+                'breadcrumbs'     => $moduleContext->getBreadcrumbs(),
                 'finalBreadcrumb' => StringHumanizer::title($chartName),
-                'chartRenderer'   => $this->chartRenderer,
-                'packageName'     => $packageName,
-                'moduleName'      => $moduleName,
-                'chart'           => $chart,
-                'viewName'        => $viewName,
+                'chartContent'    => $this->chartRenderer->renderChartControl($moduleContext, $chart, $viewName),
             ]);
     }
 
-    public function loadChartData(Request $request, IModule $module, string $chartName, string $viewName)
+    public function loadChartData(Request $request, ModuleContext $moduleContext, string $chartName, string $viewName)
     {
+        $module = $moduleContext->getModule();
+
         $chart = $this->loadChart($module, $chartName);
 
         $chartView = $this->loadChartView($chart, $viewName);
@@ -101,7 +95,6 @@ class ChartController extends DmsController
             'orderings.*.component' => 'required|in:' . implode(',', $axisNames),
             'orderings.*.direction' => 'required|in' . implode(',', OrderingDirection::getAll()),
         ]);
-
 
         if ($request->has('conditions')) {
             foreach ($request->input('conditions') as $condition) {

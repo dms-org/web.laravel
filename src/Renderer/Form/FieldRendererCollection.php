@@ -37,12 +37,13 @@ class FieldRendererCollection
     }
 
     /**
-     * @param IField $field
+     * @param FormRenderingContext $renderingContext
+     * @param IField               $field
      *
      * @return IFieldRenderer
      * @throws UnrenderableFieldException
      */
-    public function findRendererFor(IField $field) : IFieldRenderer
+    public function findRendererFor(FormRenderingContext $renderingContext, IField $field) : IFieldRenderer
     {
         $fieldType = $field->getType();
 
@@ -55,7 +56,7 @@ class FieldRendererCollection
 
             if (isset($this->fieldRenderers[$fieldTypeClass])) {
                 foreach ($this->fieldRenderers[$fieldTypeClass] as $fieldRenderer) {
-                    if ($fieldRenderer->accepts($field)) {
+                    if ($fieldRenderer->accepts($renderingContext, $field)) {
                         return $fieldRenderer;
                     }
                 }

@@ -3,9 +3,9 @@
 namespace Dms\Web\Laravel\Http\Controllers\Package\Module;
 
 use Dms\Core\ICms;
-use Dms\Core\Module\IModule;
 use Dms\Core\Package\IPackage;
 use Dms\Web\Laravel\Http\Controllers\DmsController;
+use Dms\Web\Laravel\Http\ModuleContext;
 use Dms\Web\Laravel\Renderer\Module\ModuleRendererCollection;
 use Dms\Web\Laravel\Util\StringHumanizer;
 use Illuminate\Http\Request;
@@ -45,27 +45,21 @@ class ModuleController extends DmsController
     }
 
     /**
-     * @param Request $request
-     * @param IModule $module
+     * @param ModuleContext $moduleContext
      *
      * @return mixed
      */
-    public function showDashboard(Request $request, IModule $module)
+    public function showDashboard(ModuleContext $moduleContext)
     {
-        $packageName = $module->getPackageName();
-        $moduleName  = $module->getName();
+        $module = $moduleContext->getModule();
 
         return view('dms::package.module.dashboard')
             ->with([
                 'assetGroups'     => ['tables', 'charts'],
-                'pageTitle'       => StringHumanizer::title($packageName . ' :: ' . $moduleName),
-                'breadcrumbs'     => [
-                    route('dms::index')                           => 'Home',
-                    route('dms::package.dashboard', $packageName) => StringHumanizer::title($packageName),
-                ],
-                'finalBreadcrumb' => StringHumanizer::title($moduleName),
-                'moduleRenderers' => $this->moduleRenderers,
-                'module'          => $module,
+                'pageTitle'       => implode(' :: ', $moduleContext->getTitles()),
+                'breadcrumbs'     => array_slice($moduleContext->getBreadcrumbs(), 0, -1, true),
+                'finalBreadcrumb' => StringHumanizer::title($moduleContext->getModule()->getName()),
+                'moduleContent'   => $this->moduleRenderers->findRendererFor($moduleContext)->render($moduleContext),
             ]);
     }
 }

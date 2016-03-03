@@ -3,6 +3,7 @@
 namespace Dms\Web\Laravel\Renderer\Module;
 
 use Dms\Core\Module\IModule;
+use Dms\Web\Laravel\Http\ModuleContext;
 
 /**
  * The default module renderer.
@@ -14,11 +15,11 @@ class DefaultModuleRenderer extends ModuleRenderer
     /**
      * Returns whether this renderer can render the supplied module.
      *
-     * @param IModule $module
+     * @param ModuleContext $moduleContext
      *
      * @return bool
      */
-    public function accepts(IModule $module) : bool
+    public function accepts(ModuleContext $moduleContext) : bool
     {
         return true;
     }
@@ -26,15 +27,15 @@ class DefaultModuleRenderer extends ModuleRenderer
     /**
      * Renders the supplied module dashboard as a html string.
      *
-     * @param IModule $module
+     * @param ModuleContext $moduleContext
      *
      * @return string
      */
-    protected function renderDashboard(IModule $module) : string
+    protected function renderDashboard(ModuleContext $moduleContext) : string
     {
         $authorizedWidgets = [];
 
-        foreach ($module->getWidgets() as $widget) {
+        foreach ($moduleContext->getModule()->getWidgets() as $widget) {
             if ($widget->isAuthorized()) {
                 $authorizedWidgets[] = $widget;
             }

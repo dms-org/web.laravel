@@ -7,6 +7,7 @@ use Dms\Core\Form\Field\Type\FieldType;
 use Dms\Core\Form\Field\Type\InnerFormType;
 use Dms\Core\Form\IField;
 use Dms\Core\Form\IFieldType;
+use Dms\Web\Laravel\Renderer\Form\FormRenderingContext;
 
 /**
  * The radio-group options field renderer
@@ -25,26 +26,14 @@ class RadioOptionsFieldRender extends BladeFieldRenderer
         return [FieldType::class];
     }
 
-    /**
-     * @param IField     $field
-     * @param IFieldType $fieldType
-     *
-     * @return bool
-     */
-    protected function canRender(IField $field, IFieldType $fieldType) : bool
+    protected function canRender(FormRenderingContext $renderingContext, IField $field, IFieldType $fieldType) : bool
     {
         return $fieldType instanceof ArrayOfType
             && $fieldType->getElementType() instanceof InnerFormType
             && $fieldType->getElementType();
     }
 
-    /**
-     * @param IField     $field
-     * @param IFieldType $fieldType
-     *
-     * @return string
-     */
-    protected function renderField(IField $field, IFieldType $fieldType) : string
+    protected function renderField(FormRenderingContext $renderingContext, IField $field, IFieldType $fieldType) : string
     {
         return $this->renderView(
             $field,
@@ -55,14 +44,7 @@ class RadioOptionsFieldRender extends BladeFieldRenderer
         );
     }
 
-    /**
-     * @param IField     $field
-     * @param mixed      $value
-     * @param IFieldType $fieldType
-     *
-     * @return string
-     */
-    protected function renderFieldValue(IField $field, $value, IFieldType $fieldType) : string
+    protected function renderFieldValue(FormRenderingContext $renderingContext, IField $field, $value, IFieldType $fieldType) : string
     {
         return $this->renderValueViewWithNullDefault(
             $field, $value,

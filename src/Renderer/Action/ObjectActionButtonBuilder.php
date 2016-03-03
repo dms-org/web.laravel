@@ -6,6 +6,7 @@ use Dms\Core\Common\Crud\Action\Object\IObjectAction;
 use Dms\Core\Common\Crud\Action\Table\IReorderAction;
 use Dms\Core\Common\Crud\IReadModule;
 use Dms\Core\Model\IEntity;
+use Dms\Web\Laravel\Http\ModuleContext;
 use Dms\Web\Laravel\Util\ActionSafetyChecker;
 use Dms\Web\Laravel\Util\StringHumanizer;
 
@@ -32,14 +33,16 @@ class ObjectActionButtonBuilder
     }
 
     /**
-     * @param IReadModule $module
-     * @param IEntity     $object
-     * @param string      $excludeActionName
+     * @param ModuleContext $moduleContext
+     * @param IEntity       $object
+     * @param string        $excludeActionName
      *
      * @return array|ActionButton[]
      */
-    public function buildActionButtons(IReadModule $module, IEntity $object = null, string $excludeActionName = null) : array
+    public function buildActionButtons(ModuleContext $moduleContext, IEntity $object = null, string $excludeActionName = null) : array
     {
+        /** @var IReadModule $module */
+        $module     = $moduleContext->getModule();
         $rowActions = [];
 
         foreach ($module->getObjectActions() as $action) {
@@ -61,24 +64,13 @@ class ObjectActionButtonBuilder
 
             if ($canShowActionResult) {
                 $submitForm = false;
-                $formUrl    = route(
-                    'dms::package.module.action.show',
-                    [$module->getPackageName(), $module->getName(), $action->getName(), '__object__']
-                );
+                $formUrl    = $moduleContext->getUrl('action.show', [$action->getName(), '__object__']);
             } elseif ($requiresExtraFormSubmission) {
                 $submitForm = false;
-                $formUrl    = route(
-                    'dms::package.module.action.form',
-                    [$module->getPackageName(), $module->getName(), $action->getName(), '__object__']
-                );
+                $formUrl    = $moduleContext->getUrl('action.form', [$action->getName(), '__object__']);
             } else {
                 $submitForm = true;
-                $formUrl    = route('dms::package.module.action.run', [
-                    $module->getPackageName(),
-                    $module->getName(),
-                    $action->getName(),
-                    IObjectAction::OBJECT_FIELD_NAME => '__object__',
-                ]);
+                $formUrl    = $moduleContext->getUrl('action.run', [$action->getName(), IObjectAction::OBJECT_FIELD_NAME => '__object__']);
             }
 
             $rowActions[$action->getName()] = new ActionButton(

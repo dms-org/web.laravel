@@ -8,6 +8,7 @@ use Dms\Web\Laravel\Action\ActionResultHandlerCollection;
 use Dms\Web\Laravel\Action\ResultHandler\MessageResultHandler;
 use Dms\Web\Laravel\Action\ResultHandler\NullResultHandler;
 use Dms\Web\Laravel\Action\UnhandleableActionResultException;
+use Dms\Web\Laravel\Http\ModuleContext;
 use Dms\Web\Laravel\Tests\Mock\Language\MockLanguageProvider;
 use Dms\Web\Laravel\Tests\Unit\UnitTest;
 
@@ -33,12 +34,12 @@ class ActionResultHandlerCollectionTest extends UnitTest
     {
         $this->assertInstanceOf(
             NullResultHandler::class,
-            $this->collection->findHandlerFor($this->mockAction(), null)
+            $this->collection->findHandlerFor($this->mockModuleContext(), $this->mockAction(), null)
         );
 
         $this->assertInstanceOf(
             MessageResultHandler::class,
-            $this->collection->findHandlerFor($this->mockAction(), new Message('id', []))
+            $this->collection->findHandlerFor($this->mockModuleContext(), $this->mockAction(), new Message('id', []))
         );
     }
 
@@ -46,7 +47,7 @@ class ActionResultHandlerCollectionTest extends UnitTest
     {
         $this->expectException(UnhandleableActionResultException::class);
 
-        $this->collection->findHandlerFor($this->mockAction(\stdClass::class), new \stdClass());
+        $this->collection->findHandlerFor($this->mockModuleContext(), $this->mockAction(\stdClass::class), new \stdClass());
     }
 
     protected function mockAction($resultType = null) : IAction
@@ -56,5 +57,10 @@ class ActionResultHandlerCollectionTest extends UnitTest
         $mock->method('getReturnTypeClass')->willReturn($resultType);
 
         return $mock;
+    }
+
+    private function mockModuleContext() : ModuleContext
+    {
+        return $this->getMockWithoutInvokingTheOriginalConstructor(ModuleContext::class);
     }
 }

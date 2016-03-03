@@ -6,6 +6,7 @@ use Dms\Common\Testing\CmsTestCase;
 use Dms\Core\Exception\InvalidArgumentException;
 use Dms\Core\Module\IAction;
 use Dms\Web\Laravel\Action\IActionExceptionHandler;
+use Dms\Web\Laravel\Http\ModuleContext;
 use Dms\Web\Laravel\Tests\Unit\UnitTest;
 
 /**
@@ -38,11 +39,11 @@ abstract class ExceptionHandlerTest extends UnitTest
     public function testAcceptException()
     {
         foreach ($this->exceptionsHandlingTests() as list($action, $exception, $response)) {
-            $this->assertTrue($this->handler->accepts($action, $exception));
+            $this->assertTrue($this->handler->accepts($this->mockModuleContext(), $action, $exception));
         }
 
         foreach ($this->unhandleableExceptionTests() as list($action, $exception)) {
-            $this->assertFalse($this->handler->accepts($action, $exception));
+            $this->assertFalse($this->handler->accepts($this->mockModuleContext(), $action, $exception));
         }
     }
 
@@ -52,7 +53,7 @@ abstract class ExceptionHandlerTest extends UnitTest
     public function testHandleThrowsOnInvalidException(IAction $action, \Exception $exception)
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->handler->handle($action, $exception);
+        $this->handler->handle($this->mockModuleContext(),$action, $exception);
     }
 
     /**
@@ -62,12 +63,17 @@ abstract class ExceptionHandlerTest extends UnitTest
     {
         $this->assertResponsesMatch(
             $response,
-            $this->handler->handle($action, $exception)
+            $this->handler->handle($this->mockModuleContext(),$action, $exception)
         );
     }
 
     protected function assertResponsesMatch($expected, $actual)
     {
         $this->assertEquals($expected, $actual);
+    }
+
+    protected function mockModuleContext() : ModuleContext
+    {
+        return $this->getMockWithoutInvokingTheOriginalConstructor(ModuleContext::class);
     }
 }

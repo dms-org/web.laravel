@@ -10,6 +10,7 @@ use Dms\Core\Form\Field\Type\InnerFormType;
 use Dms\Core\Form\IField;
 use Dms\Core\Form\IFieldType;
 use Dms\Web\Laravel\Renderer\Form\FormRenderer;
+use Dms\Web\Laravel\Renderer\Form\FormRenderingContext;
 
 /**
  * The inner-form field renderer
@@ -28,26 +29,14 @@ class InnerFormFieldRenderer extends BladeFieldRenderer
         return [InnerFormType::class];
     }
 
-    /**
-     * @param IField     $field
-     * @param IFieldType $fieldType
-     *
-     * @return bool
-     */
-    protected function canRender(IField $field, IFieldType $fieldType) : bool
+    protected function canRender(FormRenderingContext $renderingContext, IField $field, IFieldType $fieldType) : bool
     {
         return !$fieldType->has(FieldType::ATTR_OPTIONS)
         && !($fieldType instanceof DateOrTimeRangeType)
         && !($fieldType instanceof FileUploadType);
     }
 
-    /**
-     * @param IField     $field
-     * @param IFieldType $fieldType
-     *
-     * @return string
-     */
-    protected function renderField(IField $field, IFieldType $fieldType) : string
+    protected function renderField(FormRenderingContext $renderingContext, IField $field, IFieldType $fieldType) : string
     {
         /** @var InnerFormType $fieldType */
         $formWithArrayFields = $fieldType->getInnerArrayForm($field->getName());
@@ -59,18 +48,12 @@ class InnerFormFieldRenderer extends BladeFieldRenderer
             'dms::components.field.inner-form.input',
             [],
             [
-                'formContent' => $formRenderer->renderFields($formWithArrayFields),
+                'formContent' => $formRenderer->renderFields($renderingContext, $formWithArrayFields),
             ]
         );
     }
 
-    /**
-     * @param IField     $field
-     * @param IFieldType $fieldType
-     *
-     * @return string
-     */
-    protected function renderFieldValue(IField $field, $value, IFieldType $fieldType) : string
+    protected function renderFieldValue(FormRenderingContext $renderingContext, IField $field, $value, IFieldType $fieldType) : string
     {
         /** @var InnerFormType $fieldType */
         $formWithArrayFields = $fieldType->getInnerArrayForm($field->getName());
@@ -80,7 +63,7 @@ class InnerFormFieldRenderer extends BladeFieldRenderer
             $field, $value,
             'dms::components.field.inner-form.value',
             [
-                'formContent' => $formRenderer->renderFields($formWithArrayFields),
+                'formContent' => $formRenderer->renderFields($renderingContext, $formWithArrayFields),
             ]
         );
     }

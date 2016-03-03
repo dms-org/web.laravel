@@ -1,9 +1,10 @@
 Dms.form.initializeCallbacks.push(function (element) {
     element.find('.dms-inner-module').each(function () {
-        var innerForm = $(this);
+        var innerModule = $(this);
+        var currentValue = JSON.parse(innerModule.attr('data-value') || '[]');
 
-        if (innerForm.attr('data-readonly')) {
-            innerForm.find(':input').attr('readonly', 'readonly');
+        if (innerModule.attr('data-readonly')) {
+            innerModule.find(':input').attr('readonly', 'readonly');
         }
     });
 });

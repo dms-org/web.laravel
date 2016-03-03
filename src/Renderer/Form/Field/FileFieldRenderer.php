@@ -9,6 +9,7 @@ use Dms\Core\Form\Field\Type\FieldType;
 use Dms\Core\Form\IField;
 use Dms\Core\Form\IFieldType;
 use Dms\Web\Laravel\File\ITemporaryFileService;
+use Dms\Web\Laravel\Renderer\Form\FormRenderingContext;
 use Illuminate\Contracts\Config\Repository;
 
 /**
@@ -46,24 +47,12 @@ class FileFieldRenderer extends BladeFieldRenderer
         return [FileUploadType::class];
     }
 
-    /**
-     * @param IField     $field
-     * @param IFieldType $fieldType
-     *
-     * @return bool
-     */
-    protected function canRender(IField $field, IFieldType $fieldType) : bool
+    protected function canRender(FormRenderingContext $renderingContext, IField $field, IFieldType $fieldType) : bool
     {
         return !$fieldType->has(FieldType::ATTR_OPTIONS);
     }
 
-    /**
-     * @param IField     $field
-     * @param IFieldType $fieldType
-     *
-     * @return string
-     */
-    protected function renderField(IField $field, IFieldType $fieldType) : string
+    protected function renderField(FormRenderingContext $renderingContext, IField $field, IFieldType $fieldType) : string
     {
         return $this->renderView(
             $field,
@@ -120,14 +109,7 @@ class FileFieldRenderer extends BladeFieldRenderer
         return $data;
     }
 
-    /**
-     * @param IField     $field
-     * @param mixed      $value
-     * @param IFieldType $fieldType
-     *
-     * @return string
-     */
-    protected function renderFieldValue(IField $field, $value, IFieldType $fieldType) : string
+    protected function renderFieldValue(FormRenderingContext $renderingContext, IField $field, $value, IFieldType $fieldType) : string
     {
         return $this->renderValueViewWithNullDefault(
             $field, $value,

@@ -13,6 +13,7 @@ use Dms\Core\Module\ITableView;
 use Dms\Core\Table\Criteria\RowCriteria;
 use Dms\Core\Table\ITableStructure;
 use Dms\Web\Laravel\Http\Controllers\DmsController;
+use Dms\Web\Laravel\Http\ModuleContext;
 use Dms\Web\Laravel\Renderer\Table\TableRenderer;
 use Dms\Web\Laravel\Util\StringHumanizer;
 use Illuminate\Http\Exception\HttpResponseException;
@@ -45,16 +46,15 @@ class TableController extends DmsController
         $this->tableRenderer = $tableRenderer;
     }
 
-    public function showTable(IModule $module, string $tableName, string $viewName)
+    public function showTable(ModuleContext $moduleContext, string $tableName, string $viewName)
     {
-        $packageName = $module->getPackageName();
-        $moduleName  = $module->getName();
+        $module = $moduleContext->getModule();
 
         $table = $this->loadTable($module, $tableName);
 
         if ($table instanceof ISummaryTable) {
             return redirect()
-                ->route('dms::package.module.dashboard', [$packageName, $moduleName])
+                ->to($moduleContext->getUrl('dashboard'))
                 ->with('initial-view-name', $viewName);
         }
 
@@ -63,24 +63,17 @@ class TableController extends DmsController
         return view('dms::package.module.table')
             ->with([
                 'assetGroups'     => ['tables'],
-                'pageTitle'       => StringHumanizer::title($packageName . ' :: ' . $moduleName . ' :: ' . $tableName),
+                'pageTitle'       => implode(' :: ', array_merge($moduleContext->getTitles(), [StringHumanizer::title($tableName)])),
                 'pageSubTitle'    => $viewName,
-                'breadcrumbs'     => [
-                    route('dms::index')                                                 => 'Home',
-                    route('dms::package.dashboard', [$packageName])                     => StringHumanizer::title($packageName),
-                    route('dms::package.module.dashboard', [$packageName, $moduleName]) => StringHumanizer::title($moduleName),
-                ],
+                'breadcrumbs'     => $moduleContext->getBreadcrumbs(),
                 'finalBreadcrumb' => StringHumanizer::title($tableName),
-                'tableRenderer'   => $this->tableRenderer,
-                'module'          => $module,
-                'table'           => $table,
-                'viewName'        => $viewName,
+                'tableContent'    => $this->tableRenderer->renderTableControl($moduleContext, $table, $viewName),
             ]);
     }
 
-    public function loadTableRows(Request $request, IModule $module, string $tableName, string $viewName)
+    public function loadTableRows(Request $request, ModuleContext $moduleContext, string $tableName, string $viewName)
     {
-        $table = $this->loadTable($module, $tableName);
+        $table = $this->loadTable($moduleContext->getModule(), $tableName);
 
         $tableView = $this->loadTableView($table, $viewName);
 
@@ -89,7 +82,7 @@ class TableController extends DmsController
         $isFiltered = $this->filterCriteriaFromRequest($request, $table->getDataSource()->getStructure(), $criteria);
 
         return $this->tableRenderer->renderTableData(
-            $module,
+            $moduleContext,
             $table,
             $table->getDataSource()->load($criteria),
             $viewName,
@@ -169,8 +162,6 @@ class TableController extends DmsController
      * @param string  $tableName
      *
      * @return array|ITableDisplay
-     * @internal param string $packageName
-     * @internal param string $moduleName
      */
     protected function loadTable(IModule $module, string $tableName) : ITableDisplay
     {

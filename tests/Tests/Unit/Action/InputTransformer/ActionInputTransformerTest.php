@@ -4,6 +4,7 @@ namespace Dms\Web\Laravel\Tests\Unit\Action\InputTransformer;
 
 use Dms\Core\Module\IParameterizedAction;
 use Dms\Web\Laravel\Action\IActionInputTransformer;
+use Dms\Web\Laravel\Http\ModuleContext;
 use Dms\Web\Laravel\Tests\Unit\UnitTest;
 
 /**
@@ -37,7 +38,7 @@ abstract class ActionInputTransformerTest extends UnitTest
     {
         $this->assertEquals(
             $output,
-            $this->transformer->transform($action, $input)
+            $this->transformer->transform($this->getMockWithoutInvokingTheOriginalConstructor(ModuleContext::class), $action, $input)
         );
     }
 }

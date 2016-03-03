@@ -9,6 +9,7 @@ use Dms\Core\Form\InvalidFormSubmissionException;
 use Dms\Core\Form\InvalidInputException;
 use Dms\Core\ICms;
 use Dms\Core\Language\ILanguageProvider;
+use Dms\Core\Model\ITypedObject;
 use Dms\Core\Module\ActionNotFoundException;
 use Dms\Core\Module\IAction;
 use Dms\Core\Module\IModule;
@@ -20,8 +21,11 @@ use Dms\Web\Laravel\Action\ActionResultHandlerCollection;
 use Dms\Web\Laravel\Action\UnhandleableActionExceptionException;
 use Dms\Web\Laravel\Action\UnhandleableActionResultException;
 use Dms\Web\Laravel\Http\Controllers\DmsController;
+use Dms\Web\Laravel\Http\ModuleContext;
 use Dms\Web\Laravel\Renderer\Action\ObjectActionButtonBuilder;
 use Dms\Web\Laravel\Renderer\Form\ActionFormRenderer;
+use Dms\Web\Laravel\Renderer\Form\FormRenderingContext;
+use Dms\Web\Laravel\Renderer\Form\IFieldRendererWithActions;
 use Dms\Web\Laravel\Util\ActionSafetyChecker;
 use Dms\Web\Laravel\Util\StringHumanizer;
 use Illuminate\Http\Exception\HttpResponseException;
@@ -100,13 +104,11 @@ class ActionController extends DmsController
         $this->actionButtonBuilder = $actionButtonBuilder;
     }
 
-    public function showForm(IModule $module, string $actionName, int $objectId = null)
+    public function showForm(ModuleContext $moduleContext, string $actionName, int $objectId = null)
     {
-        $packageName = $module->getPackageName();
-        $moduleName  = $module->getName();
+        $module = $moduleContext->getModule();
 
-        $action     = $this->loadAction($module, $actionName);
-        $titleParts = [$packageName, $moduleName, $actionName];
+        $action = $this->loadAction($module, $actionName);
 
         if (!($action instanceof IParameterizedAction)) {
             abort(404);
@@ -116,12 +118,7 @@ class ActionController extends DmsController
 
         if ($objectId && $action instanceof IObjectAction) {
             /** @var IReadModule $module */
-            /** @var IObjectAction $action */
-            try {
-                $object = $action->getObjectForm()->getField(IObjectAction::OBJECT_FIELD_NAME)->process($objectId);
-            } catch (InvalidInputException $e) {
-                abort(404);
-            }
+            $object = $this->loadObject($objectId, $action);
 
             $action = $action->withSubmittedFirstStage([
                 IObjectAction::OBJECT_FIELD_NAME => $object,
@@ -129,9 +126,10 @@ class ActionController extends DmsController
 
             $hiddenValues[IObjectAction::OBJECT_FIELD_NAME] = $objectId;
             $objectLabel                                    = $module->getLabelFor($object);
-            $actionButtons                                  = $this->actionButtonBuilder->buildActionButtons($module, $object, $actionName);
+            $actionButtons                                  = $this->actionButtonBuilder->buildActionButtons($moduleContext, $object, $actionName);
             $initialStageNumber                             = 2;
         } else {
+            $object             = null;
             $objectLabel        = null;
             $actionButtons      = [];
             $initialStageNumber = 1;
@@ -139,32 +137,35 @@ class ActionController extends DmsController
 
         return view('dms::package.module.action')
             ->with([
-                'assetGroups'        => ['forms'],
-                'pageTitle'          => StringHumanizer::title(implode(' :: ', $titleParts)),
-                'breadcrumbs'        => [
-                    route('dms::index')                                                 => 'Home',
-                    route('dms::package.dashboard', [$packageName])                     => StringHumanizer::title($packageName),
-                    route('dms::package.module.dashboard', [$packageName, $moduleName]) => StringHumanizer::title($moduleName),
-                ],
-                'finalBreadcrumb'    => StringHumanizer::title($actionName),
-                'objectLabel'        => $objectLabel ? str_singular(StringHumanizer::title($moduleName)) . ': ' . $objectLabel : null,
-                'action'             => $action,
-                'formRenderer'       => $this->actionFormRenderer,
-                'hiddenValues'       => $hiddenValues,
-                'actionButtons'      => $actionButtons,
-                'objectId'           => $objectId,
-                'initialStageNumber' => $initialStageNumber,
+                'assetGroups'       => ['forms'],
+                'pageTitle'         => implode(' :: ', array_merge($moduleContext->getTitles(), [StringHumanizer::title($actionName)])),
+                'breadcrumbs'       => $moduleContext->getBreadcrumbs(),
+                'finalBreadcrumb'   => StringHumanizer::title($actionName),
+                'objectLabel'       => $objectLabel ? str_singular(StringHumanizer::title($module->getName())) . ': ' . $objectLabel : null,
+                'actionButtons'     => $actionButtons,
+                'objectId'          => $objectId,
+                'actionFormContent' => $this->actionFormRenderer->renderActionForm($moduleContext, $action, $hiddenValues, $object, $initialStageNumber),
             ]);
     }
 
-    protected function loadFormStage(Request $request, IModule $module, string $actionName, int $stageNumber) : IForm
+    protected function loadFormStage(Request $request, ModuleContext $moduleContext, string $actionName, int $stageNumber, int $objectId = null, &$object = null) : IForm
     {
-        $action = $this->loadAction($module, $actionName);
+        $action = $this->loadAction($moduleContext->getModule(), $actionName);
 
         if (!($action instanceof IParameterizedAction)) {
             throw new HttpResponseException(response()->json([
                 'message' => 'This action does not require an input form',
             ], 403));
+        }
+
+        if ($objectId && $action instanceof IObjectAction) {
+            $object = $this->loadObject($objectId, $action);
+
+            $action = $action->withSubmittedFirstStage([
+                IObjectAction::OBJECT_FIELD_NAME => $object,
+            ]);
+
+            $stageNumber--;
         }
 
         $form        = $action->getStagedForm();
@@ -176,28 +177,32 @@ class ActionController extends DmsController
             ], 404));
         }
 
-        $input = $this->inputTransformers->transform($action, $request->all());
+        $input = $this->inputTransformers->transform($moduleContext, $action, $request->all());
         return $form->getFormForStage($stageNumber, $input);
     }
 
-    public function getFormStage(Request $request, IModule $module, string $actionName, int $stageNumber)
+    public function getFormStage(Request $request, ModuleContext $moduleContext, string $actionName, int $stageNumber, int $objectId = null)
     {
+        if (!$objectId) {
+            $objectId = $request->input(IObjectAction::OBJECT_FIELD_NAME);
+        }
+
+        $module = $moduleContext->getModule();
         $action = $this->loadAction($module, $actionName);
 
         try {
-            $form = $this->loadFormStage($request, $module, $stageNumber, $input);
+            $form = $this->loadFormStage($request, $moduleContext, $actionName, $stageNumber, $objectId, $object);
         } catch (\Exception $e) {
-            return $this->exceptionHandlers->handle($action, $e);
+            return $this->exceptionHandlers->handle($moduleContext, $action, $e);
         }
 
-        return response($this->actionFormRenderer->renderFormFields($form), 200);
+        $renderingContext = new FormRenderingContext($moduleContext, $action, $stageNumber, $object);
+        return response($this->actionFormRenderer->renderFormFields($renderingContext, $form), 200);
     }
 
-    public function showActionResult(Request $request, IModule $module, string $actionName, int $objectId = null)
+    public function showActionResult(Request $request, ModuleContext $moduleContext, string $actionName, int $objectId = null)
     {
-        $packageName = $module->getPackageName();
-        $moduleName  = $module->getName();
-
+        $module = $moduleContext->getModule();
         $action = $this->loadAction($module, $actionName);
 
         if (!$this->actionSafetyChecker->isSafeToShowActionResultViaGetRequest($action)) {
@@ -205,18 +210,18 @@ class ActionController extends DmsController
         }
 
         try {
-            $result = $this->runActionWithDataFromRequest($request, $action, [IObjectAction::OBJECT_FIELD_NAME => $objectId]);
+            $result = $this->runActionWithDataFromRequest($request, $moduleContext, $action, [IObjectAction::OBJECT_FIELD_NAME => $objectId]);
         } catch (InvalidFormSubmissionException $e) {
             abort(404);
         }
 
-        $response = $this->resultHandlers->handle($action, $result);
+        $response = $this->resultHandlers->handle($moduleContext, $action, $result);
 
         if ($objectId && $module instanceof IReadModule) {
             /** @var IReadModule $module */
             $object        = $module->getDataSource()->get($objectId);
             $objectLabel   = $module->getLabelFor($object);
-            $actionButtons = $this->actionButtonBuilder->buildActionButtons($module, $object, $actionName);
+            $actionButtons = $this->actionButtonBuilder->buildActionButtons($moduleContext, $object, $actionName);
         } else {
             $objectLabel   = null;
             $actionButtons = [];
@@ -225,14 +230,10 @@ class ActionController extends DmsController
         return view('dms::package.module.details')
             ->with([
                 'assetGroups'     => ['forms'],
-                'pageTitle'       => StringHumanizer::title(implode(' :: ', [$packageName, $moduleName, $actionName])),
-                'breadcrumbs'     => [
-                    route('dms::index')                                                 => 'Home',
-                    route('dms::package.dashboard', [$packageName])                     => StringHumanizer::title($packageName),
-                    route('dms::package.module.dashboard', [$packageName, $moduleName]) => StringHumanizer::title($moduleName),
-                ],
+                'pageTitle'       => implode(' :: ', array_merge($moduleContext->getTitles(), [StringHumanizer::humanize($actionName)])),
+                'breadcrumbs'     => $moduleContext->getBreadcrumbs(),
                 'finalBreadcrumb' => StringHumanizer::title($actionName),
-                'objectLabel'     => $objectLabel ? str_singular(StringHumanizer::title($moduleName)) . ': ' . $objectLabel : null,
+                'objectLabel'     => $objectLabel ? str_singular(StringHumanizer::title($module->getName())) . ': ' . $objectLabel : null,
                 'action'          => $action,
                 'actionResult'    => $response,
                 'actionButtons'   => $actionButtons,
@@ -240,35 +241,61 @@ class ActionController extends DmsController
             ]);
     }
 
-    public function runAction(Request $request, IModule $module, string $actionName)
+    public function runFieldRendererActionWithObject(Request $request, ModuleContext $moduleContext, string $actionName, int $objectId, int $stageNumber, string $fieldName, string $fieldRendererAction = null)
     {
-        $action = $this->loadAction($module, $actionName);
+        return $this->runFieldRendererAction($request, $moduleContext, $actionName, $stageNumber, $fieldName, $fieldRendererAction, $objectId);
+    }
+
+    public function runFieldRendererAction(Request $request, ModuleContext $moduleContext, string $actionName, int $stageNumber, string $fieldName, string $fieldRendererAction = null, int $objectId = null)
+    {
+        $action = $this->loadAction($moduleContext->getModule(), $actionName);
+        $form   = $this->loadFormStage($request, $moduleContext, $actionName, $stageNumber, $objectId, $object);
+
+        if (!$form->hasField($fieldName)) {
+            abort(404);
+        }
+
+        $renderingContext = new FormRenderingContext($moduleContext, $action, $stageNumber, $object);
+        $field            = $form->getField($fieldName);
+        $renderer         = $this->actionFormRenderer->getFormRenderer()->getFieldRenderers()->findRendererFor($renderingContext, $field);
+
+        if (!($renderer instanceof IFieldRendererWithActions)) {
+            abort(404);
+        }
+
+        return $renderer->handleAction($renderingContext, $field, $request, $fieldRendererAction, $request->get('__field_action_data') ?? []);
+    }
+
+    public function runAction(Request $request, ModuleContext $moduleContext, string $actionName)
+    {
+        $action = $this->loadAction($moduleContext->getModule(), $actionName);
 
         try {
-            $result = $this->runActionWithDataFromRequest($request, $action);
+            $result = $this->runActionWithDataFromRequest($request, $moduleContext, $action);
         } catch (\Exception $e) {
-            return $this->handleActionException($action, $e);
+            return $this->handleActionException($moduleContext, $action, $e);
         }
 
         try {
-            return $this->resultHandlers->handle($action, $result);
+            return $this->resultHandlers->handle($moduleContext, $action, $result);
         } catch (UnhandleableActionResultException $e) {
             return $this->handleUnknownHandlerException($e);
         }
     }
 
     /**
-     * @param Request $request
-     * @param IAction $action
-     * @param array   $extraData
+     * @param Request       $request
+     * @param ModuleContext $moduleContext
+     * @param IAction       $action
+     * @param array         $extraData
      *
      * @return mixed
      */
-    protected function runActionWithDataFromRequest(Request $request, IAction $action, array $extraData = [])
+    protected function runActionWithDataFromRequest(Request $request, ModuleContext $moduleContext, IAction $action, array $extraData = [])
     {
         if ($action instanceof IParameterizedAction) {
             /** @var IParameterizedAction $action */
-            $input  = $this->inputTransformers->transform($action, $request->all() + $extraData);
+            $input  = $this->inputTransformers->transform($moduleContext, $action, $request->all() + $extraData);
             $result = $action->run($input);
             return $result;
         } else {
@@ -279,15 +306,17 @@ class ActionController extends DmsController
     }
 
     /**
-     * @param IAction    $action
-     * @param \Exception $e
+     * @param ModuleContext $moduleContext
+     * @param IAction       $action
+     * @param \Exception    $e
      *
      * @return mixed
+     * @throws \Exception
      */
-    protected function handleActionException(IAction $action, \Exception $e)
+    protected function handleActionException(ModuleContext $moduleContext, IAction $action, \Exception $e)
     {
         try {
-            return $this->exceptionHandlers->handle($action, $e);
+            return $this->exceptionHandlers->handle($moduleContext, $action, $e);
         } catch (UnhandleableActionExceptionException $e) {
             return $this->handleUnknownHandlerException($e);
         }
@@ -333,5 +362,20 @@ class ActionController extends DmsController
         }
 
         throw new HttpResponseException($response);
+    }
+
+    /**
+     * @param int $objectId
+     * @param     $action
+     *
+     * @return mixed
+     */
+    protected function loadObject(int $objectId, IObjectAction $action) : ITypedObject
+    {
+        try {
+            return $action->getObjectForm()->getField(IObjectAction::OBJECT_FIELD_NAME)->process($objectId);
+        } catch (InvalidInputException $e) {
+            abort(404);
+        }
     }
 }

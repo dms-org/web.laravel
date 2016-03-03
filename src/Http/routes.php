@@ -39,7 +39,8 @@ $router->group(['prefix' => 'dms', 'middleware' => 'dms.web', 'as' => 'dms::', '
                 'Package\PackageController@showDashboard'
             )->name('package.dashboard');
 
-            $moduleRouter = new ModuleRequestRouter();
+            /** @var ModuleRequestRouter $moduleRouter */
+            $moduleRouter = app(ModuleRequestRouter::class);
             $moduleRouter->registerOnMainRouter($router);
         });
     });

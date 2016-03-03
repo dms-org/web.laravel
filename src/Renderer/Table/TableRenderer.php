@@ -5,10 +5,10 @@ namespace Dms\Web\Laravel\Renderer\Table;
 use Dms\Core\Common\Crud\IReadModule;
 use Dms\Core\Common\Crud\Table\ISummaryTable;
 use Dms\Core\Model\Criteria\Condition\ConditionOperator;
-use Dms\Core\Module\IModule;
 use Dms\Core\Module\ITableDisplay;
 use Dms\Core\Table\IDataTable;
 use Dms\Core\Table\ITableStructure;
+use Dms\Web\Laravel\Http\ModuleContext;
 use Dms\Web\Laravel\Renderer\Action\ObjectActionButtonBuilder;
 
 /**
@@ -43,7 +43,7 @@ class TableRenderer
     /**
      * Renders the supplied data table as a html string.
      *
-     * @param IModule       $module
+     * @param ModuleContext $moduleContext
      * @param ITableDisplay $table
      * @param IDataTable    $tableData
      * @param string        $viewName
@@ -52,7 +52,7 @@ class TableRenderer
      * @return string
      * @throws UnrenderableColumnComponentException
      */
-    public function renderTableData(IModule $module, ITableDisplay $table, IDataTable $tableData, string $viewName = null, bool $isFiltered = false) : string
+    public function renderTableData(ModuleContext $moduleContext, ITableDisplay $table, IDataTable $tableData, string $viewName = null, bool $isFiltered = false) : string
     {
         $columnRenderers = [];
 
@@ -61,8 +61,8 @@ class TableRenderer
         }
 
         $rowActionButtons = [];
-        if ($module instanceof IReadModule && $table instanceof ISummaryTable) {
-            foreach ($this->actionButtonBuilder->buildActionButtons($module) as $actionButton) {
+        if ($moduleContext->getModule() instanceof IReadModule && $table instanceof ISummaryTable) {
+            foreach ($this->actionButtonBuilder->buildActionButtons($moduleContext) as $actionButton) {
                 $rowActionButtons[$actionButton->getName()] = $actionButton;
             }
         }
@@ -81,26 +81,23 @@ class TableRenderer
     /**
      * Renders the supplied table control as a html string.
      *
-     * @param IModule       $module
+     * @param ModuleContext $moduleContext
      * @param ITableDisplay $table
      * @param string        $viewName
      *
      * @return string
      */
-    public function renderTableControl(IModule $module, ITableDisplay $table, string $viewName = null) : string
+    public function renderTableControl(ModuleContext $moduleContext, ITableDisplay $table, string $viewName = null) : string
     {
         $viewName = $viewName ?? $table->getDefaultView()->getName();
         $columns  = $table->getDataSource()->getStructure()->getColumns();
 
-        if ($module instanceof IReadModule && $table instanceof ISummaryTable) {
+        if ($moduleContext->getModule() instanceof IReadModule && $table instanceof ISummaryTable) {
             unset($columns[IReadModule::SUMMARY_TABLE_ID_COLUMN]);
         }
 
         if ($this->allowsRowReorder($table, $viewName)) {
-            $reorderRowActionUrl = route(
-                'dms::package.module.action.run',
-                [$module->getPackageName(), $module->getName(), $table->getReorderAction($viewName)->getName()]
-            );
+            $reorderRowActionUrl = $moduleContext->getUrl('action.run', [$table->getReorderAction($viewName)->getName()]);
         } else {
             $reorderRowActionUrl = null;
         }
@@ -109,10 +106,7 @@ class TableRenderer
             ->with([
                 'columns'                      => $columns,
                 'table'                        => $table->getView($viewName),
-                'loadRowsUrl'                  => route(
-                    'dms::package.module.table.view.load',
-                    [$module->getPackageName(), $module->getName(), $table->getName(), $viewName]
-                ),
+                'loadRowsUrl'                  => $moduleContext->getUrl('table.view.load', [$table->getName(), $viewName]),
                 'reorderRowActionUrl'          => $reorderRowActionUrl,
                 'stringFilterableComponentIds' => $this->getStringFilterableColumnComponentIds($table->getDataSource()->getStructure()),
             ])

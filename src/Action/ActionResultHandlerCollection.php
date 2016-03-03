@@ -1,9 +1,10 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Action;
 
 use Dms\Core\Exception\InvalidArgumentException;
 use Dms\Core\Module\IAction;
+use Dms\Web\Laravel\Http\ModuleContext;
 use Illuminate\Http\Response;
 
 /**
@@ -35,25 +36,27 @@ class ActionResultHandlerCollection
     /**
      * Handles the supplied action result.
      *
-     * @param IAction $action
-     * @param mixed   $result
+     * @param ModuleContext $moduleContext
+     * @param IAction       $action
+     * @param mixed         $result
      *
      * @return Response|mixed
      * @throws UnhandleableActionResultException
      */
-    public function handle(IAction $action, $result)
+    public function handle(ModuleContext $moduleContext, IAction $action, $result)
     {
-        return $this->findHandlerFor($action, $result)->handle($action, $result);
+        return $this->findHandlerFor($moduleContext, $action, $result)->handle($moduleContext, $action, $result);
     }
 
     /**
-     * @param IAction $action
-     * @param mixed   $result
+     * @param ModuleContext $moduleContext
+     * @param IAction       $action
+     * @param mixed         $result
      *
      * @return IActionResultHandler
      * @throws UnhandleableActionResultException
      */
-    public function findHandlerFor(IAction $action, $result) : IActionResultHandler
+    public function findHandlerFor(ModuleContext $moduleContext, IAction $action, $result) : IActionResultHandler
     {
 
         $resultClass = get_class($result);
@@ -62,7 +65,7 @@ class ActionResultHandlerCollection
 
             if (isset($this->handlers[$resultClass])) {
                 foreach ($this->handlers[$resultClass] as $resultHandler) {
-                    if ($resultHandler->accepts($action, $result)) {
+                    if ($resultHandler->accepts($moduleContext, $action, $result)) {
                         return $resultHandler;
                     }
                 }
@@ -72,7 +75,7 @@ class ActionResultHandlerCollection
         }
 
         foreach ($this->handlers['<any>'] as $resultHandler) {
-            if ($resultHandler->accepts($action, $result)) {
+            if ($resultHandler->accepts($moduleContext, $action, $result)) {
                 return $resultHandler;
             }
         }

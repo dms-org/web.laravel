@@ -1,3 +1,4 @@
+<?php /** @var \Dms\Web\Laravel\Renderer\Form\FormRenderingContext $renderingContext */ ?>
 <?php /** @var \Dms\Web\Laravel\Renderer\Form\IFieldRenderer $columnFieldRenderer */ ?>
 <?php /** @var \Dms\Web\Laravel\Renderer\Form\IFieldRenderer|null $rowFieldRenderer */ ?>
 <?php /** @var \Dms\Web\Laravel\Renderer\Form\IFieldRenderer $cellFieldRenderer */ ?>
@@ -17,7 +18,7 @@
         @endif
         @foreach ($value['columns'] as $key => $columnValue)
             <th>
-                {!! $columnFieldRenderer->renderValue($columnField, $columnValue)  !!}
+                {!! $columnFieldRenderer->renderValue($renderingContext, $columnField, $columnValue)  !!}
             </th>
         @endforeach
     </tr>
@@ -27,12 +28,12 @@
         <tr>
             @if ($rowField !== null)
                 <th class="row-key-column">
-                    {!! $rowFieldRenderer->renderValue($rowField, $value['rows'][$rowKey]) !!}
+                    {!! $rowFieldRenderer->renderValue($renderingContext, $rowField, $value['rows'][$rowKey]) !!}
                 </th>
             @endif
             @foreach ($rowCellValues as $columnKey => $cellValue)
                 <td>
-                    {!! $cellFieldRenderer->renderValue($cellField, $cellValue) !!}
+                    {!! $cellFieldRenderer->renderValue($renderingContext, $cellField, $cellValue) !!}
                 </td>
             @endforeach
         </tr>

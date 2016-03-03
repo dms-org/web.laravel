@@ -2,10 +2,10 @@
 
 namespace Dms\Web\Laravel\Renderer\Widget;
 
-use Dms\Core\Module\IModule;
 use Dms\Core\Module\IUnparameterizedAction;
 use Dms\Core\Widget\ActionWidget;
 use Dms\Core\Widget\IWidget;
+use Dms\Web\Laravel\Http\ModuleContext;
 use Dms\Web\Laravel\Util\KeywordTypeIdentifier;
 
 /**
@@ -37,7 +37,7 @@ class UnparameterizedActionWidgetRenderer extends WidgetRenderer
      *
      * @return bool
      */
-    public function accepts(IModule $module, IWidget $widget) : bool
+    public function accepts(ModuleContext $moduleContext, IWidget $widget) : bool
     {
         return $widget instanceof ActionWidget
         && $widget->getAction() instanceof IUnparameterizedAction;
@@ -46,12 +46,12 @@ class UnparameterizedActionWidgetRenderer extends WidgetRenderer
     /**
      * Gets an array of links for the supplied widget.
      *
-     * @param IModule $module
-     * @param IWidget $widget
+     * @param ModuleContext $moduleContext
+     * @param IWidget       $widget
      *
      * @return array
      */
-    protected function getWidgetLinks(IModule $module, IWidget $widget) : array
+    protected function getWidgetLinks(ModuleContext $moduleContext, IWidget $widget) : array
     {
         return [];
     }
@@ -59,11 +59,12 @@ class UnparameterizedActionWidgetRenderer extends WidgetRenderer
     /**
      * Renders the supplied widget input as a html string.
      *
-     * @param IWidget $widget
+     * @param ModuleContext $moduleContext
+     * @param IWidget       $widget
      *
      * @return string
      */
-    protected function renderWidget(IModule $module, IWidget $widget) : string
+    protected function renderWidget(ModuleContext $moduleContext, IWidget $widget) : string
     {
         /** @var ActionWidget $widget */
         $action = $widget->getAction();
@@ -71,10 +72,7 @@ class UnparameterizedActionWidgetRenderer extends WidgetRenderer
         return view('dms::components.widget.unparameterized-action')
             ->with([
                 'action'      => $action,
-                'actionUrl'   => route(
-                    'dms::package.module.action.run',
-                    [$action->getPackageName(), $action->getModuleName(), $action->getName()]
-                ),
+                'actionUrl'   => $moduleContext->getUrl('action.run', [$action->getName()]),
                 'buttonClass' => $this->keywordTypeIdentifier->getTypeFromName($action->getName()),
             ])
             ->render();

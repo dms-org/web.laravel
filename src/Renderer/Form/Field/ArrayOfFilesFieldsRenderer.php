@@ -8,6 +8,7 @@ use Dms\Core\Form\Field\Type\ArrayOfType;
 use Dms\Core\Form\Field\Type\FieldType;
 use Dms\Core\Form\IField;
 use Dms\Core\Form\IFieldType;
+use Dms\Web\Laravel\Renderer\Form\FormRenderingContext;
 
 /**
  * The array of files field renderer
@@ -26,26 +27,14 @@ class ArrayOfFilesFieldsRenderer extends FileFieldRenderer
         return [ArrayOfType::class];
     }
 
-    /**
-     * @param IField     $field
-     * @param IFieldType $fieldType
-     *
-     * @return bool
-     */
-    protected function canRender(IField $field, IFieldType $fieldType) : bool
+    protected function canRender(FormRenderingContext $renderingContext, IField $field, IFieldType $fieldType) : bool
     {
         /** @var ArrayOfType $fieldType */
         return !$fieldType->has(FieldType::ATTR_OPTIONS)
         && $fieldType->getElementType() instanceof FileUploadType;
     }
 
-    /**
-     * @param IField     $field
-     * @param IFieldType $fieldType
-     *
-     * @return string
-     */
-    protected function renderField(IField $field, IFieldType $fieldType) : string
+    protected function renderField(FormRenderingContext $renderingContext, IField $field, IFieldType $fieldType) : string
     {
         /** @var ArrayOfType $fieldType */
         /** @var FileUploadType $elementType */
@@ -75,14 +64,7 @@ class ArrayOfFilesFieldsRenderer extends FileFieldRenderer
         );
     }
 
-    /**
-     * @param IField     $field
-     * @param mixed      $value
-     * @param IFieldType $fieldType
-     *
-     * @return string
-     */
-    protected function renderFieldValue(IField $field, $value, IFieldType $fieldType) : string
+    protected function renderFieldValue(FormRenderingContext $renderingContext, IField $field, $value, IFieldType $fieldType) : string
     {
         return $this->renderValueViewWithNullDefault(
             $field, $value,

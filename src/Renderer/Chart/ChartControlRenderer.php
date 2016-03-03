@@ -8,6 +8,7 @@ use Dms\Common\Structure\DateTime\TimeOfDay;
 use Dms\Core\Module\IChartDisplay;
 use Dms\Core\Table\Chart\IChartDataTable;
 use Dms\Core\Table\Chart\Structure\GraphChart;
+use Dms\Web\Laravel\Http\ModuleContext;
 
 /**
  * The chart control renderer class
@@ -47,24 +48,20 @@ class ChartControlRenderer
     /**
      * Renders the supplied chart control as a html string.
      *
-     * @param string        $packageName
-     * @param string        $moduleName
+     * @param ModuleContext $moduleContext
      * @param IChartDisplay $chart
      * @param string        $viewName
      *
      * @return string
      */
-    public function renderChartControl(string $packageName, string $moduleName, IChartDisplay $chart, string $viewName) : string
+    public function renderChartControl(ModuleContext $moduleContext, IChartDisplay $chart, string $viewName) : string
     {
         return view('dms::components.chart.chart-control')
             ->with([
                     'structure'        => $chart->getDataSource()->getStructure(),
                     'axes'             => $chart->getDataSource()->getStructure()->getAxes(),
                     'table'            => $chart->hasView($viewName) ? $chart->getView($viewName) : $chart->getDefaultView(),
-                    'loadChartDataUrl' => route(
-                        'dms::package.module.chart.view.load',
-                        [$packageName, $moduleName, $chart->getName(), $viewName]
-                    ),
+                    'loadChartDataUrl' => $moduleContext->getUrl('chart.view.load', [$chart->getName(), $viewName]),
                 ] + $this->getDateSettings($chart))
             ->render();
     }

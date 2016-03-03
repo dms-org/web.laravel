@@ -1,3 +1,4 @@
+<?php /** @var \Dms\Web\Laravel\Renderer\Form\FormRenderingContext $renderingContext */ ?>
 <?php /** @var \Dms\Web\Laravel\Renderer\Form\IFieldRenderer $columnFieldRenderer */ ?>
 <?php /** @var \Dms\Web\Laravel\Renderer\Form\IFieldRenderer|null $rowFieldRenderer */ ?>
 <?php /** @var \Dms\Web\Laravel\Renderer\Form\IFieldRenderer $cellFieldRenderer */ ?>
@@ -36,19 +37,19 @@
         @if($predefinedColumns === null)
             <th class="table-column field-column-template">
                 <div class="field-content">
-                    {{ $columnFieldRenderer->render($columnField->withName($name . '[columns][::column::]')->withInitialValue(null)) }}
+                    {{ $columnFieldRenderer->render($renderingContext, $columnField->withName($name . '[columns][::column::]')->withInitialValue(null)) }}
                 </div>
             </th>
         @endif
         @if($predefinedRows === null && $rowFieldRenderer !== null)
             <th class="field-row-template">
                 <div class="field-content">
-                    {{ $rowFieldRenderer->render($rowField->withName($name . '[rows][::row::]')->withInitialValue(null)) }}
+                    {{ $rowFieldRenderer->render($renderingContext, $rowField->withName($name . '[rows][::row::]')->withInitialValue(null)) }}
                 </div>
             </th>
         @endif
         <td class="field-cell-template">
-            {{ $cellFieldRenderer->render($cellField->withName($name . '[cells][::row::][::column::]')->withInitialValue(null)) }}
+            {{ $cellFieldRenderer->render($renderingContext, $cellField->withName($name . '[cells][::row::][::column::]')->withInitialValue(null)) }}
         </td>
         <td class="remove-column-template">
             <button type="button" class="btn btn-danger btn-xs btn-block btn-remove-column"><i class="fa fa-times"></i></button>
@@ -69,7 +70,7 @@
             @foreach ($predefinedColumns as $key => $columnValue)
                 <th class="table-column">
                     <div class="field-content">
-                        {!! $columnFieldRenderer->renderValue($columnField, $columnField->unprocess($columnValue)) !!}
+                        {!! $columnFieldRenderer->renderValue($renderingContext, $columnField, $columnField->unprocess($columnValue)) !!}
                     </div>
                 </th>
             @endforeach
@@ -77,7 +78,7 @@
             @foreach ($value['columns'] as $key => $columnValue)
                 <th class="table-column">
                     <div class="field-content">
-                        {!! $columnFieldRenderer->render($columnField->withName($name . '[columns][' . $key . ']')->withInitialValue($columnValue)) !!}
+                        {!! $columnFieldRenderer->render($renderingContext, $columnField->withName($name . '[columns][' . $key . ']')->withInitialValue($columnValue)) !!}
                     </div>
                 </th>
             @endforeach
@@ -94,20 +95,20 @@
                 @if($predefinedRows !== null)
                     <th class="row-key-column">
                         <div class="field-content">
-                            {!! $rowFieldRenderer->renderValue($rowField, $rowField->unprocess($predefinedRows[$rowKey])) !!}
+                            {!! $rowFieldRenderer->renderValue($renderingContext, $rowField, $rowField->unprocess($predefinedRows[$rowKey])) !!}
                         </div>
                     </th>
                 @elseif ($rowFieldRenderer !== null)
                     <th class="row-key-column">
                         <div class="field-content">
-                            {!! $rowFieldRenderer->render($rowField->withName($name . '[rows][' . $rowKey . ']')->withInitialValue($value['rows'][$rowKey])) !!}
+                            {!! $rowFieldRenderer->render($renderingContext, $rowField->withName($name . '[rows][' . $rowKey . ']')->withInitialValue($value['rows'][$rowKey])) !!}
                         </div>
                     </th>
                 @endif
 
                 @foreach ($rowCellValues as $columnKey => $cellValue)
                     <td>
-                        {!! $cellFieldRenderer->render($cellField->withName($name . '[cells][' . $rowKey . '][' . $columnKey . ']')->withInitialValue($cellValue)) !!}
+                        {!! $cellFieldRenderer->render($renderingContext, $cellField->withName($name . '[cells][' . $rowKey . '][' . $columnKey . ']')->withInitialValue($cellValue)) !!}
                     </td>
                 @endforeach
                 <td class="add-column">

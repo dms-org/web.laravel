@@ -9,6 +9,7 @@ use Dms\Web\Laravel\Action\ActionExceptionHandlerCollection;
 use Dms\Web\Laravel\Action\ExceptionHandler\InvalidFormSubmissionExceptionHandler;
 use Dms\Web\Laravel\Action\ExceptionHandler\UserForbiddenExceptionHandler;
 use Dms\Web\Laravel\Action\UnhandleableActionExceptionException;
+use Dms\Web\Laravel\Http\ModuleContext;
 use Dms\Web\Laravel\Tests\Mock\Language\MockLanguageProvider;
 use Dms\Web\Laravel\Tests\Unit\UnitTest;
 
@@ -34,12 +35,12 @@ class ActionExceptionHandlerCollectionTest extends UnitTest
     {
         $this->assertInstanceOf(
             InvalidFormSubmissionExceptionHandler::class,
-            $this->collection->findHandlerFor($this->mockAction(), $this->getMockWithoutInvokingTheOriginalConstructor(InvalidFormSubmissionException::class))
+            $this->collection->findHandlerFor($this->mockModuleContext(), $this->mockAction(), $this->getMockWithoutInvokingTheOriginalConstructor(InvalidFormSubmissionException::class))
         );
 
         $this->assertInstanceOf(
             UserForbiddenExceptionHandler::class,
-            $this->collection->findHandlerFor($this->mockAction(), $this->getMockWithoutInvokingTheOriginalConstructor(UserForbiddenException::class))
+            $this->collection->findHandlerFor($this->mockModuleContext(), $this->mockAction(), $this->getMockWithoutInvokingTheOriginalConstructor(UserForbiddenException::class))
         );
     }
 
@@ -47,7 +48,12 @@ class ActionExceptionHandlerCollectionTest extends UnitTest
     {
         $this->expectException(UnhandleableActionExceptionException::class);
 
-        $this->collection->findHandlerFor($this->mockAction(), new \Exception());
+        $this->collection->findHandlerFor($this->mockModuleContext(), $this->mockAction(), new \Exception());
+    }
+
+    protected function mockModuleContext() : ModuleContext
+    {
+        return $this->getMockWithoutInvokingTheOriginalConstructor(ModuleContext::class);
     }
 
     protected function mockAction() : IAction

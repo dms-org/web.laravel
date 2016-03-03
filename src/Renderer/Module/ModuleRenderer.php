@@ -4,6 +4,7 @@ namespace Dms\Web\Laravel\Renderer\Module;
 
 use Dms\Core\Exception\InvalidArgumentException;
 use Dms\Core\Module\IModule;
+use Dms\Web\Laravel\Http\ModuleContext;
 use Dms\Web\Laravel\Renderer\Widget\WidgetRendererCollection;
 
 /**
@@ -31,29 +32,29 @@ abstract class ModuleRenderer implements IModuleRenderer
     /**
      * Renders the supplied module dashboard as a html string.
      *
-     * @param IModule $module
+     * @param ModuleContext $moduleContext
      *
      * @return string
      * @throws InvalidArgumentException
      */
-    final public function render(IModule $module) : string
+    final public function render(ModuleContext $moduleContext) : string
     {
-        if (!$this->accepts($module)) {
+        if (!$this->accepts($moduleContext)) {
             throw InvalidArgumentException::format(
                 'Invalid module \'%s\' supplied to %s',
                 $module->getName(), get_class($this) . '::' . __FUNCTION__
             );
         }
 
-        return $this->renderDashboard($module);
+        return $this->renderDashboard($moduleContext);
     }
 
     /**
      * Renders the supplied module dashboard as a html string.
      *
-     * @param IModule $module
+     * @param ModuleContext $moduleContext
      *
      * @return string
      */
-    abstract protected function renderDashboard(IModule $module) : string;
+    abstract protected function renderDashboard(ModuleContext $moduleContext) : string;
 }

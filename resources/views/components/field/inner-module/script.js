@@ -24,9 +24,6 @@ Dms.form.initializeCallbacks.push(function (element) {
         };
 
         var fieldDataPrefix = '__field_action_data';
-        var isActionrl = function (url) {
-            return url.indexOf(rootUrl + '/action/') === 0;
-        };
 
         Dms.ajax.interceptors.push({
             accepts: function (options) {
@@ -36,7 +33,7 @@ Dms.form.initializeCallbacks.push(function (element) {
                 var formData = getDependentData();
                 formData.append(fieldDataPrefix + '[current_state]', JSON.stringify(currentValue));
                 formData.append(fieldDataPrefix + '[request][url]', options.url.substring(rootUrl.length));
-                formData.append(fieldDataPrefix + '[request][method]', options.type || 'get');
+                formData.append(fieldDataPrefix + '[request][method]', options.__emulatedType || options.type || 'get');
 
                 var parametersPrefix = fieldDataPrefix + '[request][parameters]';
                 $.each(Dms.ajax.parseData(options.data), function (name, entries) {
@@ -64,6 +61,7 @@ Dms.form.initializeCallbacks.push(function (element) {
                     data = JSON.parse(response.responseText);
                     currentValue = data['new_state'];
                     response.responseText = data.response;
+                    console.log(response.responseText);
                 }
             }
         });
@@ -73,15 +71,16 @@ Dms.form.initializeCallbacks.push(function (element) {
             if (response.redirect) {
                 var redirectUrl = response.redirect;
                 delete response.redirect;
-                if (Dms.utilities.areUrlsEqual(redirectUrl, rootUrl)) {
-                    innerModule.find('.dms-table-control .dms-table').triggerHandler('dms-load-table-data');
-                    innerModuleForm.empty();
-                } else {
+
+                if (!Dms.utilities.areUrlsEqual(redirectUrl, rootUrl)) {
                     loadModulePage(redirectUrl);
                 }
             }
 
             originalResponseHandler(response);
+
+            innerModule.find('.dms-table-control .dms-table').triggerHandler('dms-load-table-data');
+            innerModuleForm.empty();
         };
 
         var rootActionUrl = rootUrl + '/action/';
@@ -96,7 +95,8 @@ Dms.form.initializeCallbacks.push(function (element) {
 
             currentAjaxRequest = Dms.ajax.createRequest({
                 url: url,
-                type: 'get',
+                type: 'post',
+                __emulatedType: 'get',
                 dataType: 'html',
                 data: {'__content_only': 1}
             });
@@ -132,4 +132,6 @@ Dms.form.initializeCallbacks.push(function (element) {
             loadModulePage(link.attr('href'));
         });
     });
+
+    // TODO: add current stage to parent form on submit
 });

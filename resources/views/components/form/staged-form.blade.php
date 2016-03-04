@@ -9,7 +9,6 @@
         data-method="post"
         data-enctype="multipart/form-data"
         class="dms-staged-form form-horizontal"
-        data-novalidate
 >
     {!! csrf_field() !!}
 

@@ -7,7 +7,7 @@ use Dms\Core\Common\Crud\Table\ISummaryTable;
 use Dms\Core\Model\Criteria\Condition\ConditionOperator;
 use Dms\Core\Module\ITableDisplay;
 use Dms\Core\Table\IDataTable;
-use Dms\Core\Table\ITableStructure;
+use Dms\Core\Table\ITableDataSource;
 use Dms\Web\Laravel\Http\ModuleContext;
 use Dms\Web\Laravel\Renderer\Action\ObjectActionButtonBuilder;
 
@@ -108,19 +108,22 @@ class TableRenderer
                 'table'                        => $table->getView($viewName),
                 'loadRowsUrl'                  => $moduleContext->getUrl('table.view.load', [$table->getName(), $viewName]),
                 'reorderRowActionUrl'          => $reorderRowActionUrl,
-                'stringFilterableComponentIds' => $this->getStringFilterableColumnComponentIds($table->getDataSource()->getStructure()),
+                'stringFilterableComponentIds' => $this->getStringFilterableColumnComponentIds($table->getDataSource()),
             ])
             ->render();
     }
 
-    protected function getStringFilterableColumnComponentIds(ITableStructure $structure) : array
+    protected function getStringFilterableColumnComponentIds(ITableDataSource $tableDataSource) : array
     {
         $componentIds = [];
 
-        foreach ($structure->getColumns() as $column) {
+        foreach ($tableDataSource->getStructure()->getColumns() as $column) {
             foreach ($column->getComponents() as $component) {
-                if ($component->getType()->hasOperator(ConditionOperator::STRING_CONTAINS_CASE_INSENSITIVE)) {
-                    $componentIds[] = $column->getName() . '.' . $component->getName();
+                $componentId = $column->getName() . '.' . $component->getName();
+                if ($component->getType()->hasOperator(ConditionOperator::STRING_CONTAINS_CASE_INSENSITIVE)
+                    && $tableDataSource->canUseColumnComponentInCriteria($componentId)
+                ) {
+                    $componentIds[] = $componentId;
                 }
             }
         }

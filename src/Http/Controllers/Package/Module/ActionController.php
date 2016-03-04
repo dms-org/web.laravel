@@ -4,6 +4,7 @@ namespace Dms\Web\Laravel\Http\Controllers\Package\Module;
 
 use Dms\Core\Common\Crud\Action\Object\IObjectAction;
 use Dms\Core\Common\Crud\IReadModule;
+use Dms\Core\Form\Field\Type\ObjectIdType;
 use Dms\Core\Form\IForm;
 use Dms\Core\Form\InvalidFormSubmissionException;
 use Dms\Core\Form\InvalidInputException;
@@ -373,7 +374,9 @@ class ActionController extends DmsController
     protected function loadObject(string $objectId, IObjectAction $action) : ITypedObject
     {
         try {
-            return $action->getObjectForm()->getField(IObjectAction::OBJECT_FIELD_NAME)->process($objectId);
+            /** @var ObjectIdType $objectField */
+            $objectFieldType = $action->getObjectForm()->getField(IObjectAction::OBJECT_FIELD_NAME)->getType();
+            return $objectFieldType->getObjects()->get($objectId);
         } catch (InvalidInputException $e) {
             abort(404);
         }

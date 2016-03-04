@@ -26,7 +26,7 @@ interface ITemporaryFileRepository extends IRepository
      *
      * @return TemporaryFile
      */
-    public function get(int $id);
+    public function get($id);
 
     /**
      * {@inheritDoc}
@@ -40,7 +40,7 @@ interface ITemporaryFileRepository extends IRepository
      *
      * @return TemporaryFile|null
      */
-    public function tryGet(int $id);
+    public function tryGet($id);
 
     /**
      * {@inheritDoc}

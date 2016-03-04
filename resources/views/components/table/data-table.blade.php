@@ -58,7 +58,7 @@
                     @endunless
                 @endforeach
                 @if($rowActionButtons || $allowsReorder)
-                    <?php $objectId = $row->getCellComponentData(\Dms\Core\Common\Crud\IReadModule::SUMMARY_TABLE_ID_COLUMN) ?? (Dms\Core\Form\Field\Processor\InnerCrudModuleProcessor::NEW_OBJECT_ID_PREFIX . $newObjectsIndex++) ?>
+                    <?php $objectId = $row->getCellComponentData(\Dms\Core\Common\Crud\IReadModule::SUMMARY_TABLE_ID_COLUMN) ?>
                     <td class="dms-row-action-column" data-object-id="{{ $objectId }}">
                         <div class="dms-row-button-control pull-right">
                             @if(isset($rowActionButtons['details']))
@@ -74,15 +74,15 @@
                                 </a>
                             @endif
                             @if(isset($rowActionButtons['remove']))
-                                <form class="dms-run-action-form inline"
-                                      action="{{ $rowActionButtons['remove']->getUrl($objectId) }}"
+                                <div class="dms-run-action-form inline"
+                                      data-action="{{ $rowActionButtons['remove']->getUrl($objectId) }}"
                                       data-after-run-remove-closest="tr"
-                                      method="post">
+                                      data-method="post">
                                     {!! csrf_field() !!}
                                     <button type="submit" class="btn btn-xs btn-danger">
                                         <i class="fa fa-trash-o"></i>
                                     </button>
-                                </form>
+                                </div>
                             @endif
 
                             @if(array_diff_key($rowActionButtons, ['details' => true, 'edit' => true, 'remove' => true]))
@@ -96,12 +96,12 @@
                                         @foreach(array_diff_key($rowActionButtons, ['details' => true, 'edit' => true, 'remove' => true]) as $action)
                                             <li>
                                                 @if($action->isPost())
-                                                    <form class="dms-run-action-form inline"
-                                                          action="{{ $action->getUrl($objectId) }}"
-                                                          method="post">
+                                                    <div class="dms-run-action-form inline"
+                                                          data-action="{{ $action->getUrl($objectId) }}"
+                                                          data-method="post">
                                                         {!! csrf_field() !!}
-                                                        <button type="submit">{{ $action->getLabel() }}</button>
-                                                    </form>
+                                                        <button class="btn btn-link" type="submit">{{ $action->getLabel() }}</button>
+                                                    </div>
                                                 @else
                                                     <a href="{{ $action->getUrl($objectId) }}">{{ $action->getLabel() }}</a>
                                                 @endif

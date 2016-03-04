@@ -1446,15 +1446,6 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-    element.find('.dms-inner-form').each(function () {
-        var innerForm = $(this);
-
-        if (innerForm.attr('data-readonly')) {
-            innerForm.find(':input').attr('readonly', 'readonly');
-        }
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
     element.find('.dms-inner-module').each(function () {
         var innerModule = $(this);
         var rootUrl = innerModule.attr('data-root-url');
@@ -1480,9 +1471,6 @@ Dms.form.initializeCallbacks.push(function (element) {
         };
 
         var fieldDataPrefix = '__field_action_data';
-        var isActionrl = function (url) {
-            return url.indexOf(rootUrl + '/action/') === 0;
-        };
 
         Dms.ajax.interceptors.push({
             accepts: function (options) {
@@ -1492,7 +1480,7 @@ Dms.form.initializeCallbacks.push(function (element) {
                 var formData = getDependentData();
                 formData.append(fieldDataPrefix + '[current_state]', JSON.stringify(currentValue));
                 formData.append(fieldDataPrefix + '[request][url]', options.url.substring(rootUrl.length));
-                formData.append(fieldDataPrefix + '[request][method]', options.type || 'get');
+                formData.append(fieldDataPrefix + '[request][method]', options.__emulatedType || options.type || 'get');
 
                 var parametersPrefix = fieldDataPrefix + '[request][parameters]';
                 $.each(Dms.ajax.parseData(options.data), function (name, entries) {
@@ -1520,6 +1508,7 @@ Dms.form.initializeCallbacks.push(function (element) {
                     data = JSON.parse(response.responseText);
                     currentValue = data['new_state'];
                     response.responseText = data.response;
+                    console.log(response.responseText);
                 }
             }
         });
@@ -1529,15 +1518,16 @@ Dms.form.initializeCallbacks.push(function (element) {
             if (response.redirect) {
                 var redirectUrl = response.redirect;
                 delete response.redirect;
-                if (Dms.utilities.areUrlsEqual(redirectUrl, rootUrl)) {
-                    innerModule.find('.dms-table-control .dms-table').triggerHandler('dms-load-table-data');
-                    innerModuleForm.empty();
-                } else {
+
+                if (!Dms.utilities.areUrlsEqual(redirectUrl, rootUrl)) {
                     loadModulePage(redirectUrl);
                 }
             }
 
             originalResponseHandler(response);
+
+            innerModule.find('.dms-table-control .dms-table').triggerHandler('dms-load-table-data');
+            innerModuleForm.empty();
         };
 
         var rootActionUrl = rootUrl + '/action/';
@@ -1552,7 +1542,8 @@ Dms.form.initializeCallbacks.push(function (element) {
 
             currentAjaxRequest = Dms.ajax.createRequest({
                 url: url,
-                type: 'get',
+                type: 'post',
+                __emulatedType: 'get',
                 dataType: 'html',
                 data: {'__content_only': 1}
             });
@@ -1588,6 +1579,8 @@ Dms.form.initializeCallbacks.push(function (element) {
             loadModulePage(link.attr('href'));
         });
     });
+
+    // TODO: add current stage to parent form on submit
 });
 Dms.form.initializeCallbacks.push(function (element) {
 
@@ -1671,6 +1664,12 @@ Dms.form.initializeCallbacks.push(function (element) {
             listOfFields.find('.btn-remove-field').closest('.field-list-button-container').remove();
             listOfFields.find('.field-list-input').removeClass('col-xs-10 col-md-11').addClass('col-xs-12');
         }
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+    element.find('select[multiple]').multiselect({
+        enableFiltering: true,
+        includeSelectAllOption: true
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -1820,12 +1819,6 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-    element.find('select[multiple]').multiselect({
-        enableFiltering: true,
-        includeSelectAllOption: true
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
     element.find('input[type="number"][data-max-decimal-places]').each(function () {
         $(this).attr('data-parsley-max-decimal-places', $(this).attr('data-max-decimal-places'));
     });
@@ -1861,6 +1854,9 @@ Dms.form.initializeCallbacks.push(function (element) {
     element.find('input[type="ip-address"]')
         .attr('type', 'text')
         .attr('data-parsley-ip-address', '1');
+});
+Dms.form.initializeCallbacks.push(function (element) {
+
 });
 Dms.form.initializeCallbacks.push(function (element) {
 
@@ -2064,9 +2060,6 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-
-});
-Dms.form.initializeCallbacks.push(function (element) {
     if (typeof tinymce === 'undefined') {
         return;
     }
@@ -2262,6 +2255,7 @@ Dms.form.initializeCallbacks.push(function (element) {
 
     element.find('.dms-staged-form, .dms-run-action-form').each(function () {
         var form = $(this);
+        form.attr('data-parsley-validate', 'data-parsley-validate');
         var parsley = form.parsley(window.ParsleyConfig);
         var afterRunCallbacks = [];
         var submitButtons = form.find('input[type=submit], button[type=submit]');
@@ -2275,10 +2269,11 @@ Dms.form.initializeCallbacks.push(function (element) {
         };
 
         submitButtons.on('click before-confirmation', function (e) {
-            parsley.validate();
+            form.find(':input').parsley('validate');
 
             if (!isFormValid()) {
                 e.stopImmediatePropagation();
+                form.find('.dms-form-stage-container:not(.loaded)').addClass('has-error');
                 return false;
             }
         });
@@ -2427,6 +2422,15 @@ Dms.form.initializeValidationCallbacks.push(function (element) {
 
     element.find('.dms-form').each(function () {
         $(this).parsley(window.ParsleyConfig);
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+    element.find('.dms-inner-form').each(function () {
+        var innerForm = $(this);
+
+        if (innerForm.attr('data-readonly')) {
+            innerForm.find(':input').attr('readonly', 'readonly');
+        }
     });
 });
 Dms.table.initializeCallbacks.push(function (element) {

@@ -56,7 +56,7 @@ class CreatedEntityResultHandler extends ActionResultHandler
 
         return \response()->json([
             'message'      => "The '{$label}' {$type} has been created.",
-            'message_type' => 'info',
+            'message_type' => 'success',
             'redirect'     => $moduleContext->getUrl('dashboard'),
         ]);
     }

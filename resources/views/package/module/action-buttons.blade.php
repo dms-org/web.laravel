@@ -2,13 +2,13 @@
 
 @foreach($actionButtons as $actionButton)
     @if($actionButton->isPost())
-        <form class="dms-run-action-form inline" action="{{ $actionButton->getUrl($objectId) }}" method="post">
+        <div class="dms-run-action-form inline" data-action="{{ $actionButton->getUrl($objectId) }}" data-method="post">
             {!! csrf_field() !!}
             <button type="submit"
                     class="btn btn-{{ \Dms\Web\Laravel\Util\KeywordTypeIdentifier::getClass($actionButton->getName()) ?? 'default' }}">
                 {{ $actionButton->getLabel() }}
             </button>
-        </form>
+        </div>
     @else
         <a class="btn btn-{{ \Dms\Web\Laravel\Util\KeywordTypeIdentifier::getClass($actionButton->getName()) ?? 'default' }}"
            href="{{ $actionButton->getUrl($objectId) }}">

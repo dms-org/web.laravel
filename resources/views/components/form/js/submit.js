@@ -2,6 +2,7 @@ Dms.form.initializeCallbacks.push(function (element) {
 
     element.find('.dms-staged-form, .dms-run-action-form').each(function () {
         var form = $(this);
+        form.attr('data-parsley-validate', 'data-parsley-validate');
         var parsley = form.parsley(window.ParsleyConfig);
         var afterRunCallbacks = [];
         var submitButtons = form.find('input[type=submit], button[type=submit]');
@@ -19,6 +20,7 @@ Dms.form.initializeCallbacks.push(function (element) {
 
             if (!isFormValid()) {
                 e.stopImmediatePropagation();
+                form.find('.dms-form-stage-container:not(.loaded)').addClass('has-error');
                 return false;
             }
         });

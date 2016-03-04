@@ -56,11 +56,11 @@ class ActionButton
     }
 
     /**
-     * @param int $objectId
+     * @param string $objectId
      *
      * @return string
      */
-    public function getUrl(int $objectId) : string
+    public function getUrl(string $objectId) : string
     {
         return call_user_func($this->urlCallback, $objectId);
     }

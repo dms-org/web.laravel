@@ -47,6 +47,7 @@
         @endif
 
         <tbody class="@if($allowsReorder) dms-table-body-sortable @endif">
+        <?php $newObjectsIndex = 0 ?>
         @foreach ($section->getRows() as $row)
             <tr>
                 @foreach ($row->getData() as $columnName => $value)
@@ -57,7 +58,7 @@
                     @endunless
                 @endforeach
                 @if($rowActionButtons || $allowsReorder)
-                    <?php $objectId = $row->getCellComponentData(\Dms\Core\Common\Crud\IReadModule::SUMMARY_TABLE_ID_COLUMN) ?>
+                    <?php $objectId = $row->getCellComponentData(\Dms\Core\Common\Crud\IReadModule::SUMMARY_TABLE_ID_COLUMN) ?? (Dms\Core\Form\Field\Processor\InnerCrudModuleProcessor::NEW_OBJECT_ID_PREFIX . $newObjectsIndex++) ?>
                     <td class="dms-row-action-column" data-object-id="{{ $objectId }}">
                         <div class="dms-row-button-control pull-right">
                             @if(isset($rowActionButtons['details']))

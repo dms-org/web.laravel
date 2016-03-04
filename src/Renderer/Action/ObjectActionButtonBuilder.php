@@ -77,7 +77,7 @@ class ObjectActionButtonBuilder
                 $submitForm,
                 $action->getName(),
                 StringHumanizer::title($action->getName()),
-                function (int $objectId) use ($formUrl) {
+                function (string $objectId) use ($formUrl) {
                     return str_replace('__object__', $objectId, $formUrl);
                 }
             );

@@ -11,7 +11,7 @@ window.Dms = {
         initializeCallbacks: []
     },
     action: {
-        responseHandler: null // @see ./services/action.js
+        responseHandler: null // @see ./services/action-response.js
     },
     alerts: {
         add: null // @see ./services/alerts.js

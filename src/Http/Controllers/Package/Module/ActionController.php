@@ -104,7 +104,7 @@ class ActionController extends DmsController
         $this->actionButtonBuilder = $actionButtonBuilder;
     }
 
-    public function showForm(ModuleContext $moduleContext, string $actionName, int $objectId = null)
+    public function showForm(ModuleContext $moduleContext, string $actionName, string $objectId = null)
     {
         $module = $moduleContext->getModule();
 
@@ -148,7 +148,7 @@ class ActionController extends DmsController
             ]);
     }
 
-    protected function loadFormStage(Request $request, ModuleContext $moduleContext, string $actionName, int $stageNumber, int $objectId = null, &$object = null) : IForm
+    protected function loadFormStage(Request $request, ModuleContext $moduleContext, string $actionName, int $stageNumber, string $objectId = null, &$object = null) : IForm
     {
         $action = $this->loadAction($moduleContext->getModule(), $actionName);
 
@@ -181,7 +181,7 @@ class ActionController extends DmsController
         return $form->getFormForStage($stageNumber, $input);
     }
 
-    public function getFormStage(Request $request, ModuleContext $moduleContext, string $actionName, int $stageNumber, int $objectId = null)
+    public function getFormStage(Request $request, ModuleContext $moduleContext, string $actionName, int $stageNumber, string $objectId = null)
     {
         if (!$objectId) {
             $objectId = $request->has(IObjectAction::OBJECT_FIELD_NAME) ? (int)$request->input(IObjectAction::OBJECT_FIELD_NAME) : null;
@@ -200,7 +200,7 @@ class ActionController extends DmsController
         return response($this->actionFormRenderer->renderFormFields($renderingContext, $form), 200);
     }
 
-    public function showActionResult(Request $request, ModuleContext $moduleContext, string $actionName, int $objectId = null)
+    public function showActionResult(Request $request, ModuleContext $moduleContext, string $actionName, string $objectId = null)
     {
         $module = $moduleContext->getModule();
         $action = $this->loadAction($module, $actionName);
@@ -241,12 +241,12 @@ class ActionController extends DmsController
             ]);
     }
 
-    public function runFieldRendererActionWithObject(Request $request, ModuleContext $moduleContext, string $actionName, int $objectId, int $stageNumber, string $fieldName, string $fieldRendererAction = null)
+    public function runFieldRendererActionWithObject(Request $request, ModuleContext $moduleContext, string $actionName, string $objectId, int $stageNumber, string $fieldName, string $fieldRendererAction = null)
     {
         return $this->runFieldRendererAction($request, $moduleContext, $actionName, $stageNumber, $fieldName, $fieldRendererAction, $objectId);
     }
 
-    public function runFieldRendererAction(Request $request, ModuleContext $moduleContext, string $actionName, int $stageNumber, string $fieldName, string $fieldRendererAction = null, int $objectId = null)
+    public function runFieldRendererAction(Request $request, ModuleContext $moduleContext, string $actionName, int $stageNumber, string $fieldName, string $fieldRendererAction = null, string $objectId = null)
     {
         $action = $this->loadAction($moduleContext->getModule(), $actionName);
         $form   = $this->loadFormStage($request, $moduleContext, $actionName, $stageNumber, $objectId, $object);
@@ -365,12 +365,12 @@ class ActionController extends DmsController
     }
 
     /**
-     * @param int $objectId
+     * @param string $objectId
      * @param     $action
      *
      * @return mixed
      */
-    protected function loadObject(int $objectId, IObjectAction $action) : ITypedObject
+    protected function loadObject(string $objectId, IObjectAction $action) : ITypedObject
     {
         try {
             return $action->getObjectForm()->getField(IObjectAction::OBJECT_FIELD_NAME)->process($objectId);

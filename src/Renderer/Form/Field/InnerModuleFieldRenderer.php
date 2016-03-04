@@ -78,10 +78,10 @@ class InnerModuleFieldRenderer extends BladeFieldRendererWithActions implements 
 
     protected function handleFieldAction(FormRenderingContext $renderingContext, IField $field, IFieldType $fieldType, Request $request, string $actionName = null, array $data)
     {
-        $currentState      = $data['current_state'] ?: [];
+        $currentState      = json_decode($data['current_state'] ?: '[]', true);
         $requestUrl        = $data['request']['url'];
         $requestMethod     = $data['request']['method'];
-        $requestParameters = $data['request']['parameters'];
+        $requestParameters = $data['request']['parameters'] ?? [];
 
         $moduleContext = $this->loadInnerModuleContext($field, $renderingContext, $currentState);
 

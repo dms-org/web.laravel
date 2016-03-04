@@ -64,7 +64,7 @@ class ModuleRequestRouter
             $router->any(
                 '/action/{action}/form/{object_id}/stage/{stage}/field/{field_name}/{field_action?}',
                 'Package\Module\ActionController@runFieldRendererActionWithObject'
-            )->where('object_id', '(\d+)')->where('field_action', '(.*)')->name('action.form.object.stage.field.action');
+            )->where('field_action', '(.*)')->name('action.form.object.stage.field.action');
 
             $router->post(
                 '/action/{action}/run',

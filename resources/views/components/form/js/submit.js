@@ -1,12 +1,12 @@
 Dms.form.initializeCallbacks.push(function (element) {
 
-    element.find('form.dms-staged-form, form.dms-run-action-form').each(function () {
+    element.find('.dms-staged-form, .dms-run-action-form').each(function () {
         var form = $(this);
         var parsley = form.parsley(window.ParsleyConfig);
         var afterRunCallbacks = [];
         var submitButtons = form.find('input[type=submit], button[type=submit]');
-        var submitMethod = form.attr('method');
-        var submitUrl = form.attr('action');
+        var submitMethod = form.attr('data-method');
+        var submitUrl = form.attr('data-action');
 
         var isFormValid = function () {
             return parsley.isValid()
@@ -23,7 +23,7 @@ Dms.form.initializeCallbacks.push(function (element) {
             }
         });
 
-        form.on('submit', function (e) {
+        submitButtons.on('click', function (e) {
             e.preventDefault();
 
             Dms.form.validation.clearMessages(form);
@@ -38,7 +38,7 @@ Dms.form.initializeCallbacks.push(function (element) {
                 });
             });
 
-            var formData = Dms.ajax.createFormData(form.get(0));
+            var formData =  Dms.form.stages.createFormDataFromFields(form.find(':input'));
 
             $.each(fieldsToReappend, function (index, elements) {
                 elements.parentElement.append(elements.children);

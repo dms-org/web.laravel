@@ -1,6 +1,6 @@
 Dms.form.initializeCallbacks.push(function (element) {
 
-    element.find('form.dms-staged-form').each(function () {
+    element.find('.dms-staged-form').each(function () {
         var form = $(this);
         var parsley = form.parsley(window.ParsleyConfig);
         var stageElements = form.find('.dms-form-stage');

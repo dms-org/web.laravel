@@ -4,12 +4,12 @@
 <?php /** @var \Dms\Core\Form\IStagedForm $stagedForm */ ?>
 <?php /** @var \Dms\Web\Laravel\Renderer\Form\FormRenderer $formRenderer */ ?>
 <?php /** @var array $hiddenValues */ ?>
-<form
-        action="{{ $moduleContext->getUrl('action.run', [$actionName]) }}"
-        method="post"
-        enctype="multipart/form-data"
+<div
+        data-action="{{ $moduleContext->getUrl('action.run', [$actionName]) }}"
+        data-method="post"
+        data-enctype="multipart/form-data"
         class="dms-staged-form form-horizontal"
-        novalidate
+        data-novalidate
 >
     {!! csrf_field() !!}
 
@@ -71,4 +71,4 @@
         {{ \Dms\Web\Laravel\Util\StringHumanizer::title($action->getName()) }}
         <i class="fa fa-arrow-right"></i>
     </button>
-</form>
+</div>

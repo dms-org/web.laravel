@@ -6,14 +6,14 @@ Dms.utilities.countDecimals = function (value) {
     return 0;
 };
 
-Dms.utilities.idGenerator = function() {
-    var S4 = function() {
-        return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
+Dms.utilities.idGenerator = function () {
+    var S4 = function () {
+        return (((1 + Math.random()) * 0x10000) | 0).toString(16).substring(1);
     };
-    return 'id' + (S4()+S4()+"-"+S4()+"-"+S4()+"-"+S4()+"-"+S4()+S4()+S4());
+    return 'id' + (S4() + S4() + "-" + S4() + "-" + S4() + "-" + S4() + "-" + S4() + S4() + S4());
 };
 
-Dms.utilities.combineFieldNames = function(outer, inner) {
+Dms.utilities.combineFieldNames = function (outer, inner) {
     if (inner.indexOf('[') === -1) {
         return outer + '[' + inner + ']';
     }
@@ -24,9 +24,13 @@ Dms.utilities.combineFieldNames = function(outer, inner) {
     return outer + '[' + firstInner + ']' + afterFirstInner;
 };
 
-Dms.utilities.downloadFileFromUrl = function(url) {
+Dms.utilities.areUrlsEqual = function (first, second) {
+    return first.replace(/\/+$/, '') === second.replace(/\/+$/, '');
+};
+
+Dms.utilities.downloadFileFromUrl = function (url) {
     $('<iframe />')
-        .attr({ 'src': url })
+        .attr({'src': url})
         .hide()
         .appendTo('body');
 };

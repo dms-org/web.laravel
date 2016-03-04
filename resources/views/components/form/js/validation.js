@@ -35,7 +35,7 @@ Dms.form.initializeValidationCallbacks.push(function (element) {
         });
     });
 
-    element.find('form.dms-staged-form').each(function () {
+    element.find('.dms-staged-form').each(function () {
         var form = $(this);
         form.parsley(window.ParsleyConfig);
 
@@ -44,7 +44,7 @@ Dms.form.initializeValidationCallbacks.push(function (element) {
         });
     });
 
-    element.find('form.dms-form').each(function () {
+    element.find('.dms-form').each(function () {
         $(this).parsley(window.ParsleyConfig);
     });
 });

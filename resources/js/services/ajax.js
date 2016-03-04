@@ -30,13 +30,39 @@ Dms.ajax.formData = function (form) {
     this.getFormValues = function () {
         return formValues;
     };
+
+    this.toQueryString = function () {
+        var params = [];
+
+        $.each(formValues, function (name, entries) {
+            $.each(entries, function (index, entry) {
+                params.push({name: name, value: entry.value});
+            });
+        });
+
+        return $.param(params);
+    };
 };
 
 Dms.ajax.createFormData = function (form) {
     return new Dms.ajax.formData(form);
 };
 
+Dms.ajax.convertResponse = function (dataType, response) {
+    if (dataType === 'json') {
+        return JSON.parse(response);
+    } else if (dataType === 'xml') {
+        return $.parseXML(dataType);
+    }
+
+    return response;
+};
+
 Dms.ajax.parseData = function (data) {
+    if (typeof data === 'undefined' || data === null) {
+        return [];
+    }
+
     if (data instanceof Dms.ajax.formData) {
         return data.getFormValues();
     }
@@ -46,8 +72,12 @@ Dms.ajax.parseData = function (data) {
     var queryString = $.param(data);
     $.each(queryString.split('&'), function (index, parameter) {
         var parts = parameter.split('=');
+        var name = decodeURIComponent(parts[0]);
+        if (typeof dataMap[name] === 'undefined') {
+            dataMap[name] = [];
+        }
 
-        dataMap[decodeURIComponent(parts[0])] = {value: decodeURIComponent(parts[1])};
+        dataMap[name].push({value: decodeURIComponent(parts[1])});
     });
 
     return dataMap;
@@ -71,7 +101,7 @@ Dms.ajax.createRequest = function (options) {
     var callAfterInterceptors = function (response, data) {
         $.each(filteredInterceptors.reverse(), function (index, interceptor) {
             if (typeof interceptor.after === 'function') {
-                var returnValue =  interceptor.after(response, data);
+                var returnValue = interceptor.after(options, response, data);
 
                 if (typeof returnValue !== 'undefined') {
                     data = returnValue;

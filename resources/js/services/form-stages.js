@@ -43,7 +43,7 @@ Dms.form.stages.makeDependentFieldSelectorForStageMap = function (stageToDepende
 Dms.form.stages.createFormDataFromFields = function (fields) {
     var formData = Dms.ajax.createFormData();
 
-    fields.each(function () {
+    fields.filter('[name]').each(function () {
         var fieldName = $(this).attr('name');
 
         if ($(this).is('[type=file]')) {

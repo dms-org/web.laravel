@@ -59745,7 +59745,7 @@ window.Dms = {
         initializeCallbacks: []
     },
     action: {
-        responseHandler: null // @see ./services/action.js
+        responseHandler: null // @see ./services/action-response.js
     },
     alerts: {
         add: null // @see ./services/alerts.js
@@ -59888,13 +59888,39 @@ Dms.ajax.formData = function (form) {
     this.getFormValues = function () {
         return formValues;
     };
+
+    this.toQueryString = function () {
+        var params = [];
+
+        $.each(formValues, function (name, entries) {
+            $.each(entries, function (index, entry) {
+                params.push({name: name, value: entry.value});
+            });
+        });
+
+        return $.param(params);
+    };
 };
 
 Dms.ajax.createFormData = function (form) {
     return new Dms.ajax.formData(form);
 };
 
+Dms.ajax.convertResponse = function (dataType, response) {
+    if (dataType === 'json') {
+        return JSON.parse(response);
+    } else if (dataType === 'xml') {
+        return $.parseXML(dataType);
+    }
+
+    return response;
+};
+
 Dms.ajax.parseData = function (data) {
+    if (typeof data === 'undefined' || data === null) {
+        return [];
+    }
+
     if (data instanceof Dms.ajax.formData) {
         return data.getFormValues();
     }
@@ -59904,8 +59930,12 @@ Dms.ajax.parseData = function (data) {
     var queryString = $.param(data);
     $.each(queryString.split('&'), function (index, parameter) {
         var parts = parameter.split('=');
+        var name = decodeURIComponent(parts[0]);
+        if (typeof dataMap[name] === 'undefined') {
+            dataMap[name] = [];
+        }
 
-        dataMap[decodeURIComponent(parts[0])] = {value: decodeURIComponent(parts[1])};
+        dataMap[name].push({value: decodeURIComponent(parts[1])});
     });
 
     return dataMap;
@@ -59929,7 +59959,7 @@ Dms.ajax.createRequest = function (options) {
     var callAfterInterceptors = function (response, data) {
         $.each(filteredInterceptors.reverse(), function (index, interceptor) {
             if (typeof interceptor.after === 'function') {
-                var returnValue =  interceptor.after(response, data);
+                var returnValue = interceptor.after(options, response, data);
 
                 if (typeof returnValue !== 'undefined') {
                     data = returnValue;
@@ -60059,6 +60089,31 @@ Dms.global.initializeCallbacks.push(function () {
 $(document).ready(function () {
     <!-- Resolve conflict in jQuery UI tooltip with Bootstrap tooltip -->
     $.widget.bridge('uibutton', $.ui.button);
+});
+$.extend({
+    replaceTag: function (currentElem, newTagObj, keepProps) {
+        var $currentElem = $(currentElem);
+        var i, $newTag = $(newTagObj).clone();
+        if (keepProps) {//{{{
+            newTag = $newTag[0];
+            newTag.className = currentElem.className;
+            $.extend(newTag.classList, currentElem.classList);
+            $.extend(newTag.attributes, currentElem.attributes);
+        }//}}}
+        $currentElem.wrapAll($newTag);
+        $currentElem.contents().unwrap();
+        // return node; (Error spotted by Frank van Luijn)
+        return this; // Suggested by ColeLawrence
+    }
+});
+
+$.fn.extend({
+    replaceTag: function (newTagObj, keepProps) {
+        // "return" suggested by ColeLawrence
+        return this.each(function() {
+            jQuery.replaceTag(this, newTagObj, keepProps);
+        });
+    }
 });
 Dropzone.autoDiscover = false;
 var getAbsoluteName = function (allElements, element) {
@@ -60195,7 +60250,7 @@ Dms.form.stages.makeDependentFieldSelectorForStageMap = function (stageToDepende
 Dms.form.stages.createFormDataFromFields = function (fields) {
     var formData = Dms.ajax.createFormData();
 
-    fields.each(function () {
+    fields.filter('[name]').each(function () {
         var fieldName = $(this).attr('name');
 
         if ($(this).is('[type=file]')) {
@@ -60269,14 +60324,14 @@ Dms.utilities.countDecimals = function (value) {
     return 0;
 };
 
-Dms.utilities.idGenerator = function() {
-    var S4 = function() {
-        return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
+Dms.utilities.idGenerator = function () {
+    var S4 = function () {
+        return (((1 + Math.random()) * 0x10000) | 0).toString(16).substring(1);
     };
-    return 'id' + (S4()+S4()+"-"+S4()+"-"+S4()+"-"+S4()+"-"+S4()+S4()+S4());
+    return 'id' + (S4() + S4() + "-" + S4() + "-" + S4() + "-" + S4() + "-" + S4() + S4() + S4());
 };
 
-Dms.utilities.combineFieldNames = function(outer, inner) {
+Dms.utilities.combineFieldNames = function (outer, inner) {
     if (inner.indexOf('[') === -1) {
         return outer + '[' + inner + ']';
     }
@@ -60287,9 +60342,13 @@ Dms.utilities.combineFieldNames = function(outer, inner) {
     return outer + '[' + firstInner + ']' + afterFirstInner;
 };
 
-Dms.utilities.downloadFileFromUrl = function(url) {
+Dms.utilities.areUrlsEqual = function (first, second) {
+    return first.replace(/\/+$/, '') === second.replace(/\/+$/, '');
+};
+
+Dms.utilities.downloadFileFromUrl = function (url) {
     $('<iframe />')
-        .attr({ 'src': url })
+        .attr({'src': url})
         .hide()
         .appendTo('body');
 };
@@ -61133,7 +61192,8 @@ Dms.form.initializeCallbacks.push(function (element) {
     element.find('.dms-inner-module').each(function () {
         var innerModule = $(this);
         var rootUrl = innerModule.attr('data-root-url');
-        var innerModuleForm = innerModule.find('.dms-inner-module-form');
+        var innerModuleFormContainer = innerModule.find('.dms-inner-module-form-container');
+        var innerModuleForm = innerModuleFormContainer.find('.dms-inner-module-form');
         var formStage = innerModule.closest('.dms-form-stage');
         var stagedForm = innerModule.closest('.dms-staged-form');
         var currentValue = JSON.parse(innerModule.attr('data-value') || '[]');
@@ -61154,6 +61214,9 @@ Dms.form.initializeCallbacks.push(function (element) {
         };
 
         var fieldDataPrefix = '__field_action_data';
+        var isActionrl = function (url) {
+            return url.indexOf(rootUrl + '/action/') === 0;
+        };
 
         Dms.ajax.interceptors.push({
             accepts: function (options) {
@@ -61161,32 +61224,103 @@ Dms.form.initializeCallbacks.push(function (element) {
             },
             before: function (options) {
                 var formData = getDependentData();
-                formData.append(fieldDataPrefix + '[current_state]', currentValue);
+                formData.append(fieldDataPrefix + '[current_state]', JSON.stringify(currentValue));
                 formData.append(fieldDataPrefix + '[request][url]', options.url.substring(rootUrl.length));
                 formData.append(fieldDataPrefix + '[request][method]', options.type || 'get');
 
                 var parametersPrefix = fieldDataPrefix + '[request][parameters]';
-                $.each(Dms.ajax.parseData(options.data), function (name, entry) {
-                    formData.append(Dms.utilities.combineFieldNames(parametersPrefix, name), entry.value, entry.filename);
+                $.each(Dms.ajax.parseData(options.data), function (name, entries) {
+                    $.each(entries, function (index, entry) {
+                        formData.append(Dms.utilities.combineFieldNames(parametersPrefix, name), entry.value, entry.filename);
+                    });
                 });
 
                 options.__originalDataType = options.dataType;
                 options.dataType = 'json';
-                options.processData = false;
-                options.contentType = false;
-                options.data = formData;
+                if ((options.type || 'get').toLowerCase() === 'get') {
+                    options.data = formData.toQueryString();
+                } else {
+                    options.processData = false;
+                    options.contentType = false;
+                    options.data = formData;
+                }
             },
-            after: function (response, data) {
+            after: function (options, response, data) {
                 if (data) {
                     currentValue = data['new_state'];
-                    return data.response;
+
+                    return Dms.ajax.convertResponse(options.__originalDataType, data.response);
                 } else {
                     data = JSON.parse(response.responseText);
                     currentValue = data['new_state'];
-                    response.responseText = JSON.stringify(data.response);
+                    response.responseText = data.response;
                 }
             }
-        })
+        });
+
+        var originalResponseHandler = Dms.action.responseHandler;
+        Dms.action.responseHandler = function (response) {
+            if (response.redirect) {
+                var redirectUrl = response.redirect;
+                delete response.redirect;
+                if (Dms.utilities.areUrlsEqual(redirectUrl, rootUrl)) {
+                    innerModule.find('.dms-table-control .dms-table').triggerHandler('dms-load-table-data');
+                    innerModuleForm.empty();
+                } else {
+                    loadModulePage(redirectUrl);
+                }
+            }
+
+            originalResponseHandler(response);
+        };
+
+        var rootActionUrl = rootUrl + '/action/';
+        var currentAjaxRequest;
+
+        var loadModulePage = function (url) {
+            innerModuleFormContainer.addClass('loading');
+
+            if (currentAjaxRequest) {
+                currentAjaxRequest.abort();
+            }
+
+            currentAjaxRequest = Dms.ajax.createRequest({
+                url: url,
+                type: 'get',
+                dataType: 'html',
+                data: {'__content_only': 1}
+            });
+
+            currentAjaxRequest.done(function (html) {
+                innerModuleForm.html(html);
+                Dms.form.initialize(innerModuleForm);
+            });
+
+            currentAjaxRequest.fail(function () {
+                if (currentAjaxRequest.statusText === 'abort') {
+                    return;
+                }
+
+                swal({
+                    title: "Could not load form",
+                    text: "An unexpected error occurred",
+                    type: "error"
+                });
+            });
+
+            currentAjaxRequest.always(function () {
+                innerModuleFormContainer.removeClass('loading');
+                currentAjaxRequest = null;
+            });
+        };
+
+        innerModule.on('click', 'a[href^="' + rootActionUrl + '"]', function (e) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            var link = $(this);
+
+            loadModulePage(link.attr('href'));
+        });
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -61723,7 +61857,7 @@ Dms.form.initializeCallbacks.push(function (element) {
 });
 Dms.form.initializeCallbacks.push(function (element) {
 
-    element.find('form.dms-staged-form').each(function () {
+    element.find('.dms-staged-form').each(function () {
         var form = $(this);
         var parsley = form.parsley(window.ParsleyConfig);
         var stageElements = form.find('.dms-form-stage');
@@ -61860,13 +61994,13 @@ Dms.form.initializeCallbacks.push(function (element) {
 });
 Dms.form.initializeCallbacks.push(function (element) {
 
-    element.find('form.dms-staged-form, form.dms-run-action-form').each(function () {
+    element.find('.dms-staged-form, .dms-run-action-form').each(function () {
         var form = $(this);
         var parsley = form.parsley(window.ParsleyConfig);
         var afterRunCallbacks = [];
         var submitButtons = form.find('input[type=submit], button[type=submit]');
-        var submitMethod = form.attr('method');
-        var submitUrl = form.attr('action');
+        var submitMethod = form.attr('data-method');
+        var submitUrl = form.attr('data-action');
 
         var isFormValid = function () {
             return parsley.isValid()
@@ -61883,7 +62017,7 @@ Dms.form.initializeCallbacks.push(function (element) {
             }
         });
 
-        form.on('submit', function (e) {
+        submitButtons.on('click', function (e) {
             e.preventDefault();
 
             Dms.form.validation.clearMessages(form);
@@ -61898,7 +62032,7 @@ Dms.form.initializeCallbacks.push(function (element) {
                 });
             });
 
-            var formData = Dms.ajax.createFormData(form.get(0));
+            var formData =  Dms.form.stages.createFormDataFromFields(form.find(':input'));
 
             $.each(fieldsToReappend, function (index, elements) {
                 elements.parentElement.append(elements.children);
@@ -62016,7 +62150,7 @@ Dms.form.initializeValidationCallbacks.push(function (element) {
         });
     });
 
-    element.find('form.dms-staged-form').each(function () {
+    element.find('.dms-staged-form').each(function () {
         var form = $(this);
         form.parsley(window.ParsleyConfig);
 
@@ -62025,7 +62159,7 @@ Dms.form.initializeValidationCallbacks.push(function (element) {
         });
     });
 
-    element.find('form.dms-form').each(function () {
+    element.find('.dms-form').each(function () {
         $(this).parsley(window.ParsleyConfig);
     });
 });

@@ -15740,6 +15740,19 @@ a[disabled] {
 .dms-staged-form .dms-field-table .daterangepicker {
   min-width: 450px; }
 
+.dms-staged-form .dms-inner-module .dms-inner-module-form-container {
+  position: relative; }
+  .dms-staged-form .dms-inner-module .dms-inner-module-form-container.loading .dms-form-stage {
+    min-height: 50px;
+    opacity: .3; }
+  .dms-staged-form .dms-inner-module .dms-inner-module-form-container.loading .spinner {
+    display: block;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    top: calc(50% - 10px);
+    left: calc(50% - 35px); }
+
 .dms-display-map {
   margin: 15px 0;
   height: 200px;

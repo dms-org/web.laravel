@@ -6,7 +6,14 @@
         @if($readonly) data-readonly="1" @endif
         @if($value !== null) data-value="{{ json_encode($value) }}" @endif
 >
-        {!! $moduleContent !!}
+    <div class="panel panel-default">
+        <div class="panel-body">
+            {!! $moduleContent !!}
 
-        <div class="dms-inner-module-form"></div>
+            <div class="dms-inner-module-form-container">
+                <div class="dms-inner-module-form"></div>
+                @include('dms::partials.spinner')
+            </div>
+        </div>
+    </div>
 </div>

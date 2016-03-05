@@ -44,14 +44,19 @@ Dms.form.stages.createFormDataFromFields = function (fields) {
     var formData = Dms.ajax.createFormData();
 
     fields.filter('[name]').each(function () {
-        var fieldName = $(this).attr('name');
+        var field = $(this);
+        var fieldName = field.attr('name');
 
-        if ($(this).is('[type=file]')) {
+        if (field.is('[type=file]')) {
             $.each(this.files, function (index, file) {
                 formData.append(fieldName, file);
             });
+        } else if (field.is('[type=checkbox], [type=radio]')) {
+            if (field.is(':checked')) {
+                formData.append(fieldName, field.val());
+            }
         } else {
-            formData.append(fieldName, $(this).val());
+            formData.append(fieldName, field.val());
         }
     });
 

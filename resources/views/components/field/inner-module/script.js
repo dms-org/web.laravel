@@ -1,7 +1,9 @@
 Dms.form.initializeCallbacks.push(function (element) {
-    element.find('.dms-inner-module').each(function () {
+    element.find('.dms-inner-module, .dms-display-inner-module').each(function () {
         var innerModule = $(this);
+        var fieldName = innerModule.attr('data-name');
         var rootUrl = innerModule.attr('data-root-url');
+        var reloadStateUrl = rootUrl + '/state';
         var innerModuleFormContainer = innerModule.find('.dms-inner-module-form-container');
         var innerModuleForm = innerModuleFormContainer.find('.dms-inner-module-form');
         var formStage = innerModule.closest('.dms-form-stage');
@@ -27,7 +29,7 @@ Dms.form.initializeCallbacks.push(function (element) {
 
         Dms.ajax.interceptors.push({
             accepts: function (options) {
-                return options.url.indexOf(rootUrl) === 0;
+                return options.url.indexOf(rootUrl) === 0 && options.url !== reloadStateUrl;
             },
             before: function (options) {
                 var formData = getDependentData();
@@ -60,6 +62,7 @@ Dms.form.initializeCallbacks.push(function (element) {
                 } else {
                     data = JSON.parse(response.responseText);
                     currentValue = data['new_state'];
+
                     response.responseText = data.response;
                     console.log(response.responseText);
                 }
@@ -67,7 +70,12 @@ Dms.form.initializeCallbacks.push(function (element) {
         });
 
         var originalResponseHandler = Dms.action.responseHandler;
-        Dms.action.responseHandler = function (response) {
+        Dms.action.responseHandler = function (actionUrl, response) {
+            if (actionUrl.indexOf(rootUrl) !== 0) {
+                originalResponseHandler(actionUrl, response);
+                return;
+            }
+
             if (response.redirect) {
                 var redirectUrl = response.redirect;
                 delete response.redirect;
@@ -77,7 +85,7 @@ Dms.form.initializeCallbacks.push(function (element) {
                 }
             }
 
-            originalResponseHandler(response);
+            originalResponseHandler(actionUrl, response);
 
             innerModule.find('.dms-table-control .dms-table').triggerHandler('dms-load-table-data');
             innerModuleForm.empty();
@@ -131,7 +139,43 @@ Dms.form.initializeCallbacks.push(function (element) {
 
             loadModulePage(link.attr('href'));
         });
-    });
 
-    // TODO: add current stage to parent form on submit
+        innerModule.closest('.form-group').on('dms-get-input-data', function () {
+            var fieldData = {};
+            fieldData[fieldName] = currentValue;
+            return fieldData;
+        });
+
+        stagedForm.on('dms-post-submit-success', function () {
+            innerModule.addClass('loading');
+            innerModuleForm.empty();
+
+            var newStateRequest = Dms.ajax.createRequest({
+                url: reloadStateUrl,
+                type: 'post',
+                dataType: 'json'
+            });
+
+            newStateRequest.done(function (data) {
+                currentValue = data['state'];
+                innerModule.find('.dms-table-control .dms-table').triggerHandler('dms-load-table-data');
+            });
+
+            newStateRequest.fail(function () {
+                if (newStateRequest.statusText === 'abort') {
+                    return;
+                }
+
+                swal({
+                    title: "Could not reload module",
+                    text: "An unexpected error occurred",
+                    type: "error"
+                });
+            });
+
+            newStateRequest.always(function () {
+                innerModule.removeClass('loading');
+            });
+        });
+    });
 });

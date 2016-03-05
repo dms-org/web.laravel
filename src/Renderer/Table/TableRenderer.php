@@ -4,11 +4,13 @@ namespace Dms\Web\Laravel\Renderer\Table;
 
 use Dms\Core\Common\Crud\IReadModule;
 use Dms\Core\Common\Crud\Table\ISummaryTable;
+use Dms\Core\Exception\InvalidArgumentException;
 use Dms\Core\Model\Criteria\Condition\ConditionOperator;
 use Dms\Core\Module\ITableDisplay;
 use Dms\Core\Table\IDataTable;
 use Dms\Core\Table\ITableDataSource;
 use Dms\Web\Laravel\Http\ModuleContext;
+use Dms\Web\Laravel\Renderer\Action\ActionButton;
 use Dms\Web\Laravel\Renderer\Action\ObjectActionButtonBuilder;
 
 /**
@@ -43,16 +45,19 @@ class TableRenderer
     /**
      * Renders the supplied data table as a html string.
      *
-     * @param ModuleContext $moduleContext
-     * @param ITableDisplay $table
-     * @param IDataTable    $tableData
-     * @param string        $viewName
-     * @param bool          $isFiltered
+     * @param ModuleContext       $moduleContext
+     * @param ITableDisplay       $table
+     * @param IDataTable          $tableData
+     * @param string              $viewName
+     * @param bool                $isFiltered
+     * @param ActionButton[]|null $actionButtons
      *
      * @return string
      * @throws UnrenderableColumnComponentException
+     * @throws \Exception
+     * @throws \Throwable
      */
-    public function renderTableData(ModuleContext $moduleContext, ITableDisplay $table, IDataTable $tableData, string $viewName = null, bool $isFiltered = false) : string
+    public function renderTableData(ModuleContext $moduleContext, ITableDisplay $table, IDataTable $tableData, string $viewName = null, bool $isFiltered = false, array $actionButtons = null) : string
     {
         $columnRenderers = [];
 
@@ -61,9 +66,17 @@ class TableRenderer
         }
 
         $rowActionButtons = [];
-        if ($moduleContext->getModule() instanceof IReadModule && $table instanceof ISummaryTable) {
-            foreach ($this->actionButtonBuilder->buildActionButtons($moduleContext) as $actionButton) {
+        if ($actionButtons) {
+            InvalidArgumentException::verifyAllInstanceOf(__METHOD__, 'actionButtons', $actionButtons, ActionButton::class);
+
+            foreach ($actionButtons as $actionButton) {
                 $rowActionButtons[$actionButton->getName()] = $actionButton;
+            }
+        } else {
+            if ($moduleContext->getModule() instanceof IReadModule && $table instanceof ISummaryTable) {
+                foreach ($this->actionButtonBuilder->buildActionButtons($moduleContext) as $actionButton) {
+                    $rowActionButtons[$actionButton->getName()] = $actionButton;
+                }
             }
         }
 

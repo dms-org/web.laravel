@@ -8,21 +8,12 @@
     }
 
     .dms-form-stage-container {
-        position: relative;
+        @extend .dms-spinner-container;
 
         &.loading {
             .dms-form-stage {
                 min-height: 50px;
                 opacity: .3;
-            }
-
-            .spinner {
-                display: block;
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                top: calc(50% - 10px);
-                left: calc(50% - 35px);
             }
         }
     }
@@ -43,12 +34,12 @@
             right: 0;
             text-align: center;
             color: #aaa;
-            display: block!important;
+            display: block !important;
         }
 
         .dz-details {
-            padding-top: 3em!important;
-            padding-bottom: 1em!important;
+            padding-top: 3em !important;
+            padding-bottom: 1em !important;
         }
 
         .dz-image {
@@ -111,23 +102,31 @@
     }
 
     .dms-inner-module {
+        @extend .dms-spinner-container;
+
+        &.loading .dms-inner-module-panel {
+            opacity: .3;
+        }
+
+        .dms-table-control {
+            .dms-table-rows-per-page-form {
+                display: none;
+            }
+
+            .dms-table-quick-filter-form  {
+                width: 100%;
+
+                & > .input-group {
+                    float: none !important;
+                }
+            }
+        }
+
         .dms-inner-module-form-container {
-            position: relative;
+            @extend .dms-spinner-container;
 
-            &.loading {
-                .dms-form-stage {
-                    min-height: 50px;
-                    opacity: .3;
-                }
-
-                .spinner {
-                    display: block;
-                    position: absolute;
-                    top: 50%;
-                    left: 50%;
-                    top: calc(50% - 10px);
-                    left: calc(50% - 35px);
-                }
+            &.loading .dms-inner-module-form {
+                opacity: .3;
             }
         }
     }

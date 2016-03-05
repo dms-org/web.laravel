@@ -67,7 +67,7 @@ $(document).ready(function () {
     Dms.chart.initialize($(document));
     Dms.widget.initialize($(document));
 });
-Dms.action.responseHandler = function (response) {
+Dms.action.responseHandler = function (actionUrl, response) {
     if (typeof response.redirect !== 'undefined') {
         if (typeof response.message !== 'undefined') {
             Cookies.set('dms-flash-alert', {
@@ -125,8 +125,6 @@ Dms.action.responseHandler = function (response) {
 Dms.ajax.formData = function (form) {
     var formValues = {};
     var nativeFormData = new FormData(form);
-
-    this.__isInternalFormData = true;
 
     this.getNativeFormData = function () {
         return nativeFormData;
@@ -517,14 +515,19 @@ Dms.form.stages.createFormDataFromFields = function (fields) {
     var formData = Dms.ajax.createFormData();
 
     fields.filter('[name]').each(function () {
-        var fieldName = $(this).attr('name');
+        var field = $(this);
+        var fieldName = field.attr('name');
 
-        if ($(this).is('[type=file]')) {
+        if (field.is('[type=file]')) {
             $.each(this.files, function (index, file) {
                 formData.append(fieldName, file);
             });
+        } else if (field.is('[type=checkbox], [type=radio]')) {
+            if (field.is(':checked')) {
+                formData.append(fieldName, field.val());
+            }
         } else {
-            formData.append(fieldName, $(this).val());
+            formData.append(fieldName, field.val());
         }
     });
 
@@ -1446,9 +1449,20 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-    element.find('.dms-inner-module').each(function () {
+    element.find('.dms-inner-form').each(function () {
+        var innerForm = $(this);
+
+        if (innerForm.attr('data-readonly')) {
+            innerForm.find(':input').attr('readonly', 'readonly');
+        }
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+    element.find('.dms-inner-module, .dms-display-inner-module').each(function () {
         var innerModule = $(this);
+        var fieldName = innerModule.attr('data-name');
         var rootUrl = innerModule.attr('data-root-url');
+        var reloadStateUrl = rootUrl + '/state';
         var innerModuleFormContainer = innerModule.find('.dms-inner-module-form-container');
         var innerModuleForm = innerModuleFormContainer.find('.dms-inner-module-form');
         var formStage = innerModule.closest('.dms-form-stage');
@@ -1474,7 +1488,7 @@ Dms.form.initializeCallbacks.push(function (element) {
 
         Dms.ajax.interceptors.push({
             accepts: function (options) {
-                return options.url.indexOf(rootUrl) === 0;
+                return options.url.indexOf(rootUrl) === 0 && options.url !== reloadStateUrl;
             },
             before: function (options) {
                 var formData = getDependentData();
@@ -1507,6 +1521,7 @@ Dms.form.initializeCallbacks.push(function (element) {
                 } else {
                     data = JSON.parse(response.responseText);
                     currentValue = data['new_state'];
+
                     response.responseText = data.response;
                     console.log(response.responseText);
                 }
@@ -1514,7 +1529,12 @@ Dms.form.initializeCallbacks.push(function (element) {
         });
 
         var originalResponseHandler = Dms.action.responseHandler;
-        Dms.action.responseHandler = function (response) {
+        Dms.action.responseHandler = function (actionUrl, response) {
+            if (actionUrl.indexOf(rootUrl) !== 0) {
+                originalResponseHandler(actionUrl, response);
+                return;
+            }
+
             if (response.redirect) {
                 var redirectUrl = response.redirect;
                 delete response.redirect;
@@ -1524,7 +1544,7 @@ Dms.form.initializeCallbacks.push(function (element) {
                 }
             }
 
-            originalResponseHandler(response);
+            originalResponseHandler(actionUrl, response);
 
             innerModule.find('.dms-table-control .dms-table').triggerHandler('dms-load-table-data');
             innerModuleForm.empty();
@@ -1578,9 +1598,45 @@ Dms.form.initializeCallbacks.push(function (element) {
 
             loadModulePage(link.attr('href'));
         });
-    });
 
-    // TODO: add current stage to parent form on submit
+        innerModule.closest('.form-group').on('dms-get-input-data', function () {
+            var fieldData = {};
+            fieldData[fieldName] = currentValue;
+            return fieldData;
+        });
+
+        stagedForm.on('dms-post-submit-success', function () {
+            innerModule.addClass('loading');
+            innerModuleForm.empty();
+
+            var newStateRequest = Dms.ajax.createRequest({
+                url: reloadStateUrl,
+                type: 'post',
+                dataType: 'json'
+            });
+
+            newStateRequest.done(function (data) {
+                currentValue = data['state'];
+                innerModule.find('.dms-table-control .dms-table').triggerHandler('dms-load-table-data');
+            });
+
+            newStateRequest.fail(function () {
+                if (newStateRequest.statusText === 'abort') {
+                    return;
+                }
+
+                swal({
+                    title: "Could not reload module",
+                    text: "An unexpected error occurred",
+                    type: "error"
+                });
+            });
+
+            newStateRequest.always(function () {
+                innerModule.removeClass('loading');
+            });
+        });
+    });
 });
 Dms.form.initializeCallbacks.push(function (element) {
 
@@ -1664,12 +1720,6 @@ Dms.form.initializeCallbacks.push(function (element) {
             listOfFields.find('.btn-remove-field').closest('.field-list-button-container').remove();
             listOfFields.find('.field-list-input').removeClass('col-xs-10 col-md-11').addClass('col-xs-12');
         }
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
-    element.find('select[multiple]').multiselect({
-        enableFiltering: true,
-        includeSelectAllOption: true
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -1819,6 +1869,12 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
+    element.find('select[multiple]').multiselect({
+        enableFiltering: true,
+        includeSelectAllOption: true
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
     element.find('input[type="number"][data-max-decimal-places]').each(function () {
         $(this).attr('data-parsley-max-decimal-places', $(this).attr('data-max-decimal-places'));
     });
@@ -1845,7 +1901,10 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-
+    element.find('input[type=radio]').iCheck({
+        radioClass: 'iradio_square-blue',
+        increaseArea: '20%'
+    });
 });
 Dms.form.initializeCallbacks.push(function (element) {
 
@@ -1854,9 +1913,6 @@ Dms.form.initializeCallbacks.push(function (element) {
     element.find('input[type="ip-address"]')
         .attr('type', 'text')
         .attr('data-parsley-ip-address', '1');
-});
-Dms.form.initializeCallbacks.push(function (element) {
-
 });
 Dms.form.initializeCallbacks.push(function (element) {
 
@@ -2060,6 +2116,9 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
+
+});
+Dms.form.initializeCallbacks.push(function (element) {
     if (typeof tinymce === 'undefined') {
         return;
     }
@@ -2255,7 +2314,6 @@ Dms.form.initializeCallbacks.push(function (element) {
 
     element.find('.dms-staged-form, .dms-run-action-form').each(function () {
         var form = $(this);
-        form.attr('data-parsley-validate', 'data-parsley-validate');
         var parsley = form.parsley(window.ParsleyConfig);
         var afterRunCallbacks = [];
         var submitButtons = form.find('input[type=submit], button[type=submit]');
@@ -2269,7 +2327,7 @@ Dms.form.initializeCallbacks.push(function (element) {
         };
 
         submitButtons.on('click before-confirmation', function (e) {
-            form.find(':input').parsley('validate');
+            parsley.validate();
 
             if (!isFormValid()) {
                 e.stopImmediatePropagation();
@@ -2294,6 +2352,17 @@ Dms.form.initializeCallbacks.push(function (element) {
             });
 
             var formData =  Dms.form.stages.createFormDataFromFields(form.find(':input'));
+            form.find('.form-group').each(function () {
+                var additionalDataToSubmit = $(this).triggerHandler('dms-get-input-data');
+
+                if (additionalDataToSubmit) {
+                    $.each(Dms.ajax.parseData(additionalDataToSubmit), function (name, entries) {
+                        $.each(entries, function (index, entry) {
+                            formData.append(name, entry.value, entry.filename);
+                        });
+                    });
+                }
+            });
 
             $.each(fieldsToReappend, function (index, elements) {
                 elements.parentElement.append(elements.children);
@@ -2327,10 +2396,12 @@ Dms.form.initializeCallbacks.push(function (element) {
             });
 
             currentAjaxRequest.done(function (data) {
-                Dms.action.responseHandler(data);
+                Dms.action.responseHandler(submitUrl, data);
                 $.each(afterRunCallbacks, function (index, callback) {
                     callback(data);
                 });
+
+                form.triggerHandler('dms-post-submit-success');
             });
 
             currentAjaxRequest.fail(function (xhr) {
@@ -2422,15 +2493,6 @@ Dms.form.initializeValidationCallbacks.push(function (element) {
 
     element.find('.dms-form').each(function () {
         $(this).parsley(window.ParsleyConfig);
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
-    element.find('.dms-inner-form').each(function () {
-        var innerForm = $(this);
-
-        if (innerForm.attr('data-readonly')) {
-            innerForm.find(':input').attr('readonly', 'readonly');
-        }
     });
 });
 Dms.table.initializeCallbacks.push(function (element) {
@@ -2541,7 +2603,7 @@ Dms.table.initializeCallbacks.push(function (element) {
                 control.attr('data-has-loaded-table-data', true);
 
                 if (table.find('tbody tr').length < criteria.max_rows) {
-                    paginationNextButton.prop('disabled', true);
+                    paginationNextButton.addClass('disabled');
                 }
             });
 
@@ -2565,12 +2627,18 @@ Dms.table.initializeCallbacks.push(function (element) {
         };
 
         filterForm.find('button').click(function () {
-            criteria.orderings = [
-                {
-                    component: filterForm.find('[name=component]').val(),
-                    direction: filterForm.find('[name=direction]').val()
-                }
-            ];
+            var orderByComponent = filterForm.find('[name=component]').val();
+
+            if (orderByComponent) {
+                criteria.orderings = [
+                    {
+                        component: orderByComponent,
+                        direction: filterForm.find('[name=direction]').val()
+                    }
+                ];
+            } else {
+                criteria.orderings = [];
+            }
 
             criteria.conditions = [];
 
@@ -2605,18 +2673,18 @@ Dms.table.initializeCallbacks.push(function (element) {
 
         paginationPreviousButton.click(function () {
             currentPage--;
-            paginationNextButton.prop('disabled', false);
-            paginationPreviousButton.prop('disabled', currentPage === 0);
+            paginationNextButton.removeClass('disabled');
+            paginationPreviousButton.toggleClass('disabled', currentPage === 0);
             loadCurrentPage();
         });
 
         paginationNextButton.click(function () {
             currentPage++;
-            paginationPreviousButton.prop('disabled', false);
+            paginationPreviousButton.removeClass('disabled');
             loadCurrentPage();
         });
 
-        paginationPreviousButton.prop('disabled', true);
+        paginationPreviousButton.addClass('disabled');
 
         if (table.is(':visible')) {
             loadCurrentPage();

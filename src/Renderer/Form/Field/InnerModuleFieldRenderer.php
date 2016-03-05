@@ -10,6 +10,7 @@ use Dms\Core\Form\IField;
 use Dms\Core\Form\IFieldType;
 use Dms\Web\Laravel\Action\ActionService;
 use Dms\Web\Laravel\Http\ModuleRequestRouter;
+use Dms\Web\Laravel\Renderer\Action\ActionButton;
 use Dms\Web\Laravel\Renderer\Form\FormRenderingContext;
 use Dms\Web\Laravel\Renderer\Form\IFieldRendererWithActions;
 use Dms\Web\Laravel\Renderer\Module\ReadModuleRenderer;
@@ -59,25 +60,56 @@ class InnerModuleFieldRenderer extends BladeFieldRendererWithActions implements 
     protected function renderFieldValue(FormRenderingContext $renderingContext, IField $field, $value, IFieldType $fieldType) : string
     {
         /** @var InnerCrudModuleType $fieldType */
-        /** @var ICrudModule $innerModule */
+        /** @var IReadModule $innerModule */
         $innerModule        = $fieldType->getModule();
         $innerModuleContext = $this->loadInnerModuleContext($field, $renderingContext);
 
         /** @var TableRenderer $tableRenderer */
         $tableRenderer = app(TableRenderer::class);
 
+        $actionButtons = [];
+        if ($innerModule->allowsDetails()) {
+            $detailsAction = $innerModule->getDetailsAction();
+            $detailsUrl    = $innerModuleContext->getUrl('action.show', [$detailsAction->getName(), '__object__']);
+
+            $actionButtons[] = new ActionButton(
+                false,
+                $detailsAction->getName(),
+                StringHumanizer::title($detailsAction->getName()),
+                function (string $objectId) use ($detailsUrl) {
+                    return str_replace('__object__', $objectId, $detailsUrl);
+                }
+            );
+        }
+
+        $tableData = $tableRenderer->renderTableData(
+            $innerModuleContext,
+            $innerModule->getSummaryTable(),
+            $innerModule->getSummaryTable()->getDataSource()->load(),
+            null, false,
+            $actionButtons
+        );
+
         return $this->renderView(
             $field,
-            'dms::components.field.inner-module.input',
+            'dms::components.field.inner-module.value',
             [],
             [
-                'moduleContent' => $tableRenderer->renderTableData($innerModuleContext, $innerModule->getSummaryTable(), $innerModule->getSummaryTable()->getDataSource()->load()),
+                'rootUrl'       => $innerModuleContext->getRootUrl(),
+                'moduleContent' => $tableData,
             ]
         );
     }
 
     protected function handleFieldAction(FormRenderingContext $renderingContext, IField $field, IFieldType $fieldType, Request $request, string $actionName = null, array $data)
     {
+        /** @var InnerCrudModuleType $fieldType */
+        if ($actionName === 'state') {
+            return response()->json([
+                'state' => $field->unprocess($fieldType->getModule()->getDataSource()),
+            ]);
+        }
+
         $currentState      = json_decode($data['current_state'] ?: '[]', true);
         $requestUrl        = $data['request']['url'];
         $requestMethod     = $data['request']['method'];
@@ -104,7 +136,7 @@ class InnerModuleFieldRenderer extends BladeFieldRendererWithActions implements 
         /** @var InnerCrudModuleType $fieldType */
         $fieldType = $field->getType();
 
-        /** @var ICrudModule $module */
+        /** @var IReadModule $module */
         $innerModule = $fieldType->getModule();
 
         if ($moduleState) {
@@ -114,15 +146,18 @@ class InnerModuleFieldRenderer extends BladeFieldRendererWithActions implements 
         $moduleContext = $renderingContext->getModuleContext();
 
         if ($renderingContext->getObjectId() !== null) {
+            /** @var ICrudModule|IReadModule $currentModule */
+            $currentModule = $moduleContext->getModule();
+
             $subModulePath = $moduleContext->getUrl('action.form.object.stage.field.action', [
-                $renderingContext->getAction()->getName(),
+                $currentModule instanceof ICrudModule && $currentModule->getEditAction()
+                    ? $currentModule->getEditAction()->getName()
+                    : $renderingContext->getAction()->getName(),
                 $renderingContext->getObjectId(),
                 $renderingContext->getCurrentStageNumber(),
                 $field->getName(),
             ]);
 
-            /** @var IReadModule $currentModule */
-            $currentModule = $moduleContext->getModule();
             $moduleContext = $moduleContext->withBreadcrumb(
                 $currentModule->getLabelFor($renderingContext->getObject()),
                 $moduleContext->getUrl('action.form', [

@@ -5,7 +5,7 @@ namespace Dms\Web\Laravel\Renderer\Action;
 use Dms\Core\Common\Crud\Action\Object\IObjectAction;
 use Dms\Core\Common\Crud\Action\Table\IReorderAction;
 use Dms\Core\Common\Crud\IReadModule;
-use Dms\Core\Model\IEntity;
+use Dms\Core\Model\ITypedObject;
 use Dms\Web\Laravel\Http\ModuleContext;
 use Dms\Web\Laravel\Util\ActionSafetyChecker;
 use Dms\Web\Laravel\Util\StringHumanizer;
@@ -34,12 +34,12 @@ class ObjectActionButtonBuilder
 
     /**
      * @param ModuleContext $moduleContext
-     * @param IEntity       $object
+     * @param ITypedObject  $object
      * @param string        $excludeActionName
      *
      * @return array|ActionButton[]
      */
-    public function buildActionButtons(ModuleContext $moduleContext, IEntity $object = null, string $excludeActionName = null) : array
+    public function buildActionButtons(ModuleContext $moduleContext, ITypedObject $object = null, string $excludeActionName = null) : array
     {
         /** @var IReadModule $module */
         $module     = $moduleContext->getModule();

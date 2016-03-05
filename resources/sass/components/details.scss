@@ -10,3 +10,25 @@
         max-width: 100%;
     }
 }
+
+.dms-display-inner-module {
+    .dms-inner-module-form-container {
+        @extend .dms-spinner-container;
+
+        &.loading .dms-inner-module-form {
+            opacity: .3;
+        }
+
+        .box-tools .btn:not(.btn-info) {
+            display: none;
+        }
+    }
+
+    .dms-table {
+        .dms-row-button-control {
+            .btn:not(.btn-info) {
+                display: none;
+            }
+        }
+    }
+}

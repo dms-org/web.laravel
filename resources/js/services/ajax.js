@@ -2,8 +2,6 @@ Dms.ajax.formData = function (form) {
     var formValues = {};
     var nativeFormData = new FormData(form);
 
-    this.__isInternalFormData = true;
-
     this.getNativeFormData = function () {
         return nativeFormData;
     };

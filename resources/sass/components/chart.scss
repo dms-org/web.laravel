@@ -1,22 +1,9 @@
 .dms-chart-container {
-    position: relative;
-
-    .dms-chart {
-        min-height: 100px;
-    }
+    @extend .dms-spinner-container;
 
     &.loading {
         .dms-chart {
             opacity: .3;
-        }
-
-        .spinner {
-            display: block;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            top: calc(50% - 10px);
-            left: calc(50% - 35px);
         }
     }
 }

@@ -1,5 +1,5 @@
-<?php /** @var \Dms\Core\Form\IFieldOption[] $options */ ?>
-@foreach ($options as $option)
+<?php /** @var \Dms\Core\Form\IFieldOptions $options */ ?>
+@foreach ($options->getAll() as $option)
     <label class="radio-inline">
         <input
                 type="radio"

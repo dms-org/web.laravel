@@ -1,3 +1,18 @@
+.dms-spinner-container {
+    position: relative;
+
+    &.loading {
+        & > .spinner {
+            display: block;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            top: calc(50% - 10px);
+            left: calc(50% - 35px);
+        }
+    }
+}
+
 .spinner {
     margin: 0 auto 0;
     width: 70px;

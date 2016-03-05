@@ -1,19 +1,25 @@
+.dms-table-control {
+    .dms-table-rows-per-page-form, .dms-table-quick-filter-form {
+        .form-group {
+            margin: 0!important;
+        }
+    }
+
+    .pager {
+        a.disabled {
+            opacity: .5;
+            pointer-events: none;
+        }
+    }
+}
+
 .dms-table-container {
-    position: relative;
+    @extend .dms-spinner-container;
     min-height: 50px;
 
     &.loading {
         table {
             opacity: .3;
-        }
-
-        .spinner {
-            display: block;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            top: calc(50% - 10px);
-            left: calc(50% - 35px);
         }
     }
 

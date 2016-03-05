@@ -15627,18 +15627,17 @@ a[disabled] {
   pointer-events: none;
   cursor: auto; }
 
+.dms-table-control .dms-table-rows-per-page-form .form-group, .dms-table-control .dms-table-quick-filter-form .form-group {
+  margin: 0 !important; }
+
+.dms-table-control .pager a.disabled {
+  opacity: .5;
+  pointer-events: none; }
+
 .dms-table-container {
-  position: relative;
   min-height: 50px; }
   .dms-table-container.loading table {
     opacity: .3; }
-  .dms-table-container.loading .spinner {
-    display: block;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    top: calc(50% - 10px);
-    left: calc(50% - 35px); }
   .dms-table-container table thead:first-child h4 {
     margin-top: 0; }
   .dms-table-container table th[data-column-name="id"], .dms-table-container table td[data-column-name="id"] {
@@ -15651,19 +15650,8 @@ a[disabled] {
     cursor: -webkit-grabbing;
     -webkit-user-drag: none; }
 
-.dms-chart-container {
-  position: relative; }
-  .dms-chart-container .dms-chart {
-    min-height: 100px; }
-  .dms-chart-container.loading .dms-chart {
-    opacity: .3; }
-  .dms-chart-container.loading .spinner {
-    display: block;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    top: calc(50% - 10px);
-    left: calc(50% - 35px); }
+.dms-chart-container.loading .dms-chart {
+  opacity: .3; }
 
 .dms-staged-form .help-block-error {
   color: #a94442; }
@@ -15671,18 +15659,9 @@ a[disabled] {
 .dms-staged-form .list-group.dms-field-list {
   margin-bottom: 0; }
 
-.dms-staged-form .dms-form-stage-container {
-  position: relative; }
-  .dms-staged-form .dms-form-stage-container.loading .dms-form-stage {
-    min-height: 50px;
-    opacity: .3; }
-  .dms-staged-form .dms-form-stage-container.loading .spinner {
-    display: block;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    top: calc(50% - 10px);
-    left: calc(50% - 35px); }
+.dms-staged-form .dms-form-stage-container.loading .dms-form-stage {
+  min-height: 50px;
+  opacity: .3; }
 
 .dms-staged-form .dropzone {
   border: 2px dashed #0087F7;
@@ -15740,18 +15719,19 @@ a[disabled] {
 .dms-staged-form .dms-field-table .daterangepicker {
   min-width: 450px; }
 
-.dms-staged-form .dms-inner-module .dms-inner-module-form-container {
-  position: relative; }
-  .dms-staged-form .dms-inner-module .dms-inner-module-form-container.loading .dms-form-stage {
-    min-height: 50px;
-    opacity: .3; }
-  .dms-staged-form .dms-inner-module .dms-inner-module-form-container.loading .spinner {
-    display: block;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    top: calc(50% - 10px);
-    left: calc(50% - 35px); }
+.dms-staged-form .dms-inner-module.loading .dms-inner-module-panel {
+  opacity: .3; }
+
+.dms-staged-form .dms-inner-module .dms-table-control .dms-table-rows-per-page-form {
+  display: none; }
+
+.dms-staged-form .dms-inner-module .dms-table-control .dms-table-quick-filter-form {
+  width: 100%; }
+  .dms-staged-form .dms-inner-module .dms-table-control .dms-table-quick-filter-form > .input-group {
+    float: none !important; }
+
+.dms-staged-form .dms-inner-module .dms-inner-module-form-container.loading .dms-inner-module-form {
+  opacity: .3; }
 
 .dms-display-map {
   margin: 15px 0;
@@ -15761,6 +15741,25 @@ a[disabled] {
 
 .dms-file-display img {
   max-width: 100%; }
+
+.dms-display-inner-module .dms-inner-module-form-container.loading .dms-inner-module-form {
+  opacity: .3; }
+
+.dms-display-inner-module .dms-inner-module-form-container .box-tools .btn:not(.btn-info) {
+  display: none; }
+
+.dms-display-inner-module .dms-table .dms-row-button-control .btn:not(.btn-info) {
+  display: none; }
+
+.dms-spinner-container, .dms-table-container, .dms-chart-container, .dms-staged-form .dms-form-stage-container, .dms-staged-form .dms-inner-module, .dms-staged-form .dms-inner-module .dms-inner-module-form-container, .dms-display-inner-module .dms-inner-module-form-container {
+  position: relative; }
+  .dms-spinner-container.loading > .spinner, .loading.dms-table-container > .spinner, .loading.dms-chart-container > .spinner, .dms-staged-form .loading.dms-form-stage-container > .spinner, .dms-staged-form .loading.dms-inner-module > .spinner, .dms-staged-form .dms-inner-module .loading.dms-inner-module-form-container > .spinner, .dms-display-inner-module .loading.dms-inner-module-form-container > .spinner {
+    display: block;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    top: calc(50% - 10px);
+    left: calc(50% - 35px); }
 
 .spinner {
   margin: 0 auto 0;

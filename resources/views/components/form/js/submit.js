@@ -2,7 +2,6 @@ Dms.form.initializeCallbacks.push(function (element) {
 
     element.find('.dms-staged-form, .dms-run-action-form').each(function () {
         var form = $(this);
-        form.attr('data-parsley-validate', 'data-parsley-validate');
         var parsley = form.parsley(window.ParsleyConfig);
         var afterRunCallbacks = [];
         var submitButtons = form.find('input[type=submit], button[type=submit]');
@@ -41,6 +40,17 @@ Dms.form.initializeCallbacks.push(function (element) {
             });
 
             var formData =  Dms.form.stages.createFormDataFromFields(form.find(':input'));
+            form.find('.form-group').each(function () {
+                var additionalDataToSubmit = $(this).triggerHandler('dms-get-input-data');
+
+                if (additionalDataToSubmit) {
+                    $.each(Dms.ajax.parseData(additionalDataToSubmit), function (name, entries) {
+                        $.each(entries, function (index, entry) {
+                            formData.append(name, entry.value, entry.filename);
+                        });
+                    });
+                }
+            });
 
             $.each(fieldsToReappend, function (index, elements) {
                 elements.parentElement.append(elements.children);
@@ -74,10 +84,12 @@ Dms.form.initializeCallbacks.push(function (element) {
             });
 
             currentAjaxRequest.done(function (data) {
-                Dms.action.responseHandler(data);
+                Dms.action.responseHandler(submitUrl, data);
                 $.each(afterRunCallbacks, function (index, callback) {
                     callback(data);
                 });
+
+                form.triggerHandler('dms-post-submit-success');
             });
 
             currentAjaxRequest.fail(function (xhr) {

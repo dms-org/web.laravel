@@ -48,8 +48,7 @@ class ArrayOfOptionsFieldRenderer extends BladeFieldRenderer
                 ArrayOfType::ATTR_EXACT_ELEMENTS => 'exactElements',
             ],
             [
-                'options'       => $elementField->getType()->get(ArrayOfType::ATTR_OPTIONS)->getAll(),
-                'fieldRenderer' => $this->fieldRendererCollection->findRendererFor($elementField)->render($elementField),
+                'options' => $elementField->getType()->get(ArrayOfType::ATTR_OPTIONS)->getAll(),
             ]
         );
     }

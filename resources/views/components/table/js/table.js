@@ -48,7 +48,7 @@ Dms.table.initializeCallbacks.push(function (element) {
                 control.attr('data-has-loaded-table-data', true);
 
                 if (table.find('tbody tr').length < criteria.max_rows) {
-                    paginationNextButton.prop('disabled', true);
+                    paginationNextButton.addClass('disabled');
                 }
             });
 
@@ -72,12 +72,18 @@ Dms.table.initializeCallbacks.push(function (element) {
         };
 
         filterForm.find('button').click(function () {
-            criteria.orderings = [
-                {
-                    component: filterForm.find('[name=component]').val(),
-                    direction: filterForm.find('[name=direction]').val()
-                }
-            ];
+            var orderByComponent = filterForm.find('[name=component]').val();
+
+            if (orderByComponent) {
+                criteria.orderings = [
+                    {
+                        component: orderByComponent,
+                        direction: filterForm.find('[name=direction]').val()
+                    }
+                ];
+            } else {
+                criteria.orderings = [];
+            }
 
             criteria.conditions = [];
 
@@ -112,18 +118,18 @@ Dms.table.initializeCallbacks.push(function (element) {
 
         paginationPreviousButton.click(function () {
             currentPage--;
-            paginationNextButton.prop('disabled', false);
-            paginationPreviousButton.prop('disabled', currentPage === 0);
+            paginationNextButton.removeClass('disabled');
+            paginationPreviousButton.toggleClass('disabled', currentPage === 0);
             loadCurrentPage();
         });
 
         paginationNextButton.click(function () {
             currentPage++;
-            paginationPreviousButton.prop('disabled', false);
+            paginationPreviousButton.removeClass('disabled');
             loadCurrentPage();
         });
 
-        paginationPreviousButton.prop('disabled', true);
+        paginationPreviousButton.addClass('disabled');
 
         if (table.is(':visible')) {
             loadCurrentPage();

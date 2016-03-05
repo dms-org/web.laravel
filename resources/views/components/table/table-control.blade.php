@@ -33,6 +33,7 @@
                 <div class="form-group">
                     <select name="component" class="form-control">
                         @foreach($columns as $column)
+                            <option value="">Please select</option>
                             @foreach($column->getComponents() as $component)
                                 <option value="{{ $column->getName() . '.' . $component->getName() }}">
                                     @if($column->getLabel() === $component->getLabel())

@@ -28,9 +28,8 @@ class RadioOptionsFieldRender extends BladeFieldRenderer
 
     protected function canRender(FormRenderingContext $renderingContext, IField $field, IFieldType $fieldType) : bool
     {
-        return $fieldType instanceof ArrayOfType
-            && $fieldType->getElementType() instanceof InnerFormType
-            && $fieldType->getElementType();
+        return $fieldType->has(FieldType::ATTR_OPTIONS)
+        && $fieldType->get(FieldType::ATTR_SHOW_ALL_OPTIONS);
     }
 
     protected function renderField(FormRenderingContext $renderingContext, IField $field, IFieldType $fieldType) : string

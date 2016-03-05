@@ -3,11 +3,12 @@
 namespace Dms\Web\Laravel\Action\ResultHandler;
 
 use Dms\Core\Common\Crud\Action\Crud\ViewDetailsAction;
-use Dms\Core\Form\IForm;
+use Dms\Core\Common\Crud\Action\Object\IObjectAction;
+use Dms\Core\Form\IStagedForm;
+use Dms\Core\Form\Stage\IndependentFormStage;
 use Dms\Core\Module\IAction;
 use Dms\Web\Laravel\Action\ActionResultHandler;
 use Dms\Web\Laravel\Http\ModuleContext;
-use Dms\Web\Laravel\Renderer\Form\ActionFormRenderer;
 use Dms\Web\Laravel\Renderer\Form\FormRenderer;
 use Dms\Web\Laravel\Renderer\Form\FormRenderingContext;
 use Illuminate\Http\Response;
@@ -20,7 +21,7 @@ use Illuminate\Http\Response;
 class ViewDetailsResultHandler extends ActionResultHandler
 {
     /**
-     * @var ActionFormRenderer
+     * @var FormRenderer
      */
     protected $formRenderer;
 
@@ -64,8 +65,20 @@ class ViewDetailsResultHandler extends ActionResultHandler
      */
     protected function handleResult(ModuleContext $moduleContext, IAction $action, $result)
     {
-        /** @var IForm $result */
-        // TODO: handle stage numbers for form context
-        return $this->formRenderer->renderFieldsAsValues(new FormRenderingContext($moduleContext, $action), $result);
+        /** @var IStagedForm $result */
+        $object           = $result->getFirstForm()->getField(IObjectAction::OBJECT_FIELD_NAME)->getInitialValue();
+        $stageNumber      = 2;
+        $renderingContext = new FormRenderingContext($moduleContext, $action, $stageNumber, $object);
+
+        $forms = [];
+
+        foreach (array_slice($result->getAllStages(), 1) as $stage) {
+            /** @var IndependentFormStage $stage */
+            $forms[] = $this->formRenderer->renderFieldsAsValues($renderingContext, $stage->loadForm());
+            $stageNumber++;
+            $renderingContext->setCurrentStageNumber($stageNumber);
+        }
+
+        return implode('', $forms);
     }
 }

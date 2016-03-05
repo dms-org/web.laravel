@@ -181,7 +181,10 @@ class ModuleRequestRouter
 
     public function getRootContext(IModule $module) : ModuleContext
     {
-        return ModuleContext::rootContext($this->router, $module);
+        $moduleContext = ModuleContext::rootContext($this->router, $module);
+        $this->currentModuleContextStack = [$moduleContext];
+
+        return $moduleContext;
     }
 
     /**
@@ -226,10 +229,7 @@ class ModuleRequestRouter
                 abort(404);
             }
 
-            $moduleContext                     = $this->getRootContext($package->loadModule($moduleName));
-            $this->currentModuleContextStack[] = $moduleContext;
-
-            return $moduleContext;
+            return $this->getRootContext($package->loadModule($moduleName));
         });
     }
 }

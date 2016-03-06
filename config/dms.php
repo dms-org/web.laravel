@@ -30,9 +30,9 @@ return [
             ],
             'result-handlers'    => [
                 Dms\Web\Laravel\Action\ResultHandler\ViewDetailsResultHandler::class,
-                Dms\Web\Laravel\Action\ResultHandler\CreatedEntityResultHandler::class,
-                Dms\Web\Laravel\Action\ResultHandler\EditedEntityResultHandler::class,
-                Dms\Web\Laravel\Action\ResultHandler\DeletedEntityResultHandler::class,
+                Dms\Web\Laravel\Action\ResultHandler\CreatedObjectResultHandler::class,
+                Dms\Web\Laravel\Action\ResultHandler\EditedObjectResultHandler::class,
+                Dms\Web\Laravel\Action\ResultHandler\DeletedObjectResultHandler::class,
                 Dms\Web\Laravel\Action\ResultHandler\NullResultHandler::class,
                 Dms\Web\Laravel\Action\ResultHandler\MessageResultHandler::class,
                 Dms\Web\Laravel\Action\ResultHandler\FileResultHandler::class,

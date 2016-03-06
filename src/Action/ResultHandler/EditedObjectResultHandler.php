@@ -2,30 +2,30 @@
 
 namespace Dms\Web\Laravel\Action\ResultHandler;
 
-use Dms\Core\Common\Crud\Action\Object\IObjectAction;
+use Dms\Core\Common\Crud\Action\Crud\EditAction;
 use Dms\Core\Common\Crud\IReadModule;
 use Dms\Core\Model\Object\Entity;
+use Dms\Core\Model\Object\TypedObject;
 use Dms\Core\Module\IAction;
 use Dms\Web\Laravel\Action\ActionResultHandler;
 use Dms\Web\Laravel\Http\ModuleContext;
-use Dms\Web\Laravel\Http\ModuleRequestRouter;
 use Dms\Web\Laravel\Util\EntityModuleMap;
 use Dms\Web\Laravel\Util\StringHumanizer;
 use Illuminate\Http\Response;
 
 /**
- * The deleted entity action result handler.
+ * The edited object action result handler.
  *
  * @author Elliot Levin <elliotlevin@hotmail.com>
  */
-class DeletedEntityResultHandler extends ActionResultHandler
+class EditedObjectResultHandler extends ActionResultHandler
 {
     /**
      * @return string|null
      */
     protected function supportedResultType()
     {
-        return Entity::class;
+        return TypedObject::class;
     }
 
     /**
@@ -37,7 +37,7 @@ class DeletedEntityResultHandler extends ActionResultHandler
      */
     protected function canHandleResult(ModuleContext $moduleContext, IAction $action, $result) : bool
     {
-        return $moduleContext->getModule() instanceof IReadModule && $action instanceof IObjectAction && $action->getName() === 'remove';
+        return $moduleContext->getModule() instanceof IReadModule && $action instanceof EditAction;
     }
 
     /**
@@ -50,14 +50,12 @@ class DeletedEntityResultHandler extends ActionResultHandler
     protected function handleResult(ModuleContext $moduleContext, IAction $action, $result)
     {
         /** @var IReadModule $module */
-        $module        = $moduleContext->getModule();
-        $label         = $module->getLabelFor($result);
-        $type          = str_singular(StringHumanizer::humanize($module->getName()));
+        $module = $moduleContext->getModule();
+        $label  = $module->getLabelFor($result);
+        $type   = str_singular(StringHumanizer::humanize($module->getName()));
 
         return \response()->json([
-            'message'      => "The '{$label}' {$type} has been removed.",
-            'message_type' => 'info',
-            'redirect'     => $moduleContext->getUrl('dashboard'),
+            'message' => "The '{$label}' {$type} has been updated.",
         ]);
     }
 }

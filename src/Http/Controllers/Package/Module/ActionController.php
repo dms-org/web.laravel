@@ -117,7 +117,7 @@ class ActionController extends DmsController
 
         $hiddenValues = [];
 
-        if ($objectId && $action instanceof IObjectAction) {
+        if ($objectId !== null && $action instanceof IObjectAction) {
             /** @var IReadModule $module */
             $object = $this->loadObject($objectId, $action);
 
@@ -159,7 +159,7 @@ class ActionController extends DmsController
             ], 403));
         }
 
-        if ($objectId && $action instanceof IObjectAction) {
+        if ($objectId !== null && $action instanceof IObjectAction) {
             $object = $this->loadObject($objectId, $action);
 
             $action = $action->withSubmittedFirstStage([
@@ -185,7 +185,7 @@ class ActionController extends DmsController
     public function getFormStage(Request $request, ModuleContext $moduleContext, string $actionName, int $stageNumber, string $objectId = null)
     {
         if (!$objectId) {
-            $objectId = $request->has(IObjectAction::OBJECT_FIELD_NAME) ? (int)$request->input(IObjectAction::OBJECT_FIELD_NAME) : null;
+            $objectId = $request->has(IObjectAction::OBJECT_FIELD_NAME) ? (string)$request->input(IObjectAction::OBJECT_FIELD_NAME) : null;
         }
 
         $module = $moduleContext->getModule();
@@ -218,7 +218,7 @@ class ActionController extends DmsController
 
         $response = $this->resultHandlers->handle($moduleContext, $action, $result);
 
-        if ($objectId && $module instanceof IReadModule) {
+        if ($objectId !== null && $module instanceof IReadModule) {
             /** @var IReadModule $module */
             $object        = $module->getDataSource()->get($objectId);
             $objectLabel   = $module->getLabelFor($object);
@@ -231,7 +231,7 @@ class ActionController extends DmsController
         return view('dms::package.module.details')
             ->with([
                 'assetGroups'     => ['forms'],
-                'pageTitle'       => implode(' :: ', array_merge($moduleContext->getTitles(), [StringHumanizer::humanize($actionName)])),
+                'pageTitle'       => implode(' :: ', array_merge($moduleContext->getTitles(), [StringHumanizer::title($actionName)])),
                 'breadcrumbs'     => $moduleContext->getBreadcrumbs(),
                 'finalBreadcrumb' => StringHumanizer::title($actionName),
                 'objectLabel'     => $objectLabel ? str_singular(StringHumanizer::title($module->getName())) . ': ' . $objectLabel : null,

@@ -16,9 +16,18 @@ Dms.action.responseHandler = function (actionUrl, response) {
     }
 
     if (typeof response.files !== 'undefined') {
+        var fileNames = [];
+
+
+        $.each(response.files, function (index, file) {
+            fileNames.push(file.name);
+        });
+
+
         swal({
+            html: true,
             title: "Downloading files",
-            text: "Please wait while your download begins. <br> Files: " + response.files.join(', '),
+            text: "Please wait while your download begins.\r\n Files: " + fileNames.join(', '),
             type: "info",
             showConfirmButton: false,
             showLoaderOnConfirm: true

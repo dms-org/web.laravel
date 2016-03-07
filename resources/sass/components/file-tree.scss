@@ -1,0 +1,45 @@
+.dms-file-tree {
+    .dms-object-list {
+        margin-bottom: 0;
+
+        .list-group-item {
+            padding-right: 0;
+        }
+    }
+
+    .dms-file-item {
+        cursor: auto;
+        img {
+            width: 16px;
+        }
+
+        .dms-file-action-buttons {
+            padding-right: 10px;
+        }
+    }
+
+    .dms-folder-item {
+        cursor: pointer;
+
+        .fa-folder {
+            display: none;
+        }
+
+        &.dms-folder-closed {
+            & > .dms-object-list {
+                display: none;
+            }
+
+            .fa-folder-open {
+                display: none;
+            }
+            .fa-folder {
+                display: inline;
+            }
+        }
+
+        .help-block {
+            margin: 0;
+        }
+    }
+}

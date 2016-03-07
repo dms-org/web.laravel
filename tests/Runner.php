@@ -3,6 +3,8 @@
 namespace Dms;
 
 use Dms\Common\Testing;
+use Dms\Core\Tests\Helpers\Comparators\ObjectCollectionComparator;
+use SebastianBergmann\Comparator\Factory;
 
 $projectAutoLoaderPath    = __DIR__ . '/../vendor/autoload.php';
 $dependencyAutoLoaderPath = __DIR__ . '/../../../../autoload.php';
@@ -17,4 +19,5 @@ if (file_exists($projectAutoLoaderPath)) {
 
 $composerAutoLoader->addPsr4(__NAMESPACE__ . '\\', __DIR__);
 
+Factory::getInstance()->register(new ObjectCollectionComparator());
 Testing\Bootstrapper::run(__NAMESPACE__, __DIR__, 'phpunit.xml');

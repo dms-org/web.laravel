@@ -3,7 +3,7 @@ Dms.form.initializeCallbacks.push(function (element) {
     element.find('.dropzone-container').each(function () {
         var container = $(this);
         var uniqueId = Dms.utilities.idGenerator();
-        var form = container.closest('form');
+        var form = container.closest('.dms-staged-form');
         var dropzoneElement = container.find('.dms-dropzone');
         var fieldName = container.attr('data-name');
         var required = container.attr('data-required');

@@ -4,6 +4,7 @@ namespace Dms\Web\Laravel\Renderer\Form\Field;
 
 use Dms\Common\Structure\FileSystem\Form\FileUploadType;
 use Dms\Common\Structure\FileSystem\Form\ImageUploadType;
+use Dms\Common\Structure\FileSystem\PathHelper;
 use Dms\Core\File\IFile;
 use Dms\Core\Form\Field\Type\FieldType;
 use Dms\Core\Form\IField;
@@ -77,14 +78,18 @@ class FileFieldRenderer extends BladeFieldRenderer
     {
         /** @var IFile[] $existingFiles */
         $existingFiles = [];
+        $publicFiles   = [];
 
         foreach ($files as $file) {
             if (empty($file['file'])) {
                 continue;
             }
 
-            /** @var IFile $file */
-            $existingFiles[] = $file['file'];
+            if ($this->isPublicFile($file['file'])) {
+                $publicFiles[] = $file['file'];
+            } else {
+                $existingFiles[] = $file['file'];
+            }
         }
 
         $tempFiles = $this->tempFileService->storeTempFiles(
@@ -94,19 +99,33 @@ class FileFieldRenderer extends BladeFieldRenderer
 
         $data = [];
 
-        foreach ($existingFiles as $key => $file) {
-            $tempFile        = $tempFiles[$key];
+        foreach (array_merge($publicFiles, $existingFiles) as $key => $file) {
+            /** @var IFile $file */
+            $tempFile        = $tempFiles[$key] ?? null;
             $imageDimensions = @getimagesize($file->getFullPath());
 
             $data[] = [
                     'name'        => $file->getClientFileNameWithFallback(),
                     'size'        => $file->exists() ? $file->getSize() : 0,
-                    'previewUrl'  => route('dms::file.preview', $tempFile->getToken()),
-                    'downloadUrl' => route('dms::file.download', $tempFile->getToken()),
+                    'previewUrl'  => $tempFile ? route('dms::file.preview', $tempFile->getToken()) : $this->getPublicUrl($file),
+                    'downloadUrl' => $tempFile ? route('dms::file.download', $tempFile->getToken()) : $this->getPublicUrl($file),
                 ] + ($imageDimensions ? ['width' => $imageDimensions[0], 'height' => $imageDimensions[1]] : []);
         }
 
         return $data;
+    }
+
+    private function isPublicFile(IFile $file)
+    {
+        return strpos($file->getFullPath(), PathHelper::normalize($this->config->get('dms.storage.public-files.dir'))) === 0;
+    }
+
+    protected function getPublicUrl(IFile $file) : string
+    {
+        $publicDirectory    = PathHelper::normalize($this->config->get('dms.storage.public-files.dir'));
+        $publicDirectoryUrl = $this->config->get('dms.storage.public-files.url');
+
+        return rtrim($publicDirectoryUrl, '/') . '/' . ltrim(substr($file->getFullPath(), strlen($publicDirectory)), '/');
     }
 
     protected function renderFieldValue(FormRenderingContext $renderingContext, IField $field, $value, IFieldType $fieldType) : string
@@ -116,7 +135,7 @@ class FileFieldRenderer extends BladeFieldRenderer
             'dms::components.field.dropzone.value',
             [
                 'existingFiles' => $value !== null
-                    ? $this->getExistingFilesArray([$field->getUnprocessedInitialValue()])
+                    ? $this->getExistingFilesArray([$value])
                     : null,
             ]
         );

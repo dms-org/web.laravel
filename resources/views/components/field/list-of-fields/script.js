@@ -2,6 +2,7 @@ Dms.form.initializeCallbacks.push(function (element) {
 
     element.find('ul.dms-field-list').each(function () {
         var listOfFields = $(this);
+        var form = listOfFields.closest('.dms-staged-form');
         var formGroup = listOfFields.closest('.form-group');
         var templateField = listOfFields.find('.field-list-template');
         var addButton = listOfFields.find('.btn-add-field');
@@ -55,7 +56,7 @@ Dms.form.initializeCallbacks.push(function (element) {
             addButton.closest('.field-list-add').before(newField);
 
             Dms.form.initialize(fieldInputElement);
-            listOfFields.closest('form').triggerHandler('dms-form-updated');
+            form.triggerHandler('dms-form-updated');
 
             invalidateControl();
         };
@@ -64,7 +65,7 @@ Dms.form.initializeCallbacks.push(function (element) {
             var field = $(this).closest('.field-list-item');
             field.remove();
             formGroup.trigger('dms-change');
-            listOfFields.closest('form').triggerHandler('dms-form-updated');
+            from.triggerHandler('dms-form-updated');
 
             invalidateControl();
             // TODO: reindex

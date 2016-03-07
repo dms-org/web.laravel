@@ -2,6 +2,7 @@ Dms.form.initializeCallbacks.push(function (element) {
 
     element.find('table.dms-field-table').each(function () {
         var tableOfFields = $(this);
+        var form = tableOfFields.closest('.dms-staged-form');
         var formGroup = tableOfFields.closest('.form-group');
 
         var columnFieldTemplate = tableOfFields.find('.field-column-template');
@@ -112,7 +113,7 @@ Dms.form.initializeCallbacks.push(function (element) {
 
             Dms.form.initialize(elementsToInit);
 
-            tableOfFields.closest('form').triggerHandler('dms-form-updated');
+            form.triggerHandler('dms-form-updated');
 
             invalidateControl();
         };
@@ -148,7 +149,7 @@ Dms.form.initializeCallbacks.push(function (element) {
 
             Dms.form.initialize(newRow);
 
-            tableOfFields.closest('form').triggerHandler('dms-form-updated');
+            form.triggerHandler('dms-form-updated');
 
             invalidateControl();
         };
@@ -162,7 +163,7 @@ Dms.form.initializeCallbacks.push(function (element) {
             parentCell.remove();
 
             formGroup.trigger('dms-change');
-            tableOfFields.closest('form').triggerHandler('dms-form-updated');
+            form.triggerHandler('dms-form-updated');
 
             invalidateControl();
             // TODO: reindex
@@ -172,7 +173,7 @@ Dms.form.initializeCallbacks.push(function (element) {
             $(this).closest('tr').remove();
 
             formGroup.trigger('dms-change');
-            tableOfFields.closest('form').triggerHandler('dms-form-updated');
+            form.triggerHandler('dms-form-updated');
 
             invalidateControl();
             // TODO: reindex

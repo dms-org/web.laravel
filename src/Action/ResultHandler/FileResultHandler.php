@@ -2,7 +2,9 @@
 
 namespace Dms\Web\Laravel\Action\ResultHandler;
 
-use Dms\Core\File\IFile;
+use Dms\Common\Structure\FileSystem\File;
+use Dms\Core\Common\Crud\Action\Crud\CreateAction;
+use Dms\Core\Common\Crud\Action\Crud\EditAction;
 use Dms\Core\Module\IAction;
 use Dms\Web\Laravel\Action\ActionResultHandler;
 use Dms\Web\Laravel\File\ITemporaryFileService;
@@ -46,7 +48,7 @@ class FileResultHandler extends ActionResultHandler
      */
     protected function supportedResultType()
     {
-        return IFile::class;
+        return File::class;
     }
 
     /**
@@ -57,7 +59,7 @@ class FileResultHandler extends ActionResultHandler
      */
     protected function canHandleResult(ModuleContext $moduleContext, IAction $action, $result) : bool
     {
-        return true;
+        return !($action instanceof CreateAction || $action instanceof EditAction || $action->getName() === 'remove');
     }
 
     /**
@@ -69,7 +71,7 @@ class FileResultHandler extends ActionResultHandler
      */
     protected function handleResult(ModuleContext $moduleContext, IAction $action, $result)
     {
-        /** @var IFile $result */
+        /** @var File $result */
         $tempFile = $this->tempFileService->storeTempFile(
             $result,
             $this->config->get('dms.storage.temp-files.download-expiry')

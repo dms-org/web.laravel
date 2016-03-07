@@ -4,7 +4,7 @@ return [
 
     'auth' => [
         'login' => [
-            'max-attempts' => 999,
+            'max-attempts' => env('APP_ENV') === 'local' ? 999 : 5,
             'lockout-time' => 60,
         ],
     ],
@@ -15,7 +15,11 @@ return [
     ],
 
     'storage' => [
-        'temp-files' => [
+        'public-files' => [
+            'dir' => public_path('files/'),
+            'url' => asset('files/'),
+        ],
+        'temp-files'   => [
             'dir'             => storage_path('dms/temp-uploads/'),
             'upload-expiry'   => 3600,
             'download-expiry' => 3600,
@@ -73,6 +77,7 @@ return [
                 ],
                 'column-components' => [
                     Dms\Web\Laravel\Renderer\Table\Column\Component\OptimizedScalarValueComponentRenderer::class,
+                    Dms\Web\Laravel\Renderer\Table\Column\Component\FilePreviewComponentRenderer::class,
                     // Will default to field renderers
                 ],
             ],
@@ -87,6 +92,7 @@ return [
                 Dms\Web\Laravel\Renderer\Widget\ChartWidgetRenderer::class,
             ],
             'modules'     => [
+                Dms\Web\Laravel\Renderer\Module\FileTreeModuleRenderer::class,
                 Dms\Web\Laravel\Renderer\Module\ReadModuleRenderer::class,
                 Dms\Web\Laravel\Renderer\Module\DefaultModuleRenderer::class,
             ],
@@ -104,11 +110,12 @@ return [
 
     'keywords' => [
         'danger'    => ['delete', 'remove', 'trash', 'drop', 'cancel', 'reset'],
-        'success'   => ['confirm', 'approve', 'accept', 'verify'],
+        'warning'   => [],
+        'success'   => ['confirm', 'approve', 'accept', 'verify', 'download'],
         'info'      => ['download', 'stats', 'display', 'details', 'view'],
         'primary'   => ['edit'],
         'overrides' => [
-            'example-name' => 'danger',
+            // 'example-name' => 'danger',
         ],
     ],
 
@@ -121,7 +128,7 @@ return [
                 'vendor/dms/js/all.js',
             ],
         ],
-        'forms' => [
+        'forms'  => [
             'stylesheets' => [
                 'vendor/dms/wysiwyg/wysiwyg.css',
             ],

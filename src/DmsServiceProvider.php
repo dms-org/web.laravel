@@ -2,6 +2,7 @@
 
 namespace Dms\Web\Laravel;
 
+use Dms\Common\Structure\FileSystem\Directory;
 use Dms\Core\Auth\IAuthSystem;
 use Dms\Core\Auth\IRoleRepository;
 use Dms\Core\Auth\IUserRepository;
@@ -22,6 +23,8 @@ use Dms\Web\Laravel\Auth\Password\PasswordHasherFactory;
 use Dms\Web\Laravel\Auth\Password\PasswordResetService;
 use Dms\Web\Laravel\Auth\Persistence\RoleRepository;
 use Dms\Web\Laravel\Auth\Persistence\UserRepository;
+use Dms\Web\Laravel\Document\DirectoryTree;
+use Dms\Web\Laravel\Document\PublicFileModule;
 use Dms\Web\Laravel\File\Command\ClearTempFilesCommand;
 use Dms\Web\Laravel\File\ITemporaryFileService;
 use Dms\Web\Laravel\File\Persistence\ITemporaryFileRepository;
@@ -80,6 +83,7 @@ class DmsServiceProvider extends ServiceProvider
         $this->registerAuth();
         $this->registerLang();
         $this->registerModuleServices();
+        $this->registerModules();
         $this->registerHttpRoutes();
         $this->registerMiddleware();
         $this->registerDbConnection();
@@ -186,6 +190,16 @@ class DmsServiceProvider extends ServiceProvider
     public function registerModuleServices()
     {
         $this->app->singleton(ModuleRequestRouter::class);
+    }
+
+    public function registerModules()
+    {
+        $this->app->bind(PublicFileModule::class, function () {
+            return new PublicFileModule(
+                DirectoryTree::from($this->app['config']->get('dms.storage.public-files.dir')),
+                $this->app[IAuthSystem::class]
+            );
+        });
     }
 
     private function registerHttpRoutes()

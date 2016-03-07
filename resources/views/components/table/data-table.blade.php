@@ -49,11 +49,12 @@
         <tbody class="@if($allowsReorder) dms-table-body-sortable @endif">
         <?php $newObjectsIndex = 0 ?>
         @foreach ($section->getRows() as $row)
+            <?php $rowData = $row->getData() ?>
             <tr>
-                @foreach ($row->getData() as $columnName => $value)
+                @foreach ($columns as $columnName => $column)
                     @unless($groupData[$columnName] ?? false)
                         <td data-column-name="{{ $columnName }}" @if($columns[$columnName]->isHidden()) class="hidden" @endif>
-                            {!! $columnRenderers[$columnName]->render($value) !!}
+                            {!! $columnRenderers[$columnName]->render($rowData[$columnName]) !!}
                         </td>
                     @endunless
                 @endforeach

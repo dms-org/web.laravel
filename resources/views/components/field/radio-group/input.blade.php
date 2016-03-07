@@ -4,6 +4,7 @@
         <input
                 type="radio"
                 name="{{ $name }}"
+                value="{{ $option->getValue() }}"
                 @if($required) required @endif
                 @if($readonly) readonly @endif
                 @if(\Dms\Web\Laravel\Renderer\Form\ValueComparer::areLooselyEqual($option->getValue(), $value)) checked="checked" @endif

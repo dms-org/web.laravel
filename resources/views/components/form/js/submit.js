@@ -29,6 +29,8 @@ Dms.form.initializeCallbacks.push(function (element) {
 
             Dms.form.validation.clearMessages(form);
 
+            form.triggerHandler('dms-before-submit');
+
             var fieldsToReappend = [];
             form.find('.dms-form-no-submit').each(function () {
                 var removedFields = $(this).children().detach();

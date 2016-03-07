@@ -40,7 +40,7 @@ Dms.global.initializeCallbacks.push(function () {
     $.fn.getValues = function (onlyChanged) {
         var $els = this.find(':input');
         var els = $els.get();
-        var changedInputs = $(this).closest('form').data('dms-changed-inputs') || {};
+        var changedInputs = $(this).closest('form, .dms-staged-form').data('dms-changed-inputs') || {};
 
         var data = {};
 

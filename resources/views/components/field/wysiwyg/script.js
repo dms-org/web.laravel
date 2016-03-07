@@ -29,7 +29,7 @@ Dms.form.initializeCallbacks.push(function (element) {
         toolbar: "undo redo | styleselect | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist | link image"
     });
 
-    element.find('form').on('submit', function () {
+    element.closest('.dms-staged-form').on('dms-before-submit', function () {
         tinymce.triggerSave();
     });
 });

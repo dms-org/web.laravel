@@ -2,11 +2,13 @@ Dms.form.initializeCallbacks.push(function (element) {
 
     element.find('.dms-staged-form, .dms-run-action-form').each(function () {
         var form = $(this);
+        var formContainer = form.closest('.dms-staged-form-container');
         var parsley = form.parsley(window.ParsleyConfig);
         var afterRunCallbacks = [];
         var submitButtons = form.find('input[type=submit], button[type=submit]');
         var submitMethod = form.attr('data-method');
         var submitUrl = form.attr('data-action');
+        var reloadFormUrl = form.attr('data-reload-form-url');
 
         var isFormValid = function () {
             return parsley.isValid()
@@ -85,8 +87,8 @@ Dms.form.initializeCallbacks.push(function (element) {
                 }
             });
 
-            currentAjaxRequest.done(function (data) {
-                Dms.action.responseHandler(submitUrl, data);
+            currentAjaxRequest.done(function (data, statusText, xhr) {
+                Dms.action.responseHandler(xhr.status, submitUrl, data);
                 $.each(afterRunCallbacks, function (index, callback) {
                     callback(data);
                 });
@@ -105,13 +107,19 @@ Dms.form.initializeCallbacks.push(function (element) {
                         Dms.form.validation.displayMessages(form, validation.messages.fields, validation.messages.constraints);
                         break;
 
-                    default: // Unknown error
-                        swal({
-                            title: "Could not submit form",
-                            text: "An unexpected error occurred",
-                            type: "error"
-                        });
-                        break;
+                    default:
+                        try {
+                            var response = JSON.parse(xhr.responseText);
+                            Dms.action.responseHandler(xhr.status, submitUrl, response);
+                        } catch (e) {
+                            // Unknown error
+                            swal({
+                                title: "Could not submit form",
+                                text: "An unexpected error occurred",
+                                type: "error"
+                            });
+                            break;
+                        }
                 }
             });
 
@@ -132,6 +140,33 @@ Dms.form.initializeCallbacks.push(function (element) {
 
         afterRunCallbacks.push(function () {
             form.find('input[type=password]').val('');
+        });
+
+        afterRunCallbacks.push(function (data) {
+            if (data.redirect) {
+                return;
+            }
+
+            var request = Dms.ajax.createRequest({
+                url: reloadFormUrl,
+                type: 'get',
+                dataType: 'html',
+                data: {'__content_only': '1'}
+            });
+
+            formContainer.addClass('loading');
+
+            request.done(function (html) {
+                var container = form.closest('.dms-action-form-content');
+                var newContainer = $(html);
+                container.replaceWith(newContainer);
+                Dms.form.initialize(newContainer);
+                Dms.table.initialize(newContainer);
+            });
+
+            request.always(function () {
+                formContainer.removeClass('loading');
+            });
         });
     });
 });

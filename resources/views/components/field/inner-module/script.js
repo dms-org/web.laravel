@@ -26,8 +26,9 @@ Dms.form.initializeCallbacks.push(function (element) {
         };
 
         var fieldDataPrefix = '__field_action_data';
+        var interceptor;
 
-        Dms.ajax.interceptors.push({
+        Dms.ajax.interceptors.push(interceptor = {
             accepts: function (options) {
                 return options.url.indexOf(rootUrl) === 0 && options.url !== reloadStateUrl;
             },
@@ -70,9 +71,9 @@ Dms.form.initializeCallbacks.push(function (element) {
         });
 
         var originalResponseHandler = Dms.action.responseHandler;
-        Dms.action.responseHandler = function (actionUrl, response) {
-            if (actionUrl.indexOf(rootUrl) !== 0) {
-                originalResponseHandler(actionUrl, response);
+        Dms.action.responseHandler = function (httpStatusCode, actionUrl, response) {
+            if (actionUrl.indexOf(rootUrl) !== 0 || httpStatusCode >= 400) {
+                originalResponseHandler(httpStatusCode, actionUrl, response);
                 return;
             }
 
@@ -85,7 +86,7 @@ Dms.form.initializeCallbacks.push(function (element) {
                 }
             }
 
-            originalResponseHandler(actionUrl, response);
+            originalResponseHandler(httpStatusCode, actionUrl, response);
 
             innerModule.find('.dms-table-control .dms-table').triggerHandler('dms-load-table-data');
             innerModuleForm.empty();
@@ -147,35 +148,8 @@ Dms.form.initializeCallbacks.push(function (element) {
         });
 
         stagedForm.on('dms-post-submit-success', function () {
-            innerModule.addClass('loading');
-            innerModuleForm.empty();
-
-            var newStateRequest = Dms.ajax.createRequest({
-                url: reloadStateUrl,
-                type: 'post',
-                dataType: 'json'
-            });
-
-            newStateRequest.done(function (data) {
-                currentValue = data['state'];
-                innerModule.find('.dms-table-control .dms-table').triggerHandler('dms-load-table-data');
-            });
-
-            newStateRequest.fail(function () {
-                if (newStateRequest.statusText === 'abort') {
-                    return;
-                }
-
-                swal({
-                    title: "Could not reload module",
-                    text: "An unexpected error occurred",
-                    type: "error"
-                });
-            });
-
-            newStateRequest.always(function () {
-                innerModule.removeClass('loading');
-            });
+            Dms.ajax.interceptors.splice(Dms.ajax.interceptors.indexOf(interceptor), 1);
+            Dms.action.responseHandler = originalResponseHandler;
         });
     });
 });

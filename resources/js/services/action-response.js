@@ -1,4 +1,4 @@
-Dms.action.responseHandler = function (actionUrl, response) {
+Dms.action.responseHandler = function (httpStatusCode, actionUrl, response) {
     if (typeof response.redirect !== 'undefined') {
         if (typeof response.message !== 'undefined') {
             Cookies.set('dms-flash-alert', {

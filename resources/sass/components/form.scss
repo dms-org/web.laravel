@@ -1,3 +1,13 @@
+.dms-staged-form-container {
+    @extend .dms-spinner-container;
+
+    &.loading {
+        .dms-staged-form {
+            opacity: .3;
+        }
+    }
+}
+
 .dms-staged-form {
     .help-block-error {
         color: #a94442;

@@ -133,6 +133,8 @@
 
         <!-- Content Wrapper. Contains page content -->
         <div class="content-wrapper">
+            @include('dms::partials.alerts')
+
             <section class="content-header">
                 <h1>
                     {{ $pageTitle }}
@@ -155,8 +157,6 @@
             </section>
 
             <section class="content">
-                @include('dms::partials.alerts')
-
                 @yield('content')
             </section>
         </div>

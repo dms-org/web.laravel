@@ -54,6 +54,9 @@ a[disabled] {
 .dms-chart-container.loading .dms-chart {
   opacity: .3; }
 
+.dms-staged-form-container.loading .dms-staged-form {
+  opacity: .3; }
+
 .dms-staged-form .help-block-error {
   color: #a94442; }
 
@@ -152,9 +155,9 @@ a[disabled] {
 .dms-display-inner-module .dms-table .dms-row-button-control .btn:not(.btn-info) {
   display: none; }
 
-.dms-spinner-container, .dms-table-container, .dms-chart-container, .dms-staged-form .dms-form-stage-container, .dms-staged-form .dms-inner-module, .dms-staged-form .dms-inner-module .dms-inner-module-form-container, .dms-display-inner-module .dms-inner-module-form-container {
+.dms-spinner-container, .dms-table-container, .dms-chart-container, .dms-staged-form-container, .dms-staged-form .dms-form-stage-container, .dms-staged-form .dms-inner-module, .dms-staged-form .dms-inner-module .dms-inner-module-form-container, .dms-display-inner-module .dms-inner-module-form-container {
   position: relative; }
-  .dms-spinner-container.loading > .spinner, .loading.dms-table-container > .spinner, .loading.dms-chart-container > .spinner, .dms-staged-form .loading.dms-form-stage-container > .spinner, .dms-staged-form .loading.dms-inner-module > .spinner, .dms-staged-form .dms-inner-module .loading.dms-inner-module-form-container > .spinner, .dms-display-inner-module .loading.dms-inner-module-form-container > .spinner {
+  .dms-spinner-container.loading > .spinner, .loading.dms-table-container > .spinner, .loading.dms-chart-container > .spinner, .loading.dms-staged-form-container > .spinner, .dms-staged-form .loading.dms-form-stage-container > .spinner, .dms-staged-form .loading.dms-inner-module > .spinner, .dms-staged-form .dms-inner-module .loading.dms-inner-module-form-container > .spinner, .dms-display-inner-module .loading.dms-inner-module-form-container > .spinner {
     display: block;
     position: absolute;
     top: 50%;

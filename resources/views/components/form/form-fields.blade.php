@@ -11,7 +11,7 @@
         <fieldset class="dms-form-fieldset">
             @if($groupTitle !== '')<legend>{{ $groupTitle }}</legend>@endif
             @foreach($fields as $label => $field)
-                <div class="form-group clearfix" data-field-name="{{ $field['name'] }}">
+                <div class="form-group clearfix{{ $field['hidden'] ? ' hidden' : '' }}" data-field-name="{{ $field['name'] }}">
                     <div class="dms-label-container col-lg-2 col-md-3 col-sm-4">
                         <label data-for="{{ $field['name'] }}">{{ $label }}</label>
                     </div>

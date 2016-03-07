@@ -83,7 +83,7 @@ class FilePreviewComponentRenderer implements IColumnComponentRenderer
     protected function getPublicUrl(IFile $file) : string
     {
         $publicDirectory    = PathHelper::normalize($this->config->get('dms.storage.public-files.dir'));
-        $publicDirectoryUrl = $this->config->get('dms.storage.public-files.url');
+        $publicDirectoryUrl = asset($this->config->get('dms.storage.public-files.url'));
 
         return rtrim($publicDirectoryUrl, '/') . '/' . ltrim(substr($file->getFullPath(), strlen($publicDirectory)), '/');
     }

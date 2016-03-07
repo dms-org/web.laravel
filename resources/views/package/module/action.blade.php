@@ -2,7 +2,7 @@
 @extends('dms::template.default')
 
 @section('content')
-    <div class="row">
+    <div class="row dms-action-form-content">
         <div class="col-sm-12">
             <div class="box">
                 @if($actionButtons || $objectLabel)

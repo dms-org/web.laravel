@@ -2,6 +2,7 @@
 
 namespace Dms\Web\Laravel\Renderer\Form;
 
+use Dms\Core\Form\Field\Type\FieldType;
 use Dms\Core\Form\IForm;
 use Dms\Core\Form\Processor\Validator\FieldComparisonValidator;
 use Dms\Core\Form\Processor\Validator\FieldGreaterThanAnotherValidator;
@@ -63,6 +64,7 @@ class FormRenderer
                 $sections[$title][$field->getLabel()] = [
                     'name'    => $field->getName(),
                     'content' => $this->fieldRenderers->findRendererFor($renderingContext, $field)->render($renderingContext, $field),
+                    'hidden'  => $field->getType()->get(FieldType::ATTR_HIDDEN)
                 ];
             }
         }

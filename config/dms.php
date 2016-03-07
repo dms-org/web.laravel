@@ -17,7 +17,7 @@ return [
     'storage' => [
         'public-files' => [
             'dir' => public_path('files/'),
-            'url' => asset('files/'),
+            'url' => '/files/',
         ],
         'temp-files'   => [
             'dir'             => storage_path('dms/temp-uploads/'),

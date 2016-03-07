@@ -7,6 +7,7 @@
     <div class="col-xs-12">
         <div class="panel panel-default dms-file-tree"
              data-move-directory-url="{{ $moduleContext->getUrl('action.run', ['move-folder', '__object__']) }}"
+             data-reload-file-tree-url="{{ $moduleContext->getUrl('dashboard') }}"
         >
             <div class="panel-body dms-upload-form">
                 {!! app(\Dms\Web\Laravel\Renderer\Form\ActionFormRenderer::class)->renderActionForm($moduleContext, $moduleContext->getModule()->getAction('upload-files')) !!}
@@ -28,11 +29,17 @@
                 </div>
             </div>
 
-            @include('dms::package.module.dashboard.file-tree-node', [
-                'moduleContext' => $moduleContext,
-                'module'        => $moduleContext->getModule(),
-                'directoryTree' => $directoryTree,
-            ])
+            <div class="dms-file-tree-data-container">
+                <div class="dms-file-tree-data">
+                    @include('dms::package.module.dashboard.file-tree-node', [
+                        'moduleContext' => $moduleContext,
+                        'module'        => $moduleContext->getModule(),
+                        'directoryTree' => $directoryTree,
+                    ])
+                </div>
+
+                @include('dms::partials.spinner')
+            </div>
         </div>
     </div>
 </div>

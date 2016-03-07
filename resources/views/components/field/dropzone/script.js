@@ -339,5 +339,9 @@ Dms.form.initializeCallbacks.push(function (element) {
         };
 
         updateSubmissionState();
+
+        dropzoneElement.closest('.dms-staged-form').on('dms-post-submit-success', function () {
+            dropzone.destroy();
+        });
     });
 });

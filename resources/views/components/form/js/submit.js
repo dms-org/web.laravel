@@ -157,11 +157,9 @@ Dms.form.initializeCallbacks.push(function (element) {
             formContainer.addClass('loading');
 
             request.done(function (html) {
-                var container = form.closest('.dms-action-form-content');
-                var newContainer = $(html);
-                container.replaceWith(newContainer);
-                Dms.form.initialize(newContainer);
-                Dms.table.initialize(newContainer);
+                var newForm = $(html).find('.dms-staged-form').first();
+                form.replaceWith(newForm);
+                Dms.form.initialize(newForm.parent());
             });
 
             request.always(function () {

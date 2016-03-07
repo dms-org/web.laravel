@@ -1016,105 +1016,6 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-    element.find('input.date-or-time')
-        .each(function () {
-            var inputElement = $(this);
-            var dateFormat = Dms.utilities.convertPhpDateFormatToMomentFormat(inputElement.attr('data-date-format'));
-            var mode = inputElement.attr('data-mode');
-
-            var config = {
-                locale: {
-                    format: dateFormat
-                },
-                parentEl: inputElement.closest('.date-picker-container'),
-                singleDatePicker: true,
-                showDropdowns: true,
-                autoApply: true,
-                linkedCalendars: false,
-                autoUpdateInput: false
-            };
-
-            if (mode === 'date-time') {
-                config.timePicker = true;
-                config.timePickerSeconds = true;
-            }
-
-            if (mode === 'time') {
-                config.timePicker = true;
-                config.timePickerSeconds = true;
-            }
-            // TODO: timezoned-date-time
-
-            inputElement.daterangepicker(config, function (date) {
-                inputElement.val(date.format(dateFormat));
-            });
-
-            var picker = inputElement.data('daterangepicker');
-
-            if (inputElement.val()) {
-                picker.setStartDate(inputElement.val());
-            }
-
-            if (mode === 'time') {
-                inputElement.closest('.date-picker-container').find('.calendar-table').hide();
-            }
-        });
-
-    element.find('.date-or-time-range')
-        .each(function () {
-            var rangeElement = $(this);
-            var startInput = rangeElement.find('.start-input');
-            var endInput = rangeElement.find('.end-input');
-            var dateFormat = Dms.utilities.convertPhpDateFormatToMomentFormat(startInput.attr('data-date-format'));
-            var mode = rangeElement.attr('data-mode');
-
-            var config = {
-                locale: {
-                    format: dateFormat
-                },
-                parentEl: rangeElement,
-                showDropdowns: true,
-                autoApply: !rangeElement.attr('data-dont-auto-apply'),
-                linkedCalendars: false,
-                autoUpdateInput: false
-            };
-
-            if (mode === 'date-time') {
-                config.timePicker = true;
-                config.timePickerSeconds = true;
-            }
-
-            if (mode === 'time') {
-                config.timePicker = true;
-                config.timePickerSeconds = true;
-            }
-            // TODO: timezoned-date-time
-
-            startInput.daterangepicker(config, function (start, end, label) {
-                startInput.val(start.format(dateFormat));
-                endInput.val(end.format(dateFormat));
-                rangeElement.triggerHandler('dms-range-updated');
-            });
-
-            var picker = startInput.data('daterangepicker');
-
-            if (startInput.val()) {
-                picker.setStartDate(startInput.val());
-            }
-            if (endInput.val()) {
-                picker.setEndDate(endInput.val());
-            }
-
-            endInput.on('focus click', function () {
-                startInput.focus();
-            });
-
-            if (mode === 'time') {
-                rangeElement.find('.calendar-table').hide();
-            }
-        });
-});
-Dms.form.initializeCallbacks.push(function (element) {
 
     element.find('.dropzone-container').each(function () {
         var container = $(this);
@@ -1455,7 +1356,110 @@ Dms.form.initializeCallbacks.push(function (element) {
         };
 
         updateSubmissionState();
+
+        dropzoneElement.closest('.dms-staged-form').on('dms-post-submit-success', function () {
+            dropzone.destroy();
+        });
     });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+    element.find('input.date-or-time')
+        .each(function () {
+            var inputElement = $(this);
+            var dateFormat = Dms.utilities.convertPhpDateFormatToMomentFormat(inputElement.attr('data-date-format'));
+            var mode = inputElement.attr('data-mode');
+
+            var config = {
+                locale: {
+                    format: dateFormat
+                },
+                parentEl: inputElement.closest('.date-picker-container'),
+                singleDatePicker: true,
+                showDropdowns: true,
+                autoApply: true,
+                linkedCalendars: false,
+                autoUpdateInput: false
+            };
+
+            if (mode === 'date-time') {
+                config.timePicker = true;
+                config.timePickerSeconds = true;
+            }
+
+            if (mode === 'time') {
+                config.timePicker = true;
+                config.timePickerSeconds = true;
+            }
+            // TODO: timezoned-date-time
+
+            inputElement.daterangepicker(config, function (date) {
+                inputElement.val(date.format(dateFormat));
+            });
+
+            var picker = inputElement.data('daterangepicker');
+
+            if (inputElement.val()) {
+                picker.setStartDate(inputElement.val());
+            }
+
+            if (mode === 'time') {
+                inputElement.closest('.date-picker-container').find('.calendar-table').hide();
+            }
+        });
+
+    element.find('.date-or-time-range')
+        .each(function () {
+            var rangeElement = $(this);
+            var startInput = rangeElement.find('.start-input');
+            var endInput = rangeElement.find('.end-input');
+            var dateFormat = Dms.utilities.convertPhpDateFormatToMomentFormat(startInput.attr('data-date-format'));
+            var mode = rangeElement.attr('data-mode');
+
+            var config = {
+                locale: {
+                    format: dateFormat
+                },
+                parentEl: rangeElement,
+                showDropdowns: true,
+                autoApply: !rangeElement.attr('data-dont-auto-apply'),
+                linkedCalendars: false,
+                autoUpdateInput: false
+            };
+
+            if (mode === 'date-time') {
+                config.timePicker = true;
+                config.timePickerSeconds = true;
+            }
+
+            if (mode === 'time') {
+                config.timePicker = true;
+                config.timePickerSeconds = true;
+            }
+            // TODO: timezoned-date-time
+
+            startInput.daterangepicker(config, function (start, end, label) {
+                startInput.val(start.format(dateFormat));
+                endInput.val(end.format(dateFormat));
+                rangeElement.triggerHandler('dms-range-updated');
+            });
+
+            var picker = startInput.data('daterangepicker');
+
+            if (startInput.val()) {
+                picker.setStartDate(startInput.val());
+            }
+            if (endInput.val()) {
+                picker.setEndDate(endInput.val());
+            }
+
+            endInput.on('focus click', function () {
+                startInput.focus();
+            });
+
+            if (mode === 'time') {
+                rangeElement.find('.calendar-table').hide();
+            }
+        });
 });
 Dms.form.initializeCallbacks.push(function (element) {
     element.find('.dms-inner-form').each(function () {
@@ -1894,11 +1898,6 @@ Dms.form.initializeCallbacks.push(function (element) {
 
 });
 Dms.form.initializeCallbacks.push(function (element) {
-    element.find('input[type="ip-address"]')
-        .attr('type', 'text')
-        .attr('data-parsley-ip-address', '1');
-});
-Dms.form.initializeCallbacks.push(function (element) {
 
     element.find('table.dms-field-table').each(function () {
         var tableOfFields = $(this);
@@ -2101,42 +2100,12 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-
+    element.find('input[type="ip-address"]')
+        .attr('type', 'text')
+        .attr('data-parsley-ip-address', '1');
 });
 Dms.form.initializeCallbacks.push(function (element) {
-    if (typeof tinymce === 'undefined') {
-        return;
-    }
 
-    tinymce.init({
-        selector: 'textarea.dms-wysiwyg',
-        tooltip: '',
-        plugins: [
-            "advlist",
-            "autolink",
-            "lists",
-            "link",
-            "image",
-            "charmap",
-            "print",
-            "preview",
-            "anchor",
-            "searchreplace",
-            "visualblocks",
-            "code",
-            "insertdatetime",
-            "media",
-            "table",
-            "contextmenu",
-            "paste",
-            "imagetools"
-        ],
-        toolbar: "undo redo | styleselect | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist | link image"
-    });
-
-    element.closest('.dms-staged-form').on('dms-before-submit', function () {
-        tinymce.triggerSave();
-    });
 });
 Dms.form.initializeCallbacks.push(function (element) {
 
@@ -2454,11 +2423,9 @@ Dms.form.initializeCallbacks.push(function (element) {
             formContainer.addClass('loading');
 
             request.done(function (html) {
-                var container = form.closest('.dms-action-form-content');
-                var newContainer = $(html);
-                container.replaceWith(newContainer);
-                Dms.form.initialize(newContainer);
-                Dms.table.initialize(newContainer);
+                var newForm = $(html).find('.dms-staged-form').first();
+                form.replaceWith(newForm);
+                Dms.form.initialize(newForm.parent());
             });
 
             request.always(function () {
@@ -2515,6 +2482,51 @@ Dms.form.initializeValidationCallbacks.push(function (element) {
 
     element.find('.dms-form').each(function () {
         $(this).parsley(window.ParsleyConfig);
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+    if (typeof tinymce === 'undefined') {
+        return;
+    }
+
+    tinymce.init({
+        selector: 'textarea.dms-wysiwyg',
+        tooltip: '',
+        plugins: [
+            "advlist",
+            "autolink",
+            "lists",
+            "link",
+            "image",
+            "charmap",
+            "print",
+            "preview",
+            "anchor",
+            "searchreplace",
+            "visualblocks",
+            "code",
+            "insertdatetime",
+            "media",
+            "table",
+            "contextmenu",
+            "paste",
+            "imagetools"
+        ],
+        toolbar: "undo redo | styleselect | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist | link image"
+    });
+
+    element.closest('.dms-staged-form').on('dms-before-submit', function () {
+        tinymce.triggerSave();
+    });
+
+    element.find('textarea.dms-wysiwyg').filter(function () {
+        return $(this).closest('.mce-tinymce').length === 0;
+    }).each(function () {
+        if (!$(this).attr('id')) {
+            $(this).attr('id', Dms.utilities.idGenerator());
+        }
+
+        tinymce.EditorManager.execCommand('mceAddEditor', true, $(this).attr('id'));
     });
 });
 Dms.table.initializeCallbacks.push(function (element) {
@@ -2756,38 +2768,69 @@ Dms.widget.initializeCallbacks.push(function () {
         }
     });
 });
-Dms.global.initializeCallbacks.push(function (element) {
+Dms.table.initializeCallbacks.push(function (element) {
     element.find('.dms-file-tree').each(function () {
         var fileTree = $(this);
         var filterForm = fileTree.find('.dms-quick-filter-form');
-        var folderItems = fileTree.find('.dms-folder-item');
-        var fileItems = fileTree.find('.dms-file-item');
+        var reloadFileTreeUrl = fileTree.attr('data-reload-file-tree-url');
 
-        fileTree.find('.dms-folder-item').on('click', function (e) {
-            if ($(e.target).is('.dms-file-item, .dms-file-item *')) {
-                return;
-            }
+        var initializeFileTreeData = function (fileTreeData) {
+            var folderItems = fileTreeData.find('.dms-folder-item');
+            var fileItems = fileTreeData.find('.dms-file-item');
 
-            e.stopImmediatePropagation();
-            $(this).toggleClass('dms-folder-closed');
-        });
-
-        filterForm.find('input[name=filter]').on('change input', function () {
-            var filterBy = $(this).val();
-
-            folderItems.hide().addClass('.dms-folder-closed');
-            fileItems.each(function (index, fileItem) {
-                fileItem = $(fileItem);
-                var label = fileItem.text();
-
-                var doesContainFilter = label.toLowerCase().indexOf(filterBy.toLowerCase()) !== -1;
-                fileItem.toggle(doesContainFilter);
-
-                if (doesContainFilter) {
-                    fileItem.parents('.dms-folder-item').removeClass('dms-folder-closed').show();
+            fileTree.find('.dms-folder-item').on('click', function (e) {
+                if ($(e.target).is('.dms-file-item, .dms-file-item *')) {
+                    return;
                 }
+
+                e.stopImmediatePropagation();
+                $(this).toggleClass('dms-folder-closed');
+            });
+
+            filterForm.find('input[name=filter]').on('change input', function () {
+                var filterBy = $(this).val();
+
+                folderItems.hide().addClass('.dms-folder-closed');
+                fileItems.each(function (index, fileItem) {
+                    fileItem = $(fileItem);
+                    var label = fileItem.text();
+
+                    var doesContainFilter = label.toLowerCase().indexOf(filterBy.toLowerCase()) !== -1;
+                    fileItem.toggle(doesContainFilter);
+
+                    if (doesContainFilter) {
+                        fileItem.parents('.dms-folder-item').removeClass('dms-folder-closed').show();
+                    }
+                });
+            });
+        };
+
+        element.find('.dms-upload-form .dms-staged-form').on('dms-post-submit-success', function () {
+            var fileTreeContainer = fileTree.find('.dms-file-tree-data-container');
+
+            var request = Dms.ajax.createRequest({
+                url: reloadFileTreeUrl,
+                type: 'get',
+                dataType: 'html',
+                data: {'__content_only': '1'}
+            });
+
+            fileTreeContainer.addClass('loading');
+
+            request.done(function (html) {
+                var newFileTree = $(html).find('.dms-file-tree-data').first();
+                fileTree.find('.dms-file-tree-data').replaceWith(newFileTree);
+                initializeFileTreeData(newFileTree.parent());
+                Dms.form.initialize(newFileTree.parent());
+            });
+
+            request.always(function () {
+                fileTreeContainer.removeClass('loading');
             });
         });
+
+        initializeFileTreeData(fileTree.find('.dms-file-tree-data'));
     });
 });
+
 //# sourceMappingURL=app.js.map

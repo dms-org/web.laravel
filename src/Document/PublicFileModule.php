@@ -116,7 +116,7 @@ class PublicFileModule extends CrudModule
 
         $module->action('create-folder')
             ->authorizeAll([self::VIEW_PERMISSION, self::EDIT_PERMISSION])
-            ->form(Form::create()->section('Upload Files', [
+            ->form(Form::create()->section('Create Folder', [
                 Field::create('folder', 'Folder')->string()->required(),
             ]))
             ->handler(function (ArrayDataObject $input) {

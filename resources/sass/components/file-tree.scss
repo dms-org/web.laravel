@@ -1,9 +1,22 @@
-.dms-file-tree {
+.dms-file-tree-data-container {
+    @extend .dms-spinner-container;
+
+    &.loading {
+        .dms-file-tree-data {
+            opacity: .3;
+        }
+    }
+}
+
+.dms-file-tree-data {
     .dms-object-list {
         margin-bottom: 0;
 
         .list-group-item {
             padding-right: 0;
+            border-radius: 0!important;
+            border-left: none!important;
+            border-right: none!important;
         }
     }
 

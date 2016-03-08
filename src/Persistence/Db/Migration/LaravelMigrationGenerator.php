@@ -39,7 +39,7 @@ class LaravelMigrationGenerator extends MigrationGenerator
     /**
      * @var string[]
      */
-    protected $tablesToIgnore = ['migrations'];
+    protected $tablesToIgnore;
 
     /**
      * @var string
@@ -59,7 +59,8 @@ class LaravelMigrationGenerator extends MigrationGenerator
 
         $this->laravelMigrationCreator = $laravelMigrationCreator;
         $this->files                   = $files;
-        $this->path                    = $path ?: database_path('migrations');
+        $this->path                    = $path ?: config('dms.database.migrations.dir');
+        $this->tablesToIgnore          = config('dms.database.migrations.ignored-tables');
     }
 
     /**

@@ -35,6 +35,7 @@ use Dms\Web\Laravel\Http\Middleware\RedirectIfAuthenticated;
 use Dms\Web\Laravel\Http\Middleware\VerifyCsrfToken;
 use Dms\Web\Laravel\Http\ModuleRequestRouter;
 use Dms\Web\Laravel\Language\LaravelLanguageProvider;
+use Dms\Web\Laravel\Persistence\Db\DmsOrm;
 use Dms\Web\Laravel\Persistence\Db\LaravelConnection;
 use Dms\Web\Laravel\Persistence\Db\Migration\AutoGenerateMigrationCommand;
 use Dms\Web\Laravel\Renderer\Chart\ChartRendererCollection;
@@ -172,7 +173,7 @@ class DmsServiceProvider extends ServiceProvider
         $this->app['config']->set('auth.passwords.dms', [
             'provider' => 'dms-users',
             'email'    => 'dms::auth.email.password',
-            'table'    => 'dms_password_resets',
+            'table'    => DmsOrm::NAMESPACE . 'password_resets',
             'expire'   => 60,
         ]);
     }

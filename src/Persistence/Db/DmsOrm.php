@@ -15,6 +15,8 @@ use Dms\Web\Laravel\File\Persistence\TempFileOrm;
  */
 class DmsOrm extends Orm
 {
+    const NAMESPACE = 'dms_';
+
     /**
      * Defines the object mappers registered in the orm.
      *
@@ -29,5 +31,13 @@ class DmsOrm extends Orm
             new AuthOrm(),
             new TempFileOrm(),
         ]);
+    }
+
+    /**
+     * @return DmsOrm
+     */
+    public static function inDefaultNamespace() : DmsOrm
+    {
+        return (new self())->inNamespace(self::NAMESPACE);
     }
 }

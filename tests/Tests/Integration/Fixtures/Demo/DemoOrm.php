@@ -20,6 +20,6 @@ class DemoOrm extends Orm
      */
     protected function define(OrmDefinition $orm)
     {
-        $orm->encompass((new DmsOrm())->inNamespace('dms_'));
+        $orm->encompass(DmsOrm::inDefaultNamespace());
     }
 }

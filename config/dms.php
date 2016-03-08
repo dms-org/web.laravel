@@ -26,6 +26,13 @@ return [
         ],
     ],
 
+    'database' => [
+        'migrations' => [
+            'dir'            => database_path('migrations'),
+            'ignored-tables' => ['migrations'],
+        ],
+    ],
+
     'services' => [
         'actions' => [
             'input-transformers' => [

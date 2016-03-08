@@ -54,7 +54,7 @@
                 @foreach ($columns as $columnName => $column)
                     @unless($groupData[$columnName] ?? false)
                         <td data-column-name="{{ $columnName }}" @if($columns[$columnName]->isHidden()) class="hidden" @endif>
-                            {!! $columnRenderers[$columnName]->render($rowData[$columnName]) !!}
+                            {!! $columnRenderers[$columnName]->render($rowData[$columnName] ?? null) !!}
                         </td>
                     @endunless
                 @endforeach

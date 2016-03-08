@@ -15,6 +15,7 @@ use Dms\Core\Form\Builder\Form;
 use Dms\Core\Language\Message;
 use Dms\Core\Model\EntityIdCollection;
 use Dms\Core\Model\Object\ArrayDataObject;
+use Dms\Core\Model\Type\Builder\Type;
 use Dms\Web\Laravel\Auth\Password\IPasswordHasherFactory;
 use Dms\Web\Laravel\Auth\Password\IPasswordResetService;
 use Dms\Web\Laravel\Auth\Role;
@@ -57,7 +58,8 @@ class UserModule extends CrudModule
         IPasswordHasherFactory $hasher,
         IAuthSystem $authSystem,
         IPasswordResetService $passwordResetService
-    ) {
+    )
+    {
         $this->roleRepo             = $roleRepo;
         $this->hasher               = $hasher;
         $this->passwordResetService = $passwordResetService;
@@ -94,7 +96,7 @@ class UserModule extends CrudModule
                         ->required()
                         ->uniqueIn($this->dataSource, User::EMAIL_ADDRESS)
                         ->maxLength(100)
-                )->bindToProperty(User::EMAIL_ADDRESS),
+                )->bindToProperty(User::EMAIL_ADDRESS)
             ]);
 
             if ($form->isCreateForm()) {

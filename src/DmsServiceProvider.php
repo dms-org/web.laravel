@@ -73,7 +73,7 @@ class DmsServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        if (!is_array($this->app['config']->get('dms'))) {
+        if (!$this->isRunningInConsole() && !is_array($this->app['config']->get('dms'))) {
             throw InvalidOperationException::format(
                 'Cannot find dms config file: did you forget to run `php artisan vendor:publish` ?'
             );
@@ -92,7 +92,7 @@ class DmsServiceProvider extends ServiceProvider
         $this->registerRenderers();
         $this->registerViewComposers();
 
-        if ($this->app instanceof Application && $this->app->runningInConsole()) {
+        if ($this->isRunningInConsole()) {
             $this->registerCommands();
             $this->registerSchedule();
             $this->publishAssets();
@@ -372,5 +372,13 @@ class DmsServiceProvider extends ServiceProvider
     private function registerViewComposers()
     {
         view()->composer('dms::template.default', DmsNavigationViewComposer::class);
+    }
+
+    /**
+     * @return bool
+     */
+    protected function isRunningInConsole()
+    {
+        return $this->app instanceof Application && $this->app->runningInConsole();
     }
 }

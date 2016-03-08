@@ -33,6 +33,7 @@
     "tinymce": "^4.3.4",
     "typeahead.js": "^0.10.4",
     "typeahead-addresspicker": "^0.1.4",
-    "typeahead.js-bootstrap3.less": "^0.2.3"
+    "typeahead.js-bootstrap3.less": "^0.2.3",
+    "Download-File-JS": "PixelsCommander/Download-File-JS"
   }
 }

@@ -2,7 +2,7 @@ Dms.form.initializeCallbacks.push(function (element) {
 
     element.find('.dms-staged-form').each(function () {
         var form = $(this);
-        var parsley = form.parsley(window.ParsleyConfig);
+        var parsley = Dms.form.validation.initialize(form);
         var stageElements = form.find('.dms-form-stage');
 
         var arePreviousFieldsValid = function (fields) {
@@ -35,6 +35,20 @@ Dms.form.initializeCallbacks.push(function (element) {
 
                 if (currentAjaxRequest) {
                     currentAjaxRequest.abort();
+                }
+
+                if (dependentFieldNames) {
+                    var hasLoadedAllRequiredFields = true;
+
+                    $.each(dependentFieldNames, function (index, fieldName) {
+                        if (previousStages.find('[name="' + fieldName + '"]').length === 0) {
+                            hasLoadedAllRequiredFields = false;
+                        }
+                    });
+
+                    if (!hasLoadedAllRequiredFields) {
+                        return;
+                    }
                 }
 
                 container.removeClass('loaded');

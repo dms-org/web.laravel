@@ -2,6 +2,7 @@
 
 namespace Dms\Web\Laravel\Renderer\Module;
 
+use Dms\Common\Structure\FileSystem\PathHelper;
 use Dms\Web\Laravel\Document\PublicFileModule;
 use Dms\Web\Laravel\Http\ModuleContext;
 use Dms\Web\Laravel\Renderer\Table\TableRenderer;
@@ -56,14 +57,12 @@ class FileTreeModuleRenderer extends ModuleRenderer
         $module        = $moduleContext->getModule();
         $rootDirectory = $module->getRootDirectory();
         $directoryTree = $module->getDirectoryTree();
-        $summaryTable  = $module->getSummaryTable();
 
         return view('dms::package.module.dashboard.file-tree')
             ->with([
+                'isPublic'      => $rootDirectory === PathHelper::normalize(config('dms.storage.public-files.dir')),
                 'moduleContext' => $moduleContext,
                 'directoryTree' => $directoryTree,
-                'tableRenderer' => $this->tableRenderer,
-                'summaryTable'  => $summaryTable,
                 'rootDirectory' => $rootDirectory,
             ])
             ->render();

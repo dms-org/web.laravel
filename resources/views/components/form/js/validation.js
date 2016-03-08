@@ -37,7 +37,7 @@ Dms.form.initializeValidationCallbacks.push(function (element) {
 
     element.find('.dms-staged-form').each(function () {
         var form = $(this);
-        form.parsley(window.ParsleyConfig);
+        var parsley = Dms.form.validation.initialize(form);
 
         form.find('.dms-form-fields').each(function (index) {
             $(this).find(':input').attr('data-parsley-group', 'validation-group-' + index);
@@ -45,6 +45,7 @@ Dms.form.initializeValidationCallbacks.push(function (element) {
     });
 
     element.find('.dms-form').each(function () {
-        $(this).parsley(window.ParsleyConfig);
+        var form = $(this);
+        var parsley = Dms.form.validation.initialize(form);
     });
 });

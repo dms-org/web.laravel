@@ -4,17 +4,17 @@
 
 <div class="list-of-checkboxes"
      @if($exactElements !== null)
-     data-min-elements="{{ $exactElements }}"
-     data-max-elements="{{ $exactElements }}"
+         data-min-elements="{{ $exactElements }}"
+         data-max-elements="{{ $exactElements }}"
      @else
-     @if($minElements !== null) data-min-elements="{{ $minElements }}" @endif
-     @if($maxElements !== null) data-max-elements="{{ $maxElements }}" @endif
-        @endif
+         @if($minElements !== null) data-min-elements="{{ $minElements }}" @endif
+         @if($maxElements !== null) data-max-elements="{{ $maxElements }}" @endif
+     @endif
 >
     @if(count($options) > 0)
         <div class="row">
         @foreach ($options as $option)
-            <div class="col-md-4 col-lg-3">
+            <div class="col-xs-12">
                 <label>
                     <input
                             type="checkbox"

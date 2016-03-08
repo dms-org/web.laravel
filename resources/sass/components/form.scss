@@ -140,4 +140,26 @@
             }
         }
     }
+
+    .dms-wysiwyg-container {
+        .dms-file-picker-dialog {
+            z-index: 9999999;
+
+            .dms-file-picker-container {
+                @extend .dms-spinner-container;
+                min-height: 50px;
+
+                &.loading {
+                    .dms-file-picker {
+                        opacity: .3;
+                    }
+                }
+
+                .dms-quick-filter-form .form-group {
+                    margin: 0!important;
+                }
+            }
+        }
+
+    }
 }

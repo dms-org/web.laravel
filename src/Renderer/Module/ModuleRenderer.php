@@ -1,9 +1,8 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Renderer\Module;
 
 use Dms\Core\Exception\InvalidArgumentException;
-use Dms\Core\Module\IModule;
 use Dms\Web\Laravel\Http\ModuleContext;
 use Dms\Web\Laravel\Renderer\Widget\WidgetRendererCollection;
 
@@ -42,7 +41,7 @@ abstract class ModuleRenderer implements IModuleRenderer
         if (!$this->accepts($moduleContext)) {
             throw InvalidArgumentException::format(
                 'Invalid module \'%s\' supplied to %s',
-                $module->getName(), get_class($this) . '::' . __FUNCTION__
+                $moduleContext->getModule()->getName(), get_class($this) . '::' . __FUNCTION__
             );
         }
 

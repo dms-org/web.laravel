@@ -1,4 +1,4 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Renderer\Form\Field;
 
@@ -41,9 +41,10 @@ class StringFieldRenderer extends BladeFieldRenderer
             $field,
             'dms::components.field.string.input',
             [
-                StringType::ATTR_EXACT_LENGTH => 'exactLength',
-                StringType::ATTR_MIN_LENGTH   => 'minLength',
-                StringType::ATTR_MAX_LENGTH   => 'maxLength',
+                StringType::ATTR_EXACT_LENGTH     => 'exactLength',
+                StringType::ATTR_MIN_LENGTH       => 'minLength',
+                StringType::ATTR_MAX_LENGTH       => 'maxLength',
+                StringType::ATTR_SUGGESTED_VALUES => 'suggestedValues',
             ],
             ['type' => $inputType]
         );

@@ -36,7 +36,7 @@
                     <h4 class="modal-title">Edit Image</h4>
                 </div>
                 <div class="modal-body">
-                    <p class="dms-canvas-container"><p>
+                    <p class="dms-canvas-container"></p>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default pull-left btn-close" data-dismiss="modal">Close</button>

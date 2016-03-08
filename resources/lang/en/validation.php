@@ -29,6 +29,7 @@ return [
         'array'   => 'The :field must have between :min and :max items.',
     ],
     'boolean'                   => 'The :field field must be true or false.',
+    'characters'                => 'The :field can only contain the :valid_chars characters',
     'colour'                    => [
         'rgb'  => 'The :field must be a valid RGB colour.',
         'rgba' => 'The :field must be a valid RGBA colour.',

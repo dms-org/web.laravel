@@ -3,7 +3,7 @@ Dms.form.initializeCallbacks.push(function (element) {
     element.find('.dms-staged-form, .dms-run-action-form').each(function () {
         var form = $(this);
         var formContainer = form.closest('.dms-staged-form-container');
-        var parsley = form.parsley(window.ParsleyConfig);
+        var parsley = Dms.form.validation.initialize(form);
         var afterRunCallbacks = [];
         var submitButtons = form.find('input[type=submit], button[type=submit]');
         var submitMethod = form.attr('data-method');
@@ -143,7 +143,7 @@ Dms.form.initializeCallbacks.push(function (element) {
         });
 
         afterRunCallbacks.push(function (data) {
-            if (data.redirect) {
+            if (data.redirect || !form.is('.dms-staged-form')) {
                 return;
             }
 
@@ -160,6 +160,7 @@ Dms.form.initializeCallbacks.push(function (element) {
                 var newForm = $(html).find('.dms-staged-form').first();
                 form.replaceWith(newForm);
                 Dms.form.initialize(newForm.parent());
+                Dms.table.initialize(newForm.parent());
             });
 
             request.always(function () {

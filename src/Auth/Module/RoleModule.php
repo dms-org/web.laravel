@@ -135,7 +135,7 @@ class RoleModule extends CrudModule
 
         foreach ($this->cms->loadPermissions() as $permission) {
             $permissionOptions[$permission->getName()] = ucwords(
-                strtr($permission->getName(), ['.' => ' - ', '-' => ' '])
+                strtr($permission->getName(), ['.' => ' :: ', '-' => ' '])
             );
         }
 

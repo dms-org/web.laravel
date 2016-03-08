@@ -6,7 +6,7 @@
 <?php /** @var array $hiddenValues */ ?>
 <div class="dms-staged-form-container">
     <div
-            data-reload-form-url="{{ $moduleContext->getUrl('action.form', array_filter([$actionName, $renderingContext->getObject() ? $renderingContext->getObjectId() : null])) }}"
+            data-reload-form-url="{{ $moduleContext->getUrl('action.form', array_merge([$actionName], $renderingContext->getObject() ? [$renderingContext->getObjectId()] : [])) }}"
             data-action="{{ $moduleContext->getUrl('action.run', [$actionName]) }}"
             data-method="post"
             data-enctype="multipart/form-data"

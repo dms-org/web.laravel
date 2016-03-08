@@ -56,6 +56,9 @@ var bowerFilesConfig = {
         },
         "typeahead-addresspicker": {
             "main": ["dist/typeahead-addresspicker.min.js"]
+        },
+        "Download-File-JS": {
+            "main": ["dist/download.min.js"]
         }
     }
 };

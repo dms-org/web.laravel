@@ -1,3 +1,14 @@
+.dms-file-tree-header {
+    border-bottom: 1px solid #e5e5e5;
+    margin-top: 20px;
+    padding-bottom: 10px;
+    margin-bottom: 0;
+
+    h3, .btn-group {
+        margin: 0!important;
+    }
+}
+
 .dms-file-tree-data-container {
     @extend .dms-spinner-container;
 
@@ -24,6 +35,15 @@
         cursor: auto;
         img {
             width: 16px;
+        }
+
+        .dms-image-preview {
+            padding: 10px;
+            img {
+                box-shadow: 0 0 5px #999;
+                width: auto;
+                max-width: 100%;
+            }
         }
 
         .dms-file-action-buttons {

@@ -1,3 +1,8 @@
+Dms.form.validation.initialize = function (form) {
+    form.attr('data-parsley-validate', '1');
+    return form.parsley(window.ParsleyConfig);
+};
+
 Dms.form.validation.clearMessages = function (form) {
     form.find('.form-group').removeClass('has-error');
     form.find('.help-block.help-block-error').remove();

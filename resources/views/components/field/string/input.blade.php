@@ -14,4 +14,8 @@
         @if($minLength !== null) minlength="{{ $minLength }}" @endif
         @if($maxLength !== null) maxlength="{{ $maxLength }}" @endif
         @endif
+
+        @if($suggestedValues ?? false)
+        data-autocomplete="{{ json_encode($suggestedValues) }}"
+        @endif
 />

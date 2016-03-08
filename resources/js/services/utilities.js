@@ -29,10 +29,7 @@ Dms.utilities.areUrlsEqual = function (first, second) {
 };
 
 Dms.utilities.downloadFileFromUrl = function (url) {
-    $('<iframe />')
-        .attr({'src': url})
-        .hide()
-        .appendTo('body');
+    downloadFile(url);
 };
 
 Dms.utilities.isTouchDevice = function () {

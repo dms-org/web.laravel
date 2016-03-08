@@ -18,8 +18,10 @@ use Dms\Core\File\IFile;
 use Dms\Core\File\IUploadedFile;
 use Dms\Core\Form\Builder\Form;
 use Dms\Core\Form\Builder\StagedForm;
+use Dms\Core\Form\Field\Builder\FieldBuilderBase;
 use Dms\Core\Model\IMutableObjectSet;
 use Dms\Core\Model\Object\ArrayDataObject;
+use Dms\Core\Model\Type\Builder\Type;
 use Dms\Web\Laravel\Util\FileSizeFormatter;
 
 /**
@@ -29,6 +31,9 @@ use Dms\Web\Laravel\Util\FileSizeFormatter;
  */
 class PublicFileModule extends CrudModule
 {
+    const ROOT_PATH = '.' . DIRECTORY_SEPARATOR;
+    const ROOT_NAME = 'home';
+
     /**
      * @var mixed
      */
@@ -101,8 +106,7 @@ class PublicFileModule extends CrudModule
         $module->action('upload-files')
             ->authorizeAll([self::VIEW_PERMISSION, self::EDIT_PERMISSION])
             ->form(Form::create()->section('Upload Files', [
-                Field::create('folder', 'Folder')->string()->required()
-                    ->oneOf($this->getAllDirectoryOptions()),
+                $this->folderField('folder', 'Folder')->value(self::ROOT_PATH),
                 Field::create('files', 'Files')->arrayOf(
                     Field::element()->file()->required()
                 )->required(),
@@ -117,7 +121,7 @@ class PublicFileModule extends CrudModule
         $module->action('create-folder')
             ->authorizeAll([self::VIEW_PERMISSION, self::EDIT_PERMISSION])
             ->form(Form::create()->section('Create Folder', [
-                Field::create('folder', 'Folder')->string()->required(),
+                $this->folderField('folder', 'Folder'),
             ]))
             ->handler(function (ArrayDataObject $input) {
                 @mkdir(PathHelper::combine($this->rootDirectory, $input['folder']), 0644, true);
@@ -131,13 +135,14 @@ class PublicFileModule extends CrudModule
 
                 $form->section('Details', [
                     $form->field(
-                        Field::create('directory', 'Directory')->string()->required()->value($directoryPath)
+                        $this->folderField('folder', 'Folder')
+                            ->value($directoryPath)
                     )->withoutBinding(),
                 ]);
-            }, ['directory']);
+            }, ['folder']);
 
-            $form->dependentOn(['directory'], function (CrudFormDefinition $form, array $input, File $file = null) {
-                $directoryPath = PathHelper::combine($this->rootDirectory, $input['directory']);
+            $form->dependentOn(['folder'], function (CrudFormDefinition $form, array $input, File $file = null) {
+                $directoryPath = PathHelper::combine($this->rootDirectory, $input['folder']);
 
                 $form->section('File', [
                     $form->field(
@@ -168,7 +173,7 @@ class PublicFileModule extends CrudModule
 
             $form->onSave(function (File $file, array $input) use ($form) {
                 if ($form->isEditForm()) {
-                    $fullPath = PathHelper::combine($this->rootDirectory, $input['directory'], $file->getName());
+                    $fullPath = PathHelper::combine($this->rootDirectory, $input['folder'], $file->getName());
 
                     if ($input['file'] !== $file) {
                         @unlink($file->getFullPath());
@@ -193,8 +198,7 @@ class PublicFileModule extends CrudModule
             ->form(function (StagedForm $form) {
                 return $form->then(function (array $input) {
                     return Form::create()->section('Details', [
-                        Field::create('new_folder', 'New Folder')->string()->required()
-                            ->oneOf($this->getAllDirectoryOptions())
+                        $this->folderField('new_folder', 'New Folder')
                             ->value($this->getRelativePath($input['object']->getDirectory()->getFullPath())),
                     ]);
                 });
@@ -224,13 +228,31 @@ class PublicFileModule extends CrudModule
         });
     }
 
+    protected function folderField($name, $label) : FieldBuilderBase
+    {
+        return Field::create($name, $label)->string()->required()
+            ->autocomplete($this->getAllDirectoryOptions())
+            ->onlyContainsCharacterRanges([
+                'a'                 => 'z',
+                'A'                 => 'Z',
+                '0'                 => '9',
+                '_'                 => '_',
+                '-'                 => '-',
+                DIRECTORY_SEPARATOR => DIRECTORY_SEPARATOR,
+            ])
+            ->map(function (string $i) {
+                return $i === self::ROOT_NAME ? self::ROOT_PATH : $i;
+            }, function (string $i) {
+                return $i === self::ROOT_PATH ? self::ROOT_NAME : $i;
+            }, Type::string());
+    }
+
     private function getAllDirectoryOptions() : array
     {
-        $options = ['/' => 'home'];
+        $options = [self::ROOT_NAME];
 
         foreach ($this->directoryTree->getAllDirectories() as $directory) {
-            $path           = $this->getRelativePath($directory->getFullPath());
-            $options[$path] = $path;
+            $options[] = $this->getRelativePath($directory->getFullPath());
         }
 
         return $options;

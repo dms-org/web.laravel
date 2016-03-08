@@ -1,6 +1,7 @@
 Dms.table.initializeCallbacks.push(function (element) {
     element.find('.dms-file-tree').each(function () {
         var fileTree = $(this);
+        var fileTreeData = fileTree.find('.dms-file-tree-data');
         var filterForm = fileTree.find('.dms-quick-filter-form');
         var reloadFileTreeUrl = fileTree.attr('data-reload-file-tree-url');
 
@@ -26,12 +27,22 @@ Dms.table.initializeCallbacks.push(function (element) {
                     var label = fileItem.text();
 
                     var doesContainFilter = label.toLowerCase().indexOf(filterBy.toLowerCase()) !== -1;
-                    fileItem.toggle(doesContainFilter);
+                    fileItem.toggleClass('hidden', !doesContainFilter);
 
                     if (doesContainFilter) {
                         fileItem.parents('.dms-folder-item').removeClass('dms-folder-closed').show();
                     }
                 });
+
+                hideEmptyFolders(fileTreeData);
+            });
+
+            hideEmptyFolders(fileTreeData);
+        };
+
+        var hideEmptyFolders = function (fileTreeData) {
+            fileTreeData.find('.dms-folder-item').each(function () {
+                $(this).toggle($(this).find('.dms-file-item:not(.hidden)').length > 0);
             });
         };
 
@@ -52,6 +63,7 @@ Dms.table.initializeCallbacks.push(function (element) {
                 fileTree.find('.dms-file-tree-data').replaceWith(newFileTree);
                 initializeFileTreeData(newFileTree.parent());
                 Dms.form.initialize(newFileTree.parent());
+                fileTree.triggerHandler('dms-file-tree-updated');
             });
 
             request.always(function () {
@@ -59,6 +71,16 @@ Dms.table.initializeCallbacks.push(function (element) {
             });
         });
 
-        initializeFileTreeData(fileTree.find('.dms-file-tree-data'));
+        fileTree.find('.btn-images-only').on('click', function () {
+            fileTreeData.find('.dms-file-item:not(.dms-image-item)').addClass('hidden');
+            hideEmptyFolders(fileTreeData);
+        });
+
+        fileTree.find('.btn-all-files').on('click', function () {
+            fileTreeData.find('.dms-file-item').removeClass('hidden');
+            hideEmptyFolders(fileTreeData);
+        });
+
+        initializeFileTreeData(fileTreeData);
     });
 });

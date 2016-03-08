@@ -625,10 +625,7 @@ Dms.utilities.areUrlsEqual = function (first, second) {
 };
 
 Dms.utilities.downloadFileFromUrl = function (url) {
-    $('<iframe />')
-        .attr({'src': url})
-        .hide()
-        .appendTo('body');
+    downloadFile(url);
 };
 
 Dms.utilities.isTouchDevice = function () {
@@ -737,6 +734,11 @@ window.Parsley.addValidator('maxElements', {
     }
 });
 
+
+Dms.form.validation.initialize = function (form) {
+    form.attr('data-parsley-validate', '1');
+    return form.parsley(window.ParsleyConfig);
+};
 
 Dms.form.validation.clearMessages = function (form) {
     form.find('.form-group').removeClass('has-error');
@@ -1014,6 +1016,105 @@ Dms.form.initializeCallbacks.push(function (element) {
 
         $(this).addClass('minicolors').minicolors(config);
     });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+    element.find('input.date-or-time')
+        .each(function () {
+            var inputElement = $(this);
+            var dateFormat = Dms.utilities.convertPhpDateFormatToMomentFormat(inputElement.attr('data-date-format'));
+            var mode = inputElement.attr('data-mode');
+
+            var config = {
+                locale: {
+                    format: dateFormat
+                },
+                parentEl: inputElement.closest('.date-picker-container'),
+                singleDatePicker: true,
+                showDropdowns: true,
+                autoApply: true,
+                linkedCalendars: false,
+                autoUpdateInput: false
+            };
+
+            if (mode === 'date-time') {
+                config.timePicker = true;
+                config.timePickerSeconds = true;
+            }
+
+            if (mode === 'time') {
+                config.timePicker = true;
+                config.timePickerSeconds = true;
+            }
+            // TODO: timezoned-date-time
+
+            inputElement.daterangepicker(config, function (date) {
+                inputElement.val(date.format(dateFormat));
+            });
+
+            var picker = inputElement.data('daterangepicker');
+
+            if (inputElement.val()) {
+                picker.setStartDate(inputElement.val());
+            }
+
+            if (mode === 'time') {
+                inputElement.closest('.date-picker-container').find('.calendar-table').hide();
+            }
+        });
+
+    element.find('.date-or-time-range')
+        .each(function () {
+            var rangeElement = $(this);
+            var startInput = rangeElement.find('.start-input');
+            var endInput = rangeElement.find('.end-input');
+            var dateFormat = Dms.utilities.convertPhpDateFormatToMomentFormat(startInput.attr('data-date-format'));
+            var mode = rangeElement.attr('data-mode');
+
+            var config = {
+                locale: {
+                    format: dateFormat
+                },
+                parentEl: rangeElement,
+                showDropdowns: true,
+                autoApply: !rangeElement.attr('data-dont-auto-apply'),
+                linkedCalendars: false,
+                autoUpdateInput: false
+            };
+
+            if (mode === 'date-time') {
+                config.timePicker = true;
+                config.timePickerSeconds = true;
+            }
+
+            if (mode === 'time') {
+                config.timePicker = true;
+                config.timePickerSeconds = true;
+            }
+            // TODO: timezoned-date-time
+
+            startInput.daterangepicker(config, function (start, end, label) {
+                startInput.val(start.format(dateFormat));
+                endInput.val(end.format(dateFormat));
+                rangeElement.triggerHandler('dms-range-updated');
+            });
+
+            var picker = startInput.data('daterangepicker');
+
+            if (startInput.val()) {
+                picker.setStartDate(startInput.val());
+            }
+            if (endInput.val()) {
+                picker.setEndDate(endInput.val());
+            }
+
+            endInput.on('focus click', function () {
+                startInput.focus();
+            });
+
+            if (mode === 'time') {
+                rangeElement.find('.calendar-table').hide();
+            }
+        });
 });
 Dms.form.initializeCallbacks.push(function (element) {
 
@@ -1361,105 +1462,6 @@ Dms.form.initializeCallbacks.push(function (element) {
             dropzone.destroy();
         });
     });
-});
-Dms.form.initializeCallbacks.push(function (element) {
-    element.find('input.date-or-time')
-        .each(function () {
-            var inputElement = $(this);
-            var dateFormat = Dms.utilities.convertPhpDateFormatToMomentFormat(inputElement.attr('data-date-format'));
-            var mode = inputElement.attr('data-mode');
-
-            var config = {
-                locale: {
-                    format: dateFormat
-                },
-                parentEl: inputElement.closest('.date-picker-container'),
-                singleDatePicker: true,
-                showDropdowns: true,
-                autoApply: true,
-                linkedCalendars: false,
-                autoUpdateInput: false
-            };
-
-            if (mode === 'date-time') {
-                config.timePicker = true;
-                config.timePickerSeconds = true;
-            }
-
-            if (mode === 'time') {
-                config.timePicker = true;
-                config.timePickerSeconds = true;
-            }
-            // TODO: timezoned-date-time
-
-            inputElement.daterangepicker(config, function (date) {
-                inputElement.val(date.format(dateFormat));
-            });
-
-            var picker = inputElement.data('daterangepicker');
-
-            if (inputElement.val()) {
-                picker.setStartDate(inputElement.val());
-            }
-
-            if (mode === 'time') {
-                inputElement.closest('.date-picker-container').find('.calendar-table').hide();
-            }
-        });
-
-    element.find('.date-or-time-range')
-        .each(function () {
-            var rangeElement = $(this);
-            var startInput = rangeElement.find('.start-input');
-            var endInput = rangeElement.find('.end-input');
-            var dateFormat = Dms.utilities.convertPhpDateFormatToMomentFormat(startInput.attr('data-date-format'));
-            var mode = rangeElement.attr('data-mode');
-
-            var config = {
-                locale: {
-                    format: dateFormat
-                },
-                parentEl: rangeElement,
-                showDropdowns: true,
-                autoApply: !rangeElement.attr('data-dont-auto-apply'),
-                linkedCalendars: false,
-                autoUpdateInput: false
-            };
-
-            if (mode === 'date-time') {
-                config.timePicker = true;
-                config.timePickerSeconds = true;
-            }
-
-            if (mode === 'time') {
-                config.timePicker = true;
-                config.timePickerSeconds = true;
-            }
-            // TODO: timezoned-date-time
-
-            startInput.daterangepicker(config, function (start, end, label) {
-                startInput.val(start.format(dateFormat));
-                endInput.val(end.format(dateFormat));
-                rangeElement.triggerHandler('dms-range-updated');
-            });
-
-            var picker = startInput.data('daterangepicker');
-
-            if (startInput.val()) {
-                picker.setStartDate(startInput.val());
-            }
-            if (endInput.val()) {
-                picker.setEndDate(endInput.val());
-            }
-
-            endInput.on('focus click', function () {
-                startInput.focus();
-            });
-
-            if (mode === 'time') {
-                rangeElement.find('.calendar-table').hide();
-            }
-        });
 });
 Dms.form.initializeCallbacks.push(function (element) {
     element.find('.dms-inner-form').each(function () {
@@ -1898,6 +1900,42 @@ Dms.form.initializeCallbacks.push(function (element) {
 
 });
 Dms.form.initializeCallbacks.push(function (element) {
+    element.find('input[type="ip-address"]')
+        .attr('type', 'text')
+        .attr('data-parsley-ip-address', '1');
+
+    element.find('input[data-autocomplete]').each(function () {
+        var options = JSON.parse($(this).attr('data-autocomplete'));
+        $(this).removeAttr('data-autocomplete');
+
+        var values = [];
+
+        $.each(options, function (index, value) {
+            values.push({ val: value });
+        });
+
+        var engine = new Bloodhound({
+            local: values,
+            datumTokenizer: function(d) {
+                return Bloodhound.tokenizers.whitespace(d.val);
+            },
+            queryTokenizer: Bloodhound.tokenizers.whitespace
+        });
+
+        engine.initialize();
+
+        $(this).typeahead( {
+            limit: 5,
+            hint: true,
+            highlight: true,
+            minLength: 1
+        }, {
+            source: engine.ttAdapter(),
+            displayKey: 'val'
+        });
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
 
     element.find('table.dms-field-table').each(function () {
         var tableOfFields = $(this);
@@ -2100,12 +2138,132 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-    element.find('input[type="ip-address"]')
-        .attr('type', 'text')
-        .attr('data-parsley-ip-address', '1');
+
 });
 Dms.form.initializeCallbacks.push(function (element) {
+    if (typeof tinymce === 'undefined') {
+        return;
+    }
 
+    tinymce.init({
+        selector: 'textarea.dms-wysiwyg',
+        tooltip: '',
+        plugins: [
+            "advlist",
+            "autolink",
+            "lists",
+            "link",
+            "image",
+            "charmap",
+            "print",
+            "preview",
+            "anchor",
+            "searchreplace",
+            "visualblocks",
+            "code",
+            "insertdatetime",
+            "media",
+            "table",
+            "contextmenu",
+            "paste",
+            "imagetools"
+        ],
+        toolbar: "undo redo | styleselect | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist | link image",
+        setup: function (editor) {
+            editor.on('change', function () {
+                editor.save();
+            });
+        },
+        relative_urls: false,
+        convert_urls: false,
+        document_base_url: '//' + window.location.host,
+        file_picker_callback: function (callback, value, meta) {
+            var wysiwygElement = $(tinymce.activeEditor.getElement()).closest('.dms-wysiwyg-container');
+            showFilePickerDialog(meta.filetype, wysiwygElement, function (fileUrl) {
+                if (fileUrl.indexOf('http://') === 0) {
+                    fileUrl = fileUrl.substring('http:'.length);
+                } else if (fileUrl.indexOf('https://') === 0) {
+                    fileUrl = fileUrl.substring('https:'.length);
+                }
+
+                callback(fileUrl);
+            });
+        }
+    });
+
+    var wysiwygElements = element.find('textarea.dms-wysiwyg');
+
+    wysiwygElements.each(function () {
+        if (!$(this).attr('id')) {
+            $(this).attr('id', Dms.utilities.idGenerator());
+        }
+    });
+
+    wysiwygElements.filter(function () {
+        return $(this).closest('.mce-tinymce').length === 0;
+    }).each(function () {
+        tinymce.EditorManager.execCommand('mceAddEditor', true, $(this).attr('id'));
+    });
+
+    wysiwygElements.closest('.dms-staged-form').on('dms-post-submit-success', function () {
+        $(this).find('textarea.dms-wysiwyg').each(function () {
+            tinymce.remove('#' + $(this).attr('id'));
+        });
+    });
+
+    var showFilePickerDialog = function (mode, wysiwygElement, callback) {
+        var loadFilePickerUrl = wysiwygElement.attr('data-load-file-picker-url');
+        var filePickerDialog = wysiwygElement.find('.dms-file-picker-dialog');
+        var filePickerContainer = filePickerDialog.find('.dms-file-picker-container');
+        var filePicker = filePickerContainer.find('.dms-file-picker');
+
+        filePickerDialog.modal('show');
+
+        var request = Dms.ajax.createRequest({
+            url: loadFilePickerUrl,
+            type: 'get',
+            dataType: 'html',
+            data: {'__content_only': '1'}
+        });
+
+        filePickerContainer.addClass('loading');
+
+        request.done(function (html) {
+            filePicker.html(html);
+            Dms.table.initialize(filePicker);
+            Dms.form.initialize(filePicker);
+
+            var updateFilePickerButtons = function () {
+                var selectFileButton = $('<button class="btn btn-success btn-xs"><i class="fa fa-check"></i></button>');
+
+                filePicker.find('.dms-file-action-buttons').each(function () {
+                    var fileItemButtons = $(this);
+
+                    var specificFileSelectButton = selectFileButton.clone();
+                    fileItemButtons.empty();
+                    fileItemButtons.append(specificFileSelectButton);
+
+                    specificFileSelectButton.on('click', function () {
+                        callback(fileItemButtons.closest('.dms-file-item').attr('data-public-url'));
+                        filePickerDialog.modal('hide');
+                    });
+                });
+
+                filePicker.find('.btn-images-only').click().focus();
+            };
+
+            filePicker.find('.dms-file-tree').on('dms-file-tree-updated', updateFilePickerButtons);
+            updateFilePickerButtons();
+        });
+
+        request.always(function () {
+            filePickerContainer.removeClass('loading');
+        });
+
+        filePickerDialog.on('hide.bs.modal', function () {
+            filePicker.empty();
+        });
+    };
 });
 Dms.form.initializeCallbacks.push(function (element) {
 
@@ -2131,7 +2289,7 @@ Dms.form.initializeCallbacks.push(function (element) {
 
     element.find('.dms-staged-form').each(function () {
         var form = $(this);
-        var parsley = form.parsley(window.ParsleyConfig);
+        var parsley = Dms.form.validation.initialize(form);
         var stageElements = form.find('.dms-form-stage');
 
         var arePreviousFieldsValid = function (fields) {
@@ -2164,6 +2322,20 @@ Dms.form.initializeCallbacks.push(function (element) {
 
                 if (currentAjaxRequest) {
                     currentAjaxRequest.abort();
+                }
+
+                if (dependentFieldNames) {
+                    var hasLoadedAllRequiredFields = true;
+
+                    $.each(dependentFieldNames, function (index, fieldName) {
+                        if (previousStages.find('[name="' + fieldName + '"]').length === 0) {
+                            hasLoadedAllRequiredFields = false;
+                        }
+                    });
+
+                    if (!hasLoadedAllRequiredFields) {
+                        return;
+                    }
                 }
 
                 container.removeClass('loaded');
@@ -2269,7 +2441,7 @@ Dms.form.initializeCallbacks.push(function (element) {
     element.find('.dms-staged-form, .dms-run-action-form').each(function () {
         var form = $(this);
         var formContainer = form.closest('.dms-staged-form-container');
-        var parsley = form.parsley(window.ParsleyConfig);
+        var parsley = Dms.form.validation.initialize(form);
         var afterRunCallbacks = [];
         var submitButtons = form.find('input[type=submit], button[type=submit]');
         var submitMethod = form.attr('data-method');
@@ -2409,7 +2581,7 @@ Dms.form.initializeCallbacks.push(function (element) {
         });
 
         afterRunCallbacks.push(function (data) {
-            if (data.redirect) {
+            if (data.redirect || !form.is('.dms-staged-form')) {
                 return;
             }
 
@@ -2426,6 +2598,7 @@ Dms.form.initializeCallbacks.push(function (element) {
                 var newForm = $(html).find('.dms-staged-form').first();
                 form.replaceWith(newForm);
                 Dms.form.initialize(newForm.parent());
+                Dms.table.initialize(newForm.parent());
             });
 
             request.always(function () {
@@ -2473,7 +2646,7 @@ Dms.form.initializeValidationCallbacks.push(function (element) {
 
     element.find('.dms-staged-form').each(function () {
         var form = $(this);
-        form.parsley(window.ParsleyConfig);
+        var parsley = Dms.form.validation.initialize(form);
 
         form.find('.dms-form-fields').each(function (index) {
             $(this).find(':input').attr('data-parsley-group', 'validation-group-' + index);
@@ -2481,52 +2654,8 @@ Dms.form.initializeValidationCallbacks.push(function (element) {
     });
 
     element.find('.dms-form').each(function () {
-        $(this).parsley(window.ParsleyConfig);
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
-    if (typeof tinymce === 'undefined') {
-        return;
-    }
-
-    tinymce.init({
-        selector: 'textarea.dms-wysiwyg',
-        tooltip: '',
-        plugins: [
-            "advlist",
-            "autolink",
-            "lists",
-            "link",
-            "image",
-            "charmap",
-            "print",
-            "preview",
-            "anchor",
-            "searchreplace",
-            "visualblocks",
-            "code",
-            "insertdatetime",
-            "media",
-            "table",
-            "contextmenu",
-            "paste",
-            "imagetools"
-        ],
-        toolbar: "undo redo | styleselect | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist | link image"
-    });
-
-    element.closest('.dms-staged-form').on('dms-before-submit', function () {
-        tinymce.triggerSave();
-    });
-
-    element.find('textarea.dms-wysiwyg').filter(function () {
-        return $(this).closest('.mce-tinymce').length === 0;
-    }).each(function () {
-        if (!$(this).attr('id')) {
-            $(this).attr('id', Dms.utilities.idGenerator());
-        }
-
-        tinymce.EditorManager.execCommand('mceAddEditor', true, $(this).attr('id'));
+        var form = $(this);
+        var parsley = Dms.form.validation.initialize(form);
     });
 });
 Dms.table.initializeCallbacks.push(function (element) {
@@ -2771,6 +2900,7 @@ Dms.widget.initializeCallbacks.push(function () {
 Dms.table.initializeCallbacks.push(function (element) {
     element.find('.dms-file-tree').each(function () {
         var fileTree = $(this);
+        var fileTreeData = fileTree.find('.dms-file-tree-data');
         var filterForm = fileTree.find('.dms-quick-filter-form');
         var reloadFileTreeUrl = fileTree.attr('data-reload-file-tree-url');
 
@@ -2796,12 +2926,22 @@ Dms.table.initializeCallbacks.push(function (element) {
                     var label = fileItem.text();
 
                     var doesContainFilter = label.toLowerCase().indexOf(filterBy.toLowerCase()) !== -1;
-                    fileItem.toggle(doesContainFilter);
+                    fileItem.toggleClass('hidden', !doesContainFilter);
 
                     if (doesContainFilter) {
                         fileItem.parents('.dms-folder-item').removeClass('dms-folder-closed').show();
                     }
                 });
+
+                hideEmptyFolders(fileTreeData);
+            });
+
+            hideEmptyFolders(fileTreeData);
+        };
+
+        var hideEmptyFolders = function (fileTreeData) {
+            fileTreeData.find('.dms-folder-item').each(function () {
+                $(this).toggle($(this).find('.dms-file-item:not(.hidden)').length > 0);
             });
         };
 
@@ -2822,6 +2962,7 @@ Dms.table.initializeCallbacks.push(function (element) {
                 fileTree.find('.dms-file-tree-data').replaceWith(newFileTree);
                 initializeFileTreeData(newFileTree.parent());
                 Dms.form.initialize(newFileTree.parent());
+                fileTree.triggerHandler('dms-file-tree-updated');
             });
 
             request.always(function () {
@@ -2829,7 +2970,17 @@ Dms.table.initializeCallbacks.push(function (element) {
             });
         });
 
-        initializeFileTreeData(fileTree.find('.dms-file-tree-data'));
+        fileTree.find('.btn-images-only').on('click', function () {
+            fileTreeData.find('.dms-file-item:not(.dms-image-item)').addClass('hidden');
+            hideEmptyFolders(fileTreeData);
+        });
+
+        fileTree.find('.btn-all-files').on('click', function () {
+            fileTreeData.find('.dms-file-item').removeClass('hidden');
+            hideEmptyFolders(fileTreeData);
+        });
+
+        initializeFileTreeData(fileTreeData);
     });
 });
 

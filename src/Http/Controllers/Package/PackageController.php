@@ -58,7 +58,7 @@ class PackageController extends DmsController
 
         return view('dms::package.dashboard')
             ->with([
-                'assetGroups'      => ['tables', 'charts'],
+                'assetGroups'      => ['tables', 'charts', 'forms'],
                 'pageTitle'        => StringHumanizer::title($packageName) . ' :: Dashboard',
                 'breadcrumbs'      => [
                     route('dms::index') => 'Home',

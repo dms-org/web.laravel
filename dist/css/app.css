@@ -54,6 +54,9 @@ a[disabled] {
 .dms-chart-container.loading .dms-chart {
   opacity: .3; }
 
+a.dms-run-action-form {
+  cursor: pointer; }
+
 .dms-staged-form-container.loading .dms-staged-form {
   opacity: .3; }
 

@@ -2,6 +2,7 @@
 
 namespace Dms\Web\Laravel\Renderer\Module;
 
+use Dms\Core\Common\Crud\Action\Object\IObjectAction;
 use Dms\Core\Common\Crud\ICrudModule;
 use Dms\Core\Common\Crud\IReadModule;
 use Dms\Core\Module\ITableView;
@@ -64,8 +65,15 @@ class ReadModuleRenderer extends ModuleRenderer
         $createActionName = null;
         if ($module instanceof ICrudModule) {
             /** @var ICrudModule $module */
-            if ($module->allowsCreate()) {
+            if ($module->allowsCreate() && $module->getCreateAction()->isAuthorized()) {
                 $createActionName = $module->getCreateAction()->getName();
+            }
+        }
+
+        $generalActions = [];
+        foreach ($module->getActions() as $action) {
+            if (!($action instanceof IObjectAction) && $action->isAuthorized() && $action->getName() !== $createActionName) {
+                $generalActions[] = $action;
             }
         }
 
@@ -81,6 +89,7 @@ class ReadModuleRenderer extends ModuleRenderer
                 'summaryTable'      => $summaryTable,
                 'summaryTableViews' => $views,
                 'activeViewName'    => $activeViewName,
+                'generalActions'  => $generalActions,
                 'createActionName'  => $createActionName,
             ])
             ->render();

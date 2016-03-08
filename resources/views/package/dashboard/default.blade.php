@@ -18,7 +18,7 @@
                     </div>
                 </div>
                 <!-- /.box-header -->
-                <div class="box-body no-padding">
+                <div class="box-body">
                     {!! $renderer->render($moduleContext, $widget->getWidget()) !!}
                 </div>
                 <!-- /.box-footer -->

@@ -1,5 +1,7 @@
 Dms.form.initializeCallbacks.push(function () {
-    var submitButtons = $('.dms-staged-form, .dms-run-action-form').find('[type=submit].btn-danger');
+    var submitButtons = $('.dms-staged-form, .dms-run-action-form').find('[type=submit].btn-danger')
+        .add('a.dms-run-action-form.btn-danger')
+        .add('button.dms-run-action-form.btn-danger');
 
     submitButtons.click(function (e) {
         var button = $(this);

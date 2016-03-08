@@ -1,3 +1,7 @@
+a.dms-run-action-form {
+    cursor: pointer;
+}
+
 .dms-staged-form-container {
     @extend .dms-spinner-container;
 
@@ -123,7 +127,7 @@
                 display: none;
             }
 
-            .dms-table-quick-filter-form  {
+            .dms-table-quick-filter-form {
                 width: 100%;
 
                 & > .input-group {
@@ -156,7 +160,7 @@
                 }
 
                 .dms-quick-filter-form .form-group {
-                    margin: 0!important;
+                    margin: 0 !important;
                 }
             }
         }

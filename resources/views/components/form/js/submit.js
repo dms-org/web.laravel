@@ -10,6 +10,10 @@ Dms.form.initializeCallbacks.push(function (element) {
         var submitUrl = form.attr('data-action');
         var reloadFormUrl = form.attr('data-reload-form-url');
 
+        if ($(this).is('a.dms-run-action-form, button.dms-run-action-form')) {
+            submitButtons = submitButtons.add(this);
+        }
+
         var isFormValid = function () {
             return parsley.isValid()
                 && form.find('.dms-validation-message *').length === 0

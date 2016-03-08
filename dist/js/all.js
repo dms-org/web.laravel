@@ -60070,8 +60070,15 @@ Dms.global.initializeCallbacks.push(function () {
         Dms.alerts.add(flashMessage.type, flashMessage.message);
     }
 });
+Dms.global.initializeCallbacks.push(function () {
+    $('button[data-a-href]').css('cursor', 'pointer').click(function () {
+        window.location.href = $(this).attr('data-a-href');
+    });
+});
 Dms.form.initializeCallbacks.push(function () {
-    var submitButtons = $('.dms-staged-form, .dms-run-action-form').find('[type=submit].btn-danger');
+    var submitButtons = $('.dms-staged-form, .dms-run-action-form').find('[type=submit].btn-danger')
+        .add('a.dms-run-action-form.btn-danger')
+        .add('button.dms-run-action-form.btn-danger');
 
     submitButtons.click(function (e) {
         var button = $(this);
@@ -60736,12 +60743,6 @@ Dms.chart.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-    element.find('input[type=checkbox].single-checkbox').iCheck({
-        checkboxClass: 'icheckbox_square-blue',
-        increaseArea: '20%'
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
 
     element.find('.list-of-checkboxes').each(function () {
         var listOfCheckboxes = $(this);
@@ -60769,6 +60770,12 @@ Dms.form.initializeCallbacks.push(function (element) {
         }
 
         $(this).addClass('minicolors').minicolors(config);
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+    element.find('input[type=checkbox].single-checkbox').iCheck({
+        checkboxClass: 'icheckbox_square-blue',
+        increaseArea: '20%'
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -61645,13 +61652,13 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
+
+});
+Dms.form.initializeCallbacks.push(function (element) {
     element.find('input[type=radio]').iCheck({
         radioClass: 'iradio_square-blue',
         increaseArea: '20%'
     });
-});
-Dms.form.initializeCallbacks.push(function (element) {
-
 });
 Dms.form.initializeCallbacks.push(function (element) {
     element.find('input[type="ip-address"]')
@@ -62203,6 +62210,10 @@ Dms.form.initializeCallbacks.push(function (element) {
         var submitMethod = form.attr('data-method');
         var submitUrl = form.attr('data-action');
         var reloadFormUrl = form.attr('data-reload-form-url');
+
+        if ($(this).is('a.dms-run-action-form, button.dms-run-action-form')) {
+            submitButtons = submitButtons.add(this);
+        }
 
         var isFormValid = function () {
             return parsley.isValid()

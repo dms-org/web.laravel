@@ -2249,7 +2249,9 @@ Dms.form.initializeCallbacks.push(function (element) {
                     });
                 });
 
-                filePicker.find('.btn-images-only').click().focus();
+                if (mode === 'image') {
+                    filePicker.find('.btn-images-only').click().focus();
+                }
             };
 
             filePicker.find('.dms-file-tree').on('dms-file-tree-updated', updateFilePickerButtons);
@@ -2926,7 +2928,7 @@ Dms.table.initializeCallbacks.push(function (element) {
                     var label = fileItem.text();
 
                     var doesContainFilter = label.toLowerCase().indexOf(filterBy.toLowerCase()) !== -1;
-                    fileItem.toggleClass('hidden', !doesContainFilter);
+                    fileItem.toggleClass('hidden', !doesContainFilter || fileItem.hasClass('hidden-file-item'));
 
                     if (doesContainFilter) {
                         fileItem.parents('.dms-folder-item').removeClass('dms-folder-closed').show();
@@ -2971,13 +2973,17 @@ Dms.table.initializeCallbacks.push(function (element) {
         });
 
         fileTree.find('.btn-images-only').on('click', function () {
-            fileTreeData.find('.dms-file-item:not(.dms-image-item)').addClass('hidden');
+            fileTreeData.find('.dms-file-item:not(.dms-image-item)').addClass('hidden').addClass('hidden-file-item');
             hideEmptyFolders(fileTreeData);
         });
 
         fileTree.find('.btn-all-files').on('click', function () {
-            fileTreeData.find('.dms-file-item').removeClass('hidden');
+            fileTreeData.find('.dms-file-item').removeClass('hidden').removeClass('hidden-file-item');
             hideEmptyFolders(fileTreeData);
+        });
+
+        fileTree.find('.btn-group > .btn').click(function(){
+            $(this).addClass('active').siblings().removeClass('active');
         });
 
         initializeFileTreeData(fileTreeData);

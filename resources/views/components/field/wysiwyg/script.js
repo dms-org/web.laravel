@@ -107,7 +107,9 @@ Dms.form.initializeCallbacks.push(function (element) {
                     });
                 });
 
-                filePicker.find('.btn-images-only').click().focus();
+                if (mode === 'image') {
+                    filePicker.find('.btn-images-only').click().focus();
+                }
             };
 
             filePicker.find('.dms-file-tree').on('dms-file-tree-updated', updateFilePickerButtons);

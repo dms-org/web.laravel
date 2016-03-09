@@ -16,7 +16,7 @@ package hosting service of your choice. You will have to require the following p
  - `dms/common.structure`
  - `dms/core`
  
-And run `composer update dms/*` to load the dms packages.
+And run `composer update dms/*` to download the dms packages.
 
 Now that you have the packages, you have to load the dms service provider:
 
@@ -31,3 +31,8 @@ And finally, run the following artisan command:
 ```
 php artisan dms:install
 ```
+
+Now, hopefully completing without error, you should be good to go.
+
+To verify, go to `http://you-app-domain/dms` in your browser and you should be prompted with a login screen
+to the backend of your new site!

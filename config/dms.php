@@ -2,18 +2,53 @@
 
 return [
 
+    /*
+    |--------------------------------------------------------------------------
+    | Backend Authentication Settings
+    |--------------------------------------------------------------------------
+    |
+    | Here you can define the security settings for your backend authentication
+    | login. By default, a user will be locked out fo 60 seconds every 5 failed
+    | login attempts.
+    |
+    */
     'auth' => [
         'login' => [
-            'max-attempts' => env('APP_ENV') === 'local' ? 999 : 5,
+            'max-attempts' => 5,
             'lockout-time' => 60,
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Company Information
+    |--------------------------------------------------------------------------
+    |
+    | Here you can define the website and name of your company to be found
+    | in the footer of every page.
+    |
+    */
     'contact' => [
         'website' => 'http://contact-us...',
         'company' => 'Company Inc.',
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | File Storage Settings
+    |--------------------------------------------------------------------------
+    |
+    | Public files are those that are stored directly in the public directory,
+    | they are accessible via the web server and hence useful for downloads
+    | and images to be used as content. These files can be trashed, that is,
+    | moved to a private folder in the storage path and permanently deleted
+    | if necessary.
+    |
+    | Temporary files are used for file uploads within forms, this allows
+    | files to be uploaded immediately when they are selected. They will
+    | then be moved to the correct folder when the form is submitted.
+    |
+    */
     'storage' => [
         'public-files'  => [
             'dir' => public_path('files/'),
@@ -29,6 +64,17 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Database & Migration Settings
+    |--------------------------------------------------------------------------
+    |
+    | Here you can define the settings for the migration generator command.
+    | Running `php artisan dms:make:migration` will generate a command to
+    | automatically sync the database to the current structure as per the
+    | application's orm.
+    |
+    */
     'database' => [
         'migrations' => [
             'dir'            => database_path('migrations'),
@@ -36,6 +82,19 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Services & Renderers
+    |--------------------------------------------------------------------------
+    |
+    | You can extend the core functionality by providing your services here.
+    | You may control the input and results of actions by adding transformers
+    | and handlers.
+    |
+    | If you need to customize a page / form / field / column here is where
+    | you would supply your renderer class.
+    |
+    */
     'services' => [
         'actions' => [
             'input-transformers' => [
@@ -112,12 +171,35 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Action Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Here is some metadata about your defined action classes.
+    |
+    | You may mark an action as 'safe' meaning it does not perform any
+    | dangerous operations such as updating or deleting data and hence
+    | the result of the action can be loaded via a http GET request.
+    |
+    */
     'actions' => [
         'safe' => [
             Dms\Core\Common\Crud\Action\Crud\ViewDetailsAction::class,
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Keyword Convention
+    |--------------------------------------------------------------------------
+    |
+    | The ui detects the type of operation being performed by the name of the action.
+    |
+    | Actions, depending on their type, may be treated differently from a ux perspective,
+    | dangerous actions for instance may require extra confirmation before preceding.
+    |
+    */
     'keywords' => [
         'danger'    => ['delete', 'remove', 'trash', 'drop', 'cancel', 'reset'],
         'warning'   => [],
@@ -129,6 +211,16 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Assets Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Here you may declare any extra asset files you wish to be loaded in
+    | various parts of the backend. Put you custom scripts and styles here
+    | as appropriate for your use case.
+    |
+    */
     'front-end' => [
         'global' => [
             'stylesheets' => [

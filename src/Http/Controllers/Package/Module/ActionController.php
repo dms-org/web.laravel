@@ -222,7 +222,7 @@ class ActionController extends DmsController
 
         if ($objectId !== null && $module instanceof IReadModule) {
             /** @var IReadModule $module */
-            $object        = $module->getDataSource()->get($objectId);
+            $object        = $this->loadObjectFromDataSource($objectId, $module->getDataSource());
             $objectLabel   = $module->getLabelFor($object);
             $actionButtons = $this->actionButtonBuilder->buildActionButtons($moduleContext, $object, $actionName);
         } else {
@@ -378,11 +378,14 @@ class ActionController extends DmsController
         try {
             /** @var ObjectIdType $objectField */
             $objectFieldType = $action->getObjectForm()->getField(IObjectAction::OBJECT_FIELD_NAME)->getType();
-            /** @var IIdentifiableObjectSet $dataSource */
-            $dataSource = $objectFieldType->getObjects();
-            return $dataSource instanceof IRepository ? $dataSource->get((int)$objectId) : $dataSource->get($objectId);
+            return $this->loadObjectFromDataSource($objectId, $objectFieldType->getObjects());
         } catch (InvalidInputException $e) {
             abort(404);
         }
+    }
+
+    protected function loadObjectFromDataSource(string $objectId, IIdentifiableObjectSet $dataSource) : ITypedObject
+    {
+        return $dataSource instanceof IRepository ? $dataSource->get((int)$objectId) : $dataSource->get($objectId);
     }
 }

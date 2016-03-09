@@ -194,10 +194,13 @@ class PublicFileModule extends CrudModule
             $form->dependentOn(['folder'], function (CrudFormDefinition $form, array $input, File $file = null) {
                 $directoryPath = PathHelper::combine($this->rootDirectory, $input['folder']);
 
+                $fileUploadField = Field::create('file', 'File')->file()->required()->value($file)
+                    ->moveToPathWithClientsFileName($directoryPath);
                 $form->section('File', [
                     $form->field(
-                        Field::create('file', 'File')->file()->required()->value($file)
-                            ->moveToPathWithClientsFileName($directoryPath)
+                        $form->isEditForm()
+                            ? $fileUploadField->readonly()
+                            : $fileUploadField
                     )->withoutBinding(),
                 ]);
             });
@@ -221,15 +224,12 @@ class PublicFileModule extends CrudModule
                 return $input['file'];
             });
 
+
             $form->onSave(function (File $file, array $input) use ($form) {
                 if ($form->isEditForm()) {
                     $fullPath = PathHelper::combine($this->rootDirectory, $input['folder'], $file->getName());
 
-                    if ($input['file'] !== $file) {
-                        @unlink($file->getFullPath());
-                        /** @var IFile $file */
-                        $file = $input['file'];
-                    } elseif ($file->getFullPath() !== $fullPath) {
+                    if ($file->getFullPath() !== $fullPath) {
                         $file->moveTo($fullPath);
                     }
                 }

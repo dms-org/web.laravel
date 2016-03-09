@@ -92,9 +92,7 @@ class DmsNavigationViewComposer
 
     private function loadNavigation() : array
     {
-        $navigation = [
-            new NavigationElement('Home', route('dms::index')),
-        ];
+        $navigation = [];
 
         foreach ($this->cms->loadPackages() as $package) {
             $packageNavigation = [];

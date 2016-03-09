@@ -9,6 +9,7 @@ use Dms\Common\Structure\FileSystem\PathHelper;
 use Dms\Core\Model\Object\ClassDefinition;
 use Dms\Core\Model\Object\ValueObject;
 use Dms\Core\Model\ValueObjectCollection;
+use Symfony\Component\Finder\Finder;
 
 /**
  * The directory tree object.
@@ -76,9 +77,11 @@ class DirectoryTree extends ValueObject
                 $subDirectories[] = self::from($fullPath);
             } else {
                 $isImage = @getimagesize($fullPath) !== false;
-                $files[] = $isImage ? new Image($fullPath, $name) : new File($fullPath, $name);
+                $files[$name] = $isImage ? new Image($fullPath, $name) : new File($fullPath, $name);
             }
         }
+
+        ksort($files, SORT_STRING);
 
         return new self($directory, $files, $subDirectories);
     }

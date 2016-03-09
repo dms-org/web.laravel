@@ -21,7 +21,6 @@ return [
         ],
         'trashed-files' => [
             'dir'    => storage_path('trash/'),
-            'expiry' => 3600 * 24 * 7,
         ],
         'temp-files'    => [
             'dir'             => storage_path('dms/temp-uploads/'),

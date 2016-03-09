@@ -35,7 +35,7 @@ class DefaultPackageRenderer extends PackageRenderer
         $authorizedWidgets = [];
 
         foreach ($package->loadDashboard()->getWidgets() as $widget) {
-            if ($widget->getWidget()->isAuthorized()) {
+            if ($widget->getWidget()->isAuthorized() && $widget->getModule()->isAuthorized()) {
                 $authorizedWidgets[] = $widget;
             }
         }

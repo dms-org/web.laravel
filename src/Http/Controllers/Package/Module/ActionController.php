@@ -10,12 +10,14 @@ use Dms\Core\Form\InvalidFormSubmissionException;
 use Dms\Core\Form\InvalidInputException;
 use Dms\Core\ICms;
 use Dms\Core\Language\ILanguageProvider;
+use Dms\Core\Model\IIdentifiableObjectSet;
 use Dms\Core\Model\ITypedObject;
 use Dms\Core\Module\ActionNotFoundException;
 use Dms\Core\Module\IAction;
 use Dms\Core\Module\IModule;
 use Dms\Core\Module\IParameterizedAction;
 use Dms\Core\Module\IUnparameterizedAction;
+use Dms\Core\Persistence\IRepository;
 use Dms\Web\Laravel\Action\ActionExceptionHandlerCollection;
 use Dms\Web\Laravel\Action\ActionInputTransformerCollection;
 use Dms\Web\Laravel\Action\ActionResultHandlerCollection;
@@ -367,7 +369,7 @@ class ActionController extends DmsController
 
     /**
      * @param string $objectId
-     * @param     $action
+     * @param        $action
      *
      * @return mixed
      */
@@ -376,7 +378,9 @@ class ActionController extends DmsController
         try {
             /** @var ObjectIdType $objectField */
             $objectFieldType = $action->getObjectForm()->getField(IObjectAction::OBJECT_FIELD_NAME)->getType();
-            return $objectFieldType->getObjects()->get($objectId);
+            /** @var IIdentifiableObjectSet $dataSource */
+            $dataSource = $objectFieldType->getObjects();
+            return $dataSource instanceof IRepository ? $dataSource->get((int)$objectId) : $dataSource->get($objectId);
         } catch (InvalidInputException $e) {
             abort(404);
         }

@@ -2,16 +2,15 @@
 
 namespace Dms\Web\Laravel\Auth;
 
+use Dms\Core\Auth\AdminBannedException;
+use Dms\Core\Auth\AdminForbiddenException;
+use Dms\Core\Auth\IAdmin;
+use Dms\Core\Auth\IAdminRepository;
 use Dms\Core\Auth\IAuthSystem;
 use Dms\Core\Auth\InvalidCredentialsException;
 use Dms\Core\Auth\IPermission;
 use Dms\Core\Auth\IRoleRepository;
-use Dms\Core\Auth\IAdmin;
-use Dms\Core\Auth\IAdminRepository;
-use Dms\Core\Auth\Permission;
-use Dms\Core\Auth\AdminBannedException;
-use Dms\Core\Auth\AdminForbiddenException;
-use Dms\Core\Auth\UserNotAuthenticatedException;
+use Dms\Core\Auth\NotAuthenticatedException;
 use Dms\Core\Exception\InvalidArgumentException;
 use Dms\Web\Laravel\Auth\Password\IPasswordHasherFactory;
 use Illuminate\Auth\AuthManager;
@@ -45,10 +44,15 @@ class LaravelAuthSystem implements IAuthSystem
     protected $passwordHasherFactory;
 
     /**
+     * @var IPermission[]|null
+     */
+    protected $currentUsersPermissions;
+
+    /**
      * LaravelAuthSystem constructor.
      *
      * @param AuthManager            $laravelAuth
-     * @param IAdminRepository        $userRepository
+     * @param IAdminRepository       $userRepository
      * @param IRoleRepository        $roleRepository
      * @param IPasswordHasherFactory $passwordHasherFactory
      */
@@ -57,7 +61,8 @@ class LaravelAuthSystem implements IAuthSystem
         IAdminRepository $userRepository,
         IRoleRepository $roleRepository,
         IPasswordHasherFactory $passwordHasherFactory
-    ) {
+    )
+    {
         $this->laravelAuth           = $laravelAuth->guard('dms');
         $this->userRepository        = $userRepository;
         $this->passwordHasherFactory = $passwordHasherFactory;
@@ -119,7 +124,7 @@ class LaravelAuthSystem implements IAuthSystem
      * Attempts to logout the currently authenticated user.
      *
      * @return void
-     * @throws UserNotAuthenticatedException
+     * @throws NotAuthenticatedException
      */
     public function logout()
     {
@@ -163,14 +168,14 @@ class LaravelAuthSystem implements IAuthSystem
      * Returns the currently authenticated user.
      *
      * @return IAdmin
-     * @throws UserNotAuthenticatedException
+     * @throws NotAuthenticatedException
      */
     public function getAuthenticatedUser() : IAdmin
     {
         $user = $this->laravelAuth->user();
 
         if (!$user) {
-            throw UserNotAuthenticatedException::format('No user is authenticated');
+            throw NotAuthenticatedException::format('No user is authenticated');
         }
 
         return $user;
@@ -202,13 +207,7 @@ class LaravelAuthSystem implements IAuthSystem
             return true;
         }
 
-        $userPermissions = Role::collection(
-            $this->roleRepository->getAllById($user->getRoleIds()->asArray())
-        )->selectMany(function (Role $role) {
-            return $role->getPermissions();
-        })->indexBy(function (Permission $permission) {
-            return $permission->getName();
-        })->asArray();
+        $userPermissions = $this->getUserPermissions();
 
         foreach ($permissions as $permission) {
             if (!isset($userPermissions[$permission->getName()])) {
@@ -227,7 +226,7 @@ class LaravelAuthSystem implements IAuthSystem
      *
      * @return void
      * @throws AdminForbiddenException
-     * @throws UserNotAuthenticatedException
+     * @throws NotAuthenticatedException
      * @throws AdminBannedException
      */
     public function verifyAuthorized(array $permissions)
@@ -237,5 +236,23 @@ class LaravelAuthSystem implements IAuthSystem
         if (!$this->isAuthorized($permissions)) {
             throw new AdminForbiddenException($user, $permissions);
         }
+    }
+
+    /**
+     * @return IPermission[]
+     */
+    public function getUserPermissions() : array
+    {
+        if ($this->currentUsersPermissions === null) {
+            $this->currentUsersPermissions = Role::collection(
+                $this->roleRepository->getAllById($this->getAuthenticatedUser()->getRoleIds()->asArray())
+            )->selectMany(function (Role $role) {
+                return $role->getPermissions();
+            })->indexBy(function (IPermission $permission) {
+                return $permission->getName();
+            })->asArray();
+        }
+
+        return $this->currentUsersPermissions;
     }
 }

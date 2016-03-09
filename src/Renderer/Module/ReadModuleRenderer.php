@@ -89,7 +89,7 @@ class ReadModuleRenderer extends ModuleRenderer
                 'summaryTable'      => $summaryTable,
                 'summaryTableViews' => $views,
                 'activeViewName'    => $activeViewName,
-                'generalActions'  => $generalActions,
+                'generalActions'    => $generalActions,
                 'createActionName'  => $createActionName,
             ])
             ->render();

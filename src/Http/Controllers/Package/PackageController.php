@@ -43,7 +43,7 @@ class PackageController extends DmsController
     {
         $this->loadPackage($request);
 
-        if (!$this->package->hasDashboard()) {
+        if (!$this->package->hasDashboard() && $this->package->loadDashboard()->getAuthorizedWidgets()) {
             $moduleNames = $this->package->getModuleNames();
             $firstModule = reset($moduleNames);
 

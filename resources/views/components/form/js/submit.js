@@ -106,6 +106,14 @@ Dms.form.initializeCallbacks.push(function (element) {
                 }
 
                 switch (xhr.status) {
+                    case 401: // Unauthorized
+                        swal({
+                            title: "Could not perform action",
+                            text: "You do not possess the necessary permissions to authorize this action",
+                            type: "error"
+                        });
+                        break;
+
                     case 422: // Unprocessable Entity (validation failure)
                         var validation = JSON.parse(xhr.responseText);
                         Dms.form.validation.displayMessages(form, validation.messages.fields, validation.messages.constraints);

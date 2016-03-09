@@ -46,6 +46,10 @@ class ObjectActionButtonBuilder
         $rowActions = [];
 
         foreach ($module->getObjectActions() as $action) {
+            if (!$action->isAuthorized()) {
+                continue;
+            }
+
             if ($object && !$action->isSupported($object)) {
                 continue;
             }

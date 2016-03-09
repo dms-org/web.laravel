@@ -54,42 +54,52 @@
 
                         <div class="panel-footer dms-file-action-buttons ">
                             @if($isTrash ?? false)
+                                @if ($moduleContext->getModule()->getAction('restore-file')->isAuthorized())
                                 <span class="dms-run-action-form inline"
                                       data-action="{{ $moduleContext->getUrl('action.run', ['restore-file', 'file' => $fileId]) }}"
                                       data-after-run-remove-closest="li"
                                       data-after-run-refresh="1"
                                       data-method="post">
-                                {!! csrf_field() !!}
+                                    {!! csrf_field() !!}
                                     <button type="submit" class="btn btn-xs btn-success">
                                         <i class="fa fa-life-ring"></i>
                                     </button>
-                            </span>
+                                </span>
+                                @endif
                             @else
+                                @if ($moduleContext->getModule()->getAction('download')->isAuthorized())
                                 <span class="dms-run-action-form inline"
                                       data-action="{{ $moduleContext->getUrl('action.run', ['download', 'object' => $fileId]) }}"
                                       data-method="post">
-                                {!! csrf_field() !!}
+                                    {!! csrf_field() !!}
                                     <button type="submit" class="btn btn-xs btn-success">
                                         <i class="fa fa-download"></i>
                                     </button>
-                            </span>
+                                </span>
+                                @endif
+                                @if ($moduleContext->getModule()->getAction('details')->isAuthorized())
                                 <a href="{{ $moduleContext->getUrl('action.show', ['details', $fileId]) }}" title="View Details"
                                    class="btn btn-xs btn-info">
                                     <i class="fa fa-bars"></i>
                                 </a>
+                                @endif
+                                @if ($moduleContext->getModule()->getAction('edit')->isAuthorized())
                                 <a href="{{ $moduleContext->getUrl('action.form', ['edit', $fileId]) }}" title="Edit"
                                    class="btn btn-xs btn-primary">
                                     <i class="fa fa-pencil-square-o"></i>
                                 </a>
-                                <span class="dms-run-action-form inline"
-                                      data-action="{{ $moduleContext->getUrl('action.run', ['remove', 'object' => $fileId]) }}"
-                                      data-after-run-remove-closest="li"
-                                      data-method="post">
-                                {!! csrf_field() !!}
-                                    <button type="submit" class="btn btn-xs btn-danger">
-                                        <i class="fa fa-trash-o"></i>
-                                    </button>
-                            </span>
+                                @endif
+                                @if ($moduleContext->getModule()->getAction('remove')->isAuthorized())
+                                    <span class="dms-run-action-form inline"
+                                          data-action="{{ $moduleContext->getUrl('action.run', ['remove', 'object' => $fileId]) }}"
+                                          data-after-run-remove-closest="li"
+                                          data-method="post">
+                                        {!! csrf_field() !!}
+                                        <button type="submit" class="btn btn-xs btn-danger">
+                                            <i class="fa fa-trash-o"></i>
+                                        </button>
+                                    </span>
+                                @endif
                             @endif
                         </div>
                     </div>

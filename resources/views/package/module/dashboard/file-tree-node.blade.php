@@ -21,7 +21,7 @@
                 <?php $fileId = $dataSource->getObjectId($file) ?>
                 <?php $isImage = @(bool)getimagesize($file->getFullPath()) ?>
 
-                <div class="col-sm-4 dms-file-item{{ $isImage ? ' dms-image-item' : '' }}"
+                <div class="col-sm-4 col-md-3 col-lg-2 dms-file-item{{ $isImage ? ' dms-image-item' : '' }}"
                      data-id="{{ $fileId }}"
                      @if ($isPublic)
                      data-public-url="{{ asset(config('dms.storage.public-files.url') . '/' . substr($file->getFullPath(), strlen($rootDirectory))) }}"

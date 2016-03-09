@@ -17,11 +17,11 @@ use Dms\Core\Exception\NotImplementedException;
 use Dms\Core\File\IFile;
 use Dms\Core\File\IUploadedFile;
 use Dms\Core\Form\Builder\Form;
-use Dms\Core\Form\Builder\StagedForm;
 use Dms\Core\Form\Field\Builder\FieldBuilderBase;
 use Dms\Core\Model\IMutableObjectSet;
 use Dms\Core\Model\Object\ArrayDataObject;
 use Dms\Core\Model\Type\Builder\Type;
+use Dms\Core\Model\ValueObjectCollection;
 use Dms\Web\Laravel\Util\FileSizeFormatter;
 
 /**
@@ -35,9 +35,14 @@ class PublicFileModule extends CrudModule
     const ROOT_NAME = 'home';
 
     /**
-     * @var mixed
+     * @var string
      */
     protected $rootDirectory;
+
+    /**
+     * @var string
+     */
+    protected $trashDirectory;
 
     /**
      * @var RelativePathCalculator
@@ -49,10 +54,23 @@ class PublicFileModule extends CrudModule
      */
     protected $directoryTree;
 
-    public function __construct(DirectoryTree $directory, IAuthSystem $authSystem)
+    /**
+     * @var DirectoryTree
+     */
+    protected $trashDirectoryTree;
+
+    /**
+     * @var ValueObjectCollection
+     */
+    protected $trashDataSource;
+
+    public function __construct(DirectoryTree $directory, DirectoryTree $trashDirectory, IAuthSystem $authSystem)
     {
         $this->rootDirectory          = $directory->directory->getFullPath();
         $this->directoryTree          = $directory;
+        $this->trashDirectory         = $trashDirectory->directory->getFullPath();
+        $this->trashDirectoryTree     = $trashDirectory;
+        $this->trashDataSource        = $this->trashDirectoryTree->getAllFiles();
         $this->relativePathCalculator = new RelativePathCalculator();
 
         parent::__construct($this->directoryTree->getAllFiles(), $authSystem);
@@ -61,29 +79,42 @@ class PublicFileModule extends CrudModule
     /**
      * @return DirectoryTree
      */
-    public function getDirectoryTree()
+    public function getDirectoryTree() : DirectoryTree
     {
         return $this->directoryTree;
     }
 
     /**
-     * @return mixed
+     * @return string
      */
-    public function getRootDirectory()
+    public function getRootDirectory() : string
     {
         return $this->rootDirectory;
     }
 
     /**
-     * @param DirectoryTree $directory
-     *
-     * @return PublicFileModule
+     * @return string
      */
-    public function forDirectory(DirectoryTree $directory) : self
+    public function getTrashDirectory() : string
     {
-        return new self($directory, $this->authSystem);
+        return $this->trashDirectory;
     }
 
+    /**
+     * @return DirectoryTree
+     */
+    public function getTrashDirectoryTree() : DirectoryTree
+    {
+        return $this->trashDirectoryTree;
+    }
+
+    /**
+     * @return ValueObjectCollection
+     */
+    public function getTrashDataSource() : ValueObjectCollection
+    {
+        return $this->trashDataSource;
+    }
 
     protected function getRelativePath(string $path) : string
     {
@@ -106,7 +137,7 @@ class PublicFileModule extends CrudModule
         $module->action('upload-files')
             ->authorizeAll([self::VIEW_PERMISSION, self::EDIT_PERMISSION])
             ->form(Form::create()->section('Upload Files', [
-                $this->folderField('folder', 'Folder')->value(self::ROOT_PATH),
+                $this->folderField('folder', 'Folder')->value(self::ROOT_PATH)->required(),
                 Field::create('files', 'Files')->arrayOf(
                     Field::element()->file()->required()
                 )->required(),
@@ -114,8 +145,27 @@ class PublicFileModule extends CrudModule
             ->handler(function (ArrayDataObject $input) {
                 foreach ($input['files'] as $file) {
                     /** @var IUploadedFile $file */
-                    $file->moveTo(PathHelper::combine($this->rootDirectory, $input['folder'], $file->getClientFileNameWithFallback()));
+                    $fullPath = PathHelper::combine($this->rootDirectory, $input['folder'], $file->getClientFileNameWithFallback());
+                    $file->moveTo($this->getNonConflictingFileName($fullPath));
                 }
+            });
+
+        $module->action('empty-trash')
+            ->authorizeAll([self::VIEW_PERMISSION, self::EDIT_PERMISSION])
+            ->handler(function () {
+                self::deleteDirectory($this->trashDirectoryTree, $deleteFolder = false);
+            });
+
+        $module->action('restore-file')
+            ->authorizeAll([self::VIEW_PERMISSION, self::EDIT_PERMISSION])
+            ->form(Form::create()->section('File', [
+                Field::create('file', 'File')->objectFromIndex($this->trashDataSource)->required(),
+            ]))
+            ->handler(function (ArrayDataObject $input) {
+                /** @var IFile $file */
+                $file         = $input['file'];
+                $relativePath = $this->relativePathCalculator->getRelativePath($this->trashDirectory, $file->getFullPath());
+                $file->moveTo(PathHelper::combine($this->rootDirectory, $relativePath));
             });
 
         $module->action('create-folder')
@@ -193,22 +243,8 @@ class PublicFileModule extends CrudModule
                 return $file;
             });
 
-        $module->objectAction('move-folder')
-            ->authorizeAll([self::VIEW_PERMISSION, self::EDIT_PERMISSION])
-            ->form(function (StagedForm $form) {
-                return $form->then(function (array $input) {
-                    return Form::create()->section('Details', [
-                        $this->folderField('new_folder', 'New Folder')
-                            ->value($this->getRelativePath($input['object']->getDirectory()->getFullPath())),
-                    ]);
-                });
-            })
-            ->handler(function (File $file, ArrayDataObject $input) {
-                $file->moveTo(PathHelper::combine($this->rootDirectory, $input['new_folder'], $file->getName()));
-            });
-
         $module->removeAction()->handler(function (File $file) {
-            @unlink($file->getFullPath());
+            $file->moveTo(PathHelper::combine($this->trashDirectory, $this->getRelativePath($file->getFullPath())));
         });
 
         $module->summaryTable(function (SummaryTableDefinition $table) {
@@ -258,8 +294,40 @@ class PublicFileModule extends CrudModule
         return $options;
     }
 
+    protected static function deleteDirectory(DirectoryTree $directoryTree, bool $deleteFolder = true)
+    {
+        $fullPath = $directoryTree->directory->getFullPath();
+
+        foreach ($directoryTree->subDirectories as $subDirectory) {
+            self::deleteDirectory($subDirectory);
+        }
+
+        foreach ($directoryTree->files as $file) {
+            unlink($file->getFullPath());
+        }
+
+        if ($deleteFolder) {
+            rmdir($fullPath);
+        }
+    }
+
     protected function loadCrudModuleWithDataSource(IMutableObjectSet $dataSource) : ICrudModule
     {
         throw NotImplementedException::method(__METHOD__);
+    }
+
+    private function getNonConflictingFileName(string $fullPath) : string
+    {
+        $file = new File($fullPath);
+
+        $i            = 1;
+        $extension    = $file->getExtension();
+        $originalName = substr($file->getName(), 0, -strlen('.' . $extension));
+        while ($file->exists()) {
+            $file = new File(PathHelper::combine($file->getDirectory()->getFullPath(), $originalName . '-' . $i . '.' . $extension));
+            $i++;
+        }
+
+        return $file->getFullPath();
     }
 }

@@ -15,11 +15,15 @@ return [
     ],
 
     'storage' => [
-        'public-files' => [
+        'public-files'  => [
             'dir' => public_path('files/'),
             'url' => '/files/',
         ],
-        'temp-files'   => [
+        'trashed-files' => [
+            'dir'    => storage_path('trash/'),
+            'expiry' => 3600 * 24 * 7,
+        ],
+        'temp-files'    => [
             'dir'             => storage_path('dms/temp-uploads/'),
             'upload-expiry'   => 3600,
             'download-expiry' => 3600,

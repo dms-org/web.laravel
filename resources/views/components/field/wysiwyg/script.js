@@ -92,6 +92,7 @@ Dms.form.initializeCallbacks.push(function (element) {
             Dms.form.initialize(filePicker);
 
             var updateFilePickerButtons = function () {
+                filePicker.find('.dms-trashed-files-btn-container').hide();
                 var selectFileButton = $('<button class="btn btn-success btn-xs"><i class="fa fa-check"></i></button>');
 
                 filePicker.find('.dms-file-action-buttons').each(function () {

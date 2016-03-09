@@ -15701,7 +15701,7 @@ a.dms-run-action-form {
   .dms-staged-form .dropzone .btn {
     position: absolute;
     top: 0;
-    z-index: 100;
+    z-index: 25;
     cursor: pointer; }
   .dms-staged-form .dropzone .btn-download-file {
     left: 0;
@@ -15839,6 +15839,9 @@ a.dms-run-action-form {
 .dms-file-tree-data-container.loading .dms-file-tree-data {
   opacity: .3; }
 
+.dms-file-tree-data-container .dms-file-tree-empty {
+  margin: 10px 0; }
+
 .dms-file-tree-data .dms-object-list {
   margin-bottom: 0; }
   .dms-file-tree-data .dms-object-list .list-group-item {
@@ -15851,12 +15854,13 @@ a.dms-run-action-form {
   cursor: auto; }
   .dms-file-tree-data .dms-file-item img {
     width: 16px; }
-  .dms-file-tree-data .dms-file-item .dms-image-preview {
-    padding: 10px; }
-    .dms-file-tree-data .dms-file-item .dms-image-preview img {
+  .dms-file-tree-data .dms-file-item .panel-body {
+    height: 200px; }
+    .dms-file-tree-data .dms-file-item .panel-body .dms-image-preview img {
       box-shadow: 0 0 5px #999;
       width: auto;
-      max-width: 100%; }
+      max-width: 100%;
+      max-height: 175px; }
   .dms-file-tree-data .dms-file-item .dms-file-action-buttons {
     padding-right: 10px; }
 

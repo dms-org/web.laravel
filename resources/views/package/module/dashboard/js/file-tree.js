@@ -1,7 +1,9 @@
 Dms.table.initializeCallbacks.push(function (element) {
     element.find('.dms-file-tree').each(function () {
         var fileTree = $(this);
-        var fileTreeData = fileTree.find('.dms-file-tree-data');
+        var allFileTrees = fileTree.find('.dms-file-tree-data');
+        var fileTreeData = fileTree.find('.dms-file-tree-data.dms-file-tree-data-active');
+        var trashedFileTreeData = fileTree.find('.dms-file-tree-data.dms-file-tree-data-trash');
         var filterForm = fileTree.find('.dms-quick-filter-form');
         var reloadFileTreeUrl = fileTree.attr('data-reload-file-tree-url');
 
@@ -59,10 +61,21 @@ Dms.table.initializeCallbacks.push(function (element) {
             fileTreeContainer.addClass('loading');
 
             request.done(function (html) {
-                var newFileTree = $(html).find('.dms-file-tree-data').first();
-                fileTree.find('.dms-file-tree-data').replaceWith(newFileTree);
-                initializeFileTreeData(newFileTree.parent());
-                Dms.form.initialize(newFileTree.parent());
+                var newFileTrees = $(html).find('.dms-file-tree-data');
+                var newActiveFileTree = newFileTrees.filter('.dms-file-tree-data-active');
+                fileTreeData.replaceWith(newActiveFileTree);
+                var newTrashedFileTree = newFileTrees.filter('.dms-file-tree-data-trashed');
+                trashedFileTreeData.replaceWith(newTrashedFileTree);
+                initializeFileTreeData(newActiveFileTree.parent());
+                initializeFileTreeData(newTrashedFileTree.parent());
+
+                Dms.form.initialize(newActiveFileTree.parent());
+                Dms.form.initialize(newTrashedFileTree.parent());
+
+                allFileTrees = newFileTrees;
+                fileTreeData = newActiveFileTree;
+                trashedFileTreeData = newTrashedFileTree;
+
                 fileTree.triggerHandler('dms-file-tree-updated');
             });
 
@@ -72,19 +85,26 @@ Dms.table.initializeCallbacks.push(function (element) {
         });
 
         fileTree.find('.btn-images-only').on('click', function () {
-            fileTreeData.find('.dms-file-item:not(.dms-image-item)').addClass('hidden').addClass('hidden-file-item');
-            hideEmptyFolders(fileTreeData);
+            allFileTrees.find('.dms-file-item:not(.dms-image-item)').addClass('hidden').addClass('hidden-file-item');
+            hideEmptyFolders(allFileTrees);
         });
 
         fileTree.find('.btn-all-files').on('click', function () {
-            fileTreeData.find('.dms-file-item').removeClass('hidden').removeClass('hidden-file-item');
-            hideEmptyFolders(fileTreeData);
+            allFileTrees.find('.dms-file-item').removeClass('hidden').removeClass('hidden-file-item');
+            hideEmptyFolders(allFileTrees);
+        });
+
+        fileTree.find('.btn-trashed-files').on('click', function () {
+            fileTreeData.toggleClass('hidden');
+            trashedFileTreeData.toggleClass('hidden');
         });
 
         fileTree.find('.btn-group > .btn').click(function(){
             $(this).addClass('active').siblings().removeClass('active');
         });
 
-        initializeFileTreeData(fileTreeData);
+        allFileTrees.each(function () {
+            initializeFileTreeData($(this));
+        });
     });
 });

@@ -7,4 +7,8 @@ Dms.global.initializeCallbacks.push(function (element) {
         button.before(link);
         link.click();
     });
+
+    element.find('.btn.btn-active-toggle').on('click', function () {
+       $(this).toggleClass('active');
+    });
 });

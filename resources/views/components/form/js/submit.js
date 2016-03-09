@@ -142,6 +142,12 @@ Dms.form.initializeCallbacks.push(function (element) {
             });
         }
 
+        if ( form.attr('data-after-run-refresh')) {
+            afterRunCallbacks.push(function () {
+                window.location.reload(true);
+            });
+        }
+
         afterRunCallbacks.push(function () {
             form.find('input[type=password]').val('');
         });

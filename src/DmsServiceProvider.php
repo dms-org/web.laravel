@@ -198,6 +198,7 @@ class DmsServiceProvider extends ServiceProvider
         $this->app->bind(PublicFileModule::class, function () {
             return new PublicFileModule(
                 DirectoryTree::from($this->app['config']->get('dms.storage.public-files.dir')),
+                DirectoryTree::from($this->app['config']->get('dms.storage.trashed-files.dir')),
                 $this->app[IAuthSystem::class]
             );
         });

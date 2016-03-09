@@ -56,14 +56,15 @@ class FileTreeModuleRenderer extends ModuleRenderer
         /** @var PublicFileModule $module */
         $module        = $moduleContext->getModule();
         $rootDirectory = $module->getRootDirectory();
-        $directoryTree = $module->getDirectoryTree();
 
         return view('dms::package.module.dashboard.file-tree')
             ->with([
-                'isPublic'      => $rootDirectory === PathHelper::normalize(config('dms.storage.public-files.dir')),
-                'moduleContext' => $moduleContext,
-                'directoryTree' => $directoryTree,
-                'rootDirectory' => $rootDirectory,
+                'isPublic'           => $rootDirectory === PathHelper::normalize(config('dms.storage.public-files.dir')),
+                'moduleContext'      => $moduleContext,
+                'directoryTree'      => $module->getDirectoryTree(),
+                'trashDirectoryTree' => $module->getTrashDirectoryTree(),
+                'trashDataSource'    => $module->getTrashDataSource(),
+                'rootDirectory'      => $rootDirectory,
             ])
             ->render();
     }

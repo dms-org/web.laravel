@@ -6,7 +6,6 @@
 <div class="row">
     <div class="col-xs-12">
         <div class="panel panel-default dms-file-tree"
-             data-move-directory-url="{{ $moduleContext->getUrl('action.run', ['move-folder', '__object__']) }}"
              data-reload-file-tree-url="{{ $moduleContext->getUrl('dashboard') }}"
         >
             <div class="panel-body dms-upload-form">
@@ -18,9 +17,13 @@
                     <h3>Files</h3>
                 </div>
                 <div class="col-xs-6">
+                    <span class="pull-right dms-trashed-files-btn-container">
+                        &nbsp;
+                        <button type="button" class="btn btn-default btn-active-toggle btn-trashed-files"><i class="fa fa-trash-o"></i> Trash</button>
+                    </span>
                     <div class="btn-group pull-right">
                         <button type="button" class="btn btn-default btn-images-only"><i class="fa fa-file-image-o"></i> Images</button>
-                        <button type="button" class="btn btn-default btn-all-files"><i class="fa fa-file-text-o"></i> All</button>
+                        <button type="button" class="btn btn-default btn-all-files active"><i class="fa fa-file-text-o"></i> All</button>
                     </div>
                 </div>
             </div>
@@ -41,13 +44,36 @@
             </div>
 
             <div class="dms-file-tree-data-container">
-                <div class="dms-file-tree-data">
+                <div class="dms-file-tree-data dms-file-tree-data-active">
                     @include('dms::package.module.dashboard.file-tree-node', [
                         'isPublic'      => $isPublic,
                         'moduleContext' => $moduleContext,
                         'module'        => $moduleContext->getModule(),
+                        'dataSource'    => $moduleContext->getModule()->getDataSource(),
                         'directoryTree' => $directoryTree,
                     ])
+                </div>
+                <div class="dms-file-tree-data dms-file-tree-data-trash hidden clearfix">
+                    @include('dms::package.module.dashboard.file-tree-node', [
+                        'isPublic'      => false,
+                        'isTrash'       => true,
+                        'moduleContext' => $moduleContext,
+                        'module'        => $moduleContext->getModule(),
+                        'dataSource'    => $trashDataSource,
+                        'directoryTree' => $trashDirectoryTree,
+                    ])
+
+                    <div class="col-xs-12 text-center dms-file-tree-empty">
+                        <span class="dms-run-action-form inline"
+                              data-action="{{ $moduleContext->getUrl('action.run', ['empty-trash']) }}"
+                              data-after-run-refresh="1"
+                              data-method="post">
+                            {!! csrf_field() !!}
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fa fa-trash"></i> Empty Trash
+                            </button>
+                        </span>
+                    </div>
                 </div>
 
                 @include('dms::partials.spinner')

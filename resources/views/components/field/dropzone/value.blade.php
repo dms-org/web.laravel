@@ -13,7 +13,7 @@
                         <p><label>Size:</label> {{ \Dms\Web\Laravel\Util\FileSizeFormatter::formatBytes($file['size']) }}</p>
                     </div>
                     <div class="col-xs-3">
-                        <a href="{{ $file['downloadUrl'] }}" download="download" class="btn btn-success pull-right">
+                        <a href="{{ $file['downloadUrl'] }}" download="{{ $file['name'] }}" class="btn btn-success pull-right">
                             Download <i class="fa fa-download"></i>
                         </a>
                     </div>

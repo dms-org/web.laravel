@@ -5,7 +5,7 @@ namespace Dms\Web\Laravel\Auth;
 use Dms\Core\Package\Definition\PackageDefinition;
 use Dms\Core\Package\Package;
 use Dms\Web\Laravel\Auth\Module\RoleModule;
-use Dms\Web\Laravel\Auth\Module\UserModule;
+use Dms\Web\Laravel\Auth\Module\AdminUserModule;
 
 /**
  * The auth package.
@@ -32,7 +32,7 @@ class AdminPackage extends Package
             ]);
 
         $package->modules([
-            'users' => UserModule::class,
+            'users' => AdminUserModule::class,
             'roles' => RoleModule::class,
         ]);
     }

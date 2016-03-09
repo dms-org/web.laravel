@@ -1,9 +1,9 @@
 <?php declare(strict_types = 1);
 
 use Dms\Common\Structure\Web\EmailAddress;
-use Dms\Core\Auth\IUserRepository;
+use Dms\Core\Auth\IAdminRepository;
 use Dms\Web\Laravel\Auth\Password\IPasswordHasherFactory;
-use Dms\Web\Laravel\Auth\User;
+use Dms\Web\Laravel\Auth\Admin;
 use Illuminate\Database\Seeder;
 
 /**
@@ -11,10 +11,10 @@ use Illuminate\Database\Seeder;
  *
  * @author Elliot Levin <elliotlevin@hotmail.com>
  */
-class DmsUserSeeder extends Seeder
+class DmsAdminSeeder extends Seeder
 {
     /**
-     * @var IUserRepository
+     * @var IAdminRepository
      */
     protected $repo;
 
@@ -26,10 +26,10 @@ class DmsUserSeeder extends Seeder
     /**
      * DmsUserSeeder constructor.
      *
-     * @param IUserRepository        $repo
+     * @param IAdminRepository        $repo
      * @param IPasswordHasherFactory $hasherFactory
      */
-    public function __construct(IUserRepository $repo, IPasswordHasherFactory $hasherFactory)
+    public function __construct(IAdminRepository $repo, IPasswordHasherFactory $hasherFactory)
     {
         $this->repo          = $repo;
         $this->hasherFactory = $hasherFactory;
@@ -44,7 +44,7 @@ class DmsUserSeeder extends Seeder
     {
         $this->repo->clear();
 
-        $this->repo->save(new User(
+        $this->repo->save(new Admin(
             new EmailAddress('admin@admin.com'),
             'admin',
             $this->hasherFactory->buildDefault()->hash('admin'),

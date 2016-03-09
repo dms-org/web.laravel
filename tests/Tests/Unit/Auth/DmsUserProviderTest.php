@@ -8,8 +8,8 @@ use Dms\Web\Laravel\Auth\DmsUserProvider;
 use Dms\Web\Laravel\Auth\Password\BcryptPasswordHasher;
 use Dms\Web\Laravel\Auth\Password\PasswordHasherFactory;
 use Dms\Web\Laravel\Auth\Persistence\AuthOrm;
-use Dms\Web\Laravel\Auth\Persistence\UserRepository;
-use Dms\Web\Laravel\Auth\User;
+use Dms\Web\Laravel\Auth\Persistence\AdminRepository;
+use Dms\Web\Laravel\Auth\Admin;
 
 /**
  * @author Elliot Levin <elliotlevin@hotmail.com>
@@ -22,7 +22,7 @@ class DmsUserProviderTest extends DbIntegrationTest
     protected $userProvider;
 
     /**
-     * @var UserRepository
+     * @var AdminRepository
      */
     protected $userRepo;
 
@@ -44,7 +44,7 @@ class DmsUserProviderTest extends DbIntegrationTest
             },
         ], 'bcrypt', 10);
 
-        $this->userRepo     = new UserRepository($this->connection, $this->orm);
+        $this->userRepo     = new AdminRepository($this->connection, $this->orm);
         $this->userProvider = new DmsUserProvider($this->userRepo, $hasher);
 
         $this->setDataInDb([
@@ -77,16 +77,16 @@ class DmsUserProviderTest extends DbIntegrationTest
 
     public function testRetrieveByUsername()
     {
-        /** @var User $user */
+        /** @var Admin $user */
         $user = $this->userProvider->retrieveById('admin');
 
-        $this->assertInstanceOf(User::class, $user);
+        $this->assertInstanceOf(Admin::class, $user);
         $this->assertSame(1, $user->getId());
 
-        /** @var User $user */
+        /** @var Admin $user */
         $user = $this->userProvider->retrieveById('user');
 
-        $this->assertInstanceOf(User::class, $user);
+        $this->assertInstanceOf(Admin::class, $user);
         $this->assertSame(2, $user->getId());
 
         $this->assertSame(null, $this->userProvider->retrieveById('non_existent_username'));
@@ -94,22 +94,22 @@ class DmsUserProviderTest extends DbIntegrationTest
 
     public function testRetrieveByCredentials()
     {
-        /** @var User $user */
+        /** @var Admin $user */
         $user = $this->userProvider->retrieveByCredentials([
             'username' => 'admin',
             'password' => 'does_not_matter',
         ]);
 
-        $this->assertInstanceOf(User::class, $user);
+        $this->assertInstanceOf(Admin::class, $user);
         $this->assertSame(1, $user->getId());
 
-        /** @var User $user */
+        /** @var Admin $user */
         $user = $this->userProvider->retrieveByCredentials([
             'username' => 'user',
             'password' => 'does_not_matter',
         ]);
 
-        $this->assertInstanceOf(User::class, $user);
+        $this->assertInstanceOf(Admin::class, $user);
         $this->assertSame(2, $user->getId());
 
         $this->assertSame(null, $this->userProvider->retrieveByCredentials([
@@ -120,7 +120,7 @@ class DmsUserProviderTest extends DbIntegrationTest
 
     public function testUpdateRememberToken()
     {
-        /** @var User $user */
+        /** @var Admin $user */
         $user = $this->userRepo->get(1);
         $this->userProvider->updateRememberToken($user, 'new_token');
 
@@ -130,10 +130,10 @@ class DmsUserProviderTest extends DbIntegrationTest
 
     public function testRetrieveByToken()
     {
-        /** @var User $user */
+        /** @var Admin $user */
         $user = $this->userProvider->retrieveByToken('admin', 'some_token');
 
-        $this->assertInstanceOf(User::class, $user);
+        $this->assertInstanceOf(Admin::class, $user);
         $this->assertSame(1, $user->getId());
 
         $this->assertSame(null, $this->userProvider->retrieveByToken('admin', 'non_existent_token'));
@@ -141,7 +141,7 @@ class DmsUserProviderTest extends DbIntegrationTest
 
     public function testValidateCredentials()
     {
-        /** @var User $user */
+        /** @var Admin $user */
         $user = $this->userRepo->get(1);
 
         $this->assertSame(true, $this->userProvider->validateCredentials($user, ['password' => 'password']));

@@ -1,11 +1,10 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Persistence\Db\Migration;
 
 use Dms\Core\Exception\InvalidArgumentException;
 use Dms\Core\Persistence\Db\Connection\IConnection;
 use Dms\Core\Persistence\Db\Doctrine\DoctrineConnection;
-use Dms\Core\Persistence\Db\Doctrine\Migration\MigrationGenerator;
 use Dms\Core\Persistence\Db\Mapping\IOrm;
 use Illuminate\Database\Console\Migrations\BaseCommand;
 use Illuminate\Support\Composer;
@@ -37,54 +36,34 @@ class AutoGenerateMigrationCommand extends BaseCommand
     private $composer;
 
     /**
-     * @var MigrationGenerator
-     */
-    private $autoMigrationGenerator;
-
-    /**
-     * @var DoctrineConnection
-     */
-    private $connection;
-
-    /**
-     * @var IOrm
-     */
-    private $orm;
-
-    /**
      * AutoGenerateMigrationCommand constructor.
      *
-     * @param Composer                  $composer
-     * @param LaravelMigrationGenerator $autoMigrationGenerator
-     * @param IConnection               $connection
-     * @param IOrm                      $orm
+     * @param Composer $composer
      */
-    public function __construct(
-        Composer $composer,
-        LaravelMigrationGenerator $autoMigrationGenerator,
-        IConnection $connection,
-        IOrm $orm
-    ) {
+    public function __construct(Composer $composer)
+    {
         parent::__construct();
-
-        InvalidArgumentException::verifyInstanceOf(__METHOD__, 'connection', $connection, DoctrineConnection::class);
-
         $this->composer = $composer;
-        $this->autoMigrationGenerator = $autoMigrationGenerator;
-        $this->connection = $connection;
-        $this->orm = $orm;
     }
 
     /**
      * Execute the console command.
      *
-     * @return void
+     * @param LaravelMigrationGenerator $autoMigrationGenerator
+     * @param IConnection               $connection
+     * @param IOrm                      $orm
      */
-    public function fire()
+    public function fire(
+        LaravelMigrationGenerator $autoMigrationGenerator,
+        IConnection $connection,
+        IOrm $orm
+    )
     {
-        $file = $this->autoMigrationGenerator->generateMigration(
-            $this->connection,
-            $this->orm,
+        InvalidArgumentException::verifyInstanceOf(__METHOD__, 'connection', $connection, DoctrineConnection::class);
+
+        $file = $autoMigrationGenerator->generateMigration(
+            $connection,
+            $orm,
             $this->input->getArgument('name')
         );
 
@@ -96,5 +75,4 @@ class AutoGenerateMigrationCommand extends BaseCommand
 
         $this->composer->dumpAutoloads();
     }
-
 }

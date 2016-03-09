@@ -54,13 +54,13 @@ class KeywordTypeIdentifier
     /**
      * Gets the keyword type from the given string.
      *
-     * Returns one of ("danger", "success", "info") or NULL if unknown
+     * Returns one of ("danger", "success", "info") or "default" if unknown
      *
      * @param string $name
      *
-     * @return string|null
+     * @return string
      */
-    public static function getClass(string $name)
+    public static function getClass(string $name) : string
     {
         return app(__CLASS__)->getTypeFromName($name);
     }
@@ -68,13 +68,13 @@ class KeywordTypeIdentifier
     /**
      * Gets the keyword type from the given string.
      *
-     * Returns one of ("danger", "success", "info") or NULL if unknown
+     * Returns one of ("danger", "success", "info") or "default" if unknown
      *
      * @param string $name
      *
-     * @return string|null
+     * @return string
      */
-    public function getTypeFromName(string $name)
+    public function getTypeFromName(string $name) : string
     {
         if (isset($this->overridesMap[$name])) {
             return $this->overridesMap[$name];
@@ -96,6 +96,6 @@ class KeywordTypeIdentifier
             return 'primary';
         }
 
-        return null;
+        return 'default';
     }
 }

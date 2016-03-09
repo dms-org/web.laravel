@@ -2,12 +2,12 @@
 
 namespace Dms\Web\Laravel\Tests\Unit\Action\ExceptionHandler;
 
-use Dms\Core\Auth\UserForbiddenException;
+use Dms\Core\Auth\AdminForbiddenException;
 use Dms\Core\Form\InvalidFormSubmissionException;
 use Dms\Core\Module\IAction;
 use Dms\Web\Laravel\Action\ActionExceptionHandlerCollection;
 use Dms\Web\Laravel\Action\ExceptionHandler\InvalidFormSubmissionExceptionHandler;
-use Dms\Web\Laravel\Action\ExceptionHandler\UserForbiddenExceptionHandler;
+use Dms\Web\Laravel\Action\ExceptionHandler\AdminForbiddenExceptionHandler;
 use Dms\Web\Laravel\Action\UnhandleableActionExceptionException;
 use Dms\Web\Laravel\Http\ModuleContext;
 use Dms\Web\Laravel\Tests\Mock\Language\MockLanguageProvider;
@@ -27,7 +27,7 @@ class ActionExceptionHandlerCollectionTest extends UnitTest
     {
         $this->collection = new ActionExceptionHandlerCollection([
             new InvalidFormSubmissionExceptionHandler(new MockLanguageProvider()),
-            new UserForbiddenExceptionHandler(),
+            new AdminForbiddenExceptionHandler(),
         ]);
     }
 
@@ -39,8 +39,8 @@ class ActionExceptionHandlerCollectionTest extends UnitTest
         );
 
         $this->assertInstanceOf(
-            UserForbiddenExceptionHandler::class,
-            $this->collection->findHandlerFor($this->mockModuleContext(), $this->mockAction(), $this->getMockWithoutInvokingTheOriginalConstructor(UserForbiddenException::class))
+            AdminForbiddenExceptionHandler::class,
+            $this->collection->findHandlerFor($this->mockModuleContext(), $this->mockAction(), $this->getMockWithoutInvokingTheOriginalConstructor(AdminForbiddenException::class))
         );
     }
 

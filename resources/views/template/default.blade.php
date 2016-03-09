@@ -5,7 +5,7 @@
 
 
 @extends('dms::template.template')
-<?php /** @var \Dms\Core\Auth\IUser $user */ ?>
+<?php /** @var \Dms\Core\Auth\IAdmin $user */ ?>
 <?php /** @var array $navigation */ ?>
 @section('body-content')
     <body class="hold-transition skin-blue sidebar-mini">

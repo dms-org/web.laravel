@@ -2,19 +2,19 @@
 
 namespace Dms\Web\Laravel\Tests\Unit\Action\ExceptionHandler;
 
-use Dms\Core\Auth\UserForbiddenException;
-use Dms\Web\Laravel\Action\ExceptionHandler\UserForbiddenExceptionHandler;
+use Dms\Core\Auth\AdminForbiddenException;
+use Dms\Web\Laravel\Action\ExceptionHandler\AdminForbiddenExceptionHandler;
 use Dms\Web\Laravel\Action\IActionExceptionHandler;
 use Illuminate\Http\JsonResponse;
 
 /**
  * @author Elliot Levin <elliotlevin@hotmail.com>
  */
-class UserForbiddenExceptionHandlerTest extends ExceptionHandlerTest
+class AdminForbiddenExceptionHandlerTest extends ExceptionHandlerTest
 {
     protected function buildHandler() : IActionExceptionHandler
     {
-        return new UserForbiddenExceptionHandler();
+        return new AdminForbiddenExceptionHandler();
     }
 
     public function exceptionsHandlingTests() : array
@@ -22,7 +22,7 @@ class UserForbiddenExceptionHandlerTest extends ExceptionHandlerTest
         return [
             [
                 $this->mockAction(),
-                $this->getMockForAbstractClass(UserForbiddenException::class, [], '', false),
+                $this->getMockForAbstractClass(AdminForbiddenException::class, [], '', false),
                 new JsonResponse([
                     'message' => 'The current account is forbidden from running this action',
                 ], 403),

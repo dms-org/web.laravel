@@ -6,7 +6,7 @@ use Dms\Common\Structure\Web\EmailAddress;
 use Dms\Core\Auth\IHashedPassword;
 use Dms\Core\Auth\IPermission;
 use Dms\Core\Auth\IRoleRepository;
-use Dms\Core\Auth\IUserRepository;
+use Dms\Core\Auth\IAdminRepository;
 use Dms\Core\Auth\Permission;
 use Dms\Core\Common\Crud\Action\Object\IObjectAction;
 use Dms\Core\Common\Crud\ICrudModule;
@@ -19,7 +19,7 @@ use Dms\Core\Tests\Common\Crud\Modules\CrudModuleTest;
 use Dms\Core\Tests\Module\Mock\MockAuthSystem;
 use Dms\Web\Laravel\Auth\Module\RoleModule;
 use Dms\Web\Laravel\Auth\Role;
-use Dms\Web\Laravel\Auth\User;
+use Dms\Web\Laravel\Auth\Admin;
 
 /**
  * @author Elliot Levin <elliotlevin@hotmail.com>
@@ -54,15 +54,15 @@ class RoleModuleTest extends CrudModuleTest
         return new RoleModule($dataSource, $this->mockUserDataSource(), $authSystem, $this->mockCms());
     }
 
-    protected function mockUserDataSource() : IUserRepository
+    protected function mockUserDataSource() : IAdminRepository
     {
-        $admin = new User(new EmailAddress('admin@admin.com'), 'admin', $this->getMockForAbstractClass(IHashedPassword::class));
+        $admin = new Admin(new EmailAddress('admin@admin.com'), 'admin', $this->getMockForAbstractClass(IHashedPassword::class));
         $admin->setId(1);
 
-        $person = new User(new EmailAddress('person@person.com'), 'person', $this->getMockForAbstractClass(IHashedPassword::class));
+        $person = new Admin(new EmailAddress('person@person.com'), 'person', $this->getMockForAbstractClass(IHashedPassword::class));
         $person->setId(2);
 
-        return new class(User::collection([$admin, $person])) extends ArrayRepository implements IUserRepository
+        return new class(Admin::collection([$admin, $person])) extends ArrayRepository implements IAdminRepository
         {
         };
     }

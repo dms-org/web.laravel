@@ -3,7 +3,7 @@
 namespace Dms\Web\Laravel\Http\Controllers\Auth;
 
 use Dms\Core\Auth\InvalidCredentialsException;
-use Dms\Core\Auth\UserBannedException;
+use Dms\Core\Auth\AdminBannedException;
 use Dms\Core\ICms;
 use Dms\Web\Laravel\Http\Controllers\DmsController;
 use Illuminate\Cache\RateLimiter;
@@ -84,7 +84,7 @@ class AuthController extends DmsController
             return redirect()->intended(route('dms::index'));
         } catch (InvalidCredentialsException $e) {
             $errorMessage = 'dms::auth.failed';
-        } catch (UserBannedException $e) {
+        } catch (AdminBannedException $e) {
             $errorMessage = 'dms::auth.banned';
         }
 

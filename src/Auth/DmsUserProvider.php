@@ -2,8 +2,8 @@
 
 namespace Dms\Web\Laravel\Auth;
 
-use Dms\Core\Auth\IUser;
-use Dms\Core\Auth\IUserRepository;
+use Dms\Core\Auth\IAdmin;
+use Dms\Core\Auth\IAdminRepository;
 use Dms\Core\Exception\TypeMismatchException;
 use Dms\Web\Laravel\Auth\Password\IPasswordHasherFactory;
 use Illuminate\Contracts\Auth\Authenticatable;
@@ -17,7 +17,7 @@ use Illuminate\Contracts\Auth\UserProvider;
 class DmsUserProvider implements UserProvider
 {
     /**
-     * @var IUserRepository
+     * @var IAdminRepository
      */
     protected $repository;
 
@@ -29,10 +29,10 @@ class DmsUserProvider implements UserProvider
     /**
      * DmsUserProvider constructor.
      *
-     * @param IUserRepository        $repository
+     * @param IAdminRepository        $repository
      * @param IPasswordHasherFactory $passwordHasherFactory
      */
-    public function __construct(IUserRepository $repository, IPasswordHasherFactory $passwordHasherFactory)
+    public function __construct(IAdminRepository $repository, IPasswordHasherFactory $passwordHasherFactory)
     {
         $this->repository            = $repository;
         $this->passwordHasherFactory = $passwordHasherFactory;
@@ -49,7 +49,7 @@ class DmsUserProvider implements UserProvider
     {
         $users = $this->repository->matching(
             $this->repository->criteria()
-                ->where(User::USERNAME, '=', $username)
+                ->where(Admin::USERNAME, '=', $username)
         );
 
         return reset($users) ?: null;
@@ -67,8 +67,8 @@ class DmsUserProvider implements UserProvider
     {
         $users = $this->repository->matching(
             $this->repository->criteria()
-                ->where(User::USERNAME, '=', $username)
-                ->where(User::REMEMBER_TOKEN, '=', $token)
+                ->where(Admin::USERNAME, '=', $username)
+                ->where(Admin::REMEMBER_TOKEN, '=', $token)
         );
 
         return reset($users) ?: null;
@@ -144,13 +144,13 @@ class DmsUserProvider implements UserProvider
     /**
      * @param Authenticatable $user
      *
-     * @return IUser|Authenticatable
+     * @return IAdmin|Authenticatable
      * @throws TypeMismatchException
      */
     private function validateUser(Authenticatable $user)
     {
-        if (!($user instanceof IUser)) {
-            throw TypeMismatchException::format('Expecting instance of %s, %s given', IUser::class, get_class($user));
+        if (!($user instanceof IAdmin)) {
+            throw TypeMismatchException::format('Expecting instance of %s, %s given', IAdmin::class, get_class($user));
         }
 
         return $user;

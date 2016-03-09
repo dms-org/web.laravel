@@ -6,7 +6,7 @@ use Dms\Core\Auth\Permission;
 use Dms\Core\Persistence\Db\Mapping\Definition\MapperDefinition;
 use Dms\Core\Persistence\Db\Mapping\EntityMapper;
 use Dms\Web\Laravel\Auth\Role;
-use Dms\Web\Laravel\Auth\User;
+use Dms\Web\Laravel\Auth\Admin;
 
 /**
  * The role entity mapper.
@@ -40,9 +40,9 @@ class RoleMapper extends EntityMapper
             ->to(Permission::class);
 
         $map->relation(Role::USER_IDS)
-            ->to(User::class)
+            ->to(Admin::class)
             ->toManyIds()
-            ->withBidirectionalRelation(User::ROLE_IDS)
+            ->withBidirectionalRelation(Admin::ROLE_IDS)
             ->throughJoinTable('user_roles')
             ->withParentIdAs('role_id')
             ->withRelatedIdAs('user_id');

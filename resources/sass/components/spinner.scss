@@ -2,6 +2,8 @@
     position: relative;
 
     &.loading {
+        pointer-events: none;
+
         & > .spinner {
             display: block;
             position: absolute;

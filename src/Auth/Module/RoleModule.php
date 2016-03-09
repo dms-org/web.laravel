@@ -5,7 +5,7 @@ namespace Dms\Web\Laravel\Auth\Module;
 use Dms\Common\Structure\Field;
 use Dms\Core\Auth\IAuthSystem;
 use Dms\Core\Auth\IRoleRepository;
-use Dms\Core\Auth\IUserRepository;
+use Dms\Core\Auth\IAdminRepository;
 use Dms\Core\Auth\Permission;
 use Dms\Core\Common\Crud\CrudModule;
 use Dms\Core\Common\Crud\Definition\CrudModuleDefinition;
@@ -15,8 +15,7 @@ use Dms\Core\ICms;
 use Dms\Core\Model\EntityIdCollection;
 use Dms\Core\Model\ValueObjectCollection;
 use Dms\Web\Laravel\Auth\Role;
-use Dms\Web\Laravel\Auth\User;
-use Dms\Web\Laravel\Util\StringHumanizer;
+use Dms\Web\Laravel\Auth\Admin;
 
 /**
  * The role crud module.
@@ -26,7 +25,7 @@ use Dms\Web\Laravel\Util\StringHumanizer;
 class RoleModule extends CrudModule
 {
     /**
-     * @var IUserRepository
+     * @var IAdminRepository
      */
     private $userRepo;
 
@@ -39,13 +38,13 @@ class RoleModule extends CrudModule
      * RoleModule constructor.
      *
      * @param IRoleRepository $dataSource
-     * @param IUserRepository $userRepo
+     * @param IAdminRepository $userRepo
      * @param IAuthSystem     $authSystem
      * @param ICms            $cms
      */
     public function __construct(
         IRoleRepository $dataSource,
-        IUserRepository $userRepo,
+        IAdminRepository $userRepo,
         IAuthSystem $authSystem,
         ICms $cms
     ) {
@@ -98,7 +97,7 @@ class RoleModule extends CrudModule
                     Field::create('users', 'Users')
                         ->entityIdsFrom($this->userRepo)
                         ->defaultTo([])
-                        ->labelledByCallback(function (User $user) {
+                        ->labelledByCallback(function (Admin $user) {
                             return $user->getUsername() . ' <' . $user->getEmailAddress() . '>';
                         })
                         ->mapToCollection(EntityIdCollection::type())

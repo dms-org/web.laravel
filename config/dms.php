@@ -49,7 +49,7 @@ return [
                 Dms\Web\Laravel\Action\ResultHandler\FileResultHandler::class,
             ],
             'exception-handlers' => [
-                Dms\Web\Laravel\Action\ExceptionHandler\UserForbiddenExceptionHandler::class,
+                Dms\Web\Laravel\Action\ExceptionHandler\AdminForbiddenExceptionHandler::class,
                 Dms\Web\Laravel\Action\ExceptionHandler\InvalidFormSubmissionExceptionHandler::class,
                 Dms\Web\Laravel\Action\ExceptionHandler\EntityOutOfSyncExceptionHandler::class,
             ],

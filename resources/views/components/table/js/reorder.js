@@ -3,6 +3,7 @@ Dms.table.initializeCallbacks.push(function (element) {
 
     element.find('.dms-table-body-sortable').each(function () {
         var tableBody = $(this);
+        var table = tableBody.closest('.dms-table');
         var control = tableBody.closest('.dms-table-control');
         var reorderRowsUrl = control.attr('data-reorder-row-action-url');
 
@@ -29,8 +30,12 @@ Dms.table.initializeCallbacks.push(function (element) {
                 var ladda = Ladda.create(reorderButtonHandle.get(0));
                 ladda.start();
 
-                reorderRequest.always(ladda.stop)
+                reorderRequest.always(ladda.stop);
             }
+
+            reorderRequest.done(function () {
+                table.triggerHandler('dms-load-table-data');
+            });
 
             reorderRequest.fail(function () {
                 swal({

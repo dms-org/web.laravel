@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<?php /** @var \Dms\Core\Auth\IUser $user */ ?>
+<?php /** @var \Dms\Core\Auth\IAdmin $user */ ?>
 <html>
 <head>
     <meta charset="utf-8">

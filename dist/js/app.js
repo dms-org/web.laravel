@@ -316,9 +316,14 @@ Dms.global.initializeCallbacks.push(function () {
         Dms.alerts.add(flashMessage.type, flashMessage.message);
     }
 });
-Dms.global.initializeCallbacks.push(function () {
-    $('button[data-a-href]').css('cursor', 'pointer').click(function () {
-        window.location.href = $(this).attr('data-a-href');
+Dms.global.initializeCallbacks.push(function (element) {
+    element.find('button[data-a-href]').css('cursor', 'pointer');
+
+    element.delegate('button[data-a-href]', 'click', function () {
+        var button = $(this);
+        var link = $('<a/>').attr('href', $(this).attr('data-a-href')).hide();
+        button.before(link);
+        link.click();
     });
 });
 Dms.form.initializeCallbacks.push(function () {
@@ -989,6 +994,12 @@ Dms.chart.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
+    element.find('input[type=checkbox].single-checkbox').iCheck({
+        checkboxClass: 'icheckbox_square-blue',
+        increaseArea: '20%'
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
 
     element.find('.list-of-checkboxes').each(function () {
         var listOfCheckboxes = $(this);
@@ -1016,12 +1027,6 @@ Dms.form.initializeCallbacks.push(function (element) {
         }
 
         $(this).addClass('minicolors').minicolors(config);
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
-    element.find('input[type=checkbox].single-checkbox').iCheck({
-        checkboxClass: 'icheckbox_square-blue',
-        increaseArea: '20%'
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -1898,13 +1903,13 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-
-});
-Dms.form.initializeCallbacks.push(function (element) {
     element.find('input[type=radio]').iCheck({
         radioClass: 'iradio_square-blue',
         increaseArea: '20%'
     });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+
 });
 Dms.form.initializeCallbacks.push(function (element) {
     element.find('input[type="ip-address"]')
@@ -2676,6 +2681,7 @@ Dms.table.initializeCallbacks.push(function (element) {
 
     element.find('.dms-table-body-sortable').each(function () {
         var tableBody = $(this);
+        var table = tableBody.closest('.dms-table');
         var control = tableBody.closest('.dms-table-control');
         var reorderRowsUrl = control.attr('data-reorder-row-action-url');
 
@@ -2702,8 +2708,12 @@ Dms.table.initializeCallbacks.push(function (element) {
                 var ladda = Ladda.create(reorderButtonHandle.get(0));
                 ladda.start();
 
-                reorderRequest.always(ladda.stop)
+                reorderRequest.always(ladda.stop);
             }
+
+            reorderRequest.done(function () {
+                table.triggerHandler('dms-load-table-data');
+            });
 
             reorderRequest.fail(function () {
                 swal({

@@ -2,7 +2,7 @@
 
 namespace Dms\Web\Laravel\Http\Controllers\Auth;
 
-use Dms\Core\Auth\IUser;
+use Dms\Core\Auth\IAdmin;
 use Dms\Core\ICms;
 use Dms\Web\Laravel\Auth\Password\IPasswordResetService;
 use Dms\Web\Laravel\Http\Controllers\DmsController;
@@ -114,7 +114,7 @@ class PasswordController extends DmsController
             'username', 'password', 'password_confirmation', 'token'
         );
 
-        $response = $this->passwordBroker->reset($credentials, function (IUser $user, $password) {
+        $response = $this->passwordBroker->reset($credentials, function (IAdmin $user, $password) {
             $this->passwordResetService->resetUserPassword($user, $password);
         });
 

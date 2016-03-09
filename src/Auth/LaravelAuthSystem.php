@@ -6,11 +6,11 @@ use Dms\Core\Auth\IAuthSystem;
 use Dms\Core\Auth\InvalidCredentialsException;
 use Dms\Core\Auth\IPermission;
 use Dms\Core\Auth\IRoleRepository;
-use Dms\Core\Auth\IUser;
-use Dms\Core\Auth\IUserRepository;
+use Dms\Core\Auth\IAdmin;
+use Dms\Core\Auth\IAdminRepository;
 use Dms\Core\Auth\Permission;
-use Dms\Core\Auth\UserBannedException;
-use Dms\Core\Auth\UserForbiddenException;
+use Dms\Core\Auth\AdminBannedException;
+use Dms\Core\Auth\AdminForbiddenException;
 use Dms\Core\Auth\UserNotAuthenticatedException;
 use Dms\Core\Exception\InvalidArgumentException;
 use Dms\Web\Laravel\Auth\Password\IPasswordHasherFactory;
@@ -30,7 +30,7 @@ class LaravelAuthSystem implements IAuthSystem
     protected $laravelAuth;
 
     /**
-     * @var IUserRepository
+     * @var IAdminRepository
      */
     protected $userRepository;
 
@@ -48,13 +48,13 @@ class LaravelAuthSystem implements IAuthSystem
      * LaravelAuthSystem constructor.
      *
      * @param AuthManager            $laravelAuth
-     * @param IUserRepository        $userRepository
+     * @param IAdminRepository        $userRepository
      * @param IRoleRepository        $roleRepository
      * @param IPasswordHasherFactory $passwordHasherFactory
      */
     public function __construct(
         AuthManager $laravelAuth,
-        IUserRepository $userRepository,
+        IAdminRepository $userRepository,
         IRoleRepository $roleRepository,
         IPasswordHasherFactory $passwordHasherFactory
     ) {
@@ -68,16 +68,16 @@ class LaravelAuthSystem implements IAuthSystem
      * @param string $username
      * @param string $password
      *
-     * @return IUser
+     * @return IAdmin
      * @throws InvalidCredentialsException
-     * @throws UserBannedException
+     * @throws AdminBannedException
      */
-    protected function loadByCredentials(string $username, string $password) : IUser
+    protected function loadByCredentials(string $username, string $password) : IAdmin
     {
-        /** @var IUser $user */
+        /** @var IAdmin $user */
         $users = $this->userRepository->matching(
             $this->userRepository->criteria()
-                ->where(User::USERNAME, '=', $username)
+                ->where(Admin::USERNAME, '=', $username)
         );
 
         if (count($users) !== 1) {
@@ -92,7 +92,7 @@ class LaravelAuthSystem implements IAuthSystem
         }
 
         if ($user->isBanned()) {
-            throw UserBannedException::defaultMessage($user);
+            throw AdminBannedException::defaultMessage($user);
         }
 
         return $user;
@@ -106,7 +106,7 @@ class LaravelAuthSystem implements IAuthSystem
      *
      * @return void
      * @throws InvalidCredentialsException
-     * @throws UserBannedException
+     * @throws AdminBannedException
      */
     public function login(string $username, string $password)
     {
@@ -137,7 +137,7 @@ class LaravelAuthSystem implements IAuthSystem
      *
      * @return void
      * @throws InvalidCredentialsException
-     * @throws UserBannedException
+     * @throws AdminBannedException
      */
     public function resetPassword(string $username, string $oldPassword, string $newPassword)
     {
@@ -162,10 +162,10 @@ class LaravelAuthSystem implements IAuthSystem
     /**
      * Returns the currently authenticated user.
      *
-     * @return IUser
+     * @return IAdmin
      * @throws UserNotAuthenticatedException
      */
-    public function getAuthenticatedUser() : IUser
+    public function getAuthenticatedUser() : IAdmin
     {
         $user = $this->laravelAuth->user();
 
@@ -226,16 +226,16 @@ class LaravelAuthSystem implements IAuthSystem
      * @param IPermission[] $permissions
      *
      * @return void
-     * @throws UserForbiddenException
+     * @throws AdminForbiddenException
      * @throws UserNotAuthenticatedException
-     * @throws UserBannedException
+     * @throws AdminBannedException
      */
     public function verifyAuthorized(array $permissions)
     {
         $user = $this->getAuthenticatedUser();
 
         if (!$this->isAuthorized($permissions)) {
-            throw new UserForbiddenException($user, $permissions);
+            throw new AdminForbiddenException($user, $permissions);
         }
     }
 }

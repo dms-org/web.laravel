@@ -6,7 +6,7 @@ use Dms\Common\Structure\Web\EmailAddress;
 use Dms\Core\ICms;
 use Dms\Core\Persistence\Db\Mapping\IOrm;
 use Dms\Web\Laravel\Auth\Password\HashedPassword;
-use Dms\Web\Laravel\Auth\User;
+use Dms\Web\Laravel\Auth\Admin;
 use Dms\Web\Laravel\DmsServiceProvider;
 use Dms\Web\Laravel\Tests\Integration\Fixtures\DmsFixture;
 use Illuminate\Routing\RouteCollection;
@@ -113,17 +113,17 @@ abstract class CmsIntegrationTest extends TestCase
         $app->singleton('Illuminate\Contracts\Debug\ExceptionHandler', \Illuminate\Foundation\Exceptions\Handler::class);
     }
 
-    protected function actingAsUser(User $user = null)
+    protected function actingAsUser(Admin $user = null)
     {
         $this->actingAs($user ?: $this->getMockUser(), 'dms');
     }
 
     /**
-     * @return User
+     * @return Admin
      */
     protected function getMockUser()
     {
-        return new User(
+        return new Admin(
                 new EmailAddress('test@test.com'),
                 'admin',
                 new HashedPassword('some-hash', 'algo', 10)

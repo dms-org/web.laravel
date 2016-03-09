@@ -11,9 +11,9 @@ use Dms\Web\Laravel\Auth\Persistence\Mapper\HashedPasswordMapper;
 use Dms\Web\Laravel\Auth\Persistence\Mapper\PasswordResetTokenMapper;
 use Dms\Web\Laravel\Auth\Persistence\Mapper\PermissionMapper;
 use Dms\Web\Laravel\Auth\Persistence\Mapper\RoleMapper;
-use Dms\Web\Laravel\Auth\Persistence\Mapper\UserMapper;
+use Dms\Web\Laravel\Auth\Persistence\Mapper\AdminMapper;
 use Dms\Web\Laravel\Auth\Role;
-use Dms\Web\Laravel\Auth\User;
+use Dms\Web\Laravel\Auth\Admin;
 
 /**
  * The auth orm module
@@ -38,7 +38,7 @@ class AuthOrm extends Orm
 
         $orm->entities([
             Role::class               => RoleMapper::class,
-            User::class               => UserMapper::class,
+            Admin::class              => AdminMapper::class,
             PasswordResetToken::class => PasswordResetTokenMapper::class,
         ]);
     }

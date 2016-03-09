@@ -12,9 +12,9 @@ use Dms\Web\Laravel\Auth\Password\PasswordResetToken;
 use Dms\Web\Laravel\Auth\Persistence\AuthOrm;
 use Dms\Web\Laravel\Auth\Persistence\PasswordResetTokenRepository;
 use Dms\Web\Laravel\Auth\Persistence\RoleRepository;
-use Dms\Web\Laravel\Auth\Persistence\UserRepository;
+use Dms\Web\Laravel\Auth\Persistence\AdminRepository;
 use Dms\Web\Laravel\Auth\Role;
-use Dms\Web\Laravel\Auth\User;
+use Dms\Web\Laravel\Auth\Admin;
 
 /**
  * @author Elliot Levin <elliotlevin@hotmail.com>
@@ -22,7 +22,7 @@ use Dms\Web\Laravel\Auth\User;
 class AuthOrmTest extends DbIntegrationTest
 {
     /**
-     * @var UserRepository
+     * @var AdminRepository
      */
     protected $userRepo;
 
@@ -49,21 +49,21 @@ class AuthOrmTest extends DbIntegrationTest
      */
     protected function mapperAndRepoType()
     {
-        return User::class;
+        return Admin::class;
     }
 
     public function setUp()
     {
         parent::setUp();
 
-        $this->userRepo               = new UserRepository($this->connection, $this->orm);
+        $this->userRepo               = new AdminRepository($this->connection, $this->orm);
         $this->roleRepo               = new RoleRepository($this->connection, $this->orm);
         $this->passwordResetTokenRepo = new PasswordResetTokenRepository($this->connection, $this->orm);
     }
 
     public function testSaveUser()
     {
-        $this->userRepo->save(new User(
+        $this->userRepo->save(new Admin(
             new EmailAddress('admin@admin.com'),
             'admin',
             new HashedPassword('hash', 'bcrypt', 10)
@@ -112,7 +112,7 @@ class AuthOrmTest extends DbIntegrationTest
             ],
         ]);
 
-        $expected = new User(
+        $expected = new Admin(
             new EmailAddress('admin@admin.com'),
             'admin',
             new HashedPassword('hash', 'bcrypt', 10)
@@ -201,7 +201,7 @@ class AuthOrmTest extends DbIntegrationTest
 
     public function testAssociateUserToRole()
     {
-        $user = new User(new EmailAddress('admin@admin.com'), 'admin', new HashedPassword('hash', 'bcrypt', 10));
+        $user = new Admin(new EmailAddress('admin@admin.com'), 'admin', new HashedPassword('hash', 'bcrypt', 10));
         $role = new Role('admin', Permission::collection());
 
         $this->userRepo->save($user);
@@ -262,7 +262,7 @@ class AuthOrmTest extends DbIntegrationTest
             ],
         ]);
 
-        $expected                 = new User(
+        $expected                 = new Admin(
             new EmailAddress('admin@admin.com'),
             'admin',
             new HashedPassword('hash', 'bcrypt', 10)

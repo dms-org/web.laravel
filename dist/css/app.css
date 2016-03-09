@@ -169,13 +169,15 @@ a.dms-run-action-form {
 
 .dms-spinner-container, .dms-table-container, .dms-chart-container, .dms-staged-form-container, .dms-staged-form .dms-form-stage-container, .dms-staged-form .dms-inner-module, .dms-staged-form .dms-inner-module .dms-inner-module-form-container, .dms-staged-form .dms-wysiwyg-container .dms-file-picker-dialog .dms-file-picker-container, .dms-display-inner-module .dms-inner-module-form-container, .dms-file-tree-data-container {
   position: relative; }
-  .dms-spinner-container.loading > .spinner, .loading.dms-table-container > .spinner, .loading.dms-chart-container > .spinner, .loading.dms-staged-form-container > .spinner, .dms-staged-form .loading.dms-form-stage-container > .spinner, .dms-staged-form .loading.dms-inner-module > .spinner, .dms-staged-form .dms-inner-module .loading.dms-inner-module-form-container > .spinner, .dms-staged-form .dms-wysiwyg-container .dms-file-picker-dialog .loading.dms-file-picker-container > .spinner, .dms-display-inner-module .loading.dms-inner-module-form-container > .spinner, .loading.dms-file-tree-data-container > .spinner {
-    display: block;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    top: calc(50% - 10px);
-    left: calc(50% - 35px); }
+  .dms-spinner-container.loading, .loading.dms-table-container, .loading.dms-chart-container, .loading.dms-staged-form-container, .dms-staged-form .loading.dms-form-stage-container, .dms-staged-form .loading.dms-inner-module, .dms-staged-form .dms-inner-module .loading.dms-inner-module-form-container, .dms-staged-form .dms-wysiwyg-container .dms-file-picker-dialog .loading.dms-file-picker-container, .dms-display-inner-module .loading.dms-inner-module-form-container, .loading.dms-file-tree-data-container {
+    pointer-events: none; }
+    .dms-spinner-container.loading > .spinner, .loading.dms-table-container > .spinner, .loading.dms-chart-container > .spinner, .loading.dms-staged-form-container > .spinner, .dms-staged-form .loading.dms-form-stage-container > .spinner, .dms-staged-form .loading.dms-inner-module > .spinner, .dms-staged-form .dms-inner-module .loading.dms-inner-module-form-container > .spinner, .dms-staged-form .dms-wysiwyg-container .dms-file-picker-dialog .loading.dms-file-picker-container > .spinner, .dms-display-inner-module .loading.dms-inner-module-form-container > .spinner, .loading.dms-file-tree-data-container > .spinner {
+      display: block;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      top: calc(50% - 10px);
+      left: calc(50% - 35px); }
 
 .spinner {
   margin: 0 auto 0;
@@ -261,6 +263,9 @@ a.dms-run-action-form {
     display: inline; }
   .dms-file-tree-data .dms-folder-item .help-block {
     margin: 0; }
+
+.btn.btn-default.ladda-button .ladda-spinner > div > div > div {
+  background-color: #333 !important; }
 
 body {
   font-family: Arial, sans-serif !important; }

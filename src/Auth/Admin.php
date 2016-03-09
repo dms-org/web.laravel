@@ -4,22 +4,22 @@ namespace Dms\Web\Laravel\Auth;
 
 use Dms\Common\Structure\Web\EmailAddress;
 use Dms\Core\Auth\IHashedPassword;
-use Dms\Core\Auth\IUser;
+use Dms\Core\Auth\IAdmin;
 use Dms\Core\Exception\InvalidArgumentException;
 use Dms\Core\Exception\InvalidOperationException;
 use Dms\Core\Model\EntityIdCollection;
 use Dms\Core\Model\Object\ClassDefinition;
 use Dms\Core\Model\Object\Entity;
 use Dms\Web\Laravel\Auth\Password\HashedPassword;
-use Dms\Web\Laravel\Auth\Persistence\Mapper\UserMapper;
+use Dms\Web\Laravel\Auth\Persistence\Mapper\AdminMapper;
 use Illuminate\Contracts\Auth\Authenticatable;
 
 /**
- * The laravel user entity.
+ * The laravel admin entity.
  *
  * @author Elliot Levin <elliotlevin@hotmail.com>
  */
-class User extends Entity implements IUser, Authenticatable
+class Admin extends Entity implements IAdmin, Authenticatable
 {
     const EMAIL_ADDRESS = 'emailAddress';
     const USERNAME = 'username';
@@ -204,7 +204,7 @@ class User extends Entity implements IUser, Authenticatable
      */
     public function getAuthIdentifierName() : string
     {
-        return UserMapper::AUTH_IDENTIFIER_COLUMN;
+        return AdminMapper::AUTH_IDENTIFIER_COLUMN;
     }
 
     /**
@@ -224,7 +224,7 @@ class User extends Entity implements IUser, Authenticatable
      */
     public function getAuthPassword() : string
     {
-        return UserMapper::AUTH_PASSWORD_COLUMN;
+        return AdminMapper::AUTH_PASSWORD_COLUMN;
     }
 
     /**
@@ -256,6 +256,6 @@ class User extends Entity implements IUser, Authenticatable
      */
     public function getRememberTokenName()
     {
-        return UserMapper::AUTH_REMEMBER_TOKEN_COLUMN;
+        return AdminMapper::AUTH_REMEMBER_TOKEN_COLUMN;
     }
 }

@@ -2,8 +2,8 @@
 
 namespace Dms\Web\Laravel\Auth\Password;
 
-use Dms\Core\Auth\IUser;
-use Dms\Core\Auth\IUserRepository;
+use Dms\Core\Auth\IAdmin;
+use Dms\Core\Auth\IAdminRepository;
 
 /**
  * The password reset service
@@ -13,7 +13,7 @@ use Dms\Core\Auth\IUserRepository;
 class PasswordResetService implements IPasswordResetService
 {
     /**
-     * @var IUserRepository
+     * @var IAdminRepository
      */
     private $userRepository;
 
@@ -25,10 +25,10 @@ class PasswordResetService implements IPasswordResetService
     /**
      * PasswordResetService constructor.
      *
-     * @param IUserRepository        $userRepository
+     * @param IAdminRepository        $userRepository
      * @param IPasswordHasherFactory $hasherFactory
      */
-    public function __construct(IUserRepository $userRepository, IPasswordHasherFactory $hasherFactory)
+    public function __construct(IAdminRepository $userRepository, IPasswordHasherFactory $hasherFactory)
     {
         $this->userRepository = $userRepository;
         $this->hasherFactory = $hasherFactory;
@@ -37,12 +37,12 @@ class PasswordResetService implements IPasswordResetService
     /**
      * Resets the user's password.
      *
-     * @param IUser  $user
+     * @param IAdmin  $user
      * @param string $newPassword
      *
      * @return void
      */
-    public function resetUserPassword(IUser $user, string $newPassword)
+    public function resetUserPassword(IAdmin $user, string $newPassword)
     {
         $hashedPassword = $this->hasherFactory->buildDefault()->hash($newPassword);
 

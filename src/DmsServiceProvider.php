@@ -2,10 +2,9 @@
 
 namespace Dms\Web\Laravel;
 
-use Dms\Common\Structure\FileSystem\Directory;
 use Dms\Core\Auth\IAuthSystem;
 use Dms\Core\Auth\IRoleRepository;
-use Dms\Core\Auth\IUserRepository;
+use Dms\Core\Auth\IAdminRepository;
 use Dms\Core\Exception\InvalidOperationException;
 use Dms\Core\Language\ILanguageProvider;
 use Dms\Core\Persistence\Db\Connection\IConnection;
@@ -22,7 +21,7 @@ use Dms\Web\Laravel\Auth\Password\IPasswordResetService;
 use Dms\Web\Laravel\Auth\Password\PasswordHasherFactory;
 use Dms\Web\Laravel\Auth\Password\PasswordResetService;
 use Dms\Web\Laravel\Auth\Persistence\RoleRepository;
-use Dms\Web\Laravel\Auth\Persistence\UserRepository;
+use Dms\Web\Laravel\Auth\Persistence\AdminRepository;
 use Dms\Web\Laravel\Document\DirectoryTree;
 use Dms\Web\Laravel\Document\PublicFileModule;
 use Dms\Web\Laravel\File\Command\ClearTempFilesCommand;
@@ -34,6 +33,7 @@ use Dms\Web\Laravel\Http\Middleware\Authenticate;
 use Dms\Web\Laravel\Http\Middleware\RedirectIfAuthenticated;
 use Dms\Web\Laravel\Http\Middleware\VerifyCsrfToken;
 use Dms\Web\Laravel\Http\ModuleRequestRouter;
+use Dms\Web\Laravel\Install\DmsInstallCommand;
 use Dms\Web\Laravel\Language\LaravelLanguageProvider;
 use Dms\Web\Laravel\Persistence\Db\DmsOrm;
 use Dms\Web\Laravel\Persistence\Db\LaravelConnection;
@@ -149,7 +149,7 @@ class DmsServiceProvider extends ServiceProvider
             );
         });
 
-        $this->app->bind(IUserRepository::class, UserRepository::class);
+        $this->app->bind(IAdminRepository::class, AdminRepository::class);
         $this->app->bind(IRoleRepository::class, RoleRepository::class);
         $this->app->bind(IPasswordResetService::class, PasswordResetService::class);
 
@@ -167,7 +167,7 @@ class DmsServiceProvider extends ServiceProvider
 
         $this->app['config']->set('auth.providers.dms-users', [
             'driver' => 'dms',
-            'model'  => Auth\User::class,
+            'model'  => Auth\Admin::class,
         ]);
 
         $this->app['config']->set('auth.passwords.dms', [
@@ -262,6 +262,7 @@ class DmsServiceProvider extends ServiceProvider
     private function registerCommands()
     {
         $this->commands([
+            DmsInstallCommand::class,
             AutoGenerateMigrationCommand::class,
             ClearTempFilesCommand::class,
         ]);

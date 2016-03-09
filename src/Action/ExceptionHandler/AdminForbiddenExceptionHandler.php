@@ -2,7 +2,7 @@
 
 namespace Dms\Web\Laravel\Action\ExceptionHandler;
 
-use Dms\Core\Auth\UserForbiddenException;
+use Dms\Core\Auth\AdminForbiddenException;
 use Dms\Core\Module\IAction;
 use Dms\Web\Laravel\Action\ActionExceptionHandler;
 use Dms\Web\Laravel\Http\ModuleContext;
@@ -13,14 +13,14 @@ use Illuminate\Http\Response;
  *
  * @author Elliot Levin <elliotlevin@hotmail.com>
  */
-class UserForbiddenExceptionHandler extends ActionExceptionHandler
+class AdminForbiddenExceptionHandler extends ActionExceptionHandler
 {
     /**
      * @return string|null
      */
     protected function supportedExceptionType()
     {
-        return UserForbiddenException::class;
+        return AdminForbiddenException::class;
     }
 
     /**

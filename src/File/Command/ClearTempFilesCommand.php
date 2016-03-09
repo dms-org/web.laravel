@@ -36,35 +36,21 @@ class ClearTempFilesCommand extends Command
     protected $filesystem;
 
     /**
-     * @var ITemporaryFileRepository
-     */
-    protected $tempFileRepo;
-
-    /**
-     * @var IClock
-     */
-    protected $clock;
-
-    /**
      * ClearTempFilesCommand constructor.
      *
-     * @param Filesystem               $filesystem
-     * @param ITemporaryFileRepository $tempFileRepo
-     * @param IClock                   $clock
+     * @param Filesystem $filesystem
      */
-    public function __construct(Filesystem $filesystem, ITemporaryFileRepository $tempFileRepo, IClock $clock)
+    public function __construct(Filesystem $filesystem)
     {
         parent::__construct();
-        $this->filesystem   = $filesystem;
-        $this->tempFileRepo = $tempFileRepo;
-        $this->clock        = $clock;
+        $this->filesystem = $filesystem;
     }
 
-    public function fire()
+    public function fire(ITemporaryFileRepository $tempFileRepo, IClock $clock)
     {
-        $expiredFiles = $this->tempFileRepo->matching(
-            $this->tempFileRepo->criteria()
-                ->whereSatisfies(TemporaryFile::expiredSpec($this->clock))
+        $expiredFiles = $tempFileRepo->matching(
+            $tempFileRepo->criteria()
+                ->whereSatisfies(TemporaryFile::expiredSpec($clock))
         );
 
         foreach ($expiredFiles as $file) {
@@ -74,6 +60,6 @@ class ClearTempFilesCommand extends Command
             }
         }
 
-        $this->tempFileRepo->removeAll($expiredFiles);
+        $tempFileRepo->removeAll($expiredFiles);
     }
 }

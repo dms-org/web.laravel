@@ -2,7 +2,7 @@
 
 namespace Dms\Web\Laravel\Auth\Password;
 
-use Dms\Core\Auth\IUser;
+use Dms\Core\Auth\IAdmin;
 
 /**
  * The password reset service interface.
@@ -14,10 +14,10 @@ interface IPasswordResetService
     /**
      * Resets the user's password.
      *
-     * @param IUser  $user
+     * @param IAdmin  $user
      * @param string $newPassword
      *
      * @return void
      */
-    public function resetUserPassword(IUser $user, string $newPassword);
+    public function resetUserPassword(IAdmin $user, string $newPassword);
 }

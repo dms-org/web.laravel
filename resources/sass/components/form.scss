@@ -29,8 +29,15 @@ a.dms-run-action-form {
                 min-height: 50px;
                 opacity: .3;
             }
+
+            &:not(.loaded):not(.loading) + &:not(.loaded):not(.loading) {
+                // Don't display consecutive unloaded form stages
+                display: none;
+            }
         }
     }
+
+
 
     .dropzone {
         border: 2px dashed #0087F7;

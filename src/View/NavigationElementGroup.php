@@ -1,6 +1,7 @@
 <?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\View;
+
 use Dms\Core\Exception\InvalidArgumentException;
 
 /**
@@ -16,6 +17,11 @@ class NavigationElementGroup
     protected $label;
 
     /**
+     * @var string
+     */
+    protected $icon;
+
+    /**
      * @var NavigationElement[]
      */
     protected $elements;
@@ -24,13 +30,16 @@ class NavigationElementGroup
      * NavigationElementGroup constructor.
      *
      * @param string              $label
+     * @param string              $icon
      * @param NavigationElement[] $elements
      */
-    public function __construct(string $label, array $elements)
+    public function __construct(string $label, string $icon, array $elements)
     {
         InvalidArgumentException::verifyAllInstanceOf(__METHOD__, 'elements', $elements, NavigationElement::class);
 
-        $this->label    = $label;
+        $this->label = $label;
+        $this->icon  = $icon;
+
         $this->elements = $elements;
     }
 
@@ -43,11 +52,33 @@ class NavigationElementGroup
     }
 
     /**
+     * @return string
+     */
+    public function getIcon() : string
+    {
+        return $this->icon;
+    }
+
+    /**
      * @return NavigationElement[]
      */
     public function getElements() : array
     {
         return $this->elements;
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getAllUrls() : array
+    {
+        $urls = [];
+
+        foreach($this->elements as $element) {
+            $urls[] = $element->getUrl();
+        }
+
+        return $urls;
     }
 
     /**
@@ -64,5 +95,15 @@ class NavigationElementGroup
         }
 
         return true;
+    }
+
+    /**
+     * @param NavigationElement[] $subNavigation
+     *
+     * @return NavigationElementGroup
+     */
+    public function withElements(array $subNavigation) : self
+    {
+        return new self($this->label, $this->icon, $subNavigation);
     }
 }

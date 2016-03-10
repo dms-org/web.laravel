@@ -29,38 +29,30 @@
 
                 <div class="navbar-custom-menu">
                     <ul class="nav navbar-nav">
-                        <!-- Messages: style can be found in dropdown.less-->
-                        <li class="dropdown messages-menu">
-                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-                                <i class="fa fa-envelope-o"></i>
-                                <span class="label label-success">4</span>
-                            </a>
-                            <!-- User Account: style can be found in dropdown.less -->
+                        <!-- User Account: style can be found in dropdown.less -->
                         <li class="dropdown user user-menu">
                             <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-                                <span>{{ $user->getUsername() }}</span>
+                                <span><i class="fa fa-user"></i> {{ $user->getUsername() }}</span>
                             </a>
                             <ul class="dropdown-menu">
                                 <!-- Menu Body-->
                                 <li class="user-body">
-                                    <a href="{{ route('dms::auth.user.profile') }}">{{ $user->getEmailAddress() }}</a>
+                                    <a href="{{ route('dms::package.module.dashboard', ['admin', 'account']) }}">{{ $user->getEmailAddress() }}</a>
                                 </li>
                                 <!-- Menu Footer-->
                                 <li class="user-footer">
                                     <div class="pull-left">
-                                        <a href="{{ route('dms::auth.user.profile') }}"
-                                           class="btn btn-default btn-flat">Profile</a>
+                                        <a href="{{ route('dms::package.module.dashboard', ['admin', 'account']) }}" class="btn btn-default btn-flat">
+                                            <i class="fa fa-cog"></i>  Account
+                                        </a>
                                     </div>
                                     <div class="pull-right">
-                                        <a href="{{ route('dms::auth.logout') }}" class="btn btn-default btn-flat">Log
-                                            out</a>
+                                        <a href="{{ route('dms::auth.logout') }}" class="btn btn-default btn-flat">
+                                            <i class="fa fa-sign-out"></i> Log out
+                                        </a>
                                     </div>
                                 </li>
                             </ul>
-                        </li>
-                        <!-- Control Sidebar Toggle Button -->
-                        <li>
-                            <a href="#" data-toggle="control-sidebar"><i class="fa fa-gears"></i></a>
                         </li>
                     </ul>
                 </div>
@@ -73,7 +65,7 @@
                 <div class="user-panel">
                     <div class="pull-left info">
                         <p>{{ $user->getUsername() }}</p>
-                        <a href="{{ route('dms::auth.user.profile') }}">
+                        <a href="{{ route('dms::package.module.dashboard', ['admin', 'account']) }}">
                             <i class="fa fa-circle text-success"></i> {{ $user->getEmailAddress() }}
                         </a>
                     </div>
@@ -94,33 +86,30 @@
                 <ul class="sidebar-menu dms-packages-nav">
                     <li class="header">INSTALLED PACKAGES</li>
                     <li class="active treeview">
-                    @foreach($navigation as $url => $label)
-                        @if(is_array($label))
-                            <li class="treeview  @if(starts_with(request()->url(), array_keys($label))) active @endif">
+                    @foreach($navigation as $element)
+                        @if($element instanceof \Dms\Web\Laravel\View\NavigationElementGroup)
+                            <li class="treeview  @if(starts_with(request()->url(), array_keys($element->getAllUrls()))) active @endif">
                                 <a href="javascript:void(0)">
-                                    <i class="fa fa-folder"></i>
-                                    <span class="dms-nav-label dms-nav-label-group">{{ $url }}</span>
+                                    <i class="fa fa-{{ $element->getIcon() }}"></i>
+                                    <span class="dms-nav-label dms-nav-label-group">{{ $element->getLabel() }}</span>
                                     <i class="fa fa-angle-left pull-right"></i>
                                 </a>
                                 <ul class="treeview-menu">
-                                    @foreach($label as $url => $innerLabel)
-                                        <li @if(starts_with(request()->url(), $url)) class="active" @endif>
-                                            <a href="{{ $url }}"><i class="fa fa-circle-o"></i> <span class="dms-nav-label">{{ $innerLabel }}</span></a>
+                                    @foreach($element->getElements() as $innerElement)
+                                        <li @if(starts_with(request()->url(), $innerElement->getUrl())) class="active" @endif>
+                                            <a href="{{ $innerElement->getUrl() }}">
+                                                <i class="fa fa-{{ $innerElement->getIcon() }}"></i>
+                                                <span class="dms-nav-label">{{ $innerElement->getLabel() }}</span>
+                                            </a>
                                         </li>
                                     @endforeach
                                 </ul>
                             </li>
-                        @else
-                            <li @if(starts_with(request()->url(), $url)) class="active" @endif>
-                                <a href="{{ $url }}">
-                                    @if($url === route('dms::index'))
-                                        <i class="fa fa-dashboard"></i>
-                                    @else
-                                        <i class="fa fa-circle-o"></i>
-                                    @endif
-                                    <span class="dms-nav-label">
-                                        {{ $label }}
-                                    </span>
+                        @elseif ($element instanceof \Dms\Web\Laravel\View\NavigationElement)
+                            <li @if(starts_with(request()->url(), $element->getUrl())) class="active" @endif>
+                                <a href="{{ $element->getUrl() }}">
+                                    <i class="fa fa-{{ $element->getIcon() }}"></i>
+                                    <span class="dms-nav-label">{{ $element->getLabel() }}</span>
                                     <i class="fa fa-angle-left pull-right"></i>
                                 </a>
                             </li>

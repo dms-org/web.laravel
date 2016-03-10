@@ -23,15 +23,12 @@ $router->group(['prefix' => 'dms', 'middleware' => 'dms.web', 'as' => 'dms::', '
 
         $router->group(['middleware' => 'dms.auth'], function () use ($router) {
 
+            $router->get('/', 'IndexController@index')->name('index');
+
             // Files
             $router->post('/file/upload', 'FileController@upload')->name('file.upload');
             $router->get('/file/preview/{token}', 'FileController@preview')->name('file.preview');
             $router->get('/file/download/{token}', 'FileController@download')->name('file.download');
-
-            // Account
-            $router->get('/', 'IndexController@index')->name('index');
-            $router->get('/user/profile', 'UserController@showProfileForm')->name('auth.user.profile');
-            $router->post('/user/profile', 'UserController@updateUserProfile')->name('auth.user.profile.submit');
 
             // Packages
             $router->get(
@@ -39,6 +36,7 @@ $router->group(['prefix' => 'dms', 'middleware' => 'dms.web', 'as' => 'dms::', '
                 'Package\PackageController@showDashboard'
             )->name('package.dashboard');
 
+            // Modules
             /** @var ModuleRequestRouter $moduleRouter */
             $moduleRouter = app(ModuleRequestRouter::class);
             $moduleRouter->registerOnMainRouter($router);

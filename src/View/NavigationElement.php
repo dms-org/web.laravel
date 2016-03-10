@@ -20,6 +20,11 @@ class NavigationElement
     protected $label;
 
     /**
+     * @var string
+     */
+    protected $icon;
+
+    /**
      * @var string[]
      */
     protected $requiredPermissions;
@@ -29,12 +34,14 @@ class NavigationElement
      *
      * @param string   $label
      * @param string   $url
+     * @param string   $icon
      * @param string[] $requiredPermissionNames
      */
-    public function __construct(string $label, string $url, array $requiredPermissionNames = [])
+    public function __construct(string $label, string $url, string $icon, array $requiredPermissionNames = [])
     {
         $this->label               = $label;
         $this->url                 = $url;
+        $this->icon                = $icon;
         $this->requiredPermissions = $requiredPermissionNames;
     }
 
@@ -44,6 +51,14 @@ class NavigationElement
     public function getLabel() : string
     {
         return $this->label;
+    }
+
+    /**
+     * @return string
+     */
+    public function getIcon() : string
+    {
+        return $this->icon;
     }
 
     /**

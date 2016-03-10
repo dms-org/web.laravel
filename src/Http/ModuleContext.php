@@ -40,40 +40,49 @@ class ModuleContext
     protected $breadcrumbs = [];
 
     /**
-     * @var IModule
+     * @var callable
+     */
+    protected $moduleLoaderCallback;
+
+    /**
+     * @var IModule|null
      */
     protected $module;
 
     /**
      * ModuleContext constructor.
      *
-     * @param Router    $moduleRouter
-     * @param string    $rootUrl
-     * @param array     $titles
-     * @param \string[] $breadcrumbs
-     * @param IModule   $module
+     * @param Router           $moduleRouter
+     * @param string           $rootUrl
+     * @param array            $titles
+     * @param \string[]        $breadcrumbs
+     * @param IModule|callable $moduleLoaderCallback
      */
-    public function __construct(Router $moduleRouter, string $rootUrl, array $titles, array $breadcrumbs, IModule $module)
+    public function __construct(Router $moduleRouter, string $rootUrl, array $titles, array $breadcrumbs, $moduleLoaderCallback)
     {
         $this->moduleRouter = $moduleRouter;
         $this->urlGenerator = new UrlGenerator($moduleRouter->getRoutes(), request());
         $this->rootUrl      = $rootUrl;
         $this->titles       = $titles;
         $this->breadcrumbs  = $breadcrumbs;
-        $this->module       = $module;
+
+        if ($moduleLoaderCallback instanceof IModule) {
+            $this->module = $moduleLoaderCallback;
+        } else {
+            $this->moduleLoaderCallback = $moduleLoaderCallback;
+        }
     }
 
     /**
-     * @param Router  $moduleRouter
-     * @param IModule $module
+     * @param Router   $moduleRouter
+     * @param string   $packageName
+     * @param string   $moduleName
+     * @param callable $moduleLoaderCallback
      *
      * @return ModuleContext
      */
-    public static function rootContext(Router $moduleRouter, IModule $module) : ModuleContext
+    public static function rootContext(Router $moduleRouter, string $packageName, string $moduleName, callable $moduleLoaderCallback) : ModuleContext
     {
-        $packageName = $module->getPackageName();
-        $moduleName  = $module->getName();
-
         return new ModuleContext(
             $moduleRouter,
             route('dms::package.module.dashboard', [$packageName, $moduleName]),
@@ -83,7 +92,7 @@ class ModuleContext
                 route('dms::package.dashboard', [$packageName])                     => StringHumanizer::title($packageName),
                 route('dms::package.module.dashboard', [$packageName, $moduleName]) => StringHumanizer::title($moduleName),
             ],
-            $module
+            $moduleLoaderCallback
         );
     }
 
@@ -108,6 +117,10 @@ class ModuleContext
      */
     public function getModule() : IModule
     {
+        if (!$this->module) {
+            $this->module = call_user_func($this->moduleLoaderCallback);
+        }
+
         return $this->module;
     }
 
@@ -144,7 +157,7 @@ class ModuleContext
             $this->rootUrl,
             array_merge($this->titles, [$title]),
             $this->breadcrumbs + [$breadcrumbUrl => $breadcrumbName ?? $title],
-            $this->module
+            $this->module ?? $this->moduleLoaderCallback
         );
     }
 
@@ -161,7 +174,7 @@ class ModuleContext
             strpos($moduleRootPath, ':') !== false ? $moduleRootPath : $this->combineUrlPaths($this->rootUrl, $moduleRootPath),
             $this->titles,
             $this->breadcrumbs,
-            $module
+            $module->withoutRequiredPermissions()
         );
     }
 

@@ -54,27 +54,29 @@ class KeywordTypeIdentifier
     /**
      * Gets the keyword type from the given string.
      *
-     * Returns one of ("danger", "success", "info") or "default" if unknown
+     * Returns one of ("danger", "success", "info") or the default if unknown
      *
      * @param string $name
+     * @param string $default
      *
      * @return string
      */
-    public static function getClass(string $name) : string
+    public static function getClass(string $name, string $default = 'default') : string
     {
-        return app(__CLASS__)->getTypeFromName($name);
+        return app(__CLASS__)->getTypeFromName($name, $default);
     }
 
     /**
      * Gets the keyword type from the given string.
      *
-     * Returns one of ("danger", "success", "info") or "default" if unknown
+     * Returns one of ("danger", "success", "info") or the default if unknown
      *
      * @param string $name
+     * @param string $default
      *
      * @return string
      */
-    public function getTypeFromName(string $name) : string
+    public function getTypeFromName(string $name, string $default = 'default') : string
     {
         if (isset($this->overridesMap[$name])) {
             return $this->overridesMap[$name];
@@ -96,6 +98,6 @@ class KeywordTypeIdentifier
             return 'primary';
         }
 
-        return 'default';
+        return $default;
     }
 }

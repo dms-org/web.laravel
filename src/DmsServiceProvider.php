@@ -30,6 +30,7 @@ use Dms\Web\Laravel\File\Persistence\ITemporaryFileRepository;
 use Dms\Web\Laravel\File\Persistence\TemporaryFileRepository;
 use Dms\Web\Laravel\File\TemporaryFileService;
 use Dms\Web\Laravel\Http\Middleware\Authenticate;
+use Dms\Web\Laravel\Http\Middleware\EncryptCookies;
 use Dms\Web\Laravel\Http\Middleware\RedirectIfAuthenticated;
 use Dms\Web\Laravel\Http\Middleware\VerifyCsrfToken;
 use Dms\Web\Laravel\Http\ModuleRequestRouter;
@@ -217,7 +218,7 @@ class DmsServiceProvider extends ServiceProvider
         $router = $this->app['router'];
 
         $router->middlewareGroup('dms.web', [
-            //EncryptCookies::class,
+            EncryptCookies::class,
             AddQueuedCookiesToResponse::class,
             StartSession::class,
             ShareErrorsFromSession::class,

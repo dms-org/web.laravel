@@ -164,8 +164,8 @@ class ModuleRequestRouter
     {
         $this->currentModuleContextStack[] = $moduleContext;
 
-        $originalMiddlewareFlag            = app()->bound('middleware.disable') ? app()->make('middleware.disable') : false;
-        $originalRequest                   = app()->bound('request') ? app()->make('request') : null;
+        $originalMiddlewareFlag = app()->bound('middleware.disable') ? app()->make('middleware.disable') : false;
+        $originalRequest        = app()->bound('request') ? app()->make('request') : null;
 
         app()->instance('middleware.disable', true);
         app()->instance('request', $request);
@@ -179,9 +179,16 @@ class ModuleRequestRouter
         return $response;
     }
 
-    public function getRootContext(IModule $module) : ModuleContext
+    public function getRootContextFromModule(IModule $module) : ModuleContext
     {
-        $moduleContext = ModuleContext::rootContext($this->router, $module);
+        return $this->getRootContext($module->getPackageName(), $module->getName(), function () use ($module) {
+            return $module;
+        });
+    }
+
+    public function getRootContext(string $packageName, string $moduleName, callable $moduleLoaderCallback) : ModuleContext
+    {
+        $moduleContext                   = ModuleContext::rootContext($this->router, $packageName, $moduleName, $moduleLoaderCallback);
         $this->currentModuleContextStack = [$moduleContext];
 
         return $moduleContext;
@@ -229,7 +236,9 @@ class ModuleRequestRouter
                 abort(404);
             }
 
-            return $this->getRootContext($package->loadModule($moduleName));
+            return $this->getRootContext($packageName, $moduleName, function () use ($package, $moduleName) {
+                return $package->loadModule($moduleName);
+            });
         });
     }
 }

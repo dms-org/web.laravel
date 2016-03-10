@@ -1,3 +1,4 @@
+<?php /** @var \Dms\Web\Laravel\Http\ModuleContext $moduleContext */ ?>
 <?php /** @var \Dms\Web\Laravel\Renderer\Widget\WidgetRendererCollection $widgetRenderers */ ?>
 <?php /** @var \Dms\Core\Widget\IWidget[] $widgets */ ?>
 @foreach($widgets as $widget)
@@ -8,8 +9,8 @@
                     <h3 class="box-title">{{ $widget->getLabel() }}</h3>
                 </div>
                 <!-- /.box-header -->
-                <div class="box-body no-padding">
-                    {!! $widgetRenderers->findRendererFor($widget)->render($widget) !!}
+                <div class="box-body">
+                    {!! $widgetRenderers->findRendererFor($moduleContext, $widget)->render($moduleContext, $widget) !!}
                 </div>
                 <!-- /.box-footer -->
             </div>

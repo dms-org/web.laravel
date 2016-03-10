@@ -5,7 +5,9 @@ namespace Dms\Web\Laravel\View;
 use Dms\Core\Auth\IPermission;
 use Dms\Core\Exception\InvalidArgumentException;
 use Dms\Core\ICms;
+use Dms\Core\Module\IModule;
 use Dms\Core\Package\IDashboard;
+use Dms\Core\Package\IPackage;
 use Dms\Web\Laravel\Auth\LaravelAuthSystem;
 use Dms\Web\Laravel\Util\StringHumanizer;
 use Illuminate\Cache\Repository as Cache;
@@ -78,11 +80,11 @@ class DmsNavigationViewComposer
                 $subNavigation = $this->filterElementsByPermissions($isSuperUser, $permissionNames, $element->getElements());
 
                 if ($subNavigation) {
-                    $navigation[$element->getLabel()] = $subNavigation;
+                    $navigation[] = $element->withElements($subNavigation);
                 }
             } elseif ($element instanceof NavigationElement) {
                 if ($isSuperUser || $element->shouldDisplay($permissionNames)) {
-                    $navigation[$element->getUrl()] = $element->getLabel();
+                    $navigation[] = $element;
                 }
             }
         }
@@ -94,6 +96,8 @@ class DmsNavigationViewComposer
     {
         $navigation = [];
 
+        $navigation[] = new NavigationElement('Home', route('dms::index'), 'tachometer');
+
         foreach ($this->cms->loadPackages() as $package) {
             $packageNavigation = [];
 
@@ -101,7 +105,8 @@ class DmsNavigationViewComposer
                 $packageNavigation[] = new NavigationElement(
                     'Dashboard',
                     route('dms::package.dashboard', [$package->getName()]),
-                     $this->getPermissionNames($this->getCommonPermissions($package->loadDashboard()))
+                    'tachometer',
+                    $this->getPermissionNames($this->getCommonPermissions($package->loadDashboard()))
                 );
             }
 
@@ -113,6 +118,7 @@ class DmsNavigationViewComposer
                 $packageNavigation[] = new NavigationElement(
                     $moduleLabel,
                     $moduleDashboardUrl,
+                    $this->getModuleIcon($package, $module),
                     $this->getPermissionNames($module->getRequiredPermissions())
                 );
             }
@@ -120,7 +126,7 @@ class DmsNavigationViewComposer
             if (count($packageNavigation) === 1) {
                 $navigation[] = $packageNavigation[0];
             } else {
-                $navigation[] = new NavigationElementGroup($packageLabel, $packageNavigation);
+                $navigation[] = new NavigationElementGroup($packageLabel, $this->getPackageIcon($package), $packageNavigation);
             }
         }
 
@@ -164,5 +170,19 @@ class DmsNavigationViewComposer
         }
 
         return $permissions;
+    }
+
+    private function getPackageIcon(IPackage $package) : string
+    {
+        $name = 'dms::icons.packages.' . $package->getName();
+        $icon = trans($name);
+        return $icon === $name ? 'folder' : $icon;
+    }
+
+    private function getModuleIcon(IPackage $package, IModule $module) : string
+    {
+        $name = 'dms::icons.modules.' . $package->getName() . '.' . $module->getName();
+        $icon = trans($name);
+        return $icon === $name ? 'circle-o' : $icon;
     }
 }

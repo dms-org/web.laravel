@@ -70,6 +70,9 @@ a.dms-run-action-form {
   min-height: 50px;
   opacity: .3; }
 
+.dms-staged-form .dms-form-stage-container.loading:not(.loaded):not(.loading) + .dms-staged-form .dms-form-stage-container.loading:not(.loaded):not(.loading) {
+  display: none; }
+
 .dms-staged-form .dropzone {
   border: 2px dashed #0087F7;
   border-radius: 5px;

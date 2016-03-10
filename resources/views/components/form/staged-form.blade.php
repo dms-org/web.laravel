@@ -69,7 +69,7 @@
             @endif
         @endfor
 
-        <button class="btn btn-{{ \Dms\Web\Laravel\Util\KeywordTypeIdentifier::getClass($action->getName()) ?? 'primary' }}"
+        <button class="btn btn-{{ \Dms\Web\Laravel\Util\KeywordTypeIdentifier::getClass($action->getName(), 'primary') }}"
                 type="submit">
             {{ \Dms\Web\Laravel\Util\StringHumanizer::title($action->getName()) }}
             <i class="fa fa-arrow-right"></i>

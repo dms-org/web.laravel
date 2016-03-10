@@ -2,7 +2,7 @@
 <?php /** @var \Dms\Core\Module\IModule $module */ ?>
 <?php /** @var \Dms\Core\Package\IDashboardWidget[] $widgets */ ?>
 @foreach($widgets as $widget)
-    <?php $moduleContext = app(\Dms\Web\Laravel\Http\ModuleRequestRouter::class)->getRootContext($widget->getModule()) ?>
+    <?php $moduleContext = app(\Dms\Web\Laravel\Http\ModuleRequestRouter::class)->getRootContextFromModule($widget->getModule()) ?>
     <?php $renderer = $widgetRenderers->findRendererFor($moduleContext, $widget->getWidget()) ?>
     <div class="row">
         <div class="col-sm-12">

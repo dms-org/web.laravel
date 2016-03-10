@@ -16,8 +16,9 @@ return [
     'failed'   => 'These credentials do not match our records.',
     'banned'   => 'This account is currently under suspension.',
     'throttle' => 'Too many login attempts. Please try again in :seconds seconds.',
-    'user' => [
-        'password-reset' => 'The account\'s password has been reset'
-    ]
+    'user'     => [
+        'password-reset'  => 'The account\'s password has been reset',
+        'profile-updated' => 'The account\'s profile has been updated',
+    ],
 
 ];

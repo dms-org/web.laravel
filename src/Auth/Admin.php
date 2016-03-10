@@ -117,6 +117,14 @@ class Admin extends Entity implements IAdmin, Authenticatable
     }
 
     /**
+     * @return EmailAddress
+     */
+    public function getEmailAddressObject() : EmailAddress
+    {
+        return $this->emailAddress;
+    }
+
+    /**
      * @return string
      */
     public function getEmailAddress() : string
@@ -130,6 +138,22 @@ class Admin extends Entity implements IAdmin, Authenticatable
     public function getUsername() : string
     {
         return $this->username;
+    }
+
+    /**
+     * @param EmailAddress $emailAddress
+     */
+    public function setEmailAddress(EmailAddress $emailAddress)
+    {
+        $this->emailAddress = $emailAddress;
+    }
+
+    /**
+     * @param string $username
+     */
+    public function setUsername(string $username)
+    {
+        $this->username = $username;
     }
 
     /**

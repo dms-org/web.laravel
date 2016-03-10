@@ -1,11 +1,12 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Auth;
 
 use Dms\Core\Package\Definition\PackageDefinition;
 use Dms\Core\Package\Package;
-use Dms\Web\Laravel\Auth\Module\RoleModule;
+use Dms\Web\Laravel\Auth\Module\AdminCurrentAccountModule;
 use Dms\Web\Laravel\Auth\Module\AdminUserModule;
+use Dms\Web\Laravel\Auth\Module\RoleModule;
 
 /**
  * The auth package.
@@ -32,8 +33,9 @@ class AdminPackage extends Package
             ]);
 
         $package->modules([
-            'users' => AdminUserModule::class,
-            'roles' => RoleModule::class,
+            'account' => AdminCurrentAccountModule::class,
+            'users'   => AdminUserModule::class,
+            'roles'   => RoleModule::class,
         ]);
     }
 }

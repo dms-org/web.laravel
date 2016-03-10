@@ -3,22 +3,21 @@
 namespace Dms\Web\Laravel\Auth\Module;
 
 use Dms\Common\Structure\Field;
-use Dms\Core\Auth\IAuthSystem;
-use Dms\Core\Auth\IRoleRepository;
 use Dms\Core\Auth\IAdmin;
 use Dms\Core\Auth\IAdminRepository;
+use Dms\Core\Auth\IAuthSystem;
+use Dms\Core\Auth\IRoleRepository;
 use Dms\Core\Common\Crud\CrudModule;
 use Dms\Core\Common\Crud\Definition\CrudModuleDefinition;
 use Dms\Core\Common\Crud\Definition\Form\CrudFormDefinition;
 use Dms\Core\Common\Crud\Definition\Table\SummaryTableDefinition;
-use Dms\Core\Form\Builder\Form;
 use Dms\Core\Language\Message;
 use Dms\Core\Model\EntityIdCollection;
 use Dms\Core\Model\Object\ArrayDataObject;
+use Dms\Web\Laravel\Auth\Admin;
 use Dms\Web\Laravel\Auth\Password\IPasswordHasherFactory;
 use Dms\Web\Laravel\Auth\Password\IPasswordResetService;
 use Dms\Web\Laravel\Auth\Role;
-use Dms\Web\Laravel\Auth\Admin;
 
 /**
  * The admin crud module.
@@ -27,6 +26,11 @@ use Dms\Web\Laravel\Auth\Admin;
  */
 class AdminUserModule extends CrudModule
 {
+    /**
+     * @var IAdminRepository
+     */
+    protected $dataSource;
+
     /**
      * @var IRoleRepository
      */
@@ -45,7 +49,7 @@ class AdminUserModule extends CrudModule
     /**
      * UserModule constructor.
      *
-     * @param IAdminRepository        $dataSource
+     * @param IAdminRepository       $dataSource
      * @param IRoleRepository        $roleRepo
      * @param IPasswordHasherFactory $hasher
      * @param IAuthSystem            $authSystem
@@ -78,24 +82,20 @@ class AdminUserModule extends CrudModule
             return $user->getUsername() . ' <' . $user->getEmailAddress() . '>';
         });
 
+        $module->labelObjects()->fromCallback(function (Admin $user) {
+            return $user->getUsername() . ' <' . $user->getEmailAddress() . '>';
+        });
+
         $module->crudForm(function (CrudFormDefinition $form) {
             $form->section('Details', [
                 //
                 $form->field(
-                    Field::create('username', 'Username')
-                        ->string()
-                        ->required()
-                        ->uniqueIn($this->dataSource, Admin::USERNAME)
-                        ->maxLength(100)
+                    AdminProfileFields::buildUsernameField($this->dataSource)
                 )->bindToProperty(Admin::USERNAME),
                 //
                 $form->field(
-                    Field::create('email', 'Email Address')
-                        ->email()
-                        ->required()
-                        ->uniqueIn($this->dataSource, Admin::EMAIL_ADDRESS)
-                        ->maxLength(100)
-                )->bindToProperty(Admin::EMAIL_ADDRESS)
+                    AdminProfileFields::buildEmailField($this->dataSource)
+                )->bindToProperty(Admin::EMAIL_ADDRESS),
             ]);
 
             if ($form->isCreateForm()) {
@@ -138,25 +138,10 @@ class AdminUserModule extends CrudModule
 
         $module->objectAction('reset-password')
             ->authorize(self::EDIT_PERMISSION)
-            ->form(
-                Form::create()
-                    ->section('Details', [
-                        Field::create('new_password', 'New Password')
-                            ->string()
-                            ->password()
-                            ->minLength(6)
-                            ->maxLength(50)
-                            ->required(),
-                        Field::create('new_password_confirmation', 'Confirm Password')
-                            ->string()
-                            ->password()
-                            ->required(),
-                    ])
-                    ->fieldsMatch('new_password', 'new_password_confirmation')
-            )
+            ->form(new AdminPasswordResetForm())
             ->returns(Message::class)
-            ->handler(function (IAdmin $user, ArrayDataObject $input) {
-                $this->passwordResetService->resetUserPassword($user, $input['new_password']);
+            ->handler(function (IAdmin $user, AdminPasswordResetForm $input) {
+                $this->passwordResetService->resetUserPassword($user, $input->newPassword);
 
                 return new Message('auth.user.password-reset');
             });

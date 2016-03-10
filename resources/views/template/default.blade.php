@@ -88,7 +88,7 @@
                     <li class="active treeview">
                     @foreach($navigation as $element)
                         @if($element instanceof \Dms\Web\Laravel\View\NavigationElementGroup)
-                            <li class="treeview  @if(starts_with(request()->url(), array_keys($element->getAllUrls()))) active @endif">
+                            <li class="treeview  @if(starts_with(request()->url(), $element->getAllUrls()))) active @endif">
                                 <a href="javascript:void(0)">
                                     <i class="fa fa-{{ $element->getIcon() }}"></i>
                                     <span class="dms-nav-label dms-nav-label-group">{{ $element->getLabel() }}</span>
@@ -106,7 +106,7 @@
                                 </ul>
                             </li>
                         @elseif ($element instanceof \Dms\Web\Laravel\View\NavigationElement)
-                            <li @if(starts_with(request()->url(), $element->getUrl())) class="active" @endif>
+                            <li @if($element->getUrl() === route('dms::index') ? $element->getUrl() === request()->url() : starts_with(request()->url(), $element->getUrl())) class="active" @endif>
                                 <a href="{{ $element->getUrl() }}">
                                     <i class="fa fa-{{ $element->getIcon() }}"></i>
                                     <span class="dms-nav-label">{{ $element->getLabel() }}</span>

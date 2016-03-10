@@ -2,11 +2,12 @@
 
 namespace Dms\Web\Laravel;
 
+use Dms\Core\Auth\IAdminRepository;
 use Dms\Core\Auth\IAuthSystem;
 use Dms\Core\Auth\IRoleRepository;
-use Dms\Core\Auth\IAdminRepository;
 use Dms\Core\Exception\InvalidOperationException;
 use Dms\Core\Language\ILanguageProvider;
+use Dms\Core\Model\Object\TypedObjectAccessibilityAssertion;
 use Dms\Core\Persistence\Db\Connection\IConnection;
 use Dms\Core\Util\DateTimeClock;
 use Dms\Core\Util\IClock;
@@ -20,8 +21,8 @@ use Dms\Web\Laravel\Auth\Password\IPasswordHasherFactory;
 use Dms\Web\Laravel\Auth\Password\IPasswordResetService;
 use Dms\Web\Laravel\Auth\Password\PasswordHasherFactory;
 use Dms\Web\Laravel\Auth\Password\PasswordResetService;
-use Dms\Web\Laravel\Auth\Persistence\RoleRepository;
 use Dms\Web\Laravel\Auth\Persistence\AdminRepository;
+use Dms\Web\Laravel\Auth\Persistence\RoleRepository;
 use Dms\Web\Laravel\Document\DirectoryTree;
 use Dms\Web\Laravel\Document\PublicFileModule;
 use Dms\Web\Laravel\File\Command\ClearTempFilesCommand;
@@ -31,6 +32,7 @@ use Dms\Web\Laravel\File\Persistence\TemporaryFileRepository;
 use Dms\Web\Laravel\File\TemporaryFileService;
 use Dms\Web\Laravel\Http\Middleware\Authenticate;
 use Dms\Web\Laravel\Http\Middleware\EncryptCookies;
+use Dms\Web\Laravel\Http\Middleware\ExceptionHandler;
 use Dms\Web\Laravel\Http\Middleware\RedirectIfAuthenticated;
 use Dms\Web\Laravel\Http\Middleware\VerifyCsrfToken;
 use Dms\Web\Laravel\Http\ModuleRequestRouter;
@@ -53,6 +55,7 @@ use Illuminate\Contracts\Container\Container;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Database\Connection;
 use Illuminate\Foundation\Application;
+use Illuminate\Foundation\Exceptions\Handler;
 use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Routing\Router;
 use Illuminate\Session\Middleware\StartSession;
@@ -79,6 +82,10 @@ class DmsServiceProvider extends ServiceProvider
             throw InvalidOperationException::format(
                 'Cannot find dms config file: did you forget to run `php artisan vendor:publish` ?'
             );
+        }
+
+        if (!env('APP_DEBUG')) {
+            TypedObjectAccessibilityAssertion::enable(false);
         }
 
         $this->registerIocContainer();
@@ -376,6 +383,7 @@ class DmsServiceProvider extends ServiceProvider
     private function registerViewComposers()
     {
         view()->composer('dms::template.default', DmsNavigationViewComposer::class);
+        view()->composer('dms::dashboard', DmsNavigationViewComposer::class);
     }
 
     /**

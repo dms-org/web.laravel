@@ -11,6 +11,13 @@ class IndexController extends DmsController
 {
     public function index()
     {
+        return view('dms::dashboard')
+            ->with([
+                'title'     => 'Dashboard',
+                'pageTitle' => 'Dashboard',
+                'finalBreadcrumb' => 'Dashboard',
+            ]);
+
         $packageNames = $this->cms->getPackageNames();
         $package      = null;
 

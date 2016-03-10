@@ -11,6 +11,7 @@ use Dms\Core\Module\IChartView;
 use Dms\Core\Module\IModule;
 use Dms\Core\Table\Chart\Criteria\ChartCriteria;
 use Dms\Core\Table\Chart\IChartStructure;
+use Dms\Web\Laravel\Error\DmsError;
 use Dms\Web\Laravel\Http\Controllers\DmsController;
 use Dms\Web\Laravel\Http\ModuleContext;
 use Dms\Web\Laravel\Renderer\Chart\ChartControlRenderer;
@@ -120,7 +121,7 @@ class ChartController extends DmsController
         try {
             return $chart->hasView($chartView) ? $chart->getView($chartView) : $chart->getDefaultView();
         } catch (InvalidArgumentException $e) {
-            abort(404);
+            DmsError::abort(404);
         }
     }
 

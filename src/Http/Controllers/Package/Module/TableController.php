@@ -12,6 +12,7 @@ use Dms\Core\Module\ITableDisplay;
 use Dms\Core\Module\ITableView;
 use Dms\Core\Table\Criteria\RowCriteria;
 use Dms\Core\Table\ITableStructure;
+use Dms\Web\Laravel\Error\DmsError;
 use Dms\Web\Laravel\Http\Controllers\DmsController;
 use Dms\Web\Laravel\Http\ModuleContext;
 use Dms\Web\Laravel\Renderer\Table\TableRenderer;
@@ -153,7 +154,7 @@ class TableController extends DmsController
         try {
             return $table->getView($viewName);
         } catch (InvalidArgumentException $e) {
-            abort(404);
+            DmsError::abort(404);
         }
     }
 

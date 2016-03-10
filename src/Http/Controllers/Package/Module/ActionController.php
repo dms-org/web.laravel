@@ -23,6 +23,7 @@ use Dms\Web\Laravel\Action\ActionInputTransformerCollection;
 use Dms\Web\Laravel\Action\ActionResultHandlerCollection;
 use Dms\Web\Laravel\Action\UnhandleableActionExceptionException;
 use Dms\Web\Laravel\Action\UnhandleableActionResultException;
+use Dms\Web\Laravel\Error\DmsError;
 use Dms\Web\Laravel\Http\Controllers\DmsController;
 use Dms\Web\Laravel\Http\ModuleContext;
 use Dms\Web\Laravel\Renderer\Action\ObjectActionButtonBuilder;
@@ -114,7 +115,7 @@ class ActionController extends DmsController
         $action = $this->loadAction($module, $actionName);
 
         if (!($action instanceof IParameterizedAction)) {
-            abort(404);
+            DmsError::abort(404);
         }
 
         $hiddenValues = [];
@@ -209,13 +210,13 @@ class ActionController extends DmsController
         $action = $this->loadAction($module, $actionName);
 
         if (!$this->actionSafetyChecker->isSafeToShowActionResultViaGetRequest($action)) {
-            abort(404);
+            DmsError::abort(404);
         }
 
         try {
             $result = $this->runActionWithDataFromRequest($request, $moduleContext, $action, [IObjectAction::OBJECT_FIELD_NAME => $objectId]);
         } catch (InvalidFormSubmissionException $e) {
-            abort(404);
+            DmsError::abort(404);
         }
 
         $response = $this->resultHandlers->handle($moduleContext, $action, $result);
@@ -255,7 +256,7 @@ class ActionController extends DmsController
         $form   = $this->loadFormStage($request, $moduleContext, $actionName, $stageNumber, $objectId, $object);
 
         if (!$form->hasField($fieldName)) {
-            abort(404);
+            DmsError::abort(404);
         }
 
         $renderingContext = new FormRenderingContext($moduleContext, $action, $stageNumber, $object);
@@ -263,7 +264,7 @@ class ActionController extends DmsController
         $renderer         = $this->actionFormRenderer->getFormRenderer()->getFieldRenderers()->findRendererFor($renderingContext, $field);
 
         if (!($renderer instanceof IFieldRendererWithActions)) {
-            abort(404);
+            DmsError::abort(404);
         }
 
         return $renderer->handleAction($renderingContext, $field, $request, $fieldRendererAction, $request->get('__field_action_data') ?? []);
@@ -354,7 +355,7 @@ class ActionController extends DmsController
             $action = $module->getAction($actionName);
 
             if (!$action->isAuthorized()) {
-                abort(401);
+                DmsError::abort(401);
             }
 
             return $action;
@@ -380,7 +381,7 @@ class ActionController extends DmsController
             $objectFieldType = $action->getObjectForm()->getField(IObjectAction::OBJECT_FIELD_NAME)->getType();
             return $this->loadObjectFromDataSource($objectId, $objectFieldType->getObjects());
         } catch (InvalidInputException $e) {
-            abort(404);
+            DmsError::abort(404);
         }
     }
 

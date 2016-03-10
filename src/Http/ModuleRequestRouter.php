@@ -5,6 +5,7 @@ namespace Dms\Web\Laravel\Http;
 use Dms\Core\Exception\InvalidOperationException;
 use Dms\Core\ICms;
 use Dms\Core\Module\IModule;
+use Dms\Web\Laravel\Error\DmsError;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Events\RouteMatched;
@@ -227,13 +228,13 @@ class ModuleRequestRouter
             $route->forgetParameter('package');
 
             if (!$cms->hasPackage($packageName)) {
-                abort(404);
+                DmsError::abort(404);
             }
 
             $package = $cms->loadPackage($packageName);
 
             if (!$package->hasModule($moduleName)) {
-                abort(404);
+                DmsError::abort(404);
             }
 
             return $this->getRootContext($packageName, $moduleName, function () use ($package, $moduleName) {

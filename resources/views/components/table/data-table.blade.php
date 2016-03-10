@@ -97,12 +97,11 @@
                                         @foreach(array_diff_key($rowActionButtons, ['details' => true, 'edit' => true, 'remove' => true]) as $action)
                                             <li>
                                                 @if($action->isPost())
-                                                    <div class="dms-run-action-form inline"
+                                                    <a class="dms-run-action-form inline"
                                                           data-action="{{ $action->getUrl($objectId) }}"
                                                           data-method="post">
-                                                        {!! csrf_field() !!}
-                                                        <button class="btn btn-link" type="submit">{{ $action->getLabel() }}</button>
-                                                    </div>
+                                                        {{ $action->getLabel() }}
+                                                    </a>
                                                 @else
                                                     <a href="{{ $action->getUrl($objectId) }}">{{ $action->getLabel() }}</a>
                                                 @endif

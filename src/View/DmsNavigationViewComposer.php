@@ -80,7 +80,7 @@ class DmsNavigationViewComposer
                 $subNavigation = $this->filterElementsByPermissions($isSuperUser, $permissionNames, $element->getElements());
 
                 if ($subNavigation) {
-                    $navigation[] = $element->withElements($subNavigation);
+                    $navigation[] = count($subNavigation) === 1 ? $subNavigation[0] : $element->withElements($subNavigation);
                 }
             } elseif ($element instanceof NavigationElement) {
                 if ($isSuperUser || $element->shouldDisplay($permissionNames)) {
@@ -106,7 +106,8 @@ class DmsNavigationViewComposer
                     'Dashboard',
                     route('dms::package.dashboard', [$package->getName()]),
                     'tachometer',
-                    $this->getPermissionNames($this->getCommonPermissions($package->loadDashboard()))
+                    $this->getPermissionGroups($package->loadDashboard()),
+                    true
                 );
             }
 
@@ -150,26 +151,25 @@ class DmsNavigationViewComposer
         return $names;
     }
 
-    private function getCommonPermissions(IDashboard $dashboard) : array
+    private function getPermissionGroups(IDashboard $dashboard) : array
     {
         $permissionGroups = [];
 
         foreach ($dashboard->getWidgets() as $widget) {
-            $permissionGroups[] = $widget->getModule()->getRequiredPermissions();
-            $permissionGroups[] = $widget->getWidget()->getRequiredPermissions();
-        }
+            $group = [];
 
-        $permissions = array_shift($permissionGroups);
-
-        foreach ($permissionGroups as $permissionGroup) {
-            foreach ($permissions as $key => $permission) {
-                if (!in_array($permission, $permissionGroup)) {
-                    unset($permissions[$key]);
-                }
+            foreach ($widget->getModule()->getRequiredPermissions() as $permission) {
+                $group[] = $permission->getName();
             }
+
+            foreach ($widget->getWidget()->getRequiredPermissions() as $permission) {
+                $group[] = $permission->getName();
+            }
+
+            $permissionGroups[] = array_unique($group, SORT_STRING);
         }
 
-        return $permissions;
+        return $permissionGroups;
     }
 
     private function getPackageIcon(IPackage $package) : string

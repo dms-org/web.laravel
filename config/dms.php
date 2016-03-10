@@ -35,6 +35,24 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Analytics API Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Here you can define the api keys to provide access to analytics
+    | directly in the user's dashboard
+    |
+    */
+    'analytics' => [
+        'google' => [
+            'client-id'     => '....apps.googleusercontent.com',
+            'client-secret' => '...',
+            'site-id'       => 'ga:...',
+        ],
+    ],
+
+
+    /*
+    |--------------------------------------------------------------------------
     | File Storage Settings
     |--------------------------------------------------------------------------
     |

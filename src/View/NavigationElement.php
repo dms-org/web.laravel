@@ -30,19 +30,26 @@ class NavigationElement
     protected $requiredPermissions;
 
     /**
+     * @var bool
+     */
+    protected $requiresAnyFromGroups;
+
+    /**
      * NavigationElement constructor.
      *
      * @param string   $label
      * @param string   $url
      * @param string   $icon
      * @param string[] $requiredPermissionNames
+     * @param bool     $requiresAnyFromGroups
      */
-    public function __construct(string $label, string $url, string $icon, array $requiredPermissionNames = [])
+    public function __construct(string $label, string $url, string $icon, array $requiredPermissionNames = [], bool $requiresAnyFromGroups = false)
     {
-        $this->label               = $label;
-        $this->url                 = $url;
-        $this->icon                = $icon;
-        $this->requiredPermissions = $requiredPermissionNames;
+        $this->label                 = $label;
+        $this->url                   = $url;
+        $this->icon                  = $icon;
+        $this->requiredPermissions   = $requiredPermissionNames;
+        $this->requiresAnyFromGroups = $requiresAnyFromGroups;
     }
 
     /**
@@ -76,6 +83,16 @@ class NavigationElement
      */
     public function shouldDisplay(array $usersPermissionNames) : bool
     {
-        return count(array_diff($this->requiredPermissions, $usersPermissionNames)) === 0;
+        if ($this->requiresAnyFromGroups) {
+            foreach ($this->requiredPermissions as $group) {
+                if (count(array_diff($group, $usersPermissionNames)) === 0) {
+                    return true;
+                }
+            }
+
+            return false;
+        } else {
+            return count(array_diff($this->requiredPermissions, $usersPermissionNames)) === 0;
+        }
     }
 }

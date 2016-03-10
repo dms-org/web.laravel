@@ -5,6 +5,7 @@ namespace Dms\Web\Laravel\Http\Controllers;
 use Dms\Common\Structure\FileSystem\UploadedFileFactory;
 use Dms\Core\ICms;
 use Dms\Core\Model\EntityNotFoundException;
+use Dms\Web\Laravel\Error\DmsError;
 use Dms\Web\Laravel\File\ITemporaryFileService;
 use Illuminate\Contracts\Config\Repository;
 use Illuminate\Cookie\CookieJar;
@@ -80,7 +81,7 @@ class FileController extends DmsController
 
             return \response('', 404);
         } catch (EntityNotFoundException $e) {
-            abort(404);
+            DmsError::abort(404);
         }
     }
 
@@ -93,7 +94,7 @@ class FileController extends DmsController
             return \response()
                 ->download($file->getFile()->getInfo(), $file->getFile()->getClientFileNameWithFallback());
         } catch (EntityNotFoundException $e) {
-            abort(404);
+            DmsError::abort(404);
         }
     }
 }

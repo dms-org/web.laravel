@@ -4,6 +4,7 @@ namespace Dms\Web\Laravel\Http\Controllers\Package;
 
 use Dms\Core\ICms;
 use Dms\Core\Package\IPackage;
+use Dms\Web\Laravel\Error\DmsError;
 use Dms\Web\Laravel\Http\Controllers\DmsController;
 use Dms\Web\Laravel\Renderer\Package\PackageRendererCollection;
 use Dms\Web\Laravel\Util\StringHumanizer;
@@ -74,7 +75,7 @@ class PackageController extends DmsController
         $packageName = $request->route('package');
 
         if (!$this->cms->hasPackage($packageName)) {
-            abort(404, 'Unrecognized package name');
+            DmsError::abort(404, 'Unrecognized package name');
         }
 
         $this->package = $this->cms->loadPackage($packageName);

@@ -17,7 +17,7 @@ return [
     ],
 
     'modules' => [
-        'admin'     => ['account' => 'user', 'users' => 'users', 'roles' => 'lock'],
+        'admin'     => ['account' => 'cog', 'users' => 'users', 'roles' => 'lock'],
         'documents' => ['files' => 'hdd-o'],
     ],
 

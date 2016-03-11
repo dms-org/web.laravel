@@ -177,6 +177,7 @@ return [
                 Dms\Web\Laravel\Renderer\Widget\ParameterizedActionWidgetRenderer::class,
                 Dms\Web\Laravel\Renderer\Widget\TableWidgetRenderer::class,
                 Dms\Web\Laravel\Renderer\Widget\ChartWidgetRenderer::class,
+                Dms\Web\Laravel\Renderer\Widget\FormDataWidgetRenderer::class,
             ],
             'modules'     => [
                 Dms\Web\Laravel\Renderer\Module\FileTreeModuleRenderer::class,

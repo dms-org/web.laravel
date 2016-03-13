@@ -5,6 +5,7 @@ namespace Dms\Web\Laravel\Persistence\Db;
 use Dms\Common\Structure\CommonOrm;
 use Dms\Core\Persistence\Db\Mapping\Definition\Orm\OrmDefinition;
 use Dms\Core\Persistence\Db\Mapping\Orm;
+use Dms\Package\Analytics\Persistence\AnalyticsOrm;
 use Dms\Web\Laravel\Auth\Persistence\AuthOrm;
 use Dms\Web\Laravel\File\Persistence\TempFileOrm;
 
@@ -30,6 +31,7 @@ class DmsOrm extends Orm
             new CommonOrm(),
             new AuthOrm(),
             new TempFileOrm(),
+            new AnalyticsOrm(),
         ]);
     }
 

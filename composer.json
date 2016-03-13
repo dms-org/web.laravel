@@ -20,9 +20,11 @@
         "php": ">=7.0.0",
         "dms/core": "dev-master",
         "dms/common.structure": "dev-master",
+        "dms/package.analytics": "dev-master",
         "laravel/framework": "5.2.*",
         "monii/container-interop-laravel": "^1.0",
-        "marcj/topsort": "^1.0"
+        "marcj/topsort": "^1.0",
+        "cache/cache": "^0.1.0"
     },
     "autoload-dev": {
         "psr-4": {

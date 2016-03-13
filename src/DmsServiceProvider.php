@@ -2,6 +2,7 @@
 
 namespace Dms\Web\Laravel;
 
+use Cache\Adapter\Filesystem\FilesystemCachePool;
 use Dms\Core\Auth\IAdminRepository;
 use Dms\Core\Auth\IAuthSystem;
 use Dms\Core\Auth\IRoleRepository;
@@ -32,7 +33,6 @@ use Dms\Web\Laravel\File\Persistence\TemporaryFileRepository;
 use Dms\Web\Laravel\File\TemporaryFileService;
 use Dms\Web\Laravel\Http\Middleware\Authenticate;
 use Dms\Web\Laravel\Http\Middleware\EncryptCookies;
-use Dms\Web\Laravel\Http\Middleware\ExceptionHandler;
 use Dms\Web\Laravel\Http\Middleware\RedirectIfAuthenticated;
 use Dms\Web\Laravel\Http\Middleware\VerifyCsrfToken;
 use Dms\Web\Laravel\Http\ModuleRequestRouter;
@@ -55,14 +55,16 @@ use Illuminate\Contracts\Container\Container;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Database\Connection;
 use Illuminate\Foundation\Application;
-use Illuminate\Foundation\Exceptions\Handler;
 use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Routing\Router;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Interop\Container\ContainerInterface;
+use League\Flysystem\Adapter\Local;
+use League\Flysystem\Filesystem;
 use Monii\Interop\Container\Laravel\LaravelContainer as ContainerInteropAdapter;
+use Psr\Cache\CacheItemPoolInterface;
 
 /**
  * The DMS service provider
@@ -91,6 +93,7 @@ class DmsServiceProvider extends ServiceProvider
         $this->registerIocContainer();
         $this->registerAuth();
         $this->registerLang();
+        $this->registerCache();
         $this->registerModuleServices();
         $this->registerModules();
         $this->registerHttpRoutes();
@@ -196,12 +199,19 @@ class DmsServiceProvider extends ServiceProvider
         $this->app->bind(ILanguageProvider::class, LaravelLanguageProvider::class);
     }
 
-    public function registerModuleServices()
+    private function registerCache()
+    {
+        $this->app->singleton(CacheItemPoolInterface::class, function () {
+            return new FilesystemCachePool(new Filesystem(new Local(storage_path('dms/cache'))));
+        });
+    }
+
+    private function registerModuleServices()
     {
         $this->app->singleton(ModuleRequestRouter::class);
     }
 
-    public function registerModules()
+    private function registerModules()
     {
         $this->app->bind(PublicFileModule::class, function () {
             return new PublicFileModule(

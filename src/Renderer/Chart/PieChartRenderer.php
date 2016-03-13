@@ -2,8 +2,10 @@
 
 namespace Dms\Web\Laravel\Renderer\Chart;
 
+use Dms\Core\Model\Object\Enum;
 use Dms\Core\Table\Chart\IChartDataTable;
 use Dms\Core\Table\Chart\Structure\PieChart;
+use Dms\Core\Util\Hashing\ValueHasher;
 
 /**
  * The chart renderer for pie charts
@@ -49,7 +51,7 @@ class PieChartRenderer extends ChartRenderer
             ->render();
     }
 
-    private function transformChartDataToIndexedArrays(
+    protected function transformChartDataToIndexedArrays(
         IChartDataTable $data,
         $labelAxisName,
         $labelComponentName,
@@ -61,6 +63,10 @@ class PieChartRenderer extends ChartRenderer
 
         foreach ($data->getRows() as $row) {
             $key = $row[$labelAxisName][$labelComponentName];
+
+            if ($key instanceof Enum) {
+                $key = $key->getValue();
+            }
 
             if (isset($results[$key])) {
                 $results[$key]['value'] += $row[$valueAxisName][$valueComponentName];

@@ -14,6 +14,7 @@ return [
 
     'packages' => [
         'admin' => 'rocket',
+        'analytics' => 'globe',
     ],
 
     'modules' => [

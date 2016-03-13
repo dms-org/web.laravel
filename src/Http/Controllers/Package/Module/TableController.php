@@ -78,7 +78,7 @@ class TableController extends DmsController
 
         $tableView = $this->loadTableView($table, $viewName);
 
-        $criteria = $tableView->getCriteriaCopy() ?: $table->getDataSource()->criteria();
+        $criteria = $tableView->getCriteriaCopy() ?: $table->getDataSource()->criteria()->loadAll();
 
         $isFiltered = $this->filterCriteriaFromRequest($request, $table->getDataSource()->getStructure(), $criteria);
 

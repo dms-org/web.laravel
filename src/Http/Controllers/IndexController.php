@@ -2,6 +2,8 @@
 
 namespace Dms\Web\Laravel\Http\Controllers;
 
+use Dms\Web\Laravel\Renderer\Package\PackageRendererCollection;
+
 /**
  * The root controller.
  *
@@ -9,38 +11,22 @@ namespace Dms\Web\Laravel\Http\Controllers;
  */
 class IndexController extends DmsController
 {
-    public function index()
+    public function index(PackageRendererCollection $dashboardRenderer)
     {
+        if ($this->cms->hasPackage('analytics')) {
+            $package           = $this->cms->loadPackage('analytics');
+            $analyticsWidgets = $dashboardRenderer->findRendererFor($package)->render($package);
+        } else {
+            $analyticsWidgets = null;
+        }
+
         return view('dms::dashboard')
             ->with([
-                'title'     => 'Dashboard',
-                'pageTitle' => 'Dashboard',
-                'finalBreadcrumb' => 'Dashboard',
-            ]);
-
-        $packageNames = $this->cms->getPackageNames();
-        $package      = null;
-
-        foreach ($packageNames as $name) {
-            $package = $this->cms->loadPackage($name);
-            if ($package->hasDashboard()) {
-                break;
-            }
-        }
-
-        if ($package) {
-            return redirect()
-                ->route('dms::package.dashboard', ['package' => $package->getName()]);
-        }
-
-        $firstPackage    = $this->cms->loadPackage(reset($packageNames));
-        $modules         = $firstPackage->getModuleNames();
-        $firstModuleName = reset($modules);
-
-        return redirect()
-            ->route('dms::package.module.dashboard', [
-                'package' => $firstPackage->getName(),
-                'module'  => $firstModuleName,
+                'assetGroups'      => ['tables', 'charts'],
+                'title'            => 'Dashboard',
+                'pageTitle'        => 'Dashboard',
+                'finalBreadcrumb'  => 'Dashboard',
+                'analyticsWidgets' => $analyticsWidgets,
             ]);
     }
 }

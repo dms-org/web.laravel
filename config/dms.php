@@ -8,11 +8,11 @@ return [
     |--------------------------------------------------------------------------
     |
     | Here you can define the security settings for your backend authentication
-    | login. By default, a user will be locked out fo 60 seconds every 5 failed
+    | login. By default, a user will be locked out for 60 seconds every 5 failed
     | login attempts.
     |
     */
-    'auth' => [
+    'auth'      => [
         'login' => [
             'max-attempts' => 5,
             'lockout-time' => 60,
@@ -28,7 +28,7 @@ return [
     | in the footer of every page.
     |
     */
-    'contact' => [
+    'contact'   => [
         'website' => 'http://contact-us...',
         'company' => 'Company Inc.',
     ],
@@ -67,13 +67,13 @@ return [
     | then be moved to the correct folder when the form is submitted.
     |
     */
-    'storage' => [
+    'storage'   => [
         'public-files'  => [
             'dir' => public_path('files/'),
             'url' => '/files/',
         ],
         'trashed-files' => [
-            'dir'    => storage_path('trash/'),
+            'dir' => storage_path('trash/'),
         ],
         'temp-files'    => [
             'dir'             => storage_path('dms/temp-uploads/'),
@@ -93,7 +93,7 @@ return [
     | application's orm.
     |
     */
-    'database' => [
+    'database'  => [
         'migrations' => [
             'dir'            => database_path('migrations'),
             'ignored-tables' => ['migrations'],
@@ -109,11 +109,11 @@ return [
     | You may control the input and results of actions by adding transformers
     | and handlers.
     |
-    | If you need to customize a page / form / field / column here is where
+    | If you need to customize a page / form / field / column / chart here is where
     | you would supply your renderer class.
     |
     */
-    'services' => [
+    'services'  => [
         'actions' => [
             'input-transformers' => [
                 Dms\Web\Laravel\Action\InputTransformer\SymphonyToDmsUploadedFileTransformer::class,
@@ -170,6 +170,7 @@ return [
             ],
             'charts'      => [
                 Dms\Web\Laravel\Renderer\Chart\GraphChartRenderer::class,
+                Dms\Web\Laravel\Renderer\Chart\GeoChartRenderer::class,
                 Dms\Web\Laravel\Renderer\Chart\PieChartRenderer::class,
             ],
             'widgets'     => [
@@ -202,7 +203,7 @@ return [
     | the result of the action can be loaded via a http GET request.
     |
     */
-    'actions' => [
+    'actions'   => [
         'safe' => [
             Dms\Core\Common\Crud\Action\Crud\ViewDetailsAction::class,
         ],
@@ -219,7 +220,7 @@ return [
     | dangerous actions for instance may require extra confirmation before preceding.
     |
     */
-    'keywords' => [
+    'keywords'  => [
         'danger'    => ['delete', 'remove', 'trash', 'drop', 'cancel', 'reset'],
         'warning'   => [],
         'success'   => ['confirm', 'approve', 'accept', 'verify', 'download'],
@@ -271,7 +272,8 @@ return [
                 //
             ],
             'scripts'     => [
-                //
+                'https://www.gstatic.com/charts/loader.js',
+                'https://www.google.com/jsapi',
             ],
         ],
     ],

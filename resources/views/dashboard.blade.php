@@ -2,10 +2,17 @@
 
 @section('content')
     <div class="row dms-dashboard">
+        @if ($analyticsWidgets)
         <div class="col-xs-12 col-sm-6">
-            @include('dms::partials.analytics')
+            <div class="panel panel-default">
+                <div class="panel-heading">Analytics</div>
+                <div class="panel-body">
+                    {!! $analyticsWidgets !!}
+                </div>
+            </div>
         </div>
-        <div class="col-xs-12 col-sm-6">
+        @endif
+        <div class="col-xs-12 @if($analyticsWidgets) col-sm-6 @endif">
             <div class="row">
                 @foreach($navigation as $element)
                     @if($element instanceof \Dms\Web\Laravel\View\NavigationElementGroup)

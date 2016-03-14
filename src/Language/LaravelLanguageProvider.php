@@ -6,7 +6,7 @@ use Dms\Core\Exception\InvalidArgumentException;
 use Dms\Core\Language\ILanguageProvider;
 use Dms\Core\Language\Message;
 use Dms\Core\Language\MessageNotFoundException;
-use Dms\Core\Util\Debug;
+use Illuminate\Translation\Translator;
 use Symfony\Component\Translation\TranslatorInterface;
 
 /**
@@ -17,7 +17,7 @@ use Symfony\Component\Translation\TranslatorInterface;
 class LaravelLanguageProvider implements ILanguageProvider
 {
     /**
-     * @var TranslatorInterface
+     * @var Translator
      */
     protected $laravelTranslator;
 
@@ -42,7 +42,13 @@ class LaravelLanguageProvider implements ILanguageProvider
      */
     public function format(Message $message) : string
     {
-        $messageId = 'dms::' . $message->getId();
+        $namespace = 'dms';
+
+        if ($message->hasNamespace()) {
+            $namespace .= '.' . $message->getNamespace();
+        }
+
+        $messageId = $namespace . '::' . $message->getId();
 
         $response = $this->laravelTranslator->trans(
             $messageId,
@@ -104,5 +110,13 @@ class LaravelLanguageProvider implements ILanguageProvider
         }
 
         return '[' . implode(', ', $elements) . ']';
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function addResourceDirectory(string $namespace, string $directory)
+    {
+        $this->laravelTranslator->addNamespace('dms.' . $namespace, $directory);
     }
 }

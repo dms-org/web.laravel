@@ -60,7 +60,11 @@ Dms.form.validation.displayMessages = function (form, fieldMessages, generalMess
                 })
                 .closest('.form-group')
         );
-        var validationMessagesContainer = fieldGroup.find('.dms-validation-messages-container');
+
+        var validationMessagesContainer = fieldGroup.find('.dms-validation-messages-container')
+            .filter(function () {
+                return $(this).closest('.form-group').is(fieldGroup);
+            });
 
         var helpBlock = makeHelpBlock();
         $.each($.unique(messages), function (index, message) {

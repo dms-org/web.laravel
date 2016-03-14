@@ -4,8 +4,14 @@
         @if($required) required @endif
         @if($readonly) readonly @endif
 >
+    <option value="">
+        @if($required)
+            Please Select...
+        @else
+            None
+        @endif
+    </option>
     @foreach ($options->getAll() as $option)
-        <option>Please Select...</option>
         <option
                 value="{{ $option->getValue() }}"
                 @if (\Dms\Web\Laravel\Renderer\Form\ValueComparer::areLooselyEqual($option->getValue(), $value))selected="selected" @endif

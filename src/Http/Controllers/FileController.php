@@ -92,7 +92,7 @@ class FileController extends DmsController
 
             $cookieJar->queue('file-download-' . $token, true, 60, null, null, false, false);
             return \response()
-                ->download($file->getFile()->getInfo(), $file->getFile()->getClientFileNameWithFallback());
+                ->download($file->getFile()->getFullPath(), $file->getFile()->getClientFileNameWithFallback());
         } catch (EntityNotFoundException $e) {
             DmsError::abort(404);
         }

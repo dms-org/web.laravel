@@ -63,7 +63,7 @@ class InnerFormFieldRenderer extends BladeFieldRenderer
             $field, $value,
             'dms::components.field.inner-form.value',
             [
-                'formContent' => $formRenderer->renderFields($renderingContext, $formWithArrayFields),
+                'formContent' => $formRenderer->renderFieldsAsValues($renderingContext, $formWithArrayFields),
             ]
         );
     }

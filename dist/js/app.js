@@ -820,7 +820,11 @@ Dms.form.validation.displayMessages = function (form, fieldMessages, generalMess
                 })
                 .closest('.form-group')
         );
-        var validationMessagesContainer = fieldGroup.find('.dms-validation-messages-container');
+
+        var validationMessagesContainer = fieldGroup.find('.dms-validation-messages-container')
+            .filter(function () {
+                return $(this).closest('.form-group').is(fieldGroup);
+            });
 
         var helpBlock = makeHelpBlock();
         $.each($.unique(messages), function (index, message) {
@@ -937,22 +941,39 @@ Dms.chart.initializeCallbacks.push(function (element) {
 Dms.chart.initializeCallbacks.push(function (element) {
     element.find('.dms-geo-chart').each(function () {
         var chart = $(this);
+        var isCityChart = chart.attr('data-city-chart');
+        var hasLatLng = chart.attr('data-has-lat-lng');
         var chartData = JSON.parse(chart.attr('data-chart-data'));
-        var valueLabel = chart.attr('data-value-label');
+        var region = chart.attr('data-region');
+        var locationLabel = chart.attr('data-location-label');
+        var valueLabels = JSON.parse(chart.attr('data-value-labels'));
 
         google.charts.load('current', {'packages': ['geochart']});
-        google.charts.setOnLoadCallback(function() {
-            var transformedChartData = [['Country', valueLabel]];
+        google.charts.setOnLoadCallback(function () {
+            var headers = [];
+
+            if (hasLatLng) {
+                headers.push('Latitude');
+                headers.push('Longitude');
+            }
+
+            headers.push(locationLabel);
+            headers = headers.concat(valueLabels);
+
+            var transformedChartData = [headers];
 
             $.each(chartData, function (index, row) {
-                transformedChartData.push([row.label, row.value]);
+                transformedChartData.push((hasLatLng ?  row.lat_lng : []).concat([row.label]).concat(row.values));
             });
 
             var data = google.visualization.arrayToDataTable(transformedChartData);
 
             var googleChart = new google.visualization.GeoChart(chart.get(0));
 
-            googleChart.draw(data, {});
+            googleChart.draw(data, {
+                displayMode: isCityChart ? 'markers' : 'regions',
+                region: region
+            });
         });
     });
 });
@@ -1945,6 +1966,42 @@ Dms.form.initializeCallbacks.push(function (element) {
 
 });
 Dms.form.initializeCallbacks.push(function (element) {
+    element.find('input[type="ip-address"]')
+        .attr('type', 'text')
+        .attr('data-parsley-ip-address', '1');
+
+    element.find('input[data-autocomplete]').each(function () {
+        var options = JSON.parse($(this).attr('data-autocomplete'));
+        $(this).removeAttr('data-autocomplete');
+
+        var values = [];
+
+        $.each(options, function (index, value) {
+            values.push({ val: value });
+        });
+
+        var engine = new Bloodhound({
+            local: values,
+            datumTokenizer: function(d) {
+                return Bloodhound.tokenizers.whitespace(d.val);
+            },
+            queryTokenizer: Bloodhound.tokenizers.whitespace
+        });
+
+        engine.initialize();
+
+        $(this).typeahead( {
+            limit: 5,
+            hint: true,
+            highlight: true,
+            minLength: 1
+        }, {
+            source: engine.ttAdapter(),
+            displayKey: 'val'
+        });
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
 
     element.find('table.dms-field-table').each(function () {
         var tableOfFields = $(this);
@@ -2144,42 +2201,6 @@ Dms.form.initializeCallbacks.push(function (element) {
             tableOfFields.find('.btn-remove-row').remove();
             tableOfFields.find('.btn-add-row').remove();
         }
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
-    element.find('input[type="ip-address"]')
-        .attr('type', 'text')
-        .attr('data-parsley-ip-address', '1');
-
-    element.find('input[data-autocomplete]').each(function () {
-        var options = JSON.parse($(this).attr('data-autocomplete'));
-        $(this).removeAttr('data-autocomplete');
-
-        var values = [];
-
-        $.each(options, function (index, value) {
-            values.push({ val: value });
-        });
-
-        var engine = new Bloodhound({
-            local: values,
-            datumTokenizer: function(d) {
-                return Bloodhound.tokenizers.whitespace(d.val);
-            },
-            queryTokenizer: Bloodhound.tokenizers.whitespace
-        });
-
-        engine.initialize();
-
-        $(this).typeahead( {
-            limit: 5,
-            hint: true,
-            highlight: true,
-            minLength: 1
-        }, {
-            source: engine.ttAdapter(),
-            displayKey: 'val'
-        });
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {

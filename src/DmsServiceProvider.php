@@ -37,6 +37,7 @@ use Dms\Web\Laravel\Http\Middleware\RedirectIfAuthenticated;
 use Dms\Web\Laravel\Http\Middleware\VerifyCsrfToken;
 use Dms\Web\Laravel\Http\ModuleRequestRouter;
 use Dms\Web\Laravel\Install\DmsInstallCommand;
+use Dms\Web\Laravel\Ioc\LaravelIocContainer;
 use Dms\Web\Laravel\Language\LaravelLanguageProvider;
 use Dms\Web\Laravel\Persistence\Db\DmsOrm;
 use Dms\Web\Laravel\Persistence\Db\LaravelConnection;
@@ -63,7 +64,6 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Interop\Container\ContainerInterface;
 use League\Flysystem\Adapter\Local;
 use League\Flysystem\Filesystem;
-use Monii\Interop\Container\Laravel\LaravelContainer as ContainerInteropAdapter;
 use Psr\Cache\CacheItemPoolInterface;
 
 /**
@@ -139,7 +139,7 @@ class DmsServiceProvider extends ServiceProvider
     private function registerIocContainer()
     {
         $this->app->singleton(ContainerInterface::class, function (Container $laravelContainer) {
-            return new ContainerInteropAdapter($laravelContainer);
+            return new LaravelIocContainer($laravelContainer);
         });
     }
 

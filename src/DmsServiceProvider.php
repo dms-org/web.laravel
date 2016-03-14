@@ -7,6 +7,7 @@ use Dms\Core\Auth\IAdminRepository;
 use Dms\Core\Auth\IAuthSystem;
 use Dms\Core\Auth\IRoleRepository;
 use Dms\Core\Exception\InvalidOperationException;
+use Dms\Core\ICms;
 use Dms\Core\Ioc\IIocContainer;
 use Dms\Core\Language\ILanguageProvider;
 use Dms\Core\Model\Object\TypedObjectAccessibilityAssertion;
@@ -121,6 +122,10 @@ class DmsServiceProvider extends ServiceProvider
     {
         $this->loadViews();
         $this->loadTranslations();
+
+        // Here we resolve the cms instance to ensure that it loads the instance
+        // and boots the installed packages...
+        $cms = $this->app[ICms::class];
     }
 
     private function publishAssets()

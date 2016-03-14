@@ -13,13 +13,14 @@ use Dms\Core\Model\Object\Entity;
 use Dms\Web\Laravel\Auth\Password\HashedPassword;
 use Dms\Web\Laravel\Auth\Persistence\Mapper\AdminMapper;
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Contracts\Auth\CanResetPassword;
 
 /**
  * The laravel admin entity.
  *
  * @author Elliot Levin <elliotlevin@hotmail.com>
  */
-class Admin extends Entity implements IAdmin, Authenticatable
+class Admin extends Entity implements IAdmin, Authenticatable, CanResetPassword
 {
     const EMAIL_ADDRESS = 'emailAddress';
     const USERNAME = 'username';
@@ -281,5 +282,15 @@ class Admin extends Entity implements IAdmin, Authenticatable
     public function getRememberTokenName()
     {
         return AdminMapper::AUTH_REMEMBER_TOKEN_COLUMN;
+    }
+
+    /**
+     * Get the e-mail address where password reset links are sent.
+     *
+     * @return string
+     */
+    public function getEmailForPasswordReset()
+    {
+        return $this->emailAddress->asString();
     }
 }

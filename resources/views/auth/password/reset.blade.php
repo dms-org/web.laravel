@@ -2,6 +2,10 @@
 @section('content')
     <p class="login-box-msg">Reset your password</p>
 
+    @if(session('success'))
+        <p class="alert alert-success">{{ session('success') }}</p>
+    @endif
+
     <form action="{{ route('dms::auth.password.reset') }}" method="post">
         {!! csrf_field() !!}
 

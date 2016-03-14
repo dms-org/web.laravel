@@ -280,6 +280,9 @@ a:not(.btn).ladda-button .ladda-spinner > div > div > div {
 .dms-dashboard .box-body .list-group {
   margin-bottom: 0; }
 
+#darkroom-icons {
+  top: 0; }
+
 body {
   font-family: Arial, sans-serif !important; }
 

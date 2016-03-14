@@ -13,7 +13,6 @@ use Dms\Core\Common\Crud\Definition\Form\CrudFormDefinition;
 use Dms\Core\Common\Crud\Definition\Table\SummaryTableDefinition;
 use Dms\Core\Language\Message;
 use Dms\Core\Model\EntityIdCollection;
-use Dms\Core\Model\Object\ArrayDataObject;
 use Dms\Web\Laravel\Auth\Admin;
 use Dms\Web\Laravel\Auth\Password\IPasswordHasherFactory;
 use Dms\Web\Laravel\Auth\Password\IPasswordResetService;
@@ -77,6 +76,10 @@ class AdminUserModule extends CrudModule
     protected function defineCrudModule(CrudModuleDefinition $module)
     {
         $module->name('users');
+
+        $module->metadata([
+            'icon' => 'users'
+        ]);
 
         $module->labelObjects()->fromCallback(function (Admin $user) {
             return $user->getUsername() . ' <' . $user->getEmailAddress() . '>';

@@ -130,6 +130,10 @@ class PublicFileModule extends CrudModule
     {
         $module->name('files');
 
+        $module->metadata([
+            'icon' => 'hdd-o'
+        ]);
+
         $module->labelObjects()->fromCallback(function (File $file) {
             return $this->relativePathCalculator->getRelativePath($this->rootDirectory, $file->getFullPath());
         });

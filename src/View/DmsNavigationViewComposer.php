@@ -119,7 +119,7 @@ class DmsNavigationViewComposer
                 $packageNavigation[] = new NavigationElement(
                     $moduleLabel,
                     $moduleDashboardUrl,
-                    $this->getModuleIcon($package, $module),
+                    $this->getModuleIcon($module),
                     $this->getPermissionNames($module->getRequiredPermissions())
                 );
             }
@@ -174,15 +174,11 @@ class DmsNavigationViewComposer
 
     private function getPackageIcon(IPackage $package) : string
     {
-        $name = 'dms::icons.packages.' . $package->getName();
-        $icon = trans($name);
-        return $icon === $name ? 'folder' : $icon;
+        return $package->hasMetadata('icon') ? $package->getMetadata('icon') : 'folder';
     }
 
-    private function getModuleIcon(IPackage $package, IModule $module) : string
+    private function getModuleIcon(IModule $module) : string
     {
-        $name = 'dms::icons.modules.' . $package->getName() . '.' . $module->getName();
-        $icon = trans($name);
-        return $icon === $name ? 'circle-o' : $icon;
+        return $module->hasMetadata('icon') ? $module->getMetadata('icon') : 'circle-o';
     }
 }

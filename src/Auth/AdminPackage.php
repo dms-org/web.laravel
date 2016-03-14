@@ -26,6 +26,10 @@ class AdminPackage extends Package
     {
         $package->name('admin');
 
+        $package->metadata([
+            'icon' => 'rocket'
+        ]);
+
         $package->dashboard()
             ->widgets([
                 'users.summary-table',

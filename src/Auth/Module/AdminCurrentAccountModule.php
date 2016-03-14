@@ -65,6 +65,10 @@ class AdminCurrentAccountModule extends Module
     {
         $module->name('account');
 
+        $module->metadata([
+            'icon' => 'cog'
+        ]);
+
         /** @var Admin $user */
         $user = $this->authSystem->getAuthenticatedUser();
 

@@ -64,6 +64,10 @@ class RoleModule extends CrudModule
     {
         $module->name('roles');
 
+        $module->metadata([
+            'icon' => 'lock'
+        ]);
+
         $module->labelObjects()->fromProperty(Role::NAME);
 
         $module->crudForm(function (CrudFormDefinition $form) {

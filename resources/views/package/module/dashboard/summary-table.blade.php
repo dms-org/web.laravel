@@ -39,7 +39,7 @@
             </ul>
             <div class="tab-content">
                 @foreach($summaryTableViews as $view)
-                    <div class="tab-pane {{ $view->isDefault() ? 'active' : '' }}" id="summary-table-table-{{ $view->getName() }}">
+                    <div class="tab-pane {{ $activeViewName === $view->getName() ? 'active' : '' }}" id="summary-table-table-{{ $view->getName() }}">
                         {!! $tableRenderer->renderTableControl($moduleContext, $summaryTable, $view->getName()) !!}
                     </div>
                     <!-- /.tab-pane -->

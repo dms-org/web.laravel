@@ -4,6 +4,7 @@ namespace Dms\Web\Laravel\Http\Controllers\Auth;
 
 use Dms\Core\Auth\InvalidCredentialsException;
 use Dms\Core\Auth\AdminBannedException;
+use Dms\Core\Auth\NotAuthenticatedException;
 use Dms\Core\ICms;
 use Dms\Web\Laravel\Http\Controllers\DmsController;
 use Illuminate\Cache\RateLimiter;
@@ -106,7 +107,11 @@ class AuthController extends DmsController
      */
     public function logout()
     {
-        $this->auth->logout();
+        try {
+            $this->auth->logout();
+        } catch (NotAuthenticatedException $e) {
+
+        }
 
         return redirect('/');
     }

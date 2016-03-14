@@ -23,7 +23,6 @@ class IndexController extends DmsController
         return view('dms::dashboard')
             ->with([
                 'assetGroups'      => ['tables', 'charts'],
-                'title'            => 'Dashboard',
                 'pageTitle'        => 'Dashboard',
                 'finalBreadcrumb'  => 'Dashboard',
                 'analyticsWidgets' => $analyticsWidgets,

@@ -72,6 +72,19 @@ class LaravelIocContainer extends LaravelContainer implements IIocContainer
         }
     }
 
+    /**
+     * Binds the supplied abstract class or interface to the supplied value.
+     *
+     * @param string $abstract
+     * @param mixed $concrete
+     *
+     * @return void
+     */
+    public function bindValue(string $abstract, $concrete)
+    {
+        $this->container->instance($abstract, $concrete);
+    }
+
     private function validateScope(string $method, string $scope)
     {
         $validScopes = [self::SCOPE_INSTANCE_PER_RESOLVE, self::SCOPE_SINGLETON];

@@ -2,6 +2,7 @@
 
 namespace Dms\Web\Laravel\Http\Controllers;
 
+use Dms\Common\Structure\FileSystem\InMemoryFile;
 use Dms\Common\Structure\FileSystem\UploadedFileFactory;
 use Dms\Core\ICms;
 use Dms\Core\Model\EntityNotFoundException;
@@ -88,11 +89,19 @@ class FileController extends DmsController
     public function download($token, CookieJar $cookieJar)
     {
         try {
-            $file = $this->tempFileService->getTempFile($token);
+            $file = $this->tempFileService->getTempFile($token)->getFile();
 
             $cookieJar->queue('file-download-' . $token, true, 60, null, null, false, false);
-            return \response()
-                ->download($file->getFile()->getFullPath(), $file->getFile()->getClientFileNameWithFallback());
+
+            if ($file instanceof InMemoryFile) {
+                return \response(file_get_contents($file->getFullPath()), 200, [
+                    'Content-Type'        => 'application/octet-stream',
+                    'Content-Disposition' => "attachment; filename=\"{$file->getName()}\"",
+                ]);
+            } else {
+                return \response()
+                    ->download($file->getFullPath(), $file->getClientFileNameWithFallback());
+            }
         } catch (EntityNotFoundException $e) {
             DmsError::abort(404);
         }

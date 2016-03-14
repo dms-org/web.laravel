@@ -3,6 +3,7 @@
 namespace Dms\Web\Laravel\Tests\Mock\Language;
 
 use Dms\Core\Exception\InvalidArgumentException;
+use Dms\Core\Exception\NotImplementedException;
 use Dms\Core\Language\ILanguageProvider;
 use Dms\Core\Language\Message;
 use Dms\Core\Language\MessageNotFoundException;
@@ -52,5 +53,10 @@ class MockLanguageProvider implements ILanguageProvider
         }
 
         return implode(',', $elements);
+    }
+
+    public function addResourceDirectory(string $namespace, string $directory)
+    {
+        throw NotImplementedException::method(__METHOD__);
     }
 }

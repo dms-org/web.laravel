@@ -4,7 +4,9 @@ namespace Dms\Web\Laravel\File\Persistence;
 
 use Dms\Common\Structure\FileSystem\File;
 use Dms\Common\Structure\FileSystem\Image;
+use Dms\Common\Structure\FileSystem\InMemoryFile;
 use Dms\Common\Structure\FileSystem\Persistence\FileMapper as BaseFileMapper;
+use Dms\Common\Structure\FileSystem\RelativePathCalculator;
 use Dms\Common\Structure\FileSystem\UploadedFile;
 use Dms\Common\Structure\FileSystem\UploadedImage;
 use Dms\Core\Persistence\Db\Mapping\Definition\MapperDefinition;
@@ -16,6 +18,24 @@ use Dms\Core\Persistence\Db\Mapping\Definition\MapperDefinition;
  */
 class FileAndSubclassesMapper extends BaseFileMapper
 {
+    /**
+     * FileAndSubclassesMapper constructor.
+     *
+     * @param string                      $filePathColumnName
+     * @param string|null                 $clientFileNameColumnName
+     * @param string|null                 $baseDirectoryPath
+     * @param RelativePathCalculator|null $relativePathCalculator
+     */
+    public function __construct(
+        string $filePathColumnName,
+        string $clientFileNameColumnName = null,
+        string $baseDirectoryPath = null,
+        RelativePathCalculator $relativePathCalculator = null
+    )
+    {
+        parent::__construct($filePathColumnName, $clientFileNameColumnName, $baseDirectoryPath, $relativePathCalculator, true);
+    }
+
     /**
      * Defines the entity mapper
      *
@@ -31,6 +51,7 @@ class FileAndSubclassesMapper extends BaseFileMapper
             'uploaded-image' => UploadedImage::class,
             'uploaded-file'  => UploadedFile::class,
             'stored-image'   => Image::class,
+            'in-memory'      => InMemoryFile::class,
             'stored-file'    => File::class,
         ]);
     }

@@ -7,6 +7,7 @@ use Dms\Core\Auth\IAdminRepository;
 use Dms\Core\Auth\IAuthSystem;
 use Dms\Core\Auth\IRoleRepository;
 use Dms\Core\Exception\InvalidOperationException;
+use Dms\Core\Ioc\IIocContainer;
 use Dms\Core\Language\ILanguageProvider;
 use Dms\Core\Model\Object\TypedObjectAccessibilityAssertion;
 use Dms\Core\Persistence\Db\Connection\IConnection;
@@ -138,7 +139,7 @@ class DmsServiceProvider extends ServiceProvider
 
     private function registerIocContainer()
     {
-        $this->app->singleton(ContainerInterface::class, function (Container $laravelContainer) {
+        $this->app->singleton(IIocContainer::class, function (Container $laravelContainer) {
             return new LaravelIocContainer($laravelContainer);
         });
     }

@@ -54,6 +54,14 @@ class RoleModuleTest extends CrudModuleTest
         return new RoleModule($dataSource, $this->mockUserDataSource(), $authSystem, $this->mockCms());
     }
 
+    /**
+     * @return IPermission[]
+     */
+    protected function expectedReadModuleRequiredPermissions()
+    {
+        return [];
+    }
+
     protected function mockUserDataSource() : IAdminRepository
     {
         $admin = new Admin(new EmailAddress('admin@admin.com'), 'admin', $this->getMockForAbstractClass(IHashedPassword::class));

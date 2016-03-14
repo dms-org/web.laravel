@@ -43,6 +43,7 @@ return [
     'email'                     => 'The :field must be a valid email address.',
     'exists'                    => 'The selected :field is invalid.',
     'filled'                    => 'The :field field is required.',
+    'file-extensions'           => 'The :field field only allows files with the :extensions extension',
     'image'                     => 'The :field must be an image.',
     'in'                        => 'The selected :field is invalid.',
     'int'                       => 'The :field must be a whole number.',

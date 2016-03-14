@@ -23,17 +23,33 @@ Dms.chart.initializeCallbacks.push(function (element) {
             var transformedChartData = [headers];
 
             $.each(chartData, function (index, row) {
-                transformedChartData.push((hasLatLng ?  row.lat_lng : []).concat([row.label]).concat(row.values));
+                transformedChartData.push((hasLatLng ? row.lat_lng : []).concat([row.label]).concat(row.values));
             });
 
             var data = google.visualization.arrayToDataTable(transformedChartData);
 
             var googleChart = new google.visualization.GeoChart(chart.get(0));
 
-            googleChart.draw(data, {
-                displayMode: isCityChart ? 'markers' : 'regions',
-                region: region
+            var drawChart = function () {
+                googleChart.draw(data, {
+                    displayMode: isCityChart ? 'markers' : 'regions',
+                    region: region
+                });
+            };
+
+            var resizeTimeoutId;
+            $(window).resize(function () {
+                if (resizeTimeoutId) {
+                    clearTimeout(resizeTimeoutId);
+                }
+
+                resizeTimeoutId = setTimeout(function () {
+                    drawChart();
+                    resizeTimeoutId = null;
+                }, 500);
             });
+
+            drawChart();
         });
     });
 });

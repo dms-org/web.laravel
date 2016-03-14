@@ -23,12 +23,12 @@ class IndexTest extends CmsIntegrationTest
         $this->assertRedirectedToRoute('dms::auth.login');
     }
 
-    public function testAuthenticatedIndexPageRedirectsToFirstPackage()
+    public function testAuthenticatedIndexPageShowsDashboard()
     {
         $this->actingAsUser();
 
         $this->route('GET', 'dms::index');
 
-        $this->assertRedirectedToRoute('dms::package.dashboard', ['package' => 'admin']);
+        $this->see('Dashboard');
     }
 }

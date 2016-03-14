@@ -28,7 +28,7 @@ use Dms\Web\Laravel\Auth\Admin;
 /**
  * @author Elliot Levin <elliotlevin@hotmail.com>
  */
-class UserModuleTest extends CrudModuleTest
+class AdminUserModuleTest extends CrudModuleTest
 {
     /**
      * @var bool
@@ -71,6 +71,14 @@ class UserModuleTest extends CrudModuleTest
             $authSystem,
             $this->mockPasswordResetService()
         );
+    }
+
+    /**
+     * @return IPermission[]
+     */
+    protected function expectedReadModuleRequiredPermissions()
+    {
+        return [];
     }
 
     protected function mockRolDataSource() : IRoleRepository

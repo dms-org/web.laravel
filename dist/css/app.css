@@ -287,6 +287,12 @@ a:not(.btn).ladda-button .ladda-spinner > div > div > div {
 #darkroom-icons {
   top: 0; }
 
+.login-box-logo {
+  width: 100%;
+  margin-top: 10%; }
+  .login-box-logo + .login-box {
+    margin-top: 20px; }
+
 body {
   font-family: Arial, sans-serif !important; }
 

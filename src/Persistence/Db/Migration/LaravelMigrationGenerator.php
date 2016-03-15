@@ -59,8 +59,8 @@ class LaravelMigrationGenerator extends MigrationGenerator
 
         $this->laravelMigrationCreator = $laravelMigrationCreator;
         $this->files                   = $files;
-        $this->path                    = $path ?: config('dms.database.migrations.dir');
-        $this->tablesToIgnore          = config('dms.database.migrations.ignored-tables');
+        $this->path                    = $path ?: config('dms.database.migrations.dir') ?? database_path('migrations/');
+        $this->tablesToIgnore          = config('dms.database.migrations.ignored-tables') ?? [];
     }
 
     /**

@@ -86,7 +86,7 @@ class DmsInstallCommand extends Command
         $console->call('vendor:publish');
         $this->info('Executed: php artisan vendor:publish');
 
-        config('dms', require __DIR__ . '/../../config/dms.php');
+        app('config')->set(['dms' => require __DIR__ . '/../../config/dms.php']);
 
         $this->composer->dumpAutoloads();
         $this->info('Executed: composer dump-autoload');

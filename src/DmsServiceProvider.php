@@ -54,6 +54,7 @@ use Dms\Web\Laravel\Renderer\Widget\WidgetRendererCollection;
 use Dms\Web\Laravel\View\DmsNavigationViewComposer;
 use Illuminate\Auth\AuthManager;
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Database\Connection;
@@ -123,9 +124,14 @@ class DmsServiceProvider extends ServiceProvider
         $this->loadViews();
         $this->loadTranslations();
 
-        // Here we resolve the cms instance to ensure that it loads the instance
-        // and boots the installed packages...
-        $cms = $this->app[ICms::class];
+        try {
+            // Here we resolve the cms instance to ensure that it loads the instance
+            // and boots the installed packages...
+            $cms = $this->app[ICms::class];
+        } catch (BindingResolutionException $e) {
+            // And ignore the error as this probably indicates this is during
+            // the installation process
+        }
     }
 
     private function publishAssets()

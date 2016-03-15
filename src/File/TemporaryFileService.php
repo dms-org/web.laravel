@@ -3,6 +3,7 @@
 namespace Dms\Web\Laravel\File;
 
 use Dms\Common\Structure\DateTime\DateTime;
+use Dms\Common\Structure\FileSystem\PathHelper;
 use Dms\Core\Exception\InvalidArgumentException;
 use Dms\Core\File\IFile;
 use Dms\Core\File\IUploadedFile;
@@ -79,7 +80,7 @@ class TemporaryFileService implements ITemporaryFileService
         foreach ($files as $key => $file) {
             if ($file instanceof IUploadedFile) {
                 $fileName = str_random(32);
-                $file     = $file->moveTo(realpath($tempUploadDirectory) . DIRECTORY_SEPARATOR . $fileName);
+                $file     = $file->moveTo(PathHelper::combine($tempUploadDirectory, $fileName));
             }
 
             $tempFiles[$key] = new TemporaryFile(

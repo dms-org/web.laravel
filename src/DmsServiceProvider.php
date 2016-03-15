@@ -112,7 +112,6 @@ class DmsServiceProvider extends ServiceProvider
             $this->registerSchedule();
             $this->publishAssets();
             $this->publishConfig();
-            $this->publishSeeders();
         }
     }
 
@@ -305,13 +304,6 @@ class DmsServiceProvider extends ServiceProvider
         $schedule = $this->app[Schedule::class];
 
         $schedule->command('dms:clear-temp-files')->daily();
-    }
-
-    private function publishSeeders()
-    {
-        $this->publishes([
-            __DIR__ . '/Persistence/Db/Seeders/' => database_path('seeds'),
-        ]);
     }
 
     private function registerUtils()

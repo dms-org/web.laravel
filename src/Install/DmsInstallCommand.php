@@ -100,6 +100,14 @@ class DmsInstallCommand extends Command
         $console->call('db:seed');
         $this->info('Executed: php artisan db:seed');
 
+        file_put_contents(
+            app_path('../.gitignore'),
+            '/storage/dms/' . PHP_EOL
+            . '/public/files/' . PHP_EOL,
+            FILE_APPEND
+        );
+        $this->info('Added to .gitignore');
+
         $this->info('Done! Good luck with your project.');
     }
 }

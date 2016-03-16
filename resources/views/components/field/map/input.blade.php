@@ -1,4 +1,9 @@
-<div class="dms-map-input" data-input-mode="{{ $inputMode }}" data-name="{{ $name }}">
+<div class="dms-map-input"
+     data-input-mode="{{ $inputMode }}"
+     data-name="{{ $name }}"
+     data-default-latitude="{{ config('dms.localisation.form.defaults.map')[0] ?? null }}"
+     data-default-longitude="{{ config('dms.localisation.form.defaults.map')[1] ?? null }}"
+>
     <div>
         <div class="input-group">
             <input type="text"

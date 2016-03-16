@@ -153,6 +153,12 @@ a.dms-run-action-form {
     .dms-staged-form .dms-wysiwyg-container .dms-file-picker-dialog .dms-file-picker-container .dms-quick-filter-form .form-group {
       margin: 0 !important; }
 
+.dms-staged-form .dms-money-input-group .dms-money-input {
+  width: 70%; }
+
+.dms-staged-form .dms-money-input-group .dms-currency-input {
+  width: 30%; }
+
 .dms-display-map {
   margin: 15px 0;
   height: 200px;

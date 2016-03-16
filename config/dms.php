@@ -12,10 +12,27 @@ return [
     | login attempts.
     |
     */
-    'auth'      => [
+    'auth'         => [
         'login' => [
             'max-attempts' => 5,
             'lockout-time' => 60,
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Localization Settings
+    |--------------------------------------------------------------------------
+    |
+    | Here you can define localization defaults and settings.
+    |
+    */
+    'localisation' => [
+        'form' => [
+            'defaults' => [
+                'currency' => 'AUD',
+                'map'      => [-25.3455606, 131.0195906]
+            ]
         ],
     ],
 
@@ -28,7 +45,7 @@ return [
     | in the footer of every page.
     |
     */
-    'contact'   => [
+    'contact'      => [
         'website' => 'http://contact-us...',
         'company' => 'Company Inc.',
     ],
@@ -50,7 +67,7 @@ return [
     | then be moved to the correct folder when the form is submitted.
     |
     */
-    'storage'   => [
+    'storage'      => [
         'public-files'  => [
             'dir' => public_path('files/'),
             'url' => '/files/',
@@ -76,7 +93,7 @@ return [
     | application's orm.
     |
     */
-    'database'  => [
+    'database'     => [
         'migrations' => [
             'dir'            => database_path('migrations'),
             'ignored-tables' => ['migrations'],
@@ -96,7 +113,7 @@ return [
     | you would supply your renderer class.
     |
     */
-    'services'  => [
+    'services'     => [
         'actions' => [
             'input-transformers' => [
                 Dms\Web\Laravel\Action\InputTransformer\SymphonyToDmsUploadedFileTransformer::class,
@@ -132,6 +149,7 @@ return [
                 Dms\Web\Laravel\Renderer\Form\Field\InnerModuleFieldRenderer::class,
                 Dms\Web\Laravel\Renderer\Form\Field\IntFieldRenderer::class,
                 Dms\Web\Laravel\Renderer\Form\Field\FileFieldRenderer::class,
+                Dms\Web\Laravel\Renderer\Form\Field\MoneyFieldRenderer::class,
                 Dms\Web\Laravel\Renderer\Form\Field\RadioOptionsFieldRender::class,
                 Dms\Web\Laravel\Renderer\Form\Field\SelectOptionsFieldRender::class,
                 Dms\Web\Laravel\Renderer\Form\Field\RgbaColourFieldRenderer::class,
@@ -186,7 +204,7 @@ return [
     | the result of the action can be loaded via a http GET request.
     |
     */
-    'actions'   => [
+    'actions'      => [
         'safe' => [
             Dms\Core\Common\Crud\Action\Crud\ViewDetailsAction::class,
         ],
@@ -203,7 +221,7 @@ return [
     | dangerous actions for instance may require extra confirmation before preceding.
     |
     */
-    'keywords'  => [
+    'keywords'     => [
         'danger'    => ['delete', 'remove', 'trash', 'drop', 'cancel', 'reset'],
         'warning'   => [],
         'success'   => ['confirm', 'approve', 'accept', 'verify', 'download'],
@@ -224,7 +242,7 @@ return [
     | as appropriate for your use case.
     |
     */
-    'front-end' => [
+    'front-end'    => [
         'global' => [
             'stylesheets' => [
                 'vendor/dms/css/all.css',

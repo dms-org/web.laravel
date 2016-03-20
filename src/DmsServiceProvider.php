@@ -3,6 +3,7 @@
 namespace Dms\Web\Laravel;
 
 use Cache\Adapter\Filesystem\FilesystemCachePool;
+use Dms\Common\Structure\FileSystem\IApplicationDirectories;
 use Dms\Core\Auth\IAdminRepository;
 use Dms\Core\Auth\IAuthSystem;
 use Dms\Core\Auth\IRoleRepository;
@@ -30,6 +31,7 @@ use Dms\Web\Laravel\Document\DirectoryTree;
 use Dms\Web\Laravel\Document\PublicFileModule;
 use Dms\Web\Laravel\File\Command\ClearTempFilesCommand;
 use Dms\Web\Laravel\File\ITemporaryFileService;
+use Dms\Web\Laravel\File\LaravelApplicationDirectories;
 use Dms\Web\Laravel\File\Persistence\ITemporaryFileRepository;
 use Dms\Web\Laravel\File\Persistence\TemporaryFileRepository;
 use Dms\Web\Laravel\File\TemporaryFileService;
@@ -308,9 +310,10 @@ class DmsServiceProvider extends ServiceProvider
 
     private function registerUtils()
     {
-        $this->app->bind(IClock::class, DateTimeClock::class);
-        $this->app->bind(ITemporaryFileService::class, TemporaryFileService::class);
-        $this->app->bind(ITemporaryFileRepository::class, TemporaryFileRepository::class);
+        $this->app->singleton(IClock::class, DateTimeClock::class);
+        $this->app->singleton(ITemporaryFileService::class, TemporaryFileService::class);
+        $this->app->singleton(ITemporaryFileRepository::class, TemporaryFileRepository::class);
+        $this->app->singleton(IApplicationDirectories::class, LaravelApplicationDirectories::class);
     }
 
     private function registerActionServices()

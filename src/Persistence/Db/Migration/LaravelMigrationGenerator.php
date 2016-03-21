@@ -47,6 +47,11 @@ class LaravelMigrationGenerator extends MigrationGenerator
     private $path;
 
     /**
+     * @var string[]
+     */
+    private $identifierMap = [];
+
+    /**
      * LaravelMigrationGenerator constructor.
      *
      * @param MigrationCreator $laravelMigrationCreator
@@ -72,6 +77,7 @@ class LaravelMigrationGenerator extends MigrationGenerator
      */
     protected function createMigration(SchemaDiff $diff, SchemaDiff $reverseDiff, string $migrationName)
     {
+        $this->identifierMap = [];
         $this->filterDiff($diff);
         $this->filterDiff($reverseDiff);
 
@@ -474,7 +480,7 @@ class LaravelMigrationGenerator extends MigrationGenerator
         $columns = $this->exportSimpleArrayOrSingle($index->getColumns());
 
         $indexName = $overrideName ?: $index->getName();
-        $name      = var_export($indexName, true);
+        $name      = var_export($this->normalizeIdentifier($indexName), true);
 
         $code .= $columns . ', ' . $name . ')';
 
@@ -488,7 +494,7 @@ class LaravelMigrationGenerator extends MigrationGenerator
 
     private function createAddForeignKeyCode(ForeignKeyConstraint $foreignKey)
     {
-        $name              = var_export($foreignKey->getName(), true);
+        $name              = var_export($this->normalizeIdentifier($foreignKey->getName()), true));
         $localColumns      = $this->exportSimpleArrayOrSingle($foreignKey->getLocalColumns());
         $referencedTable   = var_export($foreignKey->getForeignTableName(), true);
         $referencedColumns = $this->exportSimpleArrayOrSingle($foreignKey->getForeignColumns());
@@ -528,5 +534,19 @@ class LaravelMigrationGenerator extends MigrationGenerator
         return (string)($table instanceof TableDiff
             ? ($table->getNewName() ?: $table->fromTable->getName())
             : $table->getName());
+    }
+
+    private function normalizeIdentifier(string $identifier) : string
+    {
+        // For compatibility with mysql the identifier must be <= 64 chars
+        if (strlen($identifier) <= 64) {
+            return $identifier;
+        }
+
+        if (!isset($this->identifierMap[$identifier])) {
+            $this->identifierMap[$identifier] = substr($identifier, 0, 64 - 16) . substr(bin2hex(random_bytes(16)), 0, 16);
+        }
+
+        return $this->identifierMap[$identifier];
     }
 }

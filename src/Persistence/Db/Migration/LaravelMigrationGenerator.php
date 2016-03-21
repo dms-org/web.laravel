@@ -494,7 +494,7 @@ class LaravelMigrationGenerator extends MigrationGenerator
 
     private function createAddForeignKeyCode(ForeignKeyConstraint $foreignKey)
     {
-        $name              = var_export($this->normalizeIdentifier($foreignKey->getName()), true));
+        $name              = var_export($this->normalizeIdentifier($foreignKey->getName()), true);
         $localColumns      = $this->exportSimpleArrayOrSingle($foreignKey->getLocalColumns());
         $referencedTable   = var_export($foreignKey->getForeignTableName(), true);
         $referencedColumns = $this->exportSimpleArrayOrSingle($foreignKey->getForeignColumns());

@@ -492,17 +492,25 @@ class LaravelMigrationGenerator extends MigrationGenerator
         $localColumns      = $this->exportSimpleArrayOrSingle($foreignKey->getLocalColumns());
         $referencedTable   = var_export($foreignKey->getForeignTableName(), true);
         $referencedColumns = $this->exportSimpleArrayOrSingle($foreignKey->getForeignColumns());
-        $onUpdate          = var_export(strtolower($foreignKey->onUpdate()), true);
-        $onDelete          = var_export(strtolower($foreignKey->onDelete()), true);
+
+        $onUpdate = $foreignKey->onUpdate() ? var_export(strtolower($foreignKey->onUpdate()), true) : null;
+        $onDelete = $foreignKey->onDelete() ? var_export(strtolower($foreignKey->onDelete()), true) : null;
 
         $indent = PHP_EOL . str_repeat(' ', 8);
 
-        return "\$table->foreign({$localColumns}, {$name})"
-        . $indent . "->references({$referencedColumns})"
-        . $indent . "->on({$referencedTable})"
-        . $indent . "->onDelete({$onDelete})"
-        . $indent . "->onUpdate({$onUpdate})"
-        . ";";
+        $code = "\$table->foreign({$localColumns}, {$name})"
+            . $indent . "->references({$referencedColumns})"
+            . $indent . "->on({$referencedTable})";
+
+        if ($onDelete) {
+            $code .= $indent . "->onDelete({$onDelete})";
+        }
+
+        if ($onUpdate) {
+            $code .= $indent . "->onUpdate({$onUpdate})";
+        }
+
+        return $code . ";";
     }
 
     private function createDropForeignKeyCode($foreignKeyName)

@@ -59957,12 +59957,12 @@ Dms.ajax.parseData = function (data) {
     var queryString = $.param(data);
     $.each(queryString.split('&'), function (index, parameter) {
         var parts = parameter.split('=');
-        var name = decodeURIComponent(parts[0]);
+        var name = decodeURIComponent(parts[0].replace(/\+/g, '%20'));
         if (typeof dataMap[name] === 'undefined') {
             dataMap[name] = [];
         }
 
-        dataMap[name].push({value: decodeURIComponent(parts[1])});
+        dataMap[name].push({value: decodeURIComponent(parts[1].replace(/\+/g, '%20'))});
     });
 
     return dataMap;
@@ -60818,6 +60818,417 @@ Dms.chart.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
+
+    var fieldCounter = 1;
+
+    element.find('.dms-form-fieldset .form-group').each(function () {
+        var fieldLabel = $(this).children('.dms-label-container label[data-for]');
+        var forFieldName = fieldLabel.attr('data-for');
+
+        if (forFieldName) {
+            var forField = $(this).first('*[name="' + forFieldName + '"], .dms-inner-form[data-name="' + forFieldName + '"]');
+
+            if (!forField.attr('id')) {
+                forField.attr('id', 'dms-field-' + fieldCounter);
+                fieldCounter++;
+            }
+
+            fieldLabel.attr('for', forField.attr('id'));
+        }
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+
+    element.find('.dms-staged-form').each(function () {
+        var form = $(this);
+        var parsley = Dms.form.validation.initialize(form);
+        var stageElements = form.find('.dms-form-stage');
+
+        var arePreviousFieldsValid = function (fields) {
+            var originalScroll = $(document).scrollTop();
+            var focusedElement = $(document.activeElement);
+            parsley.validate();
+            focusedElement.focus();
+            $(document).scrollTop(originalScroll);
+
+            return fields.closest('.form-group').find('.dms-validation-message *').length === 0;
+        };
+
+        stageElements.filter('.dms-dependent-form-stage').each(function () {
+            var currentStage = $(this);
+            var container = currentStage.closest('.dms-form-stage-container');
+            var previousStages = container.prevAll('.dms-form-stage-container').find('.dms-form-stage');
+            var loadStageUrl = currentStage.attr('data-load-stage-url');
+            var dependentFields = currentStage.attr('data-stage-dependent-fields');
+            var dependentFieldNames = dependentFields ? JSON.parse(dependentFields) : null;
+            var currentAjaxRequest = null;
+            var previousLoadAttempt = 0;
+            var minMillisecondsBetweenLoads = 2000;
+            var isWaitingForNextLoadAttempt = false;
+
+            var makeDependentFieldSelectorFor = function (selector) {
+                return Dms.form.stages.makeDependentFieldSelectorFor(dependentFieldNames, selector);
+            };
+
+            var loadNextStage = function () {
+
+                if (currentAjaxRequest) {
+                    currentAjaxRequest.abort();
+                }
+
+                if (dependentFieldNames) {
+                    var hasLoadedAllRequiredFields = true;
+
+                    $.each(dependentFieldNames, function (index, fieldName) {
+                        if (previousStages.find('[name="' + fieldName + '"]').length === 0) {
+                            hasLoadedAllRequiredFields = false;
+                        }
+                    });
+
+                    if (!hasLoadedAllRequiredFields) {
+                        return;
+                    }
+                }
+
+                container.removeClass('loaded');
+                container.addClass('loading');
+
+                var currentTime = new Date().getTime();
+                var millisecondsBetweenLastLoad = currentTime - previousLoadAttempt;
+
+                if (millisecondsBetweenLastLoad >= minMillisecondsBetweenLoads) {
+                    isWaitingForNextLoadAttempt = false;
+                    previousLoadAttempt = currentTime;
+                }
+                else {
+                    if (!isWaitingForNextLoadAttempt) {
+                        isWaitingForNextLoadAttempt = true;
+                        setTimeout(loadNextStage, minMillisecondsBetweenLoads - millisecondsBetweenLastLoad);
+                    }
+                    return;
+                }
+
+                var previousFields = previousStages.find(makeDependentFieldSelectorFor('*'));
+
+                if (!arePreviousFieldsValid(previousFields)) {
+                    container.removeClass('loading');
+                    return;
+                }
+
+                Dms.form.validation.clearMessages(form);
+
+                var formData = Dms.form.stages.createFormDataFromFields(previousFields);
+
+                currentAjaxRequest = Dms.ajax.createRequest({
+                    url: loadStageUrl,
+                    type: 'post',
+                    processData: false,
+                    contentType: false,
+                    dataType: 'html',
+                    data: formData
+                });
+
+                currentAjaxRequest.done(function (html) {
+                    container.addClass('loaded');
+                    var currentValues = currentStage.getValues(true);
+                    currentStage.html(html);
+                    Dms.form.initialize(currentStage);
+                    currentStage.restoreValues(currentValues);
+                    form.triggerHandler('dms-form-updated');
+                });
+
+                currentAjaxRequest.fail(function (xhr) {
+                    if (currentAjaxRequest.statusText === 'abort') {
+                        return;
+                    }
+
+                    switch (xhr.status) {
+                        case 422: // Unprocessable Entity (validation failure)
+                            var validation = JSON.parse(xhr.responseText);
+                            Dms.form.validation.displayMessages(form, validation.messages.fields, validation.messages.constraints);
+                            break;
+
+                        case 400: // Bad request
+                            swal({
+                                title: "Could not load form",
+                                text: JSON.parse(xhr.responseText).message,
+                                type: "error"
+                            });
+                            break;
+
+                        default: // Unknown error
+                            swal({
+                                title: "Could not load form",
+                                text: "An unexpected error occurred",
+                                type: "error"
+                            });
+                            break;
+                    }
+                });
+
+                currentAjaxRequest.always(function () {
+                    container.removeClass('loading');
+                });
+            };
+
+            previousStages.on('input', makeDependentFieldSelectorFor('input'), loadNextStage);
+            previousStages.on('input', makeDependentFieldSelectorFor('textarea'), loadNextStage);
+            previousStages.on('change', makeDependentFieldSelectorFor('select'), loadNextStage);
+
+            if (dependentFieldNames) {
+                var selectors = [];
+                $.each(dependentFieldNames, function (index, fieldName) {
+                    selectors.push('.form-group[data-field-name="' + fieldName + '"]');
+                });
+
+                previousStages.on('dms-change', selectors.join(','), loadNextStage);
+            } else {
+                previousStages.on('dms-change', '.form-group[data-field-name]', loadNextStage);
+            }
+        });
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+
+    element.find('.dms-staged-form, .dms-run-action-form').each(function () {
+        var form = $(this);
+        var formContainer = form.closest('.dms-staged-form-container');
+        var parsley = Dms.form.validation.initialize(form);
+        var afterRunCallbacks = [];
+        var submitButtons = form.find('input[type=submit], button[type=submit]');
+        var submitMethod = form.attr('data-method');
+        var submitUrl = form.attr('data-action');
+        var reloadFormUrl = form.attr('data-reload-form-url');
+
+        if ($(this).is('a.dms-run-action-form, button.dms-run-action-form')) {
+            submitButtons = submitButtons.add(this);
+        }
+
+        var isFormValid = function () {
+            return parsley.isValid()
+                && form.find('.dms-validation-message *').length === 0
+                && form.find('.dms-form-stage-container').length === form.find('.dms-form-stage-container.loaded').length;
+        };
+
+        submitButtons.on('click before-confirmation', function (e) {
+            parsley.validate();
+
+            if (!isFormValid()) {
+                e.stopImmediatePropagation();
+                form.find('.dms-form-stage-container:not(.loaded)').addClass('has-error');
+                return false;
+            }
+        });
+
+        submitButtons.on('click', function (e) {
+            e.preventDefault();
+
+            Dms.form.validation.clearMessages(form);
+
+            form.triggerHandler('dms-before-submit');
+
+            var fieldsToReappend = [];
+            form.find('.dms-form-no-submit').each(function () {
+                var removedFields = $(this).children().detach();
+
+                fieldsToReappend.push({
+                    parentElement: $(this),
+                    children: removedFields
+                });
+            });
+
+            var formData =  Dms.form.stages.createFormDataFromFields(form.find(':input'));
+            form.find('.form-group').each(function () {
+                var additionalDataToSubmit = $(this).triggerHandler('dms-get-input-data');
+
+                if (additionalDataToSubmit) {
+                    $.each(Dms.ajax.parseData(additionalDataToSubmit), function (name, entries) {
+                        $.each(entries, function (index, entry) {
+                            formData.append(name, entry.value, entry.filename);
+                        });
+                    });
+                }
+            });
+
+            $.each(fieldsToReappend, function (index, elements) {
+                elements.parentElement.append(elements.children);
+            });
+
+            submitButtons.prop('disabled', true);
+            submitButtons.addClass('ladda-button').attr('data-style', 'expand-right');
+            var ladda = Ladda.create(submitButtons.get(0));
+            ladda.start();
+
+            var currentAjaxRequest = Dms.ajax.createRequest({
+                url: submitUrl,
+                type: submitMethod,
+                processData: false,
+                contentType: false,
+                dataType: 'json',
+                data: formData,
+                xhr: function () {
+                    var xhr = $.ajaxSettings.xhr();
+
+                    if (form.find('input[type=file]').length && xhr.upload) {
+                        xhr.upload.addEventListener('progress', function (event) {
+                            if (event.lengthComputable) {
+                                ladda.setProgress(event.loaded / event.total);
+                            }
+                        }, false);
+                    }
+
+                    return xhr;
+                }
+            });
+
+            currentAjaxRequest.done(function (data, statusText, xhr) {
+                Dms.action.responseHandler(xhr.status, submitUrl, data);
+                $.each(afterRunCallbacks, function (index, callback) {
+                    callback(data);
+                });
+
+                form.triggerHandler('dms-post-submit-success');
+            });
+
+            currentAjaxRequest.fail(function (xhr) {
+                if (currentAjaxRequest.statusText === 'abort') {
+                    return;
+                }
+
+                switch (xhr.status) {
+                    case 401: // Unauthorized
+                        swal({
+                            title: "Could not perform action",
+                            text: "You do not possess the necessary permissions to authorize this action",
+                            type: "error"
+                        });
+                        break;
+
+                    case 422: // Unprocessable Entity (validation failure)
+                        var validation = JSON.parse(xhr.responseText);
+                        Dms.form.validation.displayMessages(form, validation.messages.fields, validation.messages.constraints);
+                        break;
+
+                    default:
+                        try {
+                            var response = JSON.parse(xhr.responseText);
+                            Dms.action.responseHandler(xhr.status, submitUrl, response);
+                        } catch (e) {
+                            // Unknown error
+                            swal({
+                                title: "Could not submit form",
+                                text: "An unexpected error occurred",
+                                type: "error"
+                            });
+                            break;
+                        }
+                }
+            });
+
+            currentAjaxRequest.always(function () {
+                submitButtons.prop('disabled', false);
+                ladda.stop();
+            });
+
+            return false;
+        });
+
+        var parentToRemove = form.attr('data-after-run-remove-closest');
+        if (parentToRemove) {
+            afterRunCallbacks.push(function () {
+                form.closest(parentToRemove).fadeOut(100);
+            });
+        }
+
+        if ( form.attr('data-after-run-refresh')) {
+            afterRunCallbacks.push(function () {
+                window.location.reload(true);
+            });
+        }
+
+        afterRunCallbacks.push(function () {
+            form.find('input[type=password]').val('');
+        });
+
+        afterRunCallbacks.push(function (data) {
+            if (data.redirect || !form.is('.dms-staged-form')) {
+                return;
+            }
+
+            var request = Dms.ajax.createRequest({
+                url: reloadFormUrl,
+                type: 'get',
+                dataType: 'html',
+                data: {'__content_only': '1'}
+            });
+
+            formContainer.addClass('loading');
+
+            request.done(function (html) {
+                var newForm = $(html).find('.dms-staged-form').first();
+                form.replaceWith(newForm);
+                Dms.form.initialize(newForm.parent());
+                Dms.table.initialize(newForm.parent());
+            });
+
+            request.always(function () {
+                formContainer.removeClass('loading');
+            });
+        });
+    });
+});
+Dms.form.initializeValidationCallbacks.push(function (element) {
+
+    element.find('.dms-form-fields').each(function () {
+        if (!$(this).attr('id')) {
+            $(this).attr('id', Dms.utilities.idGenerator());
+        }
+    });
+
+    element.find('.dms-form-fields').each(function () {
+        var formFieldSection = $(this);
+        var formFieldsGroupId = formFieldSection.attr('id');
+
+
+        var buildElementSelector = function (fieldName) {
+            return '#' + formFieldsGroupId + ' *[name="' + fieldName + '"]';
+        };
+
+        var fieldValidations = {
+            'data-equal-fields': 'data-parsley-equalto',
+            'data-greater-than-fields': 'data-parsley-gt',
+            'data-greater-than-or-equal-fields': 'data-parsley-gte',
+            'data-less-than-fields': 'data-parsley-lt',
+            'data-less-than-or-equal-fields': 'data-parsley-lte'
+        };
+
+        $.each(fieldValidations, function (validationAttr, parsleyAttr) {
+            var fieldsMap = formFieldSection.attr(validationAttr);
+
+            if (fieldsMap) {
+                $.each(JSON.parse(fieldsMap), function (fieldName, otherFieldName) {
+                    var field = $(buildElementSelector(fieldName));
+                    field.attr(parsleyAttr, buildElementSelector(otherFieldName));
+                });
+            }
+        });
+    });
+
+    element.find('.dms-staged-form').each(function () {
+        var form = $(this);
+        var parsley = Dms.form.validation.initialize(form);
+
+        form.find('.dms-form-fields').each(function (index) {
+            $(this).find(':input').attr('data-parsley-group', 'validation-group-' + index);
+        });
+    });
+
+    element.find('.dms-form').each(function () {
+        var form = $(this);
+        var parsley = Dms.form.validation.initialize(form);
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
     element.find('input[type=checkbox].single-checkbox').iCheck({
         checkboxClass: 'icheckbox_square-blue',
         increaseArea: '20%'
@@ -60835,22 +61246,6 @@ Dms.form.initializeCallbacks.push(function (element) {
         var firstCheckbox = listOfCheckboxes.find('input[type=checkbox]').first();
         firstCheckbox.attr('data-parsley-min-elements', listOfCheckboxes.attr('data-min-elements'));
         firstCheckbox.attr('data-parsley-max-elements', listOfCheckboxes.attr('data-max-elements'));
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
-    element.find('input.dms-colour-input').each(function () {
-        var config = {
-            theme: 'bootstrap'
-        };
-
-        if ($(this).hasClass('dms-colour-input-rgb')) {
-            config.format = 'rgb';
-        } else if ($(this).hasClass('dms-colour-input-rgba')) {
-            config.format = 'rgb';
-            config.opacity = true;
-        }
-
-        $(this).addClass('minicolors').minicolors(config);
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -61464,6 +61859,22 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
+    element.find('input.dms-colour-input').each(function () {
+        var config = {
+            theme: 'bootstrap'
+        };
+
+        if ($(this).hasClass('dms-colour-input-rgb')) {
+            config.format = 'rgb';
+        } else if ($(this).hasClass('dms-colour-input-rgba')) {
+            config.format = 'rgb';
+            config.opacity = true;
+        }
+
+        $(this).addClass('minicolors').minicolors(config);
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
 
     element.find('ul.dms-field-list').each(function () {
         var listOfFields = $(this);
@@ -61703,12 +62114,6 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-    element.find('select[multiple]').multiselect({
-        enableFiltering: true,
-        includeSelectAllOption: true
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
     element.find('input[type="number"][data-max-decimal-places]').each(function () {
         $(this).attr('data-parsley-max-decimal-places', $(this).attr('data-max-decimal-places'));
     });
@@ -61739,9 +62144,6 @@ Dms.form.initializeCallbacks.push(function (element) {
         radioClass: 'iradio_square-blue',
         increaseArea: '20%'
     });
-});
-Dms.form.initializeCallbacks.push(function (element) {
-
 });
 Dms.form.initializeCallbacks.push(function (element) {
     element.find('input[type="ip-address"]')
@@ -61780,135 +62182,10 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-
-});
-Dms.form.initializeCallbacks.push(function (element) {
-    if (typeof tinymce === 'undefined') {
-        return;
-    }
-
-    tinymce.init({
-        selector: 'textarea.dms-wysiwyg',
-        tooltip: '',
-        plugins: [
-            "advlist",
-            "autolink",
-            "lists",
-            "link",
-            "image",
-            "charmap",
-            "print",
-            "preview",
-            "anchor",
-            "searchreplace",
-            "visualblocks",
-            "code",
-            "insertdatetime",
-            "media",
-            "table",
-            "contextmenu",
-            "paste",
-            "imagetools"
-        ],
-        toolbar: "undo redo | styleselect | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist | link image",
-        setup: function (editor) {
-            editor.on('change', function () {
-                editor.save();
-            });
-        },
-        relative_urls: false,
-        convert_urls: false,
-        document_base_url: '//' + window.location.host,
-        file_picker_callback: function (callback, value, meta) {
-            var wysiwygElement = $(tinymce.activeEditor.getElement()).closest('.dms-wysiwyg-container');
-            showFilePickerDialog(meta.filetype, wysiwygElement, function (fileUrl) {
-                if (fileUrl.indexOf('http://') === 0) {
-                    fileUrl = fileUrl.substring('http:'.length);
-                } else if (fileUrl.indexOf('https://') === 0) {
-                    fileUrl = fileUrl.substring('https:'.length);
-                }
-
-                callback(fileUrl);
-            });
-        }
+    element.find('select[multiple]').multiselect({
+        enableFiltering: true,
+        includeSelectAllOption: true
     });
-
-    var wysiwygElements = element.find('textarea.dms-wysiwyg');
-
-    wysiwygElements.each(function () {
-        if (!$(this).attr('id')) {
-            $(this).attr('id', Dms.utilities.idGenerator());
-        }
-    });
-
-    wysiwygElements.filter(function () {
-        return $(this).closest('.mce-tinymce').length === 0;
-    }).each(function () {
-        tinymce.EditorManager.execCommand('mceAddEditor', true, $(this).attr('id'));
-    });
-
-    wysiwygElements.closest('.dms-staged-form').on('dms-post-submit-success', function () {
-        $(this).find('textarea.dms-wysiwyg').each(function () {
-            tinymce.remove('#' + $(this).attr('id'));
-        });
-    });
-
-    var showFilePickerDialog = function (mode, wysiwygElement, callback) {
-        var loadFilePickerUrl = wysiwygElement.attr('data-load-file-picker-url');
-        var filePickerDialog = wysiwygElement.find('.dms-file-picker-dialog');
-        var filePickerContainer = filePickerDialog.find('.dms-file-picker-container');
-        var filePicker = filePickerContainer.find('.dms-file-picker');
-
-        filePickerDialog.modal('show');
-
-        var request = Dms.ajax.createRequest({
-            url: loadFilePickerUrl,
-            type: 'get',
-            dataType: 'html',
-            data: {'__content_only': '1'}
-        });
-
-        filePickerContainer.addClass('loading');
-
-        request.done(function (html) {
-            filePicker.html(html);
-            Dms.table.initialize(filePicker);
-            Dms.form.initialize(filePicker);
-
-            var updateFilePickerButtons = function () {
-                filePicker.find('.dms-trashed-files-btn-container').hide();
-                var selectFileButton = $('<button class="btn btn-success btn-xs"><i class="fa fa-check"></i></button>');
-
-                filePicker.find('.dms-file-action-buttons').each(function () {
-                    var fileItemButtons = $(this);
-
-                    var specificFileSelectButton = selectFileButton.clone();
-                    fileItemButtons.empty();
-                    fileItemButtons.append(specificFileSelectButton);
-
-                    specificFileSelectButton.on('click', function () {
-                        callback(fileItemButtons.closest('.dms-file-item').attr('data-public-url'));
-                        filePickerDialog.modal('hide');
-                    });
-                });
-
-                if (mode === 'image') {
-                    filePicker.find('.btn-images-only').click().focus();
-                }
-            };
-
-            filePicker.find('.dms-file-tree').on('dms-file-tree-updated', updateFilePickerButtons);
-            updateFilePickerButtons();
-        });
-
-        request.always(function () {
-            filePickerContainer.removeClass('loading');
-        });
-
-        filePickerDialog.on('hide.bs.modal', function () {
-            filePicker.empty();
-        });
-    };
 });
 Dms.form.initializeCallbacks.push(function (element) {
 
@@ -62114,414 +62391,137 @@ Dms.form.initializeCallbacks.push(function (element) {
 });
 Dms.form.initializeCallbacks.push(function (element) {
 
-    var fieldCounter = 1;
-
-    element.find('.dms-form-fieldset .form-group').each(function () {
-        var fieldLabel = $(this).children('.dms-label-container label[data-for]');
-        var forFieldName = fieldLabel.attr('data-for');
-
-        if (forFieldName) {
-            var forField = $(this).first('*[name="' + forFieldName + '"], .dms-inner-form[data-name="' + forFieldName + '"]');
-
-            if (!forField.attr('id')) {
-                forField.attr('id', 'dms-field-' + fieldCounter);
-                fieldCounter++;
-            }
-
-            fieldLabel.attr('for', forField.attr('id'));
-        }
-    });
 });
 Dms.form.initializeCallbacks.push(function (element) {
 
-    element.find('.dms-staged-form').each(function () {
-        var form = $(this);
-        var parsley = Dms.form.validation.initialize(form);
-        var stageElements = form.find('.dms-form-stage');
-
-        var arePreviousFieldsValid = function (fields) {
-            var originalScroll = $(document).scrollTop();
-            var focusedElement = $(document.activeElement);
-            parsley.validate();
-            focusedElement.focus();
-            $(document).scrollTop(originalScroll);
-
-            return fields.closest('.form-group').find('.dms-validation-message *').length === 0;
-        };
-
-        stageElements.filter('.dms-dependent-form-stage').each(function () {
-            var currentStage = $(this);
-            var container = currentStage.closest('.dms-form-stage-container');
-            var previousStages = container.prevAll('.dms-form-stage-container').find('.dms-form-stage');
-            var loadStageUrl = currentStage.attr('data-load-stage-url');
-            var dependentFields = currentStage.attr('data-stage-dependent-fields');
-            var dependentFieldNames = dependentFields ? JSON.parse(dependentFields) : null;
-            var currentAjaxRequest = null;
-            var previousLoadAttempt = 0;
-            var minMillisecondsBetweenLoads = 2000;
-            var isWaitingForNextLoadAttempt = false;
-
-            var makeDependentFieldSelectorFor = function (selector) {
-                return Dms.form.stages.makeDependentFieldSelectorFor(dependentFieldNames, selector);
-            };
-
-            var loadNextStage = function () {
-
-                if (currentAjaxRequest) {
-                    currentAjaxRequest.abort();
-                }
-
-                if (dependentFieldNames) {
-                    var hasLoadedAllRequiredFields = true;
-
-                    $.each(dependentFieldNames, function (index, fieldName) {
-                        if (previousStages.find('[name="' + fieldName + '"]').length === 0) {
-                            hasLoadedAllRequiredFields = false;
-                        }
-                    });
-
-                    if (!hasLoadedAllRequiredFields) {
-                        return;
-                    }
-                }
-
-                container.removeClass('loaded');
-                container.addClass('loading');
-
-                var currentTime = new Date().getTime();
-                var millisecondsBetweenLastLoad = currentTime - previousLoadAttempt;
-
-                if (millisecondsBetweenLastLoad >= minMillisecondsBetweenLoads) {
-                    isWaitingForNextLoadAttempt = false;
-                    previousLoadAttempt = currentTime;
-                }
-                else {
-                    if (!isWaitingForNextLoadAttempt) {
-                        isWaitingForNextLoadAttempt = true;
-                        setTimeout(loadNextStage, minMillisecondsBetweenLoads - millisecondsBetweenLastLoad);
-                    }
-                    return;
-                }
-
-                var previousFields = previousStages.find(makeDependentFieldSelectorFor('*'));
-
-                if (!arePreviousFieldsValid(previousFields)) {
-                    container.removeClass('loading');
-                    return;
-                }
-
-                Dms.form.validation.clearMessages(form);
-
-                var formData = Dms.form.stages.createFormDataFromFields(previousFields);
-
-                currentAjaxRequest = Dms.ajax.createRequest({
-                    url: loadStageUrl,
-                    type: 'post',
-                    processData: false,
-                    contentType: false,
-                    dataType: 'html',
-                    data: formData
-                });
-
-                currentAjaxRequest.done(function (html) {
-                    container.addClass('loaded');
-                    var currentValues = currentStage.getValues(true);
-                    currentStage.html(html);
-                    Dms.form.initialize(currentStage);
-                    currentStage.restoreValues(currentValues);
-                    form.triggerHandler('dms-form-updated');
-                });
-
-                currentAjaxRequest.fail(function (xhr) {
-                    if (currentAjaxRequest.statusText === 'abort') {
-                        return;
-                    }
-
-                    switch (xhr.status) {
-                        case 422: // Unprocessable Entity (validation failure)
-                            var validation = JSON.parse(xhr.responseText);
-                            Dms.form.validation.displayMessages(form, validation.messages.fields, validation.messages.constraints);
-                            break;
-
-                        case 400: // Bad request
-                            swal({
-                                title: "Could not load form",
-                                text: JSON.parse(xhr.responseText).message,
-                                type: "error"
-                            });
-                            break;
-
-                        default: // Unknown error
-                            swal({
-                                title: "Could not load form",
-                                text: "An unexpected error occurred",
-                                type: "error"
-                            });
-                            break;
-                    }
-                });
-
-                currentAjaxRequest.always(function () {
-                    container.removeClass('loading');
-                });
-            };
-
-            previousStages.on('input', makeDependentFieldSelectorFor('input'), loadNextStage);
-            previousStages.on('input', makeDependentFieldSelectorFor('textarea'), loadNextStage);
-            previousStages.on('change', makeDependentFieldSelectorFor('select'), loadNextStage);
-
-            if (dependentFieldNames) {
-                var selectors = [];
-                $.each(dependentFieldNames, function (index, fieldName) {
-                    selectors.push('.form-group[data-field-name="' + fieldName + '"]');
-                });
-
-                previousStages.on('dms-change', selectors.join(','), loadNextStage);
-            } else {
-                previousStages.on('dms-change', '.form-group[data-field-name]', loadNextStage);
-            }
-        });
-    });
 });
 Dms.form.initializeCallbacks.push(function (element) {
+    if (typeof tinymce === 'undefined') {
+        return;
+    }
 
-    element.find('.dms-staged-form, .dms-run-action-form').each(function () {
-        var form = $(this);
-        var formContainer = form.closest('.dms-staged-form-container');
-        var parsley = Dms.form.validation.initialize(form);
-        var afterRunCallbacks = [];
-        var submitButtons = form.find('input[type=submit], button[type=submit]');
-        var submitMethod = form.attr('data-method');
-        var submitUrl = form.attr('data-action');
-        var reloadFormUrl = form.attr('data-reload-form-url');
-
-        if ($(this).is('a.dms-run-action-form, button.dms-run-action-form')) {
-            submitButtons = submitButtons.add(this);
-        }
-
-        var isFormValid = function () {
-            return parsley.isValid()
-                && form.find('.dms-validation-message *').length === 0
-                && form.find('.dms-form-stage-container').length === form.find('.dms-form-stage-container.loaded').length;
-        };
-
-        submitButtons.on('click before-confirmation', function (e) {
-            parsley.validate();
-
-            if (!isFormValid()) {
-                e.stopImmediatePropagation();
-                form.find('.dms-form-stage-container:not(.loaded)').addClass('has-error');
-                return false;
-            }
-        });
-
-        submitButtons.on('click', function (e) {
-            e.preventDefault();
-
-            Dms.form.validation.clearMessages(form);
-
-            form.triggerHandler('dms-before-submit');
-
-            var fieldsToReappend = [];
-            form.find('.dms-form-no-submit').each(function () {
-                var removedFields = $(this).children().detach();
-
-                fieldsToReappend.push({
-                    parentElement: $(this),
-                    children: removedFields
-                });
+    tinymce.init({
+        selector: 'textarea.dms-wysiwyg',
+        tooltip: '',
+        plugins: [
+            "advlist",
+            "autolink",
+            "lists",
+            "link",
+            "image",
+            "charmap",
+            "print",
+            "preview",
+            "anchor",
+            "searchreplace",
+            "visualblocks",
+            "code",
+            "insertdatetime",
+            "media",
+            "table",
+            "contextmenu",
+            "paste",
+            "imagetools"
+        ],
+        toolbar: "undo redo | styleselect | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist | link image",
+        setup: function (editor) {
+            editor.on('change', function () {
+                editor.save();
             });
-
-            var formData =  Dms.form.stages.createFormDataFromFields(form.find(':input'));
-            form.find('.form-group').each(function () {
-                var additionalDataToSubmit = $(this).triggerHandler('dms-get-input-data');
-
-                if (additionalDataToSubmit) {
-                    $.each(Dms.ajax.parseData(additionalDataToSubmit), function (name, entries) {
-                        $.each(entries, function (index, entry) {
-                            formData.append(name, entry.value, entry.filename);
-                        });
-                    });
-                }
-            });
-
-            $.each(fieldsToReappend, function (index, elements) {
-                elements.parentElement.append(elements.children);
-            });
-
-            submitButtons.prop('disabled', true);
-            submitButtons.addClass('ladda-button').attr('data-style', 'expand-right');
-            var ladda = Ladda.create(submitButtons.get(0));
-            ladda.start();
-
-            var currentAjaxRequest = Dms.ajax.createRequest({
-                url: submitUrl,
-                type: submitMethod,
-                processData: false,
-                contentType: false,
-                dataType: 'json',
-                data: formData,
-                xhr: function () {
-                    var xhr = $.ajaxSettings.xhr();
-
-                    if (form.find('input[type=file]').length && xhr.upload) {
-                        xhr.upload.addEventListener('progress', function (event) {
-                            if (event.lengthComputable) {
-                                ladda.setProgress(event.loaded / event.total);
-                            }
-                        }, false);
-                    }
-
-                    return xhr;
-                }
-            });
-
-            currentAjaxRequest.done(function (data, statusText, xhr) {
-                Dms.action.responseHandler(xhr.status, submitUrl, data);
-                $.each(afterRunCallbacks, function (index, callback) {
-                    callback(data);
-                });
-
-                form.triggerHandler('dms-post-submit-success');
-            });
-
-            currentAjaxRequest.fail(function (xhr) {
-                if (currentAjaxRequest.statusText === 'abort') {
-                    return;
+        },
+        relative_urls: false,
+        convert_urls: false,
+        document_base_url: '//' + window.location.host,
+        file_picker_callback: function (callback, value, meta) {
+            var wysiwygElement = $(tinymce.activeEditor.getElement()).closest('.dms-wysiwyg-container');
+            showFilePickerDialog(meta.filetype, wysiwygElement, function (fileUrl) {
+                if (fileUrl.indexOf('http://') === 0) {
+                    fileUrl = fileUrl.substring('http:'.length);
+                } else if (fileUrl.indexOf('https://') === 0) {
+                    fileUrl = fileUrl.substring('https:'.length);
                 }
 
-                switch (xhr.status) {
-                    case 401: // Unauthorized
-                        swal({
-                            title: "Could not perform action",
-                            text: "You do not possess the necessary permissions to authorize this action",
-                            type: "error"
-                        });
-                        break;
-
-                    case 422: // Unprocessable Entity (validation failure)
-                        var validation = JSON.parse(xhr.responseText);
-                        Dms.form.validation.displayMessages(form, validation.messages.fields, validation.messages.constraints);
-                        break;
-
-                    default:
-                        try {
-                            var response = JSON.parse(xhr.responseText);
-                            Dms.action.responseHandler(xhr.status, submitUrl, response);
-                        } catch (e) {
-                            // Unknown error
-                            swal({
-                                title: "Could not submit form",
-                                text: "An unexpected error occurred",
-                                type: "error"
-                            });
-                            break;
-                        }
-                }
-            });
-
-            currentAjaxRequest.always(function () {
-                submitButtons.prop('disabled', false);
-                ladda.stop();
-            });
-
-            return false;
-        });
-
-        var parentToRemove = form.attr('data-after-run-remove-closest');
-        if (parentToRemove) {
-            afterRunCallbacks.push(function () {
-                form.closest(parentToRemove).fadeOut(100);
+                callback(fileUrl);
             });
         }
-
-        if ( form.attr('data-after-run-refresh')) {
-            afterRunCallbacks.push(function () {
-                window.location.reload(true);
-            });
-        }
-
-        afterRunCallbacks.push(function () {
-            form.find('input[type=password]').val('');
-        });
-
-        afterRunCallbacks.push(function (data) {
-            if (data.redirect || !form.is('.dms-staged-form')) {
-                return;
-            }
-
-            var request = Dms.ajax.createRequest({
-                url: reloadFormUrl,
-                type: 'get',
-                dataType: 'html',
-                data: {'__content_only': '1'}
-            });
-
-            formContainer.addClass('loading');
-
-            request.done(function (html) {
-                var newForm = $(html).find('.dms-staged-form').first();
-                form.replaceWith(newForm);
-                Dms.form.initialize(newForm.parent());
-                Dms.table.initialize(newForm.parent());
-            });
-
-            request.always(function () {
-                formContainer.removeClass('loading');
-            });
-        });
     });
-});
-Dms.form.initializeValidationCallbacks.push(function (element) {
 
-    element.find('.dms-form-fields').each(function () {
+    var wysiwygElements = element.find('textarea.dms-wysiwyg');
+
+    wysiwygElements.each(function () {
         if (!$(this).attr('id')) {
             $(this).attr('id', Dms.utilities.idGenerator());
         }
     });
 
-    element.find('.dms-form-fields').each(function () {
-        var formFieldSection = $(this);
-        var formFieldsGroupId = formFieldSection.attr('id');
+    wysiwygElements.filter(function () {
+        return $(this).closest('.mce-tinymce').length === 0;
+    }).each(function () {
+        tinymce.EditorManager.execCommand('mceAddEditor', true, $(this).attr('id'));
+    });
 
+    wysiwygElements.closest('.dms-staged-form').on('dms-post-submit-success', function () {
+        $(this).find('textarea.dms-wysiwyg').each(function () {
+            tinymce.remove('#' + $(this).attr('id'));
+        });
+    });
 
-        var buildElementSelector = function (fieldName) {
-            return '#' + formFieldsGroupId + ' *[name="' + fieldName + '"]';
-        };
+    var showFilePickerDialog = function (mode, wysiwygElement, callback) {
+        var loadFilePickerUrl = wysiwygElement.attr('data-load-file-picker-url');
+        var filePickerDialog = wysiwygElement.find('.dms-file-picker-dialog');
+        var filePickerContainer = filePickerDialog.find('.dms-file-picker-container');
+        var filePicker = filePickerContainer.find('.dms-file-picker');
 
-        var fieldValidations = {
-            'data-equal-fields': 'data-parsley-equalto',
-            'data-greater-than-fields': 'data-parsley-gt',
-            'data-greater-than-or-equal-fields': 'data-parsley-gte',
-            'data-less-than-fields': 'data-parsley-lt',
-            'data-less-than-or-equal-fields': 'data-parsley-lte'
-        };
+        filePickerDialog.modal('show');
 
-        $.each(fieldValidations, function (validationAttr, parsleyAttr) {
-            var fieldsMap = formFieldSection.attr(validationAttr);
+        var request = Dms.ajax.createRequest({
+            url: loadFilePickerUrl,
+            type: 'get',
+            dataType: 'html',
+            data: {'__content_only': '1'}
+        });
 
-            if (fieldsMap) {
-                $.each(JSON.parse(fieldsMap), function (fieldName, otherFieldName) {
-                    var field = $(buildElementSelector(fieldName));
-                    field.attr(parsleyAttr, buildElementSelector(otherFieldName));
+        filePickerContainer.addClass('loading');
+
+        request.done(function (html) {
+            filePicker.html(html);
+            Dms.table.initialize(filePicker);
+            Dms.form.initialize(filePicker);
+
+            var updateFilePickerButtons = function () {
+                filePicker.find('.dms-trashed-files-btn-container').hide();
+                var selectFileButton = $('<button class="btn btn-success btn-xs"><i class="fa fa-check"></i></button>');
+
+                filePicker.find('.dms-file-action-buttons').each(function () {
+                    var fileItemButtons = $(this);
+
+                    var specificFileSelectButton = selectFileButton.clone();
+                    fileItemButtons.empty();
+                    fileItemButtons.append(specificFileSelectButton);
+
+                    specificFileSelectButton.on('click', function () {
+                        callback(fileItemButtons.closest('.dms-file-item').attr('data-public-url'));
+                        filePickerDialog.modal('hide');
+                    });
                 });
-            }
+
+                if (mode === 'image') {
+                    filePicker.find('.btn-images-only').click().focus();
+                }
+            };
+
+            filePicker.find('.dms-file-tree').on('dms-file-tree-updated', updateFilePickerButtons);
+            updateFilePickerButtons();
         });
-    });
 
-    element.find('.dms-staged-form').each(function () {
-        var form = $(this);
-        var parsley = Dms.form.validation.initialize(form);
-
-        form.find('.dms-form-fields').each(function (index) {
-            $(this).find(':input').attr('data-parsley-group', 'validation-group-' + index);
+        request.always(function () {
+            filePickerContainer.removeClass('loading');
         });
-    });
 
-    element.find('.dms-form').each(function () {
-        var form = $(this);
-        var parsley = Dms.form.validation.initialize(form);
-    });
+        filePickerDialog.on('hide.bs.modal', function () {
+            filePicker.empty();
+        });
+    };
 });
 Dms.table.initializeCallbacks.push(function (element) {
     var groupCounter = 0;

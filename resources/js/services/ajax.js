@@ -70,12 +70,12 @@ Dms.ajax.parseData = function (data) {
     var queryString = $.param(data);
     $.each(queryString.split('&'), function (index, parameter) {
         var parts = parameter.split('=');
-        var name = decodeURIComponent(parts[0]);
+        var name = decodeURIComponent(parts[0].replace(/\+/g, '%20'));
         if (typeof dataMap[name] === 'undefined') {
             dataMap[name] = [];
         }
 
-        dataMap[name].push({value: decodeURIComponent(parts[1])});
+        dataMap[name].push({value: decodeURIComponent(parts[1].replace(/\+/g, '%20'))});
     });
 
     return dataMap;

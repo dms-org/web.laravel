@@ -5,7 +5,7 @@ namespace Dms\Web\Laravel\Ioc;
 use Dms\Core\Exception\InvalidArgumentException;
 use Dms\Core\Ioc\IIocContainer;
 use Dms\Core\Util\Debug;
-use Illuminate\Contracts\Container\Container;
+use Illuminate\Container\Container;
 use Monii\Interop\Container\Laravel\LaravelContainer;
 
 /**
@@ -76,13 +76,44 @@ class LaravelIocContainer extends LaravelContainer implements IIocContainer
      * Binds the supplied abstract class or interface to the supplied value.
      *
      * @param string $abstract
-     * @param mixed $concrete
+     * @param mixed  $concrete
      *
      * @return void
      */
     public function bindValue(string $abstract, $concrete)
     {
         $this->container->instance($abstract, $concrete);
+    }
+
+    /**
+     * Binds the supplied class or interface to the supplied value for the duration
+     * of the supplied callback.
+     *
+     * @param string   $abstract
+     * @param mixed    $concrete
+     * @param callable $callback
+     *
+     * @return mixed The value returned from the callback
+     */
+    public function bindForCallback(string $abstract, $concrete, callable $callback)
+    {
+        $hasOriginal = $this->container->bound($abstract);
+
+        if ($hasOriginal) {
+            $binding = $this->container->getBindings()[$abstract] ?? null;
+        }
+
+        $this->container->instance($abstract, $concrete);
+
+        $return = $callback();
+
+        unset($this->container[$abstract]);
+
+        if ($hasOriginal && $binding) {
+            $this->container->bind($abstract, $binding['concrete'], $binding['shared']);
+        }
+
+        return $return;
     }
 
     private function validateScope(string $method, string $scope)

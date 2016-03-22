@@ -1,9 +1,10 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Renderer\Table;
 
 use Dms\Core\Exception\InvalidArgumentException;
 use Dms\Core\Table\IColumnComponent;
+use Dms\Web\Laravel\Renderer\Form\FieldRendererCollection;
 use Dms\Web\Laravel\Renderer\Form\IFieldRenderer;
 use Dms\Web\Laravel\Renderer\Table\Column\Component\FieldComponentRenderer;
 
@@ -26,11 +27,16 @@ class ColumnComponentRendererCollection
      */
     public function __construct(array $columnComponentRenderers)
     {
+        $fieldsRenderers = [];
+
         foreach ($columnComponentRenderers as $key => $renderer) {
             if ($renderer instanceof IFieldRenderer) {
+                $fieldsRenderers[] = $renderer;
                 $columnComponentRenderers[$key] = new FieldComponentRenderer($renderer);
             }
         }
+
+        $collection = new FieldRendererCollection($fieldsRenderers);
 
         InvalidArgumentException::verifyAllInstanceOf(
             __METHOD__, 'columnComponentRenderers', $columnComponentRenderers, IColumnComponentRenderer::class

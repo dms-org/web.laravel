@@ -5,6 +5,7 @@ namespace Dms\Web\Laravel\Renderer\Form\Field;
 use Dms\Common\Structure\DateTime\Form\DateOrTimeRangeType;
 use Dms\Common\Structure\FileSystem\Form\FileUploadType;
 use Dms\Common\Structure\FileSystem\Form\ImageUploadType;
+use Dms\Common\Structure\Money\Form\MoneyType;
 use Dms\Core\Form\Field\Type\FieldType;
 use Dms\Core\Form\Field\Type\InnerFormType;
 use Dms\Core\Form\IField;
@@ -33,7 +34,8 @@ class InnerFormFieldRenderer extends BladeFieldRenderer
     {
         return !$fieldType->has(FieldType::ATTR_OPTIONS)
         && !($fieldType instanceof DateOrTimeRangeType)
-        && !($fieldType instanceof FileUploadType);
+        && !($fieldType instanceof FileUploadType)
+        && !($fieldType instanceof MoneyType);
     }
 
     protected function renderField(FormRenderingContext $renderingContext, IField $field, IFieldType $fieldType) : string

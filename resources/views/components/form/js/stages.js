@@ -41,7 +41,7 @@ Dms.form.initializeCallbacks.push(function (element) {
                     var hasLoadedAllRequiredFields = true;
 
                     $.each(dependentFieldNames, function (index, fieldName) {
-                        if (previousStages.find('[name="' + fieldName + '"]').length === 0) {
+                        if (previousStages.find(Dms.form.stages.makeDependentFieldSelectorFor([fieldName], '*')).length === 0) {
                             hasLoadedAllRequiredFields = false;
                         }
                     });

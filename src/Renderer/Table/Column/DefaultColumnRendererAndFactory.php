@@ -35,13 +35,7 @@ class DefaultColumnRendererAndFactory extends ColumnRendererAndFactory
      */
     protected function renderHeader(IColumn $column) : string
     {
-        $componentLabels = [];
-
-        foreach ($column->getComponents() as $component) {
-            $componentLabels[] = e($component->getLabel());
-        }
-
-        return $this->wrapInNestedSubTags($componentLabels);
+        return $column->getLabel();
     }
 
     /**

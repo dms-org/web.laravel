@@ -2,7 +2,9 @@ Dms.form.initializeCallbacks.push(function (element) {
     element.find('input.date-or-time')
         .each(function () {
             var inputElement = $(this);
-            var dateFormat = Dms.utilities.convertPhpDateFormatToMomentFormat(inputElement.attr('data-date-format'));
+            var formGroup = inputElement.closest('.form-group');
+            var phpDateFormat = inputElement.attr('data-date-format');
+            var dateFormat = Dms.utilities.convertPhpDateFormatToMomentFormat(phpDateFormat);
             var mode = inputElement.attr('data-mode');
 
             var config = {
@@ -19,12 +21,12 @@ Dms.form.initializeCallbacks.push(function (element) {
 
             if (mode === 'date-time') {
                 config.timePicker = true;
-                config.timePickerSeconds = true;
+                config.timePickerSeconds = phpDateFormat.indexOf('s') !== -1;
             }
 
             if (mode === 'time') {
                 config.timePicker = true;
-                config.timePickerSeconds = true;
+                config.timePickerSeconds = phpDateFormat.indexOf('s') !== -1;
             }
             // TODO: timezoned-date-time
 
@@ -41,11 +43,16 @@ Dms.form.initializeCallbacks.push(function (element) {
             if (mode === 'time') {
                 inputElement.closest('.date-picker-container').find('.calendar-table').hide();
             }
+            
+            inputElement.on('apply.daterangepicker', function () {
+                formGroup.trigger('dms-change');
+            });
         });
 
     element.find('.date-or-time-range')
         .each(function () {
             var rangeElement = $(this);
+            var formGroup = rangeElement.closest('.form-group');
             var startInput = rangeElement.find('.start-input');
             var endInput = rangeElement.find('.end-input');
             var dateFormat = Dms.utilities.convertPhpDateFormatToMomentFormat(startInput.attr('data-date-format'));
@@ -95,5 +102,9 @@ Dms.form.initializeCallbacks.push(function (element) {
             if (mode === 'time') {
                 rangeElement.find('.calendar-table').hide();
             }
+
+            startInput.on('apply.daterangepicker', function () {
+                formGroup.trigger('dms-change');
+            });
         });
 });

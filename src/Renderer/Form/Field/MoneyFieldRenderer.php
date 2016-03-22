@@ -49,8 +49,7 @@ class MoneyFieldRenderer extends BladeFieldRenderer
     {
         return $this->renderValueViewWithNullDefault(
             $field, $value,
-            'dms::components.field.money.value',
-            ['value' => $field->getInitialValue()]
+            'dms::components.field.money.value'
         );
     }
 }

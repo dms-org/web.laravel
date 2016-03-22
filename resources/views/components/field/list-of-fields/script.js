@@ -65,7 +65,7 @@ Dms.form.initializeCallbacks.push(function (element) {
             var field = $(this).closest('.field-list-item');
             field.remove();
             formGroup.trigger('dms-change');
-            from.triggerHandler('dms-form-updated');
+            form.triggerHandler('dms-form-updated');
 
             invalidateControl();
             // TODO: reindex

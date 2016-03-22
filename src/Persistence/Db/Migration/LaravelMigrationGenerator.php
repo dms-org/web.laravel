@@ -544,7 +544,7 @@ class LaravelMigrationGenerator extends MigrationGenerator
         }
 
         if (!isset($this->identifierMap[$identifier])) {
-            $this->identifierMap[$identifier] = substr($identifier, 0, 64 - 16) . substr(bin2hex(random_bytes(16)), 0, 16);
+            $this->identifierMap[$identifier] = 'fk_' . md5($identifier);
         }
 
         return $this->identifierMap[$identifier];

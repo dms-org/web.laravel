@@ -239,7 +239,7 @@ class LaravelMigrationGenerator extends MigrationGenerator
             }
 
             foreach ($table->removedIndexes as $index) {
-                $code->appendLine($this->createDropIndexCode($index));
+                $code->appendLine($this->createDropIndexCode($index->getName()));
             }
 
             foreach ($table->removedIndexes as $oldName => $index) {
@@ -487,7 +487,7 @@ class LaravelMigrationGenerator extends MigrationGenerator
         return $code . ';';
     }
 
-    private function createDropIndexCode($indexName)
+    private function createDropIndexCode(string $indexName)
     {
         return '$table->dropIndex(' . var_export($indexName, true) . ');';
     }

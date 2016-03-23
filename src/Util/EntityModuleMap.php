@@ -62,20 +62,41 @@ class EntityModuleMap
      */
     public function loadModuleFor(string $entityType) : IReadModule
     {
-        $originalEntityType = $entityType;
+        $name = $this->getPackageAndModuleName($entityType);
+
+        if (!$name) {
+            throw InvalidArgumentException::format(
+                'Invalid call to %s: unknown entity type, expecting one of (%s), %s given',
+                __METHOD__, Debug::formatValues(array_keys($this->map)), $entityType
+            );
+        }
+
+        list($packageName, $moduleName) = explode('.', $name);
+
+        return $this->cms->loadPackage($packageName)->loadModule($moduleName);
+    }
+
+    public function hasModuleFor(string $entityType)
+    {
+        return $this->getPackageAndModuleName($entityType) !== null;
+    }
+
+    /**
+     * @param string $entityType
+     *
+     * @return string|null
+     * @throws InvalidArgumentException
+     */
+    protected function getPackageAndModuleName(string $entityType)
+    {
         while (!isset($this->map[$entityType])) {
             $entityType = get_parent_class($entityType);
 
             if ($entityType === false) {
-                throw InvalidArgumentException::format(
-                    'Invalid call to %s: unknown entity type, expecting one of (%s), %s given',
-                    __METHOD__, Debug::formatValues(array_keys($this->map)), $originalEntityType
-                );
+                return null;
             }
         }
 
-        list($packageName, $moduleName) = explode('.', $this->map[$entityType]);
-
-        return $this->cms->loadPackage($packageName)->loadModule($moduleName);
+        return $this->map[$entityType];
     }
 }

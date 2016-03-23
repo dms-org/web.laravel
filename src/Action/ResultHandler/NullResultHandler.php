@@ -45,7 +45,7 @@ class NullResultHandler extends ActionResultHandler
     protected function handleResult(ModuleContext $moduleContext, IAction $action, $result)
     {
         return \response()->json([
-            'message' => 'The action was executed successfully',
+            'message' => trans('dms::action.generic-response'),
         ]);
     }
 }

@@ -44,7 +44,7 @@ class FileResultHandlerTest extends ResultHandlerTest
                 $this->mockAction(),
                 $this->mockFile(),
                 new JsonResponse([
-                    'message' => 'The action was successfully executed',
+                    'message' => trans('dms::action.generic-response'),
                     'files'   => [
                         [
                             'name'  => 'file-name',

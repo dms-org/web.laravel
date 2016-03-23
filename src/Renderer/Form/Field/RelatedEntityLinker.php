@@ -26,7 +26,9 @@ class RelatedEntityLinker
 
         /** @var EntityModuleMap $entityModuleMap */
         $entityModuleMap = app(EntityModuleMap::class);
-        try {
+
+        if ($entityModuleMap->hasModuleFor($options->getObjects()->getObjectType())) {
+            
             $module = $entityModuleMap->loadModuleFor($options->getObjects()->getObjectType());
 
             if ($module->getDetailsAction()->isAuthorized()) {
@@ -34,8 +36,6 @@ class RelatedEntityLinker
                     return route('dms::package.module.action.show', [$module->getPackageName(), $module->getName(), $module->getDetailsAction()->getName(), $id]);
                 };
             }
-        } catch (InvalidArgumentException $e) {
-
         }
 
         return null;

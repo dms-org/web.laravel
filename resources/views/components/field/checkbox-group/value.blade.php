@@ -7,7 +7,13 @@
     <ul class="dms-display-list list-group">
         @foreach ($options as $option)
             @if(isset($valuesAsKeys[$option->getValue()]))
-                <li class="list-group-item">{{ $option->getLabel() }}</li>
+                <li class="list-group-item">
+                    @if($urlCallback ?? false)
+                        <a href="{{ $urlCallback($option->getValue()) }}">{{ $option->getLabel() }}</a>
+                    @else
+                        {{ $option->getLabel() }}
+                    @endif
+                </li>
             @endif
         @endforeach
     </ul>

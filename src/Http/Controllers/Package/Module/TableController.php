@@ -135,6 +135,7 @@ class TableController extends DmsController
         if ($request->has('orderings')) {
             $isFiltered = true;
 
+            $criteria->clearOrderings();
             foreach ($request->input('orderings') as $ordering) {
                 $criteria->orderBy($ordering['component'], $ordering['direction']);
             }

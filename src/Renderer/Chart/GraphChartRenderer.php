@@ -2,8 +2,10 @@
 
 namespace Dms\Web\Laravel\Renderer\Chart;
 
+use Dms\Common\Structure\DateTime\Date;
 use Dms\Common\Structure\DateTime\DateOrTimeObject;
 use Dms\Common\Structure\DateTime\DateTime;
+use Dms\Common\Structure\DateTime\TimeOfDay;
 use Dms\Core\Exception\InvalidArgumentException;
 use Dms\Core\Table\Chart\IChartDataTable;
 use Dms\Core\Table\Chart\Structure\AreaChart;
@@ -69,6 +71,7 @@ class GraphChartRenderer extends ChartRenderer
                 'horizontalAxisKey'  => 'x',
                 'verticalAxisKeys'   => $yAxisKeys,
                 'verticalAxisLabels' => $yAxisLabels,
+                'horizontalUnitType'          => $this->getHorizontalUnitType($dateTimeClass),
             ])
             ->render();
     }
@@ -106,6 +109,19 @@ class GraphChartRenderer extends ChartRenderer
 
             default:
                 throw InvalidArgumentException::format('Unknown chart type %s', get_class($chartStructure));
+        }
+    }
+
+    private function getHorizontalUnitType(string $dateTimeClass) : string
+    {
+        switch ($dateTimeClass) {
+            case TimeOfDay::class:
+                return 'time';
+            case Date::class:
+                return 'date';
+
+            default:
+                return 'datetime';
         }
     }
 

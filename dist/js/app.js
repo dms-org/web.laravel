@@ -1000,16 +1000,58 @@ Dms.chart.initializeCallbacks.push(function (element) {
         var chartData = JSON.parse(chart.attr('data-chart-data'));
         var chartType = chart.attr('data-chart-type');
         var horizontalAxisKey = chart.attr('data-horizontal-axis-key');
+        var horizontalAxisUnitType = chart.attr('data-horizontal-unit-type');
         var verticalAxisKeys = JSON.parse(chart.attr('data-vertical-axis-keys'));
         var verticalAxisLabels = JSON.parse(chart.attr('data-vertical-axis-labels'));
+        var minTimestamp;
+        var maxTimestamp;
+        var timeRowLookup = {};
 
         if (!chart.attr('id')) {
             chart.attr('id', Dms.utilities.idGenerator());
         }
 
         $.each(chartData, function (index, row) {
-            row[horizontalAxisKey] = moment(row[horizontalAxisKey], dateFormat).valueOf();
+            var timestamp = moment(row[horizontalAxisKey], dateFormat).valueOf();
+            row[horizontalAxisKey] = timestamp;
+            timeRowLookup[timestamp] = true;
+
+            if (!minTimestamp || timestamp < minTimestamp) {
+                minTimestamp = timestamp;
+            }
+
+            if (!maxTimestamp || timestamp > maxTimestamp) {
+                maxTimestamp = timestamp;
+            }
         });
+
+        var zeroFillMissingValues = function (unitType, chartData) {
+            if (chartData.length === 0) {
+                return;
+            }
+
+            var unit;
+            if (unitType === 'date') {
+                unit = 24 * 3600 * 1000;
+            } else {
+                unit = 1000;
+            }
+
+            for (var i = minTimestamp; i < maxTimestamp; i += unit) {
+                if (typeof timeRowLookup[i] === 'undefined') {
+                    var rowData = {};
+                    rowData[horizontalAxisKey] = i;
+
+                    $.each(verticalAxisKeys, function (index, verticalAxisKey) {
+                        rowData[verticalAxisKey] = 0;
+                    });
+
+                    chartData.push(rowData);
+                }
+            }
+        };
+
+        zeroFillMissingValues(horizontalAxisUnitType, chartData);
 
         var morrisConfig = {
             element: chart.attr('id'),
@@ -1091,328 +1133,21 @@ Dms.form.initializeCallbacks.push(function (element) {
         });
     });
 });
-Dms.table.initializeCallbacks.push(function (element) {
-    var groupCounter = 0;
-
-    element.find('.dms-table-body-sortable').each(function () {
-        var tableBody = $(this);
-        var table = tableBody.closest('.dms-table');
-        var control = tableBody.closest('.dms-table-control');
-        var reorderRowsUrl = control.attr('data-reorder-row-action-url');
-
-        var performReorder = function (event) {
-            var newIndex = typeof event.newIndex === 'undefined' ? event.oldIndex : event.newIndex;
-
-            var criteria = control.data('dms-table-criteria');
-            var row = $(event.item);
-            var objectId = row.find('.dms-row-action-column').attr('data-object-id');
-            var reorderButtonHandle = row.find('.dms-drag-handle');
-
-            var reorderRequest = Dms.ajax.createRequest({
-                url: reorderRowsUrl,
-                type: 'post',
-                dataType: 'html',
-                data: {
-                    object: objectId,
-                    index: criteria.offset + newIndex + 1
-                }
-            });
-
-            if (reorderButtonHandle.is('button')) {
-                reorderButtonHandle.addClass('ladda-button').attr('data-style', 'expand-right');
-                var ladda = Ladda.create(reorderButtonHandle.get(0));
-                ladda.start();
-
-                reorderRequest.always(ladda.stop);
-            }
-
-            reorderRequest.done(function () {
-                table.triggerHandler('dms-load-table-data');
-            });
-
-            reorderRequest.fail(function () {
-                swal({
-                    title: "Could not reorder item",
-                    text: "An unexpected error occurred",
-                    type: "error"
-                });
-            });
+Dms.form.initializeCallbacks.push(function (element) {
+    element.find('input.dms-colour-input').each(function () {
+        var config = {
+            theme: 'bootstrap'
         };
 
-        var sortable = new Sortable(tableBody.get(0), {
-            group: "sortable-group" + groupCounter++,
-            sort: true,  // sorting inside list
-            animation: 150,  // ms, animation speed moving items when sorting, `0` — without animation
-            handle: ".dms-drag-handle",  // Drag handle selector within list items
-            draggable: "tr",  // Specifies which items inside the element should be sortable
-            ghostClass: "sortable-ghost",  // Class name for the drop placeholder
-            chosenClass: "sortable-chosen",  // Class name for the chosen item
-            dataIdAttr: 'data-id',
-
-            onEnd: performReorder
-
-        });
-    });
-});
-Dms.table.initializeCallbacks.push(function (element) {
-
-    element.find('.dms-table-control').each(function () {
-        var control = $(this);
-        var tableContainer = control.find('.dms-table-container');
-        var table = tableContainer.find('table.dms-table');
-        var filterForm = control.find('.dms-table-quick-filter-form');
-        var rowsPerPageSelect = control.find('.dms-table-rows-per-page-form select');
-        var paginationPreviousButton = control.find('.dms-table-pagination .dms-pagination-previous');
-        var paginationNextButton = control.find('.dms-table-pagination .dms-pagination-next');
-        var loadRowsUrl = control.attr('data-load-rows-url');
-        var stringFilterableComponentIds = JSON.parse(control.attr('data-string-filterable-component-ids')) || [];
-
-        var currentPage = 0;
-
-        var criteria = {
-            orderings: [],
-            condition_mode: 'or',
-            conditions: [],
-            offset: 0,
-            max_rows: rowsPerPageSelect.val()
-        };
-
-        var currentAjaxRequest;
-
-        var loadCurrentPage = function () {
-            if (currentAjaxRequest) {
-                currentAjaxRequest.abort();
-            }
-
-            tableContainer.addClass('loading');
-
-            criteria.offset = currentPage * criteria.max_rows;
-
-            currentAjaxRequest = Dms.ajax.createRequest({
-                url: loadRowsUrl,
-                type: 'post',
-                dataType: 'html',
-                data: criteria
-            });
-
-            currentAjaxRequest.done(function (tableData) {
-                table.html(tableData);
-                Dms.table.initialize(table);
-                Dms.form.initialize(table);
-
-                control.data('dms-table-criteria', criteria);
-                control.attr('data-has-loaded-table-data', true);
-
-                if (table.find('tbody tr').length < criteria.max_rows) {
-                    paginationNextButton.addClass('disabled');
-                }
-            });
-
-            currentAjaxRequest.fail(function () {
-                if (currentAjaxRequest.statusText === 'abort') {
-                    return;
-                }
-
-                tableContainer.addClass('has-error');
-
-                swal({
-                    title: "Could not load table data",
-                    text: "An unexpected error occurred",
-                    type: "error"
-                });
-            });
-
-            currentAjaxRequest.always(function () {
-                tableContainer.removeClass('loading');
-            });
-        };
-
-        filterForm.find('button').click(function () {
-            var orderByComponent = filterForm.find('[name=component]').val();
-
-            if (orderByComponent) {
-                criteria.orderings = [
-                    {
-                        component: orderByComponent,
-                        direction: filterForm.find('[name=direction]').val()
-                    }
-                ];
-            } else {
-                criteria.orderings = [];
-            }
-
-            criteria.conditions = [];
-
-            var filterByString = filterForm.find('[name=filter]').val();
-
-            if (filterByString) {
-                $.each(stringFilterableComponentIds, function (index, componentId) {
-                    criteria.conditions.push({
-                        component: componentId,
-                        operator: 'string-contains-case-insensitive',
-                        value: filterByString
-                    });
-                });
-            }
-
-            loadCurrentPage();
-        });
-
-        filterForm.find('input[name=filter]').on('keyup', function (event) {
-            var enterKey = 13;
-
-            if (event.keyCode === enterKey) {
-                filterForm.find('button').click();
-            }
-        });
-
-        rowsPerPageSelect.on('change', function () {
-            criteria.max_rows = $(this).val();
-
-            loadCurrentPage();
-        });
-
-        paginationPreviousButton.click(function () {
-            currentPage--;
-            paginationNextButton.removeClass('disabled');
-            paginationPreviousButton.toggleClass('disabled', currentPage === 0);
-            loadCurrentPage();
-        });
-
-        paginationNextButton.click(function () {
-            currentPage++;
-            paginationPreviousButton.removeClass('disabled');
-            loadCurrentPage();
-        });
-
-        paginationPreviousButton.addClass('disabled');
-
-        if (table.is(':visible')) {
-            loadCurrentPage();
+        if ($(this).hasClass('dms-colour-input-rgb')) {
+            config.format = 'rgb';
+        } else if ($(this).hasClass('dms-colour-input-rgba')) {
+            config.format = 'rgb';
+            config.opacity = true;
         }
 
-        table.on('dms-load-table-data', loadCurrentPage);
+        $(this).addClass('minicolors').minicolors(config);
     });
-
-    $('.dms-table-tabs').each(function () {
-        var tabs = $(this);
-
-        tabs.find('.dms-table-tab-show-button').on('click', function () {
-            var linkedTablePane = $($(this).attr('href'));
-
-            linkedTablePane.find('.dms-table-control:not([data-has-loaded-table-data]) .dms-table-container:not(.loading) .dms-table').triggerHandler('dms-load-table-data');
-        });
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
-    element.find('input.date-or-time')
-        .each(function () {
-            var inputElement = $(this);
-            var formGroup = inputElement.closest('.form-group');
-            var phpDateFormat = inputElement.attr('data-date-format');
-            var dateFormat = Dms.utilities.convertPhpDateFormatToMomentFormat(phpDateFormat);
-            var mode = inputElement.attr('data-mode');
-
-            var config = {
-                locale: {
-                    format: dateFormat
-                },
-                parentEl: inputElement.closest('.date-picker-container'),
-                singleDatePicker: true,
-                showDropdowns: true,
-                autoApply: true,
-                linkedCalendars: false,
-                autoUpdateInput: false
-            };
-
-            if (mode === 'date-time') {
-                config.timePicker = true;
-                config.timePickerSeconds = phpDateFormat.indexOf('s') !== -1;
-            }
-
-            if (mode === 'time') {
-                config.timePicker = true;
-                config.timePickerSeconds = phpDateFormat.indexOf('s') !== -1;
-            }
-            // TODO: timezoned-date-time
-
-            inputElement.daterangepicker(config, function (date) {
-                inputElement.val(date.format(dateFormat));
-            });
-
-            var picker = inputElement.data('daterangepicker');
-
-            if (inputElement.val()) {
-                picker.setStartDate(inputElement.val());
-            }
-
-            if (mode === 'time') {
-                inputElement.closest('.date-picker-container').find('.calendar-table').hide();
-            }
-            
-            inputElement.on('apply.daterangepicker', function () {
-                formGroup.trigger('dms-change');
-            });
-        });
-
-    element.find('.date-or-time-range')
-        .each(function () {
-            var rangeElement = $(this);
-            var formGroup = rangeElement.closest('.form-group');
-            var startInput = rangeElement.find('.start-input');
-            var endInput = rangeElement.find('.end-input');
-            var dateFormat = Dms.utilities.convertPhpDateFormatToMomentFormat(startInput.attr('data-date-format'));
-            var mode = rangeElement.attr('data-mode');
-
-            var config = {
-                locale: {
-                    format: dateFormat
-                },
-                parentEl: rangeElement,
-                showDropdowns: true,
-                autoApply: !rangeElement.attr('data-dont-auto-apply'),
-                linkedCalendars: false,
-                autoUpdateInput: false
-            };
-
-            if (mode === 'date-time') {
-                config.timePicker = true;
-                config.timePickerSeconds = true;
-            }
-
-            if (mode === 'time') {
-                config.timePicker = true;
-                config.timePickerSeconds = true;
-            }
-            // TODO: timezoned-date-time
-
-            startInput.daterangepicker(config, function (start, end, label) {
-                startInput.val(start.format(dateFormat));
-                endInput.val(end.format(dateFormat));
-                rangeElement.triggerHandler('dms-range-updated');
-            });
-
-            var picker = startInput.data('daterangepicker');
-
-            if (startInput.val()) {
-                picker.setStartDate(startInput.val());
-            }
-            if (endInput.val()) {
-                picker.setEndDate(endInput.val());
-            }
-
-            endInput.on('focus click', function () {
-                startInput.focus();
-            });
-
-            if (mode === 'time') {
-                rangeElement.find('.calendar-table').hide();
-            }
-
-            startInput.on('apply.daterangepicker', function () {
-                formGroup.trigger('dms-change');
-            });
-        });
 });
 Dms.form.initializeCallbacks.push(function (element) {
 
@@ -1771,22 +1506,6 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-    element.find('input.dms-colour-input').each(function () {
-        var config = {
-            theme: 'bootstrap'
-        };
-
-        if ($(this).hasClass('dms-colour-input-rgb')) {
-            config.format = 'rgb';
-        } else if ($(this).hasClass('dms-colour-input-rgba')) {
-            config.format = 'rgb';
-            config.opacity = true;
-        }
-
-        $(this).addClass('minicolors').minicolors(config);
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
     element.find('.dms-inner-module, .dms-display-inner-module').each(function () {
         var innerModule = $(this);
         var fieldName = innerModule.attr('data-name');
@@ -1940,6 +1659,116 @@ Dms.form.initializeCallbacks.push(function (element) {
             Dms.action.responseHandler = originalResponseHandler;
         });
     });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+    element.find('input.date-or-time')
+        .each(function () {
+            var inputElement = $(this);
+            var formGroup = inputElement.closest('.form-group');
+            var phpDateFormat = inputElement.attr('data-date-format');
+            var dateFormat = Dms.utilities.convertPhpDateFormatToMomentFormat(phpDateFormat);
+            var mode = inputElement.attr('data-mode');
+
+            var config = {
+                locale: {
+                    format: dateFormat
+                },
+                parentEl: inputElement.closest('.date-picker-container'),
+                singleDatePicker: true,
+                showDropdowns: true,
+                autoApply: true,
+                linkedCalendars: false,
+                autoUpdateInput: false
+            };
+
+            if (mode === 'date-time') {
+                config.timePicker = true;
+                config.timePickerSeconds = phpDateFormat.indexOf('s') !== -1;
+            }
+
+            if (mode === 'time') {
+                config.timePicker = true;
+                config.timePickerSeconds = phpDateFormat.indexOf('s') !== -1;
+            }
+            // TODO: timezoned-date-time
+
+            inputElement.daterangepicker(config, function (date) {
+                inputElement.val(date.format(dateFormat));
+            });
+
+            var picker = inputElement.data('daterangepicker');
+
+            if (inputElement.val()) {
+                picker.setStartDate(inputElement.val());
+            }
+
+            if (mode === 'time') {
+                inputElement.closest('.date-picker-container').find('.calendar-table').hide();
+            }
+            
+            inputElement.on('apply.daterangepicker', function () {
+                formGroup.trigger('dms-change');
+            });
+        });
+
+    element.find('.date-or-time-range')
+        .each(function () {
+            var rangeElement = $(this);
+            var formGroup = rangeElement.closest('.form-group');
+            var startInput = rangeElement.find('.start-input');
+            var endInput = rangeElement.find('.end-input');
+            var dateFormat = Dms.utilities.convertPhpDateFormatToMomentFormat(startInput.attr('data-date-format'));
+            var mode = rangeElement.attr('data-mode');
+
+            var config = {
+                locale: {
+                    format: dateFormat
+                },
+                parentEl: rangeElement,
+                showDropdowns: true,
+                autoApply: !rangeElement.attr('data-dont-auto-apply'),
+                linkedCalendars: false,
+                autoUpdateInput: false
+            };
+
+            if (mode === 'date-time') {
+                config.timePicker = true;
+                config.timePickerSeconds = true;
+            }
+
+            if (mode === 'time') {
+                config.timePicker = true;
+                config.timePickerSeconds = true;
+            }
+            // TODO: timezoned-date-time
+
+            startInput.daterangepicker(config, function (start, end, label) {
+                startInput.val(start.format(dateFormat));
+                endInput.val(end.format(dateFormat));
+                rangeElement.triggerHandler('dms-range-updated');
+            });
+
+            var picker = startInput.data('daterangepicker');
+
+            if (startInput.val()) {
+                picker.setStartDate(startInput.val());
+            }
+            if (endInput.val()) {
+                picker.setEndDate(endInput.val());
+            }
+
+            endInput.on('focus click', function () {
+                startInput.focus();
+            });
+
+            if (mode === 'time') {
+                rangeElement.find('.calendar-table').hide();
+            }
+
+            startInput.on('apply.daterangepicker', function () {
+                formGroup.trigger('dms-change');
+            });
+        });
 });
 Dms.form.initializeCallbacks.push(function (element) {
 
@@ -2181,6 +2010,12 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
+    element.find('select[multiple]').multiselect({
+        enableFiltering: true,
+        includeSelectAllOption: true
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
     element.find('input[type="number"][data-max-decimal-places]').each(function () {
         $(this).attr('data-parsley-max-decimal-places', $(this).attr('data-max-decimal-places'));
     });
@@ -2207,10 +2042,7 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-    element.find('select[multiple]').multiselect({
-        enableFiltering: true,
-        includeSelectAllOption: true
-    });
+
 });
 Dms.form.initializeCallbacks.push(function (element) {
     element.find('input[type=radio]').iCheck({
@@ -2457,6 +2289,9 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
+
+});
+Dms.form.initializeCallbacks.push(function (element) {
     if (typeof tinymce === 'undefined') {
         return;
     }
@@ -2583,12 +2418,6 @@ Dms.form.initializeCallbacks.push(function (element) {
             filePicker.empty();
         });
     };
-});
-Dms.form.initializeCallbacks.push(function (element) {
-
-});
-Dms.form.initializeCallbacks.push(function (element) {
-
 });
 Dms.form.initializeCallbacks.push(function (element) {
 
@@ -2999,6 +2828,219 @@ Dms.form.initializeValidationCallbacks.push(function (element) {
     element.find('.dms-form').each(function () {
         var form = $(this);
         var parsley = Dms.form.validation.initialize(form);
+    });
+});
+Dms.table.initializeCallbacks.push(function (element) {
+    var groupCounter = 0;
+
+    element.find('.dms-table-body-sortable').each(function () {
+        var tableBody = $(this);
+        var table = tableBody.closest('.dms-table');
+        var control = tableBody.closest('.dms-table-control');
+        var reorderRowsUrl = control.attr('data-reorder-row-action-url');
+
+        var performReorder = function (event) {
+            var newIndex = typeof event.newIndex === 'undefined' ? event.oldIndex : event.newIndex;
+
+            var criteria = control.data('dms-table-criteria');
+            var row = $(event.item);
+            var objectId = row.find('.dms-row-action-column').attr('data-object-id');
+            var reorderButtonHandle = row.find('.dms-drag-handle');
+
+            var reorderRequest = Dms.ajax.createRequest({
+                url: reorderRowsUrl,
+                type: 'post',
+                dataType: 'html',
+                data: {
+                    object: objectId,
+                    index: criteria.offset + newIndex + 1
+                }
+            });
+
+            if (reorderButtonHandle.is('button')) {
+                reorderButtonHandle.addClass('ladda-button').attr('data-style', 'expand-right');
+                var ladda = Ladda.create(reorderButtonHandle.get(0));
+                ladda.start();
+
+                reorderRequest.always(ladda.stop);
+            }
+
+            reorderRequest.done(function () {
+                table.triggerHandler('dms-load-table-data');
+            });
+
+            reorderRequest.fail(function () {
+                swal({
+                    title: "Could not reorder item",
+                    text: "An unexpected error occurred",
+                    type: "error"
+                });
+            });
+        };
+
+        var sortable = new Sortable(tableBody.get(0), {
+            group: "sortable-group" + groupCounter++,
+            sort: true,  // sorting inside list
+            animation: 150,  // ms, animation speed moving items when sorting, `0` — without animation
+            handle: ".dms-drag-handle",  // Drag handle selector within list items
+            draggable: "tr",  // Specifies which items inside the element should be sortable
+            ghostClass: "sortable-ghost",  // Class name for the drop placeholder
+            chosenClass: "sortable-chosen",  // Class name for the chosen item
+            dataIdAttr: 'data-id',
+
+            onEnd: performReorder
+
+        });
+    });
+});
+Dms.table.initializeCallbacks.push(function (element) {
+
+    element.find('.dms-table-control').each(function () {
+        var control = $(this);
+        var tableContainer = control.find('.dms-table-container');
+        var table = tableContainer.find('table.dms-table');
+        var filterForm = control.find('.dms-table-quick-filter-form');
+        var rowsPerPageSelect = control.find('.dms-table-rows-per-page-form select');
+        var paginationPreviousButton = control.find('.dms-table-pagination .dms-pagination-previous');
+        var paginationNextButton = control.find('.dms-table-pagination .dms-pagination-next');
+        var loadRowsUrl = control.attr('data-load-rows-url');
+        var stringFilterableComponentIds = JSON.parse(control.attr('data-string-filterable-component-ids')) || [];
+
+        var currentPage = 0;
+
+        var criteria = {
+            orderings: [],
+            condition_mode: 'or',
+            conditions: [],
+            offset: 0,
+            max_rows: rowsPerPageSelect.val()
+        };
+
+        var currentAjaxRequest;
+
+        var loadCurrentPage = function () {
+            if (currentAjaxRequest) {
+                currentAjaxRequest.abort();
+            }
+
+            tableContainer.addClass('loading');
+
+            criteria.offset = currentPage * criteria.max_rows;
+
+            currentAjaxRequest = Dms.ajax.createRequest({
+                url: loadRowsUrl,
+                type: 'post',
+                dataType: 'html',
+                data: criteria
+            });
+
+            currentAjaxRequest.done(function (tableData) {
+                table.html(tableData);
+                Dms.table.initialize(table);
+                Dms.form.initialize(table);
+
+                control.data('dms-table-criteria', criteria);
+                control.attr('data-has-loaded-table-data', true);
+
+                if (table.find('tbody tr').length < criteria.max_rows) {
+                    paginationNextButton.addClass('disabled');
+                }
+            });
+
+            currentAjaxRequest.fail(function () {
+                if (currentAjaxRequest.statusText === 'abort') {
+                    return;
+                }
+
+                tableContainer.addClass('has-error');
+
+                swal({
+                    title: "Could not load table data",
+                    text: "An unexpected error occurred",
+                    type: "error"
+                });
+            });
+
+            currentAjaxRequest.always(function () {
+                tableContainer.removeClass('loading');
+            });
+        };
+
+        filterForm.find('button').click(function () {
+            var orderByComponent = filterForm.find('[name=component]').val();
+
+            if (orderByComponent) {
+                criteria.orderings = [
+                    {
+                        component: orderByComponent,
+                        direction: filterForm.find('[name=direction]').val()
+                    }
+                ];
+            } else {
+                criteria.orderings = [];
+            }
+
+            criteria.conditions = [];
+
+            var filterByString = filterForm.find('[name=filter]').val();
+
+            if (filterByString) {
+                $.each(stringFilterableComponentIds, function (index, componentId) {
+                    criteria.conditions.push({
+                        component: componentId,
+                        operator: 'string-contains-case-insensitive',
+                        value: filterByString
+                    });
+                });
+            }
+
+            loadCurrentPage();
+        });
+
+        filterForm.find('input[name=filter]').on('keyup', function (event) {
+            var enterKey = 13;
+
+            if (event.keyCode === enterKey) {
+                filterForm.find('button').click();
+            }
+        });
+
+        rowsPerPageSelect.on('change', function () {
+            criteria.max_rows = $(this).val();
+
+            loadCurrentPage();
+        });
+
+        paginationPreviousButton.click(function () {
+            currentPage--;
+            paginationNextButton.removeClass('disabled');
+            paginationPreviousButton.toggleClass('disabled', currentPage === 0);
+            loadCurrentPage();
+        });
+
+        paginationNextButton.click(function () {
+            currentPage++;
+            paginationPreviousButton.removeClass('disabled');
+            loadCurrentPage();
+        });
+
+        paginationPreviousButton.addClass('disabled');
+
+        if (table.is(':visible')) {
+            loadCurrentPage();
+        }
+
+        table.on('dms-load-table-data', loadCurrentPage);
+    });
+
+    $('.dms-table-tabs').each(function () {
+        var tabs = $(this);
+
+        tabs.find('.dms-table-tab-show-button').on('click', function () {
+            var linkedTablePane = $($(this).attr('href'));
+
+            linkedTablePane.find('.dms-table-control:not([data-has-loaded-table-data]) .dms-table-container:not(.loading) .dms-table').triggerHandler('dms-load-table-data');
+        });
     });
 });
 Dms.widget.initializeCallbacks.push(function () {

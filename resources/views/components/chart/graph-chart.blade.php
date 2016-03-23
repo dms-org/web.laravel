@@ -6,4 +6,5 @@
         data-horizontal-axis-key="{{ $horizontalAxisKey }}"
         data-vertical-axis-keys="{{ json_encode($verticalAxisKeys) }}"
         data-vertical-axis-labels="{{ json_encode($verticalAxisLabels) }}"
+        data-horizontal-unit-type="{{ $horizontalUnitType }}"
 ></div>

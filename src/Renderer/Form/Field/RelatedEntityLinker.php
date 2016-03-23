@@ -31,7 +31,7 @@ class RelatedEntityLinker
 
             if ($module->getDetailsAction()->isAuthorized()) {
                 return function ($id) use ($module) {
-                    return route('dms::package.module.action', [$module->getPackageName(), $module->getName(), $module->getDetailsAction()->getName(), $id]);
+                    return route('dms::package.module.action.show', [$module->getPackageName(), $module->getName(), $module->getDetailsAction()->getName(), $id]);
                 };
             }
         } catch (InvalidArgumentException $e) {

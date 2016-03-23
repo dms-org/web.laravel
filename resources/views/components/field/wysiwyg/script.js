@@ -3,6 +3,14 @@ Dms.form.initializeCallbacks.push(function (element) {
         return;
     }
 
+    var wysiwygElements = element.find('textarea.dms-wysiwyg');
+
+    wysiwygElements.each(function () {
+        if (!$(this).attr('id')) {
+            $(this).attr('id', Dms.utilities.idGenerator());
+        }
+    });
+
     tinymce.init({
         selector: 'textarea.dms-wysiwyg',
         tooltip: '',
@@ -46,14 +54,6 @@ Dms.form.initializeCallbacks.push(function (element) {
 
                 callback(fileUrl);
             });
-        }
-    });
-
-    var wysiwygElements = element.find('textarea.dms-wysiwyg');
-
-    wysiwygElements.each(function () {
-        if (!$(this).attr('id')) {
-            $(this).attr('id', Dms.utilities.idGenerator());
         }
     });
 

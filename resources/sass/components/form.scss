@@ -183,4 +183,10 @@ a.dms-run-action-form {
             width: 30%;
         }
     }
+
+    .dms-disabled-input {
+        cursor: default;
+        pointer-events: none;
+        opacity: .7;
+    }
 }

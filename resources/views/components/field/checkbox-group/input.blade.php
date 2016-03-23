@@ -15,9 +15,10 @@
         <div class="row">
         @foreach ($options as $option)
             <div class="col-xs-12">
-                <label>
+                <label @if($option->isDisabled()) class="dms-disabled-input" @endif>
                     <input
                             type="checkbox"
+                            @if($option->isDisabled()) disabled="disabled" @endif
                             value="{{ $option->getValue() }}"
                             name="{{ $name }}[]"
                             @if($readonly) readonly @endif

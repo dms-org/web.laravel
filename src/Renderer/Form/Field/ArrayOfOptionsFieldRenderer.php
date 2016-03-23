@@ -3,6 +3,7 @@
 namespace Dms\Web\Laravel\Renderer\Form\Field;
 
 use Dms\Core\Form\Field\Builder\Field;
+use Dms\Core\Form\Field\Options\EntityIdOptions;
 use Dms\Core\Form\Field\Type\ArrayOfType;
 use Dms\Core\Form\Field\Type\FieldType;
 use Dms\Core\Form\IField;
@@ -34,7 +35,11 @@ class ArrayOfOptionsFieldRenderer extends BladeFieldRenderer
         && $fieldType->get(ArrayOfType::ATTR_UNIQUE_ELEMENTS);
     }
 
-    protected function renderField(FormRenderingContext $renderingContext, IField $field, IFieldType $fieldType) : string
+    protected function renderField(
+        FormRenderingContext $renderingContext,
+        IField $field,
+        IFieldType $fieldType
+    ) : string
     {
         /** @var ArrayOfType $fieldType */
         $elementField = $this->makeElementField($fieldType);
@@ -53,16 +58,25 @@ class ArrayOfOptionsFieldRenderer extends BladeFieldRenderer
         );
     }
 
-    protected function renderFieldValue(FormRenderingContext $renderingContext, IField $field, $value, IFieldType $fieldType) : string
+    protected function renderFieldValue(
+        FormRenderingContext $renderingContext,
+        IField $field,
+        $value,
+        IFieldType $fieldType
+    ) : string
     {
         /** @var ArrayOfType $fieldType */
         $elementField = $this->makeElementField($fieldType);
+
+        $options     = $elementField->getType()->get(ArrayOfType::ATTR_OPTIONS);
+        $urlCallback = RelatedEntityLinker::getUrlCallbackFor($options);
 
         return $this->renderValueViewWithNullDefault(
             $field, $value,
             'dms::components.field.checkbox-group.value',
             [
-                'options' => $elementField->getType()->get(ArrayOfType::ATTR_OPTIONS)->getAll(),
+                'options'     => $options->getAll(),
+                'urlCallback' => $urlCallback,
             ]
         );
     }

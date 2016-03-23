@@ -159,6 +159,11 @@ a.dms-run-action-form {
 .dms-staged-form .dms-money-input-group .dms-currency-input {
   width: 30%; }
 
+.dms-staged-form .dms-disabled-input {
+  cursor: default;
+  pointer-events: none;
+  opacity: .7; }
+
 .dms-display-map {
   margin: 15px 0;
   height: 200px;

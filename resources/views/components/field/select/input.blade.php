@@ -14,6 +14,7 @@
     @foreach ($options->getAll() as $option)
         <option
                 value="{{ $option->getValue() }}"
+                @if($option->isDisabled()) disabled="disabled" @endif
                 @if (\Dms\Web\Laravel\Renderer\Form\ValueComparer::areLooselyEqual($option->getValue(), $value))selected="selected" @endif
         >{{ $option->getLabel() }}</option>
     @endforeach

@@ -1,10 +1,8 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Renderer\Form\Field;
 
-use Dms\Core\Form\Field\Type\ArrayOfType;
 use Dms\Core\Form\Field\Type\FieldType;
-use Dms\Core\Form\Field\Type\InnerFormType;
 use Dms\Core\Form\IField;
 use Dms\Core\Form\IFieldType;
 use Dms\Web\Laravel\Renderer\Form\FormRenderingContext;
@@ -14,7 +12,7 @@ use Dms\Web\Laravel\Renderer\Form\FormRenderingContext;
  *
  * @author Elliot Levin <elliotlevin@hotmail.com>
  */
-class RadioOptionsFieldRender extends BladeFieldRenderer
+class RadioOptionsFieldRender extends OptionsFieldRender
 {
     /**
      * Gets the expected class of the field type for the field.
@@ -32,7 +30,11 @@ class RadioOptionsFieldRender extends BladeFieldRenderer
         && $fieldType->get(FieldType::ATTR_SHOW_ALL_OPTIONS);
     }
 
-    protected function renderField(FormRenderingContext $renderingContext, IField $field, IFieldType $fieldType) : string
+    protected function renderField(
+        FormRenderingContext $renderingContext,
+        IField $field,
+        IFieldType $fieldType
+    ) : string
     {
         return $this->renderView(
             $field,
@@ -40,14 +42,6 @@ class RadioOptionsFieldRender extends BladeFieldRenderer
             [
                 FieldType::ATTR_OPTIONS => 'options',
             ]
-        );
-    }
-
-    protected function renderFieldValue(FormRenderingContext $renderingContext, IField $field, $value, IFieldType $fieldType) : string
-    {
-        return $this->renderValueViewWithNullDefault(
-            $field, $value,
-            'dms::components.field.string.value'
         );
     }
 }

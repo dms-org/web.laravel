@@ -1,5 +1,7 @@
 <span class="dms-display-string">
-    @if (!isset($type) || $type === 'text')
+    @if (!empty($url))
+        <a href="{{ $url }}">{{ $value }}</a>
+    @elseif (!isset($type) || $type === 'text')
         {{ $value }}
     @elseif ($type === 'url')
         <a href="{{ $value }}">{{ $value }}</a>

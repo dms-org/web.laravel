@@ -121,7 +121,7 @@ class InnerModuleFieldRenderer extends BladeFieldRendererWithActions implements 
         $moduleRequestRouter = app(ModuleRequestRouter::class);
 
         /** @var Request $innerModuleRequest */
-        $innerModuleRequest = Request::create($requestUrl, $requestMethod, $requestParameters);
+        $innerModuleRequest = Request::create($request->root() . $requestUrl, $requestMethod, $requestParameters);
 
         $innerModuleResponse = $moduleRequestRouter->dispatch($moduleContext, $innerModuleRequest);
 

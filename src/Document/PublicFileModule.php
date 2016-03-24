@@ -198,8 +198,9 @@ class PublicFileModule extends CrudModule
             $form->dependentOn(['folder'], function (CrudFormDefinition $form, array $input, File $file = null) {
                 $directoryPath = PathHelper::combine($this->rootDirectory, $input['folder']);
 
-                $fileUploadField = Field::create('file', 'File')->file()->required()->value($file)
-                    ->moveToPathWithClientsFileName($directoryPath);
+                $fileUploadField = Field::create('file', 'File')->file()->required()
+                    ->moveToPathWithClientsFileName($directoryPath)
+                    ->value($file);
                 $form->section('File', [
                     $form->field(
                         $form->isEditForm()

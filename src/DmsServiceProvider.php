@@ -139,7 +139,7 @@ class DmsServiceProvider extends ServiceProvider
     {
         $this->publishes([
             __DIR__ . '/../dist/' => public_path('vendor/dms/'),
-        ], 'assets');
+        ], 'public');
     }
 
     private function publishConfig()

@@ -11,6 +11,7 @@ Dms.form.initializeCallbacks.push(function (element) {
         }
     });
 
+    tinymce.baseURL = '/vendor/dms/wysiwyg/';
     tinymce.init({
         selector: 'textarea.dms-wysiwyg',
         tooltip: '',

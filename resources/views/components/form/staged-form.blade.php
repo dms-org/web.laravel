@@ -57,8 +57,7 @@
                                 <div class="col-lg-offset-2 col-lg-10 col-md-offset-3 col-md-9 col-sm-offset-4 col-sm-8">
                                     <p class="help-block">
                                         The following fields are not shown because they require you to enter the values
-                                        for the previous fields in
-                                        this form.
+                                        for the previous fields in this form.
                                     </p>
                                 </div>
                             </div>

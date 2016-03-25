@@ -1,6 +1,7 @@
 <script>
     window.Dms.config = {
         routes: {
+            loginUrl: {!! json_encode(route('dms::auth.login')) !!},
             localUrls: {
                 root: {!! json_encode(url('/dms')) !!},
                 exclude: [

@@ -23,6 +23,9 @@ window.Dms = {
     link: {
         // @see ./services/links.js
     },
+    auth: {
+        // @see ./services/auth.js
+    },
     form: {
         initialize: function (element) {
             var callbacks = Dms.form.initializeCallbacks.concat(Dms.form.initializeValidationCallbacks);

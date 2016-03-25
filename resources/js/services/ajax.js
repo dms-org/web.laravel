@@ -82,6 +82,7 @@ Dms.ajax.parseData = function (data) {
 };
 
 Dms.ajax.createRequest = function (options) {
+    var originalOptions = $.extend(true, {}, options);
     var filteredInterceptors = [];
 
     $.each(Dms.ajax.interceptors, function (index, interceptor) {
@@ -96,10 +97,14 @@ Dms.ajax.createRequest = function (options) {
         }
     });
 
+    var optionsAfterBeforeFilters = $.extend(true, {}, options);
+    var areHandlersCanceled = false;
+
     var callAfterInterceptors = function (response, data) {
         $.each(filteredInterceptors.reverse(), function (index, interceptor) {
             if (typeof interceptor.after === 'function') {
-                var returnValue = interceptor.after(options, response, data);
+
+                var returnValue = interceptor.after(optionsAfterBeforeFilters, response, data);
 
                 if (typeof returnValue !== 'undefined') {
                     data = returnValue;
@@ -110,10 +115,38 @@ Dms.ajax.createRequest = function (options) {
         return data;
     };
 
+    var handleLoggedOutDueToSessionExpiry = function (response) {
+        if (Dms.auth.isLoggedOut(response)) {
+            areHandlersCanceled = true;
+
+            Dms.auth.handleActionWhenLoggedOut(function () {
+                var newRequest = Dms.ajax.createRequest(originalOptions);
+
+                $.each(doneCallbacks, function (index, callback) {
+                    newRequest.done(callback);
+                });
+
+                $.each(failCallbacks, function (index, callback) {
+                    newRequest.fail(callback);
+                });
+
+                $.each(alwaysCallbacks, function (index, callback) {
+                    newRequest.always(callback);
+                });
+            });
+        }
+    };
+
     var responseData;
 
     var originalErrorCallback = options.error;
     options.error = function (jqXHR, textStatus, errorThrown) {
+        handleLoggedOutDueToSessionExpiry(jqXHR);
+
+        if (areHandlersCanceled) {
+            return;
+        }
+        
         callAfterInterceptors(jqXHR);
 
         if (originalErrorCallback) {
@@ -124,6 +157,10 @@ Dms.ajax.createRequest = function (options) {
     var originalSuccessCallback = options.success;
     options.success = function (data, textStatus, jqXHR) {
         responseData = data = callAfterInterceptors(jqXHR, data);
+
+        if (areHandlersCanceled) {
+            return;
+        }
 
         if (originalSuccessCallback) {
             return originalSuccessCallback.apply(this, [data, textStatus, jqXHR]);
@@ -136,10 +173,59 @@ Dms.ajax.createRequest = function (options) {
 
     var request = $.ajax(options);
 
+    var doneCallbacks = [];
+    var failCallbacks = [];
+    var alwaysCallbacks = [];
+
     var originalDone = request.done;
     request.done = function (callback) {
+        if (!callback) {
+            return;
+        }
+
+        doneCallbacks.push(callback);
+
         originalDone(function (data, textStatus, jqXHR) {
+
+            if (areHandlersCanceled) {
+                return;
+            }
+
             callback(responseData, textStatus, jqXHR);
+        });
+    };
+
+    var originalFail = request.fail;
+    request.fail = function (callback) {
+        if (!callback) {
+            return;
+        }
+
+        originalFail(function () {
+            failCallbacks.push(callback);
+
+            if (areHandlersCanceled) {
+                return;
+            }
+
+            callback.apply(this, arguments);
+        });
+    };
+
+    var originalAlways = request.always;
+    request.always = function (callback) {
+        if (!callback) {
+            return;
+        }
+
+        originalAlways(function () {
+            alwaysCallbacks.push(callback);
+
+            if (areHandlersCanceled) {
+                return;
+            }
+
+            callback.apply(this, arguments);
         });
     };
 

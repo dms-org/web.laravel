@@ -23,6 +23,9 @@ window.Dms = {
     link: {
         // @see ./services/links.js
     },
+    auth: {
+        // @see ./services/auth.js
+    },
     form: {
         initialize: function (element) {
             var callbacks = Dms.form.initializeCallbacks.concat(Dms.form.initializeValidationCallbacks);
@@ -224,6 +227,7 @@ Dms.ajax.parseData = function (data) {
 };
 
 Dms.ajax.createRequest = function (options) {
+    var originalOptions = $.extend(true, {}, options);
     var filteredInterceptors = [];
 
     $.each(Dms.ajax.interceptors, function (index, interceptor) {
@@ -238,10 +242,14 @@ Dms.ajax.createRequest = function (options) {
         }
     });
 
+    var optionsAfterBeforeFilters = $.extend(true, {}, options);
+    var areHandlersCanceled = false;
+
     var callAfterInterceptors = function (response, data) {
         $.each(filteredInterceptors.reverse(), function (index, interceptor) {
             if (typeof interceptor.after === 'function') {
-                var returnValue = interceptor.after(options, response, data);
+
+                var returnValue = interceptor.after(optionsAfterBeforeFilters, response, data);
 
                 if (typeof returnValue !== 'undefined') {
                     data = returnValue;
@@ -252,10 +260,38 @@ Dms.ajax.createRequest = function (options) {
         return data;
     };
 
+    var handleLoggedOutDueToSessionExpiry = function (response) {
+        if (Dms.auth.isLoggedOut(response)) {
+            areHandlersCanceled = true;
+
+            Dms.auth.handleActionWhenLoggedOut(function () {
+                var newRequest = Dms.ajax.createRequest(originalOptions);
+
+                $.each(doneCallbacks, function (index, callback) {
+                    newRequest.done(callback);
+                });
+
+                $.each(failCallbacks, function (index, callback) {
+                    newRequest.fail(callback);
+                });
+
+                $.each(alwaysCallbacks, function (index, callback) {
+                    newRequest.always(callback);
+                });
+            });
+        }
+    };
+
     var responseData;
 
     var originalErrorCallback = options.error;
     options.error = function (jqXHR, textStatus, errorThrown) {
+        handleLoggedOutDueToSessionExpiry(jqXHR);
+
+        if (areHandlersCanceled) {
+            return;
+        }
+        
         callAfterInterceptors(jqXHR);
 
         if (originalErrorCallback) {
@@ -266,6 +302,10 @@ Dms.ajax.createRequest = function (options) {
     var originalSuccessCallback = options.success;
     options.success = function (data, textStatus, jqXHR) {
         responseData = data = callAfterInterceptors(jqXHR, data);
+
+        if (areHandlersCanceled) {
+            return;
+        }
 
         if (originalSuccessCallback) {
             return originalSuccessCallback.apply(this, [data, textStatus, jqXHR]);
@@ -278,10 +318,59 @@ Dms.ajax.createRequest = function (options) {
 
     var request = $.ajax(options);
 
+    var doneCallbacks = [];
+    var failCallbacks = [];
+    var alwaysCallbacks = [];
+
     var originalDone = request.done;
     request.done = function (callback) {
+        if (!callback) {
+            return;
+        }
+
+        doneCallbacks.push(callback);
+
         originalDone(function (data, textStatus, jqXHR) {
+
+            if (areHandlersCanceled) {
+                return;
+            }
+
             callback(responseData, textStatus, jqXHR);
+        });
+    };
+
+    var originalFail = request.fail;
+    request.fail = function (callback) {
+        if (!callback) {
+            return;
+        }
+
+        originalFail(function () {
+            failCallbacks.push(callback);
+
+            if (areHandlersCanceled) {
+                return;
+            }
+
+            callback.apply(this, arguments);
+        });
+    };
+
+    var originalAlways = request.always;
+    request.always = function (callback) {
+        if (!callback) {
+            return;
+        }
+
+        originalAlways(function () {
+            alwaysCallbacks.push(callback);
+
+            if (areHandlersCanceled) {
+                return;
+            }
+
+            callback.apply(this, arguments);
         });
     };
 
@@ -325,6 +414,63 @@ Dms.global.initializeCallbacks.push(function () {
         Dms.alerts.add(flashMessage.type, flashMessage.message);
     }
 });
+Dms.auth.isLoggedOut = function (response) {
+    return response.status === 401 && response.responseText.toLowerCase() === 'unauthenticated';
+};
+
+Dms.auth.handleActionWhenLoggedOut = function (loggedInCallback) {
+    var loginFormUrl = Dms.config.routes.loginUrl;
+    var loginDialog = $('.dms-login-dialog');
+    var loginDialogContainer = loginDialog.parent();
+    var loginFormContainer = loginDialog.find('.dms-login-form-container');
+    var loginForm = loginFormContainer.find('.dms-login-form');
+
+    loginDialog.appendTo('body').modal('show');
+    loginDialog.on('hidden.bs.modal', function () {
+        loginDialog.appendTo(loginDialogContainer);
+    });
+
+    var request = Dms.ajax.createRequest({
+        url: loginFormUrl,
+        type: 'get',
+        dataType: 'html',
+        data: {'__content_only': '1'}
+    });
+
+    loginFormContainer.addClass('loading');
+
+    request.done(function (html) {
+        loginForm.html(html);
+
+        loginForm.find('form').on('submit', function (e) {
+            var form = $(this);
+            e.preventDefault();
+
+            var request = Dms.ajax.createRequest({
+                type: 'POST',
+                url: Dms.config.routes.loginUrl,
+                data: form.serialize()
+            });
+
+            request.done(function () {
+                loginDialog.modal('hide');
+                loggedInCallback();
+            });
+
+            request.fail(function () {
+                Dms.alerts.add('danger', 'Login Failed', 'Please verify your login credentials', 5000);
+            });
+        });
+    });
+
+    request.always(function () {
+        loginFormContainer.removeClass('loading');
+    });
+
+    loginDialog.on('hide.bs.modal', function () {
+        loginForm.empty();
+    });
+};
 Dms.global.initializeCallbacks.push(function (element) {
     element.find('button[data-a-href]').css('cursor', 'pointer');
 
@@ -687,6 +833,21 @@ Dms.global.initializeCallbacks.push(function (element) {
             return;
         }
 
+        // Ignore hash of current page, not a link just scrolling
+        var hashPos = linkUrl.indexOf('#');
+        if (hashPos === 0 || (hashPos !== -1 && linkUrl.split('#')[0] === window.location.split('#')[0])) {
+            return;
+        }
+
+        // Ignore non-left clicks and key combinations that open a new tab
+        if (typeof e.which !== 'undefined' && e.which !== 1 || e.ctrlKey || e.altKey || e.shiftKey) {
+            return;
+        }
+
+        if (e.isDefaultPrevented()) {
+            return;
+        }
+
         e.preventDefault();
         e.stopImmediatePropagation();
 
@@ -724,6 +885,7 @@ Dms.global.initializeCallbacks.push(function (element) {
 
                 if (!isPoppingState) {
                     history.pushState({page: linkUrl, linkId: link.attr('id')}, '', linkUrl);
+                } else {
                     isPoppingState = false;
                 }
             });
@@ -1107,6 +1269,243 @@ Dms.global.initializeCallbacks.push(function () {
         check: "You must select between %s and %s choices.",
         equalto: "This must match the confirmation field."
     }, true);
+});
+Dms.chart.initializeCallbacks.push(function (element) {
+
+    element.find('.dms-chart-control').each(function () {
+        var control = $(this);
+        var chartContainer = control.find('.dms-chart-container');
+        var chartElement = chartContainer.find('.dms-chart');
+        var chartRangePicker = chartContainer.find('.dms-chart-range-picker');
+        var loadChartUrl = control.attr('data-load-chart-url');
+
+        var criteria = {
+            orderings: [],
+            conditions: []
+        };
+
+        var currentAjaxRequest;
+
+        var loadCurrentData = function () {
+            chartContainer.addClass('loading');
+
+            if (currentAjaxRequest) {
+                currentAjaxRequest.abort();
+            }
+
+            currentAjaxRequest = Dms.ajax.createRequest({
+                url: loadChartUrl,
+                type: 'post',
+                dataType: 'html',
+                data: criteria
+            });
+
+            currentAjaxRequest.done(function (chartData) {
+                chartElement.html(chartData);
+                Dms.chart.initialize(chartElement);
+            });
+
+            currentAjaxRequest.fail(function () {
+                if (currentAjaxRequest.statusText === 'abort') {
+                    return;
+                }
+
+                chartContainer.addClass('error');
+
+                swal({
+                    title: "Could not load chart data",
+                    text: "An unexpected error occurred",
+                    type: "error"
+                });
+            });
+
+            currentAjaxRequest.always(function () {
+                chartContainer.removeClass('loading');
+            });
+        };
+
+        loadCurrentData();
+
+        chartRangePicker.on('dms-range-updated', function () {
+            var horizontalAxis = chartContainer.attr('data-date-axis-name');
+            criteria.conditions = [
+                {axis: horizontalAxis, operator: '>=', value: chartRangePicker.find('.start-input').val()},
+                {axis: horizontalAxis, operator: '<=', value: chartRangePicker.find('.end-input').val()}
+            ];
+
+            loadCurrentData();
+        });
+    });
+});
+Dms.chart.initializeCallbacks.push(function (element) {
+    
+    element.find('.dms-geo-chart').each(function () {
+        var chart = $(this);
+        var isCityChart = chart.attr('data-city-chart');
+        var hasLatLng = chart.attr('data-has-lat-lng');
+        var chartData = JSON.parse(chart.attr('data-chart-data'));
+        var region = chart.attr('data-region');
+        var locationLabel = chart.attr('data-location-label');
+        var valueLabels = JSON.parse(chart.attr('data-value-labels'));
+
+        Dms.loader.register('google-geo-charts', function (callback) {
+            google.charts.load('current', {'packages': ['geochart']});
+            google.charts.setOnLoadCallback(callback);
+        }, function () {
+            var headers = [];
+
+            if (hasLatLng) {
+                headers.push('Latitude');
+                headers.push('Longitude');
+            }
+
+            headers.push(locationLabel);
+            headers = headers.concat(valueLabels);
+
+            var transformedChartData = [headers];
+
+            $.each(chartData, function (index, row) {
+                transformedChartData.push((hasLatLng ? row.lat_lng : []).concat([row.label]).concat(row.values));
+            });
+
+            var data = google.visualization.arrayToDataTable(transformedChartData);
+
+            var googleChart = new google.visualization.GeoChart(chart.get(0));
+
+            var drawChart = function () {
+                googleChart.draw(data, {
+                    displayMode: isCityChart ? 'markers' : 'regions',
+                    region: region
+                });
+            };
+
+            var resizeTimeoutId;
+            $(window).resize(function () {
+                if (resizeTimeoutId) {
+                    clearTimeout(resizeTimeoutId);
+                }
+
+                resizeTimeoutId = setTimeout(function () {
+                    drawChart();
+                    resizeTimeoutId = null;
+                }, 500);
+            });
+
+            drawChart();
+        });
+    });
+});
+Dms.chart.initializeCallbacks.push(function (element) {
+    element.find('.dms-graph-chart').each(function () {
+        var chart = $(this);
+        var dateFormat = Dms.utilities.convertPhpDateFormatToMomentFormat(chart.attr('data-date-format'));
+        var chartData = JSON.parse(chart.attr('data-chart-data'));
+        var chartType = chart.attr('data-chart-type');
+        var horizontalAxisKey = chart.attr('data-horizontal-axis-key');
+        var horizontalAxisUnitType = chart.attr('data-horizontal-unit-type');
+        var verticalAxisKeys = JSON.parse(chart.attr('data-vertical-axis-keys'));
+        var verticalAxisLabels = JSON.parse(chart.attr('data-vertical-axis-labels'));
+        var minTimestamp;
+        var maxTimestamp;
+        var timeRowLookup = {};
+
+        if (!chart.attr('id')) {
+            chart.attr('id', Dms.utilities.idGenerator());
+        }
+
+        $.each(chartData, function (index, row) {
+            var timestamp = moment(row[horizontalAxisKey], dateFormat).valueOf();
+            row[horizontalAxisKey] = timestamp;
+            timeRowLookup[timestamp] = true;
+
+            if (!minTimestamp || timestamp < minTimestamp) {
+                minTimestamp = timestamp;
+            }
+
+            if (!maxTimestamp || timestamp > maxTimestamp) {
+                maxTimestamp = timestamp;
+            }
+        });
+
+        var zeroFillMissingValues = function (unitType, chartData) {
+            if (chartData.length === 0) {
+                return;
+            }
+
+            var unit;
+            if (unitType === 'date') {
+                unit = 24 * 3600 * 1000;
+            } else {
+                unit = 1000;
+            }
+
+            for (var i = minTimestamp; i < maxTimestamp; i += unit) {
+                if (typeof timeRowLookup[i] === 'undefined') {
+                    var rowData = {};
+                    rowData[horizontalAxisKey] = i;
+
+                    $.each(verticalAxisKeys, function (index, verticalAxisKey) {
+                        rowData[verticalAxisKey] = 0;
+                    });
+
+                    chartData.push(rowData);
+                }
+            }
+        };
+
+        zeroFillMissingValues(horizontalAxisUnitType, chartData);
+
+        var morrisConfig = {
+            element: chart.attr('id'),
+            data: chartData,
+            xkey: horizontalAxisKey,
+            ykeys: verticalAxisKeys,
+            labels: verticalAxisLabels,
+            resize: true,
+            redraw: true,
+            dateFormat: function (timestamp) {
+                return moment(timestamp).format(dateFormat);
+            }
+        };
+
+        var morrisChart;
+        if (chartType === 'bar') {
+            morrisChart = Morris.Bar(morrisConfig);
+        } else if (chartType === 'area') {
+            morrisChart = Morris.Area(morrisConfig);
+        } else {
+            morrisChart = Morris.Line(morrisConfig);
+        }
+
+        $(window).on('resize', function () {
+            if (morrisChart.raphael) {
+                morrisChart.redraw();
+            }
+        });
+    });
+});
+Dms.chart.initializeCallbacks.push(function (element) {
+    element.find('.dms-pie-chart').each(function () {
+        var chart = $(this);
+        var chartData = JSON.parse(chart.attr('data-chart-data'));
+
+        if (!chart.attr('id')) {
+            chart.attr('id', Dms.utilities.idGenerator());
+        }
+
+        var morrisChart = Morris.Donut({
+            element: chart.attr('id'),
+            data: chartData,
+            resize: true,
+            redraw: true
+        });
+
+        $(window).on('resize', function () {
+            if (morrisChart.raphael) {
+                morrisChart.redraw();
+            }
+        });
+    });
 });
 Dms.form.initializeCallbacks.push(function (element) {
     element.find('input[type=checkbox].single-checkbox').iCheck({
@@ -3094,243 +3493,6 @@ Dms.widget.initializeCallbacks.push(function () {
                 return false;
             });
         }
-    });
-});
-Dms.chart.initializeCallbacks.push(function (element) {
-
-    element.find('.dms-chart-control').each(function () {
-        var control = $(this);
-        var chartContainer = control.find('.dms-chart-container');
-        var chartElement = chartContainer.find('.dms-chart');
-        var chartRangePicker = chartContainer.find('.dms-chart-range-picker');
-        var loadChartUrl = control.attr('data-load-chart-url');
-
-        var criteria = {
-            orderings: [],
-            conditions: []
-        };
-
-        var currentAjaxRequest;
-
-        var loadCurrentData = function () {
-            chartContainer.addClass('loading');
-
-            if (currentAjaxRequest) {
-                currentAjaxRequest.abort();
-            }
-
-            currentAjaxRequest = Dms.ajax.createRequest({
-                url: loadChartUrl,
-                type: 'post',
-                dataType: 'html',
-                data: criteria
-            });
-
-            currentAjaxRequest.done(function (chartData) {
-                chartElement.html(chartData);
-                Dms.chart.initialize(chartElement);
-            });
-
-            currentAjaxRequest.fail(function () {
-                if (currentAjaxRequest.statusText === 'abort') {
-                    return;
-                }
-
-                chartContainer.addClass('error');
-
-                swal({
-                    title: "Could not load chart data",
-                    text: "An unexpected error occurred",
-                    type: "error"
-                });
-            });
-
-            currentAjaxRequest.always(function () {
-                chartContainer.removeClass('loading');
-            });
-        };
-
-        loadCurrentData();
-
-        chartRangePicker.on('dms-range-updated', function () {
-            var horizontalAxis = chartContainer.attr('data-date-axis-name');
-            criteria.conditions = [
-                {axis: horizontalAxis, operator: '>=', value: chartRangePicker.find('.start-input').val()},
-                {axis: horizontalAxis, operator: '<=', value: chartRangePicker.find('.end-input').val()}
-            ];
-
-            loadCurrentData();
-        });
-    });
-});
-Dms.chart.initializeCallbacks.push(function (element) {
-    
-    element.find('.dms-geo-chart').each(function () {
-        var chart = $(this);
-        var isCityChart = chart.attr('data-city-chart');
-        var hasLatLng = chart.attr('data-has-lat-lng');
-        var chartData = JSON.parse(chart.attr('data-chart-data'));
-        var region = chart.attr('data-region');
-        var locationLabel = chart.attr('data-location-label');
-        var valueLabels = JSON.parse(chart.attr('data-value-labels'));
-
-        Dms.loader.register('google-geo-charts', function (callback) {
-            google.charts.load('current', {'packages': ['geochart']});
-            google.charts.setOnLoadCallback(callback);
-        }, function () {
-            var headers = [];
-
-            if (hasLatLng) {
-                headers.push('Latitude');
-                headers.push('Longitude');
-            }
-
-            headers.push(locationLabel);
-            headers = headers.concat(valueLabels);
-
-            var transformedChartData = [headers];
-
-            $.each(chartData, function (index, row) {
-                transformedChartData.push((hasLatLng ? row.lat_lng : []).concat([row.label]).concat(row.values));
-            });
-
-            var data = google.visualization.arrayToDataTable(transformedChartData);
-
-            var googleChart = new google.visualization.GeoChart(chart.get(0));
-
-            var drawChart = function () {
-                googleChart.draw(data, {
-                    displayMode: isCityChart ? 'markers' : 'regions',
-                    region: region
-                });
-            };
-
-            var resizeTimeoutId;
-            $(window).resize(function () {
-                if (resizeTimeoutId) {
-                    clearTimeout(resizeTimeoutId);
-                }
-
-                resizeTimeoutId = setTimeout(function () {
-                    drawChart();
-                    resizeTimeoutId = null;
-                }, 500);
-            });
-
-            drawChart();
-        });
-    });
-});
-Dms.chart.initializeCallbacks.push(function (element) {
-    element.find('.dms-graph-chart').each(function () {
-        var chart = $(this);
-        var dateFormat = Dms.utilities.convertPhpDateFormatToMomentFormat(chart.attr('data-date-format'));
-        var chartData = JSON.parse(chart.attr('data-chart-data'));
-        var chartType = chart.attr('data-chart-type');
-        var horizontalAxisKey = chart.attr('data-horizontal-axis-key');
-        var horizontalAxisUnitType = chart.attr('data-horizontal-unit-type');
-        var verticalAxisKeys = JSON.parse(chart.attr('data-vertical-axis-keys'));
-        var verticalAxisLabels = JSON.parse(chart.attr('data-vertical-axis-labels'));
-        var minTimestamp;
-        var maxTimestamp;
-        var timeRowLookup = {};
-
-        if (!chart.attr('id')) {
-            chart.attr('id', Dms.utilities.idGenerator());
-        }
-
-        $.each(chartData, function (index, row) {
-            var timestamp = moment(row[horizontalAxisKey], dateFormat).valueOf();
-            row[horizontalAxisKey] = timestamp;
-            timeRowLookup[timestamp] = true;
-
-            if (!minTimestamp || timestamp < minTimestamp) {
-                minTimestamp = timestamp;
-            }
-
-            if (!maxTimestamp || timestamp > maxTimestamp) {
-                maxTimestamp = timestamp;
-            }
-        });
-
-        var zeroFillMissingValues = function (unitType, chartData) {
-            if (chartData.length === 0) {
-                return;
-            }
-
-            var unit;
-            if (unitType === 'date') {
-                unit = 24 * 3600 * 1000;
-            } else {
-                unit = 1000;
-            }
-
-            for (var i = minTimestamp; i < maxTimestamp; i += unit) {
-                if (typeof timeRowLookup[i] === 'undefined') {
-                    var rowData = {};
-                    rowData[horizontalAxisKey] = i;
-
-                    $.each(verticalAxisKeys, function (index, verticalAxisKey) {
-                        rowData[verticalAxisKey] = 0;
-                    });
-
-                    chartData.push(rowData);
-                }
-            }
-        };
-
-        zeroFillMissingValues(horizontalAxisUnitType, chartData);
-
-        var morrisConfig = {
-            element: chart.attr('id'),
-            data: chartData,
-            xkey: horizontalAxisKey,
-            ykeys: verticalAxisKeys,
-            labels: verticalAxisLabels,
-            resize: true,
-            redraw: true,
-            dateFormat: function (timestamp) {
-                return moment(timestamp).format(dateFormat);
-            }
-        };
-
-        var morrisChart;
-        if (chartType === 'bar') {
-            morrisChart = Morris.Bar(morrisConfig);
-        } else if (chartType === 'area') {
-            morrisChart = Morris.Area(morrisConfig);
-        } else {
-            morrisChart = Morris.Line(morrisConfig);
-        }
-
-        $(window).on('resize', function () {
-            if (morrisChart.raphael) {
-                morrisChart.redraw();
-            }
-        });
-    });
-});
-Dms.chart.initializeCallbacks.push(function (element) {
-    element.find('.dms-pie-chart').each(function () {
-        var chart = $(this);
-        var chartData = JSON.parse(chart.attr('data-chart-data'));
-
-        if (!chart.attr('id')) {
-            chart.attr('id', Dms.utilities.idGenerator());
-        }
-
-        var morrisChart = Morris.Donut({
-            element: chart.attr('id'),
-            data: chartData,
-            resize: true,
-            redraw: true
-        });
-
-        $(window).on('resize', function () {
-            if (morrisChart.raphael) {
-                morrisChart.redraw();
-            }
-        });
     });
 });
 Dms.table.initializeCallbacks.push(function (element) {

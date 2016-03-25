@@ -34,7 +34,7 @@ class Authenticate
     {
         if (!$this->auth->isAuthenticated()) {
             if ($request->ajax()) {
-                return response('Unauthorized.', 401);
+                return response('Unauthenticated', 401);
             } else {
                 return redirect()->guest(route('dms::auth.login'));
             }

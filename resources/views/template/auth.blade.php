@@ -1,3 +1,8 @@
+@if(request()->input('__content_only'))
+    @yield('content')
+    <?php return ?>
+@endif
+
 @extends('dms::template.template')
 @section('body-content')
     <body class="hold-transition login-page">

@@ -115,6 +115,21 @@ Dms.global.initializeCallbacks.push(function (element) {
             return;
         }
 
+        // Ignore hash of current page, not a link just scrolling
+        var hashPos = linkUrl.indexOf('#');
+        if (hashPos === 0 || (hashPos !== -1 && linkUrl.split('#')[0] === window.location.split('#')[0])) {
+            return;
+        }
+
+        // Ignore non-left clicks and key combinations that open a new tab
+        if (typeof e.which !== 'undefined' && e.which !== 1 || e.ctrlKey || e.altKey || e.shiftKey) {
+            return;
+        }
+
+        if (e.isDefaultPrevented()) {
+            return;
+        }
+
         e.preventDefault();
         e.stopImmediatePropagation();
 
@@ -152,6 +167,7 @@ Dms.global.initializeCallbacks.push(function (element) {
 
                 if (!isPoppingState) {
                     history.pushState({page: linkUrl, linkId: link.attr('id')}, '', linkUrl);
+                } else {
                     isPoppingState = false;
                 }
             });

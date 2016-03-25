@@ -24,3 +24,22 @@
         overflow: auto;
     }
 }
+
+.dms-login-dialog {
+    z-index: 9999999;
+
+    .modal-dialog {
+        margin-top: 20%;
+    }
+
+    .dms-login-form-container {
+        @extend .dms-spinner-container;
+        min-height: 50px;
+
+        &.loading {
+            .dms-login-form {
+                opacity: .3;
+            }
+        }
+    }
+}

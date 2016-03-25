@@ -1,9 +1,9 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Http\Controllers\Auth;
 
-use Dms\Core\Auth\InvalidCredentialsException;
 use Dms\Core\Auth\AdminBannedException;
+use Dms\Core\Auth\InvalidCredentialsException;
 use Dms\Core\Auth\NotAuthenticatedException;
 use Dms\Core\ICms;
 use Dms\Web\Laravel\Http\Controllers\DmsController;
@@ -82,7 +82,11 @@ class AuthController extends DmsController
 
             $this->clearLoginAttempts($request);
 
-            return redirect()->intended(route('dms::index'));
+            if ($request->ajax()) {
+                return response('Authenticated', 200);
+            } else {
+                return redirect()->intended(route('dms::index'));
+            }
         } catch (InvalidCredentialsException $e) {
             $errorMessage = 'dms::auth.failed';
         } catch (AdminBannedException $e) {
@@ -93,11 +97,16 @@ class AuthController extends DmsController
         // to login and redirect the user back to the login form. Of course, when this
         // user surpasses their maximum number of attempts they will get locked out.
         $this->incrementLoginAttempts($request);
-        return redirect()->back()
-            ->withInput($request->only('username'))
-            ->withErrors([
-                'username' => trans($errorMessage),
-            ]);
+
+        if ($request->ajax()) {
+            return response('Failed', 400);
+        } else {
+            return redirect()->back()
+                ->withInput($request->only('username'))
+                ->withErrors([
+                    'username' => trans($errorMessage),
+                ]);
+        }
     }
 
     /**

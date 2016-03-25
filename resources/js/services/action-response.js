@@ -7,7 +7,7 @@ Dms.action.responseHandler = function (httpStatusCode, actionUrl, response) {
             });
         }
 
-        window.location.href = response.redirect;
+        Dms.link.goToUrl(response.redirect);
         return;
     }
 

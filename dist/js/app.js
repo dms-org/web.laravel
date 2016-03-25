@@ -20,6 +20,9 @@ window.Dms = {
         interceptors: []
         // @see ./services/ajax.js
     },
+    link: {
+        // @see ./services/links.js
+    },
     form: {
         initialize: function (element) {
             var callbacks = Dms.form.initializeCallbacks.concat(Dms.form.initializeValidationCallbacks);
@@ -57,15 +60,21 @@ window.Dms = {
         },
         initializeCallbacks: []
     },
+    all: {
+        initialize: function (element) {
+            Dms.global.initialize(element);
+            Dms.form.initialize(element);
+            Dms.table.initialize(element);
+            Dms.chart.initialize(element);
+            Dms.widget.initialize(element);
+        }
+    },
+    loader: {}, // @see ./services/loader.js,
     utilities: {} // @see ./services/utilities.js
 };
 
 $(document).ready(function () {
-    Dms.global.initialize($(document));
-    Dms.form.initialize($(document));
-    Dms.table.initialize($(document));
-    Dms.chart.initialize($(document));
-    Dms.widget.initialize($(document));
+    Dms.all.initialize($(document));
 });
 Dms.action.responseHandler = function (httpStatusCode, actionUrl, response) {
     if (typeof response.redirect !== 'undefined') {
@@ -76,7 +85,7 @@ Dms.action.responseHandler = function (httpStatusCode, actionUrl, response) {
             });
         }
 
-        window.location.href = response.redirect;
+        Dms.link.goToUrl(response.redirect);
         return;
     }
 
@@ -329,10 +338,6 @@ Dms.global.initializeCallbacks.push(function (element) {
         link.click();
     });
 
-    element.delegate('a[href].dms-placeholder-a', 'click', function () {
-        window.location.href = $(this).attr('href');
-    });
-
     element.find('.btn.btn-active-toggle').on('click', function () {
        $(this).toggleClass('active');
     });
@@ -565,8 +570,35 @@ Dms.form.stages.createFormDataFromFields = function (fields) {
 
     return formData;
 };
-Dms.global.initializeCallbacks.push(function () {
-    $('a').click(function (e) {
+Dms.link.isLocalLink = function (url) {
+    var rootUrl = Dms.config.routes.localUrls.root;
+    var excludedUrls = Dms.config.routes.localUrls.exclude;
+
+    if (url.indexOf(rootUrl) !== 0) {
+        return false;
+    }
+
+    var isExcluded = false;
+
+    $.each(excludedUrls, function (index, excludedUrl) {
+        if (Dms.utilities.areUrlsEqual(url, excludedUrl)) {
+            isExcluded = true;
+        }
+    });
+
+    return !isExcluded;
+};
+
+Dms.link.goToUrl = function (url) {
+    if (Dms.link.isLocalLink(url)) {
+        $('<a/>').attr({href: url}).hide().appendTo(document.body).click();
+    } else {
+        window.location.href = url;
+    }
+};
+
+Dms.global.initializeCallbacks.push(function (element) {
+    element.click(function (e) {
         if ($(this).attr('disabled')) {
             e.stopImmediatePropagation();
 
@@ -575,10 +607,182 @@ Dms.global.initializeCallbacks.push(function () {
 
         return true;
     });
+
+
+    if (Dms.config.hasLoadedAjaxPageNavigation) {
+        return;
+    } else {
+        Dms.config.hasLoadedAjaxPageNavigation = true;
+    }
+
+    var rootUrl = Dms.config.routes.localUrls.root;
+    var contentContainer = element.find('.content-wrapper');
+    var contentElement = contentContainer.children('.dms-page-content');
+    var isPoppingState = false;
+
+    if (contentElement.length === 0) {
+        return;
+    }
+
+    var loadedScripts = $.map($('script[src]').toArray(), function (script) {
+        return $(script).attr('src');
+    });
+
+    var loadedStyles = $.map($('link[rel=stylesheet][href]').toArray(), function (style) {
+        return $(style).attr('href');
+    });
+
+    var loadedRequiredAssets = function (page, callback) {
+        var scriptToLoad = $.map(page.find('#page > .scripts > script[src]').toArray(), function (script) {
+            return $(script).attr('src');
+        });
+
+        var styleToLoad = $.map(page.find('#page > .styles > link[rel=stylesheet][href]').toArray(), function (style) {
+            return $(style).attr('href');
+        });
+
+        $.each(styleToLoad, function (index, css) {
+            if ($.inArray(css, loadedStyles) === -1) {
+                $('<link/>', {
+                    rel: 'stylesheet',
+                    type: 'text/css',
+                    href: css
+                }).appendTo('head');
+
+                loadedStyles.push(css);
+            }
+        });
+
+        var scriptSemaphore = 0;
+        var scriptsTotal = 0;
+
+        $.each(scriptToLoad, function (index, script) {
+            if ($.inArray(script, loadedScripts) === -1) {
+                scriptsTotal++;
+
+                $.getScript(script, function () {
+                    scriptSemaphore++;
+
+                    if (scriptSemaphore === scriptsTotal) {
+                        callback();
+                    }
+                });
+
+                loadedScripts.push(script);
+            }
+        });
+
+        if (scriptsTotal === 0) {
+            callback();
+        }
+    };
+
+    var currentAjaxRequest;
+
+    element.on('click', 'a[href^="' + rootUrl + '"]', function (e) {
+        var link = $(this);
+        var linkUrl = link.attr('href');
+
+        if (!Dms.link.isLocalLink(linkUrl)) {
+            return;
+        }
+
+        e.preventDefault();
+        e.stopImmediatePropagation();
+
+        if (currentAjaxRequest) {
+            currentAjaxRequest.abort();
+        }
+
+        contentContainer.addClass('loading');
+
+        currentAjaxRequest = Dms.ajax.createRequest({
+            url: linkUrl,
+            type: 'get',
+            dataType: 'html',
+            data: {'__no_template': 1}
+        });
+
+        currentAjaxRequest.done(function (content) {
+            var page = $('<div>' + content + '</div>');
+            currentAjaxRequest = null;
+
+            loadedRequiredAssets(page, function () {
+                if (!link.attr('id')) {
+                    link.attr('id', Dms.utilities.idGenerator());
+                }
+
+                contentElement.empty().append(page.find('#page > .content > *'));
+                contentContainer.removeClass('loading');
+                Dms.all.initialize(contentElement);
+
+                if (link.closest('.dms-packages-nav').length) {
+                    link.closest('li').addClass('active').siblings().removeClass('active');
+                }
+
+                document.title = page.find('#page > .title').text();
+
+                if (!isPoppingState) {
+                    history.pushState({page: linkUrl, linkId: link.attr('id')}, '', linkUrl);
+                    isPoppingState = false;
+                }
+            });
+        });
+
+        currentAjaxRequest.fail(function () {
+            if (currentAjaxRequest.statusText === 'abort') {
+                return;
+            }
+
+            swal({
+                title: "Could not load page",
+                text: "An unexpected error occurred",
+                type: "error"
+            });
+
+            contentContainer.removeClass('loading');
+        });
+    });
+
+    $(window).on('popstate', function (e) {
+        isPoppingState = true;
+        var linkId = e.originalEvent.state.linkId;
+        var link = $('#' + linkId);
+
+        if (link.length) {
+            link.click();
+        } else {
+            Dms.link.goToUrl(e.originalEvent.state.page);
+        }
+    });
 });
-Dms.global.initializeCallbacks.push(function () {
-    var navigationFilter = $('.dms-nav-quick-filter');
-    var packagesNavigation = $('.dms-packages-nav');
+Dms.loader.loaders = {};
+
+Dms.loader.register = function (loaderName, loadCallback, doneCallback) {
+    if (typeof (Dms.loader.loaders[loaderName]) === 'undefined') {
+        Dms.loader.loaders[loaderName] = {
+            loaded: false,
+            callbacks: []
+        };
+
+        loadCallback(function () {
+            Dms.loader.loaders[loaderName].loaded = true;
+
+            $.each(Dms.loader.loaders[loaderName].callbacks, function (index, callback) {
+                callback();
+            });
+        });
+    }
+
+    if (Dms.loader.loaders[loaderName].loaded) {
+        doneCallback();
+    } else {
+        Dms.loader.loaders[loaderName].callbacks.push(doneCallback);
+    }
+};
+Dms.global.initializeCallbacks.push(function (element) {
+    var navigationFilter = element.find('.dms-nav-quick-filter');
+    var packagesNavigation = element.find('.dms-packages-nav');
     var navigationSections = packagesNavigation.find('li.treeview');
     var navigationLabels = packagesNavigation.find('.dms-nav-label');
 
@@ -612,9 +816,21 @@ Dms.global.initializeCallbacks.push(function () {
         var enterKey = 13;
 
         if (event.keyCode === enterKey) {
-            var link = packagesNavigation.find('a[href!="javascript:void(0)"]:visible').first().attr('href');
-            window.location.href = link;
+            var link = packagesNavigation.find('a[href!="javascript:void(0)"]:visible').first();
+            link.click();
+            navigationFilter.val('');
+            navigationFilter.triggerHandler('input');
         }
+    });
+
+    packagesNavigation.on('dms-update-active', function () {
+        var currentUrl = window.location.href;
+
+        var currentLink
+    });
+
+    element.find('.navbar-static-top .user-menu a[href]').on('click', function () {
+        $(this).closest('.user-menu').removeClass('open');
     });
 });
 Dms.utilities.countDecimals = function (value) {
@@ -705,6 +921,24 @@ Dms.utilities.convertPhpDateFormatToMomentFormat = function (format) {
     });
 
     return newFormat;
+};
+
+Dms.utilities.scrollToView = function (element) {
+    var topOfElement = element.offset().top;
+    if (!element.is(":visible")) {
+        element.css({"visibility": "hidden"}).show();
+        topOfElement = element.offset().top;
+        element.css({"visibility": "", "display": ""});
+    }
+    var bottomOfElement = topOfElement + element.outerHeight();
+
+    var topOfScreen = $(window).scrollTop();
+    var bottomOfScreen = topOfScreen + window.innerHeight;
+
+    if (!(topOfScreen < topOfElement && bottomOfScreen > bottomOfElement)) {
+        // Not in view so scroll to it
+        $('html,body').animate({scrollTop: topOfElement - window.innerHeight / 3}, 500);
+    }
 };
 window.Parsley.addValidator('ipAddress', {
     requirementType: 'boolean',
@@ -842,6 +1076,9 @@ window.ParsleyConfig = {
     classHandler: function (el) {
         return el.$element.closest(".form-group");
     },
+    errorsContainer: function (el) {
+        return el.$element.closest(".form-group").children().children(".dms-validation-messages-container");
+    },
     errorsWrapper: "<span class='help-block dms-validation-message'></span>",
     errorTemplate: "<span></span>"
 };
@@ -871,237 +1108,17 @@ Dms.global.initializeCallbacks.push(function () {
         equalto: "This must match the confirmation field."
     }, true);
 });
-Dms.chart.initializeCallbacks.push(function (element) {
-
-    element.find('.dms-chart-control').each(function () {
-        var control = $(this);
-        var chartContainer = control.find('.dms-chart-container');
-        var chartElement = chartContainer.find('.dms-chart');
-        var chartRangePicker = chartContainer.find('.dms-chart-range-picker');
-        var loadChartUrl = control.attr('data-load-chart-url');
-
-        var criteria = {
-            orderings: [],
-            conditions: []
-        };
-
-        var currentAjaxRequest;
-
-        var loadCurrentData = function () {
-            chartContainer.addClass('loading');
-
-            if (currentAjaxRequest) {
-                currentAjaxRequest.abort();
-            }
-
-            currentAjaxRequest = Dms.ajax.createRequest({
-                url: loadChartUrl,
-                type: 'post',
-                dataType: 'html',
-                data: criteria
-            });
-
-            currentAjaxRequest.done(function (chartData) {
-                chartElement.html(chartData);
-                Dms.chart.initialize(chartElement);
-            });
-
-            currentAjaxRequest.fail(function () {
-                if (currentAjaxRequest.statusText === 'abort') {
-                    return;
-                }
-
-                chartContainer.addClass('error');
-
-                swal({
-                    title: "Could not load chart data",
-                    text: "An unexpected error occurred",
-                    type: "error"
-                });
-            });
-
-            currentAjaxRequest.always(function () {
-                chartContainer.removeClass('loading');
-            });
-        };
-
-        loadCurrentData();
-
-        chartRangePicker.on('dms-range-updated', function () {
-            var horizontalAxis = chartContainer.attr('data-date-axis-name');
-            criteria.conditions = [
-                {axis: horizontalAxis, operator: '>=', value: chartRangePicker.find('.start-input').val()},
-                {axis: horizontalAxis, operator: '<=', value: chartRangePicker.find('.end-input').val()}
-            ];
-
-            loadCurrentData();
-        });
+Dms.form.initializeCallbacks.push(function (element) {
+    element.find('input[type=checkbox].single-checkbox').iCheck({
+        checkboxClass: 'icheckbox_square-blue',
+        increaseArea: '20%'
     });
-});
-Dms.chart.initializeCallbacks.push(function (element) {
-    element.find('.dms-geo-chart').each(function () {
-        var chart = $(this);
-        var isCityChart = chart.attr('data-city-chart');
-        var hasLatLng = chart.attr('data-has-lat-lng');
-        var chartData = JSON.parse(chart.attr('data-chart-data'));
-        var region = chart.attr('data-region');
-        var locationLabel = chart.attr('data-location-label');
-        var valueLabels = JSON.parse(chart.attr('data-value-labels'));
 
-        google.charts.load('current', {'packages': ['geochart']});
-        google.charts.setOnLoadCallback(function () {
-            var headers = [];
+    element.find('input[type=checkbox]').each(function () {
+        var formGroup = $(this).closest('.form-group');
 
-            if (hasLatLng) {
-                headers.push('Latitude');
-                headers.push('Longitude');
-            }
-
-            headers.push(locationLabel);
-            headers = headers.concat(valueLabels);
-
-            var transformedChartData = [headers];
-
-            $.each(chartData, function (index, row) {
-                transformedChartData.push((hasLatLng ? row.lat_lng : []).concat([row.label]).concat(row.values));
-            });
-
-            var data = google.visualization.arrayToDataTable(transformedChartData);
-
-            var googleChart = new google.visualization.GeoChart(chart.get(0));
-
-            var drawChart = function () {
-                googleChart.draw(data, {
-                    displayMode: isCityChart ? 'markers' : 'regions',
-                    region: region
-                });
-            };
-
-            var resizeTimeoutId;
-            $(window).resize(function () {
-                if (resizeTimeoutId) {
-                    clearTimeout(resizeTimeoutId);
-                }
-
-                resizeTimeoutId = setTimeout(function () {
-                    drawChart();
-                    resizeTimeoutId = null;
-                }, 500);
-            });
-
-            drawChart();
-        });
-    });
-});
-Dms.chart.initializeCallbacks.push(function (element) {
-    element.find('.dms-graph-chart').each(function () {
-        var chart = $(this);
-        var dateFormat = Dms.utilities.convertPhpDateFormatToMomentFormat(chart.attr('data-date-format'));
-        var chartData = JSON.parse(chart.attr('data-chart-data'));
-        var chartType = chart.attr('data-chart-type');
-        var horizontalAxisKey = chart.attr('data-horizontal-axis-key');
-        var horizontalAxisUnitType = chart.attr('data-horizontal-unit-type');
-        var verticalAxisKeys = JSON.parse(chart.attr('data-vertical-axis-keys'));
-        var verticalAxisLabels = JSON.parse(chart.attr('data-vertical-axis-labels'));
-        var minTimestamp;
-        var maxTimestamp;
-        var timeRowLookup = {};
-
-        if (!chart.attr('id')) {
-            chart.attr('id', Dms.utilities.idGenerator());
-        }
-
-        $.each(chartData, function (index, row) {
-            var timestamp = moment(row[horizontalAxisKey], dateFormat).valueOf();
-            row[horizontalAxisKey] = timestamp;
-            timeRowLookup[timestamp] = true;
-
-            if (!minTimestamp || timestamp < minTimestamp) {
-                minTimestamp = timestamp;
-            }
-
-            if (!maxTimestamp || timestamp > maxTimestamp) {
-                maxTimestamp = timestamp;
-            }
-        });
-
-        var zeroFillMissingValues = function (unitType, chartData) {
-            if (chartData.length === 0) {
-                return;
-            }
-
-            var unit;
-            if (unitType === 'date') {
-                unit = 24 * 3600 * 1000;
-            } else {
-                unit = 1000;
-            }
-
-            for (var i = minTimestamp; i < maxTimestamp; i += unit) {
-                if (typeof timeRowLookup[i] === 'undefined') {
-                    var rowData = {};
-                    rowData[horizontalAxisKey] = i;
-
-                    $.each(verticalAxisKeys, function (index, verticalAxisKey) {
-                        rowData[verticalAxisKey] = 0;
-                    });
-
-                    chartData.push(rowData);
-                }
-            }
-        };
-
-        zeroFillMissingValues(horizontalAxisUnitType, chartData);
-
-        var morrisConfig = {
-            element: chart.attr('id'),
-            data: chartData,
-            xkey: horizontalAxisKey,
-            ykeys: verticalAxisKeys,
-            labels: verticalAxisLabels,
-            resize: true,
-            redraw: true,
-            dateFormat: function (timestamp) {
-                return moment(timestamp).format(dateFormat);
-            }
-        };
-
-        var morrisChart;
-        if (chartType === 'bar') {
-            morrisChart = Morris.Bar(morrisConfig);
-        } else if (chartType === 'area') {
-            morrisChart = Morris.Area(morrisConfig);
-        } else {
-            morrisChart = Morris.Line(morrisConfig);
-        }
-
-        $(window).on('resize', function () {
-            if (morrisChart.raphael) {
-                morrisChart.redraw();
-            }
-        });
-    });
-});
-Dms.chart.initializeCallbacks.push(function (element) {
-    element.find('.dms-pie-chart').each(function () {
-        var chart = $(this);
-        var chartData = JSON.parse(chart.attr('data-chart-data'));
-
-        if (!chart.attr('id')) {
-            chart.attr('id', Dms.utilities.idGenerator());
-        }
-
-        var morrisChart = Morris.Donut({
-            element: chart.attr('id'),
-            data: chartData,
-            resize: true,
-            redraw: true
-        });
-
-        $(window).on('resize', function () {
-            if (morrisChart.raphael) {
-                morrisChart.redraw();
-            }
+        $(this).on('ifToggled', function(event){
+            formGroup.trigger('dms-change');
         });
     });
 });
@@ -1120,20 +1137,6 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-    element.find('input[type=checkbox].single-checkbox').iCheck({
-        checkboxClass: 'icheckbox_square-blue',
-        increaseArea: '20%'
-    });
-
-    element.find('input[type=checkbox]').each(function () {
-        var formGroup = $(this).closest('.form-group');
-
-        $(this).on('ifToggled', function(event){
-            formGroup.trigger('dms-change');
-        });
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
     element.find('input.dms-colour-input').each(function () {
         var config = {
             theme: 'bootstrap'
@@ -1148,6 +1151,116 @@ Dms.form.initializeCallbacks.push(function (element) {
 
         $(this).addClass('minicolors').minicolors(config);
     });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+    element.find('input.date-or-time')
+        .each(function () {
+            var inputElement = $(this);
+            var formGroup = inputElement.closest('.form-group');
+            var phpDateFormat = inputElement.attr('data-date-format');
+            var dateFormat = Dms.utilities.convertPhpDateFormatToMomentFormat(phpDateFormat);
+            var mode = inputElement.attr('data-mode');
+
+            var config = {
+                locale: {
+                    format: dateFormat
+                },
+                parentEl: inputElement.closest('.date-picker-container'),
+                singleDatePicker: true,
+                showDropdowns: true,
+                autoApply: true,
+                linkedCalendars: false,
+                autoUpdateInput: false
+            };
+
+            if (mode === 'date-time') {
+                config.timePicker = true;
+                config.timePickerSeconds = phpDateFormat.indexOf('s') !== -1;
+            }
+
+            if (mode === 'time') {
+                config.timePicker = true;
+                config.timePickerSeconds = phpDateFormat.indexOf('s') !== -1;
+            }
+            // TODO: timezoned-date-time
+
+            inputElement.daterangepicker(config, function (date) {
+                inputElement.val(date.format(dateFormat));
+            });
+
+            var picker = inputElement.data('daterangepicker');
+
+            if (inputElement.val()) {
+                picker.setStartDate(inputElement.val());
+            }
+
+            if (mode === 'time') {
+                inputElement.closest('.date-picker-container').find('.calendar-table').hide();
+            }
+            
+            inputElement.on('apply.daterangepicker', function () {
+                formGroup.trigger('dms-change');
+            });
+        });
+
+    element.find('.date-or-time-range')
+        .each(function () {
+            var rangeElement = $(this);
+            var formGroup = rangeElement.closest('.form-group');
+            var startInput = rangeElement.find('.start-input');
+            var endInput = rangeElement.find('.end-input');
+            var dateFormat = Dms.utilities.convertPhpDateFormatToMomentFormat(startInput.attr('data-date-format'));
+            var mode = rangeElement.attr('data-mode');
+
+            var config = {
+                locale: {
+                    format: dateFormat
+                },
+                parentEl: rangeElement,
+                showDropdowns: true,
+                autoApply: !rangeElement.attr('data-dont-auto-apply'),
+                linkedCalendars: false,
+                autoUpdateInput: false
+            };
+
+            if (mode === 'date-time') {
+                config.timePicker = true;
+                config.timePickerSeconds = true;
+            }
+
+            if (mode === 'time') {
+                config.timePicker = true;
+                config.timePickerSeconds = true;
+            }
+            // TODO: timezoned-date-time
+
+            startInput.daterangepicker(config, function (start, end, label) {
+                startInput.val(start.format(dateFormat));
+                endInput.val(end.format(dateFormat));
+                rangeElement.triggerHandler('dms-range-updated');
+            });
+
+            var picker = startInput.data('daterangepicker');
+
+            if (startInput.val()) {
+                picker.setStartDate(startInput.val());
+            }
+            if (endInput.val()) {
+                picker.setEndDate(endInput.val());
+            }
+
+            endInput.on('focus click', function () {
+                startInput.focus();
+            });
+
+            if (mode === 'time') {
+                rangeElement.find('.calendar-table').hide();
+            }
+
+            startInput.on('apply.daterangepicker', function () {
+                formGroup.trigger('dms-change');
+            });
+        });
 });
 Dms.form.initializeCallbacks.push(function (element) {
 
@@ -1169,7 +1282,7 @@ Dms.form.initializeCallbacks.push(function (element) {
         var minImageWidth = container.attr('data-min-width');
         var maxImageHeight = container.attr('data-max-height');
         var minImageHeight = container.attr('data-min-height');
-        var imageEditor = container.find('.dms-image-editor');
+        var imageEditor = container.find('.dms-image-editor-dialog');
 
         var getDownloadUrlForFile = function (file) {
             if (file.downloadUrl) {
@@ -1214,7 +1327,7 @@ Dms.form.initializeCallbacks.push(function (element) {
                     },
 
                     initialize: function () {
-                        imageEditor.modal('show');
+                        imageEditor.appendTo('body').modal('show');
                     }
                 }, options));
 
@@ -1234,6 +1347,7 @@ Dms.form.initializeCallbacks.push(function (element) {
 
                     imageEditor.unbind('hide.bs.modal');
                     imageEditor.find('.btn-save-changes').unbind('click');
+                    imageEditor.appendTo(container);
 
                     isEditingImage = false;
 
@@ -1604,6 +1718,7 @@ Dms.form.initializeCallbacks.push(function (element) {
 
         var loadModulePage = function (url) {
             innerModuleFormContainer.addClass('loading');
+            Dms.utilities.scrollToView(innerModuleFormContainer);
 
             if (currentAjaxRequest) {
                 currentAjaxRequest.abort();
@@ -1659,116 +1774,6 @@ Dms.form.initializeCallbacks.push(function (element) {
             Dms.action.responseHandler = originalResponseHandler;
         });
     });
-});
-Dms.form.initializeCallbacks.push(function (element) {
-    element.find('input.date-or-time')
-        .each(function () {
-            var inputElement = $(this);
-            var formGroup = inputElement.closest('.form-group');
-            var phpDateFormat = inputElement.attr('data-date-format');
-            var dateFormat = Dms.utilities.convertPhpDateFormatToMomentFormat(phpDateFormat);
-            var mode = inputElement.attr('data-mode');
-
-            var config = {
-                locale: {
-                    format: dateFormat
-                },
-                parentEl: inputElement.closest('.date-picker-container'),
-                singleDatePicker: true,
-                showDropdowns: true,
-                autoApply: true,
-                linkedCalendars: false,
-                autoUpdateInput: false
-            };
-
-            if (mode === 'date-time') {
-                config.timePicker = true;
-                config.timePickerSeconds = phpDateFormat.indexOf('s') !== -1;
-            }
-
-            if (mode === 'time') {
-                config.timePicker = true;
-                config.timePickerSeconds = phpDateFormat.indexOf('s') !== -1;
-            }
-            // TODO: timezoned-date-time
-
-            inputElement.daterangepicker(config, function (date) {
-                inputElement.val(date.format(dateFormat));
-            });
-
-            var picker = inputElement.data('daterangepicker');
-
-            if (inputElement.val()) {
-                picker.setStartDate(inputElement.val());
-            }
-
-            if (mode === 'time') {
-                inputElement.closest('.date-picker-container').find('.calendar-table').hide();
-            }
-            
-            inputElement.on('apply.daterangepicker', function () {
-                formGroup.trigger('dms-change');
-            });
-        });
-
-    element.find('.date-or-time-range')
-        .each(function () {
-            var rangeElement = $(this);
-            var formGroup = rangeElement.closest('.form-group');
-            var startInput = rangeElement.find('.start-input');
-            var endInput = rangeElement.find('.end-input');
-            var dateFormat = Dms.utilities.convertPhpDateFormatToMomentFormat(startInput.attr('data-date-format'));
-            var mode = rangeElement.attr('data-mode');
-
-            var config = {
-                locale: {
-                    format: dateFormat
-                },
-                parentEl: rangeElement,
-                showDropdowns: true,
-                autoApply: !rangeElement.attr('data-dont-auto-apply'),
-                linkedCalendars: false,
-                autoUpdateInput: false
-            };
-
-            if (mode === 'date-time') {
-                config.timePicker = true;
-                config.timePickerSeconds = true;
-            }
-
-            if (mode === 'time') {
-                config.timePicker = true;
-                config.timePickerSeconds = true;
-            }
-            // TODO: timezoned-date-time
-
-            startInput.daterangepicker(config, function (start, end, label) {
-                startInput.val(start.format(dateFormat));
-                endInput.val(end.format(dateFormat));
-                rangeElement.triggerHandler('dms-range-updated');
-            });
-
-            var picker = startInput.data('daterangepicker');
-
-            if (startInput.val()) {
-                picker.setStartDate(startInput.val());
-            }
-            if (endInput.val()) {
-                picker.setEndDate(endInput.val());
-            }
-
-            endInput.on('focus click', function () {
-                startInput.focus();
-            });
-
-            if (mode === 'time') {
-                rangeElement.find('.calendar-table').hide();
-            }
-
-            startInput.on('apply.daterangepicker', function () {
-                formGroup.trigger('dms-change');
-            });
-        });
 });
 Dms.form.initializeCallbacks.push(function (element) {
 
@@ -2002,11 +2007,25 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-    element.find('input.dms-money-input').each(function () {
-        $(this).attr({
-            'type': $(this).attr('step') ? 'number' : 'text',
+    element.find('.dms-money-input-group').each(function () {
+        var inputGroup = $(this);
+        var moneyInput = inputGroup.find('.dms-money-input');
+        var currencyInput = inputGroup.find('.dms-currency-input');
+
+        moneyInput.attr({
+            'type': 'number',
             'data-parsley-type': 'number'
         });
+
+        var updateDecimalDigits = function () {
+            var selectedOption = currencyInput.children('option:selected');
+
+            var decimalDigits = selectedOption.attr('data-fractional-digits');
+            moneyInput.attr('step', Math.pow(0.1, decimalDigits).toFixed(decimalDigits));
+        };
+
+        currencyInput.on('change', updateDecimalDigits);
+        updateDecimalDigits();
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -2042,13 +2061,13 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-
-});
-Dms.form.initializeCallbacks.push(function (element) {
     element.find('input[type=radio]').iCheck({
         radioClass: 'iradio_square-blue',
         increaseArea: '20%'
     });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+
 });
 Dms.form.initializeCallbacks.push(function (element) {
     element.find('input[type="ip-address"]')
@@ -2368,7 +2387,10 @@ Dms.form.initializeCallbacks.push(function (element) {
         var filePickerContainer = filePickerDialog.find('.dms-file-picker-container');
         var filePicker = filePickerContainer.find('.dms-file-picker');
 
-        filePickerDialog.modal('show');
+        filePickerDialog.appendTo('body').modal('show');
+        filePickerDialog.on('hidden.bs.modal', function () {
+            filePickerDialog.appendTo(wysiwygElement);
+        });
 
         var request = Dms.ajax.createRequest({
             url: loadFilePickerUrl,
@@ -3072,6 +3094,243 @@ Dms.widget.initializeCallbacks.push(function () {
                 return false;
             });
         }
+    });
+});
+Dms.chart.initializeCallbacks.push(function (element) {
+
+    element.find('.dms-chart-control').each(function () {
+        var control = $(this);
+        var chartContainer = control.find('.dms-chart-container');
+        var chartElement = chartContainer.find('.dms-chart');
+        var chartRangePicker = chartContainer.find('.dms-chart-range-picker');
+        var loadChartUrl = control.attr('data-load-chart-url');
+
+        var criteria = {
+            orderings: [],
+            conditions: []
+        };
+
+        var currentAjaxRequest;
+
+        var loadCurrentData = function () {
+            chartContainer.addClass('loading');
+
+            if (currentAjaxRequest) {
+                currentAjaxRequest.abort();
+            }
+
+            currentAjaxRequest = Dms.ajax.createRequest({
+                url: loadChartUrl,
+                type: 'post',
+                dataType: 'html',
+                data: criteria
+            });
+
+            currentAjaxRequest.done(function (chartData) {
+                chartElement.html(chartData);
+                Dms.chart.initialize(chartElement);
+            });
+
+            currentAjaxRequest.fail(function () {
+                if (currentAjaxRequest.statusText === 'abort') {
+                    return;
+                }
+
+                chartContainer.addClass('error');
+
+                swal({
+                    title: "Could not load chart data",
+                    text: "An unexpected error occurred",
+                    type: "error"
+                });
+            });
+
+            currentAjaxRequest.always(function () {
+                chartContainer.removeClass('loading');
+            });
+        };
+
+        loadCurrentData();
+
+        chartRangePicker.on('dms-range-updated', function () {
+            var horizontalAxis = chartContainer.attr('data-date-axis-name');
+            criteria.conditions = [
+                {axis: horizontalAxis, operator: '>=', value: chartRangePicker.find('.start-input').val()},
+                {axis: horizontalAxis, operator: '<=', value: chartRangePicker.find('.end-input').val()}
+            ];
+
+            loadCurrentData();
+        });
+    });
+});
+Dms.chart.initializeCallbacks.push(function (element) {
+    
+    element.find('.dms-geo-chart').each(function () {
+        var chart = $(this);
+        var isCityChart = chart.attr('data-city-chart');
+        var hasLatLng = chart.attr('data-has-lat-lng');
+        var chartData = JSON.parse(chart.attr('data-chart-data'));
+        var region = chart.attr('data-region');
+        var locationLabel = chart.attr('data-location-label');
+        var valueLabels = JSON.parse(chart.attr('data-value-labels'));
+
+        Dms.loader.register('google-geo-charts', function (callback) {
+            google.charts.load('current', {'packages': ['geochart']});
+            google.charts.setOnLoadCallback(callback);
+        }, function () {
+            var headers = [];
+
+            if (hasLatLng) {
+                headers.push('Latitude');
+                headers.push('Longitude');
+            }
+
+            headers.push(locationLabel);
+            headers = headers.concat(valueLabels);
+
+            var transformedChartData = [headers];
+
+            $.each(chartData, function (index, row) {
+                transformedChartData.push((hasLatLng ? row.lat_lng : []).concat([row.label]).concat(row.values));
+            });
+
+            var data = google.visualization.arrayToDataTable(transformedChartData);
+
+            var googleChart = new google.visualization.GeoChart(chart.get(0));
+
+            var drawChart = function () {
+                googleChart.draw(data, {
+                    displayMode: isCityChart ? 'markers' : 'regions',
+                    region: region
+                });
+            };
+
+            var resizeTimeoutId;
+            $(window).resize(function () {
+                if (resizeTimeoutId) {
+                    clearTimeout(resizeTimeoutId);
+                }
+
+                resizeTimeoutId = setTimeout(function () {
+                    drawChart();
+                    resizeTimeoutId = null;
+                }, 500);
+            });
+
+            drawChart();
+        });
+    });
+});
+Dms.chart.initializeCallbacks.push(function (element) {
+    element.find('.dms-graph-chart').each(function () {
+        var chart = $(this);
+        var dateFormat = Dms.utilities.convertPhpDateFormatToMomentFormat(chart.attr('data-date-format'));
+        var chartData = JSON.parse(chart.attr('data-chart-data'));
+        var chartType = chart.attr('data-chart-type');
+        var horizontalAxisKey = chart.attr('data-horizontal-axis-key');
+        var horizontalAxisUnitType = chart.attr('data-horizontal-unit-type');
+        var verticalAxisKeys = JSON.parse(chart.attr('data-vertical-axis-keys'));
+        var verticalAxisLabels = JSON.parse(chart.attr('data-vertical-axis-labels'));
+        var minTimestamp;
+        var maxTimestamp;
+        var timeRowLookup = {};
+
+        if (!chart.attr('id')) {
+            chart.attr('id', Dms.utilities.idGenerator());
+        }
+
+        $.each(chartData, function (index, row) {
+            var timestamp = moment(row[horizontalAxisKey], dateFormat).valueOf();
+            row[horizontalAxisKey] = timestamp;
+            timeRowLookup[timestamp] = true;
+
+            if (!minTimestamp || timestamp < minTimestamp) {
+                minTimestamp = timestamp;
+            }
+
+            if (!maxTimestamp || timestamp > maxTimestamp) {
+                maxTimestamp = timestamp;
+            }
+        });
+
+        var zeroFillMissingValues = function (unitType, chartData) {
+            if (chartData.length === 0) {
+                return;
+            }
+
+            var unit;
+            if (unitType === 'date') {
+                unit = 24 * 3600 * 1000;
+            } else {
+                unit = 1000;
+            }
+
+            for (var i = minTimestamp; i < maxTimestamp; i += unit) {
+                if (typeof timeRowLookup[i] === 'undefined') {
+                    var rowData = {};
+                    rowData[horizontalAxisKey] = i;
+
+                    $.each(verticalAxisKeys, function (index, verticalAxisKey) {
+                        rowData[verticalAxisKey] = 0;
+                    });
+
+                    chartData.push(rowData);
+                }
+            }
+        };
+
+        zeroFillMissingValues(horizontalAxisUnitType, chartData);
+
+        var morrisConfig = {
+            element: chart.attr('id'),
+            data: chartData,
+            xkey: horizontalAxisKey,
+            ykeys: verticalAxisKeys,
+            labels: verticalAxisLabels,
+            resize: true,
+            redraw: true,
+            dateFormat: function (timestamp) {
+                return moment(timestamp).format(dateFormat);
+            }
+        };
+
+        var morrisChart;
+        if (chartType === 'bar') {
+            morrisChart = Morris.Bar(morrisConfig);
+        } else if (chartType === 'area') {
+            morrisChart = Morris.Area(morrisConfig);
+        } else {
+            morrisChart = Morris.Line(morrisConfig);
+        }
+
+        $(window).on('resize', function () {
+            if (morrisChart.raphael) {
+                morrisChart.redraw();
+            }
+        });
+    });
+});
+Dms.chart.initializeCallbacks.push(function (element) {
+    element.find('.dms-pie-chart').each(function () {
+        var chart = $(this);
+        var chartData = JSON.parse(chart.attr('data-chart-data'));
+
+        if (!chart.attr('id')) {
+            chart.attr('id', Dms.utilities.idGenerator());
+        }
+
+        var morrisChart = Morris.Donut({
+            element: chart.attr('id'),
+            data: chartData,
+            resize: true,
+            redraw: true
+        });
+
+        $(window).on('resize', function () {
+            if (morrisChart.raphael) {
+                morrisChart.redraw();
+            }
+        });
     });
 });
 Dms.table.initializeCallbacks.push(function (element) {

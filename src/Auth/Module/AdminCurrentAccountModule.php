@@ -94,7 +94,6 @@ class AdminCurrentAccountModule extends Module
             ->form(new AdminPasswordResetForm())
             ->returns(Message::class)
             ->handler(function (AdminPasswordResetForm $input) {
-                /** @var Admin $user */
                 $user = $this->authSystem->getAuthenticatedUser();
 
                 $this->passwordResetService->resetUserPassword($user, $input->newPassword);

@@ -18,7 +18,7 @@ Dms.form.initializeCallbacks.push(function (element) {
         var minImageWidth = container.attr('data-min-width');
         var maxImageHeight = container.attr('data-max-height');
         var minImageHeight = container.attr('data-min-height');
-        var imageEditor = container.find('.dms-image-editor');
+        var imageEditor = container.find('.dms-image-editor-dialog');
 
         var getDownloadUrlForFile = function (file) {
             if (file.downloadUrl) {
@@ -63,7 +63,7 @@ Dms.form.initializeCallbacks.push(function (element) {
                     },
 
                     initialize: function () {
-                        imageEditor.modal('show');
+                        imageEditor.appendTo('body').modal('show');
                     }
                 }, options));
 
@@ -83,6 +83,7 @@ Dms.form.initializeCallbacks.push(function (element) {
 
                     imageEditor.unbind('hide.bs.modal');
                     imageEditor.find('.btn-save-changes').unbind('click');
+                    imageEditor.appendTo(container);
 
                     isEditingImage = false;
 

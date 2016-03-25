@@ -1,0 +1,26 @@
+.dms-file-picker-dialog {
+    z-index: 9999999;
+
+    .dms-file-picker-container {
+        @extend .dms-spinner-container;
+        min-height: 50px;
+
+        &.loading {
+            .dms-file-picker {
+                opacity: .3;
+            }
+        }
+
+        .dms-quick-filter-form .form-group {
+            margin: 0 !important;
+        }
+    }
+}
+
+.dms-image-editor-dialog {
+    .dms-canvas-container {
+        max-width: 100%;
+        padding-top: 40px;
+        overflow: auto;
+    }
+}

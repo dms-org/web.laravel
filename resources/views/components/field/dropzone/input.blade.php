@@ -26,7 +26,7 @@
         </div>
     </div>
 
-    <div class="modal dms-image-editor">
+    <div class="modal dms-image-editor-dialog">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">

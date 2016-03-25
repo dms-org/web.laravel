@@ -14,7 +14,14 @@
 @import "components/dashboard";
 @import "components/darkroom";
 @import "components/auth";
+@import "components/loading";
+@import "components/dialog";
 
 body {
     font-family: Arial, sans-serif!important;
+}
+
+.dms-page-content {
+    position: relative;
+    z-index: 800;
 }

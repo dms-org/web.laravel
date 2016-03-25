@@ -20,6 +20,9 @@ window.Dms = {
         interceptors: []
         // @see ./services/ajax.js
     },
+    link: {
+        // @see ./services/links.js
+    },
     form: {
         initialize: function (element) {
             var callbacks = Dms.form.initializeCallbacks.concat(Dms.form.initializeValidationCallbacks);
@@ -57,13 +60,19 @@ window.Dms = {
         },
         initializeCallbacks: []
     },
+    all: {
+        initialize: function (element) {
+            Dms.global.initialize(element);
+            Dms.form.initialize(element);
+            Dms.table.initialize(element);
+            Dms.chart.initialize(element);
+            Dms.widget.initialize(element);
+        }
+    },
+    loader: {}, // @see ./services/loader.js,
     utilities: {} // @see ./services/utilities.js
 };
 
 $(document).ready(function () {
-    Dms.global.initialize($(document));
-    Dms.form.initialize($(document));
-    Dms.table.initialize($(document));
-    Dms.chart.initialize($(document));
-    Dms.widget.initialize($(document));
+    Dms.all.initialize($(document));
 });

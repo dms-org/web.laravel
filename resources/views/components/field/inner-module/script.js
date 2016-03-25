@@ -97,6 +97,7 @@ Dms.form.initializeCallbacks.push(function (element) {
 
         var loadModulePage = function (url) {
             innerModuleFormContainer.addClass('loading');
+            Dms.utilities.scrollToView(innerModuleFormContainer);
 
             if (currentAjaxRequest) {
                 currentAjaxRequest.abort();

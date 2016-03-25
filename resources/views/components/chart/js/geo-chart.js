@@ -1,4 +1,5 @@
 Dms.chart.initializeCallbacks.push(function (element) {
+    
     element.find('.dms-geo-chart').each(function () {
         var chart = $(this);
         var isCityChart = chart.attr('data-city-chart');
@@ -8,8 +9,10 @@ Dms.chart.initializeCallbacks.push(function (element) {
         var locationLabel = chart.attr('data-location-label');
         var valueLabels = JSON.parse(chart.attr('data-value-labels'));
 
-        google.charts.load('current', {'packages': ['geochart']});
-        google.charts.setOnLoadCallback(function () {
+        Dms.loader.register('google-geo-charts', function (callback) {
+            google.charts.load('current', {'packages': ['geochart']});
+            google.charts.setOnLoadCallback(callback);
+        }, function () {
             var headers = [];
 
             if (hasLatLng) {

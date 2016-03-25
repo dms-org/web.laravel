@@ -133,8 +133,6 @@ class AdminUserModule extends CrudModule
                         ->entityIdsFrom($this->roleRepo)
                         ->mapToCollection(EntityIdCollection::type())
                         ->labelledBy(Role::NAME)
-                        ->required()
-                        ->minLength(1)
                 )->bindToProperty(Admin::ROLE_IDS),
             ]);
         });

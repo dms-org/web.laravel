@@ -11,10 +11,6 @@ Dms.global.initializeCallbacks.push(function (element) {
         link.click();
     });
 
-    element.delegate('a[href].dms-placeholder-a', 'click', function () {
-        window.location.href = $(this).attr('href');
-    });
-
     element.find('.btn.btn-active-toggle').on('click', function () {
        $(this).toggleClass('active');
     });

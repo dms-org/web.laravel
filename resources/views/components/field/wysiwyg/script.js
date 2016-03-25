@@ -75,7 +75,10 @@ Dms.form.initializeCallbacks.push(function (element) {
         var filePickerContainer = filePickerDialog.find('.dms-file-picker-container');
         var filePicker = filePickerContainer.find('.dms-file-picker');
 
-        filePickerDialog.modal('show');
+        filePickerDialog.appendTo('body').modal('show');
+        filePickerDialog.on('hidden.bs.modal', function () {
+            filePickerDialog.appendTo(wysiwygElement);
+        });
 
         var request = Dms.ajax.createRequest({
             url: loadFilePickerUrl,

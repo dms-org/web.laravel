@@ -1,8 +1,22 @@
 @if(request()->input('__content_only'))
-@yield('content')
-<?php return ?>
+    @yield('content')
+    <?php return ?>
 @endif
-
+@if(request()->input('__no_template'))
+    <div id="page">
+        <div class="title">{{ ($pageTitle ?? false) ? $pageTitle . ' :: ' : '' }}{{ $title }}</div>
+        <div class="scripts">
+            @include('dms::partials.assets.scripts')
+        </div>
+        <div class="styles">
+            @include('dms::partials.assets.styles')
+        </div>
+        <div class="content">
+            @include('dms::partials.content')
+        </div>
+    </div>
+    <?php return ?>
+@endif
 
 @extends('dms::template.template')
 <?php /** @var \Dms\Core\Auth\IAdmin $user */ ?>
@@ -88,7 +102,7 @@
                     <li class="active treeview">
                     @foreach($navigation as $element)
                         @if($element instanceof \Dms\Web\Laravel\View\NavigationElementGroup)
-                            <li class="treeview  @if(starts_with(request()->url(), $element->getAllUrls()))) active @endif">
+                            <li class="treeview  @if(starts_with(request()->url(), $element->getAllUrls())) active @endif">
                                 <a href="javascript:void(0)">
                                     <i class="fa fa-{{ $element->getIcon() }}"></i>
                                     <span class="dms-nav-label dms-nav-label-group">{{ $element->getLabel() }}</span>
@@ -120,35 +134,17 @@
             <!-- /.sidebar -->
         </aside>
 
+        @include('dms::partials.alerts')
+
         <!-- Content Wrapper. Contains page content -->
         <div class="content-wrapper">
-            @include('dms::partials.alerts')
+            <div class="dms-page-content">
+                @include('dms::partials.content')
+            </div>
 
-            <section class="content-header">
-                <h1>
-                    {{ $pageTitle }}
-                    @if (!empty($pageSubtitle))
-                        <small>{{ $pageSubtitle }}</small>
-                    @endif
-                </h1>
-                <ol class="breadcrumb">
-                    @if (!empty($breadcrumbs))
-                        @foreach ($breadcrumbs as $link => $label)
-                            <li>
-                                <a href="{{ $link }}">
-                                    @if ($link === route('dms::index')) <i class="fa fa-dashboard"></i> @endif {{ $label }}
-                                </a>
-                            </li>
-                        @endforeach
-                    @endif
-                    <li class="active">{{ $finalBreadcrumb }} </li>
-                </ol>
-            </section>
-
-            <section class="content">
-                @yield('content')
-            </section>
+            @include('dms::partials.spinner')
         </div>
+
         <!-- /.content-wrapper -->
         <footer class="main-footer">
             <div class="pull-right hidden-xs">

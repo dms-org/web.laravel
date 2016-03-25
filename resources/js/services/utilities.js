@@ -87,3 +87,21 @@ Dms.utilities.convertPhpDateFormatToMomentFormat = function (format) {
 
     return newFormat;
 };
+
+Dms.utilities.scrollToView = function (element) {
+    var topOfElement = element.offset().top;
+    if (!element.is(":visible")) {
+        element.css({"visibility": "hidden"}).show();
+        topOfElement = element.offset().top;
+        element.css({"visibility": "", "display": ""});
+    }
+    var bottomOfElement = topOfElement + element.outerHeight();
+
+    var topOfScreen = $(window).scrollTop();
+    var bottomOfScreen = topOfScreen + window.innerHeight;
+
+    if (!(topOfScreen < topOfElement && bottomOfScreen > bottomOfElement)) {
+        // Not in view so scroll to it
+        $('html,body').animate({scrollTop: topOfElement - window.innerHeight / 3}, 500);
+    }
+};

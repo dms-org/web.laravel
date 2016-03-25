@@ -10,9 +10,13 @@
             @if($value !== null) value="{{ $value['amount'] }}" @endif
     />
     <select class="form-control dms-currency-input" name="{{ $name }}[currency]" @if($required) required @endif>
-        @foreach (\Dms\Common\Structure\Money\Currency::getNameMap() as $code => $label)
-            <option value="{{ $code }}" @if($value ? $code === $value['currency'] : $code === $defaultCurrency) selected="selected" @endif>
-                {{ $label }} ({{ $code }})
+        @foreach (\Dms\Common\Structure\Money\Currency::getAll() as $currency)
+            <?php $code = $currency->getCurrencyCode() ?>
+            <option value="{{ $code }}"
+                    data-fractional-digits="{{ $currency->getDefaultFractionDigits() }}"
+                    @if($value ? $code === $value['currency'] : $code === $defaultCurrency) selected="selected" @endif
+            >
+                {{ $currency->getDisplayName() }} ({{ $code }})
             </option>
         @endforeach
     </select>

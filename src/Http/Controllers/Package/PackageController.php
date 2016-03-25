@@ -52,7 +52,7 @@ class PackageController extends DmsController
                 ->route('dms::package.module.dashboard', [
                     'package' => $this->package->getName(),
                     'module'  => $firstModule,
-                ]);
+                ] + array_filter($request->only('__content_only', '__no_template')));
         }
 
         $packageName = $this->package->getName();

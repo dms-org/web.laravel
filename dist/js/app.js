@@ -866,6 +866,8 @@ Dms.global.initializeCallbacks.push(function (element) {
 
         currentAjaxRequest.done(function (content) {
             var page = $('<div>' + content + '</div>');
+
+            var finalUrl = currentAjaxRequest.responseURL || linkUrl;
             currentAjaxRequest = null;
 
             loadedRequiredAssets(page, function () {
@@ -884,7 +886,7 @@ Dms.global.initializeCallbacks.push(function (element) {
                 document.title = page.find('#page > .title').text();
 
                 if (!isPoppingState) {
-                    history.pushState({page: linkUrl, linkId: link.attr('id')}, '', linkUrl);
+                    history.pushState({page: finalUrl, linkId: link.attr('id')}, '', linkUrl);
                 } else {
                     isPoppingState = false;
                 }
@@ -1270,20 +1272,6 @@ Dms.global.initializeCallbacks.push(function () {
         equalto: "This must match the confirmation field."
     }, true);
 });
-Dms.form.initializeCallbacks.push(function (element) {
-    element.find('input[type=checkbox].single-checkbox').iCheck({
-        checkboxClass: 'icheckbox_square-blue',
-        increaseArea: '20%'
-    });
-
-    element.find('input[type=checkbox]').each(function () {
-        var formGroup = $(this).closest('.form-group');
-
-        $(this).on('ifToggled', function(event){
-            formGroup.trigger('dms-change');
-        });
-    });
-});
 Dms.chart.initializeCallbacks.push(function (element) {
 
     element.find('.dms-chart-control').each(function () {
@@ -1518,6 +1506,20 @@ Dms.chart.initializeCallbacks.push(function (element) {
             if (morrisChart.raphael) {
                 morrisChart.redraw();
             }
+        });
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+    element.find('input[type=checkbox].single-checkbox').iCheck({
+        checkboxClass: 'icheckbox_square-blue',
+        increaseArea: '20%'
+    });
+
+    element.find('input[type=checkbox]').each(function () {
+        var formGroup = $(this).closest('.form-group');
+
+        $(this).on('ifToggled', function(event){
+            formGroup.trigger('dms-change');
         });
     });
 });

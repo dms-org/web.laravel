@@ -148,6 +148,8 @@ Dms.global.initializeCallbacks.push(function (element) {
 
         currentAjaxRequest.done(function (content) {
             var page = $('<div>' + content + '</div>');
+
+            var finalUrl = currentAjaxRequest.responseURL || linkUrl;
             currentAjaxRequest = null;
 
             loadedRequiredAssets(page, function () {
@@ -166,7 +168,7 @@ Dms.global.initializeCallbacks.push(function (element) {
                 document.title = page.find('#page > .title').text();
 
                 if (!isPoppingState) {
-                    history.pushState({page: linkUrl, linkId: link.attr('id')}, '', linkUrl);
+                    history.pushState({page: finalUrl, linkId: link.attr('id')}, '', linkUrl);
                 } else {
                     isPoppingState = false;
                 }

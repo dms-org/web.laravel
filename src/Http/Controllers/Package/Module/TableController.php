@@ -55,7 +55,7 @@ class TableController extends DmsController
 
         if ($table instanceof ISummaryTable) {
             return redirect()
-                ->to($moduleContext->getUrl('dashboard'))
+                ->to($moduleContext->getUrl('dashboard', array_filter(request()->only('__content_only', '__no_template'))))
                 ->with('initial-view-name', $viewName);
         }
 

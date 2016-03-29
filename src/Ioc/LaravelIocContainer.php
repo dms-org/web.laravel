@@ -105,15 +105,16 @@ class LaravelIocContainer extends LaravelContainer implements IIocContainer
 
         $this->container->instance($abstract, $concrete);
 
-        $return = $callback();
+        try {
+            $return = $callback();
+            return $return;
+        } finally {
+            unset($this->container[$abstract]);
 
-        unset($this->container[$abstract]);
-
-        if ($hasOriginal && $binding) {
-            $this->container->bind($abstract, $binding['concrete'], $binding['shared']);
+            if ($hasOriginal && $binding) {
+                $this->container->bind($abstract, $binding['concrete'], $binding['shared']);
+            }
         }
-
-        return $return;
     }
 
     private function validateScope(string $method, string $scope)

@@ -64,7 +64,7 @@ class FormRenderer
                 $sections[$title][$field->getLabel()] = [
                     'name'    => $field->getName(),
                     'content' => $this->fieldRenderers->findRendererFor($renderingContext, $field)->render($renderingContext, $field),
-                    'hidden'  => $field->getType()->get(FieldType::ATTR_HIDDEN)
+                    'hidden'  => $field->getType()->get(FieldType::ATTR_HIDDEN),
                 ];
             }
         }
@@ -106,6 +106,7 @@ class FormRenderer
                 $sections[$title][$field->getLabel()] = [
                     'name'    => $field->getName(),
                     'content' => $this->fieldRenderers->findRendererFor($renderingContext, $field)->renderValue($renderingContext, $field),
+                    'hidden'  => $field->getType()->get(FieldType::ATTR_HIDDEN),
                 ];
             }
         }

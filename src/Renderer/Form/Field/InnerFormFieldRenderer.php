@@ -1,10 +1,9 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Renderer\Form\Field;
 
 use Dms\Common\Structure\DateTime\Form\DateOrTimeRangeType;
 use Dms\Common\Structure\FileSystem\Form\FileUploadType;
-use Dms\Common\Structure\FileSystem\Form\ImageUploadType;
 use Dms\Common\Structure\Money\Form\MoneyType;
 use Dms\Core\Form\Field\Type\FieldType;
 use Dms\Core\Form\Field\Type\InnerFormType;
@@ -38,11 +37,15 @@ class InnerFormFieldRenderer extends BladeFieldRenderer
         && !($fieldType instanceof MoneyType);
     }
 
-    protected function renderField(FormRenderingContext $renderingContext, IField $field, IFieldType $fieldType) : string
+    protected function renderField(
+        FormRenderingContext $renderingContext,
+        IField $field,
+        IFieldType $fieldType
+    ) : string
     {
         /** @var InnerFormType $fieldType */
         $formWithArrayFields = $fieldType->getInnerArrayForm($field->getName());
-        $formRenderer = new FormRenderer($this->fieldRendererCollection);
+        $formRenderer        = new FormRenderer($this->fieldRendererCollection);
 
 
         return $this->renderView(
@@ -55,11 +58,18 @@ class InnerFormFieldRenderer extends BladeFieldRenderer
         );
     }
 
-    protected function renderFieldValue(FormRenderingContext $renderingContext, IField $field, $value, IFieldType $fieldType) : string
+    protected function renderFieldValue(
+        FormRenderingContext $renderingContext,
+        IField $field,
+        $value,
+        IFieldType $fieldType
+    ) : string
     {
         /** @var InnerFormType $fieldType */
+        $fieldType = $field->withInitialValue($field->process($value))->getType();
+
         $formWithArrayFields = $fieldType->getInnerArrayForm($field->getName());
-        $formRenderer = new FormRenderer($this->fieldRendererCollection);
+        $formRenderer        = new FormRenderer($this->fieldRendererCollection);
 
         return $this->renderValueViewWithNullDefault(
             $field, $value,

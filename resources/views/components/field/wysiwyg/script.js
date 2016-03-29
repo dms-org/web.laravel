@@ -42,17 +42,10 @@ Dms.form.initializeCallbacks.push(function (element) {
             });
         },
         relative_urls: false,
-        convert_urls: false,
-        document_base_url: '//' + window.location.host,
+        remove_script_host: true,
         file_picker_callback: function (callback, value, meta) {
             var wysiwygElement = $(tinymce.activeEditor.getElement()).closest('.dms-wysiwyg-container');
             showFilePickerDialog(meta.filetype, wysiwygElement, function (fileUrl) {
-                if (fileUrl.indexOf('http://') === 0) {
-                    fileUrl = fileUrl.substring('http:'.length);
-                } else if (fileUrl.indexOf('https://') === 0) {
-                    fileUrl = fileUrl.substring('https:'.length);
-                }
-
                 callback(fileUrl);
             });
         }

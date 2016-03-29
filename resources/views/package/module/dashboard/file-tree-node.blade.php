@@ -24,7 +24,7 @@
                 <div class="col-sm-4 col-md-3 col-lg-2 dms-file-item{{ $isImage ? ' dms-image-item' : '' }}"
                      data-id="{{ $fileId }}"
                      @if ($isPublic)
-                     data-public-url="{{ asset(config('dms.storage.public-files.url') . '/' . substr($file->getFullPath(), strlen($rootDirectory))) }}"
+                     data-public-url="{{ asset(rtrim(config('dms.storage.public-files.url'), '/') . '/' . ltrim(substr($file->getFullPath(), strlen($rootDirectory)), '/')) }}"
                     @endif
                 >
                     <div class="panel panel-default">

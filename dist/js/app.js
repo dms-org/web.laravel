@@ -1554,116 +1554,6 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-    element.find('input.date-or-time')
-        .each(function () {
-            var inputElement = $(this);
-            var formGroup = inputElement.closest('.form-group');
-            var phpDateFormat = inputElement.attr('data-date-format');
-            var dateFormat = Dms.utilities.convertPhpDateFormatToMomentFormat(phpDateFormat);
-            var mode = inputElement.attr('data-mode');
-
-            var config = {
-                locale: {
-                    format: dateFormat
-                },
-                parentEl: inputElement.closest('.date-picker-container'),
-                singleDatePicker: true,
-                showDropdowns: true,
-                autoApply: true,
-                linkedCalendars: false,
-                autoUpdateInput: false
-            };
-
-            if (mode === 'date-time') {
-                config.timePicker = true;
-                config.timePickerSeconds = phpDateFormat.indexOf('s') !== -1;
-            }
-
-            if (mode === 'time') {
-                config.timePicker = true;
-                config.timePickerSeconds = phpDateFormat.indexOf('s') !== -1;
-            }
-            // TODO: timezoned-date-time
-
-            inputElement.daterangepicker(config, function (date) {
-                inputElement.val(date.format(dateFormat));
-            });
-
-            var picker = inputElement.data('daterangepicker');
-
-            if (inputElement.val()) {
-                picker.setStartDate(inputElement.val());
-            }
-
-            if (mode === 'time') {
-                inputElement.closest('.date-picker-container').find('.calendar-table').hide();
-            }
-            
-            inputElement.on('apply.daterangepicker', function () {
-                formGroup.trigger('dms-change');
-            });
-        });
-
-    element.find('.date-or-time-range')
-        .each(function () {
-            var rangeElement = $(this);
-            var formGroup = rangeElement.closest('.form-group');
-            var startInput = rangeElement.find('.start-input');
-            var endInput = rangeElement.find('.end-input');
-            var dateFormat = Dms.utilities.convertPhpDateFormatToMomentFormat(startInput.attr('data-date-format'));
-            var mode = rangeElement.attr('data-mode');
-
-            var config = {
-                locale: {
-                    format: dateFormat
-                },
-                parentEl: rangeElement,
-                showDropdowns: true,
-                autoApply: !rangeElement.attr('data-dont-auto-apply'),
-                linkedCalendars: false,
-                autoUpdateInput: false
-            };
-
-            if (mode === 'date-time') {
-                config.timePicker = true;
-                config.timePickerSeconds = true;
-            }
-
-            if (mode === 'time') {
-                config.timePicker = true;
-                config.timePickerSeconds = true;
-            }
-            // TODO: timezoned-date-time
-
-            startInput.daterangepicker(config, function (start, end, label) {
-                startInput.val(start.format(dateFormat));
-                endInput.val(end.format(dateFormat));
-                rangeElement.triggerHandler('dms-range-updated');
-            });
-
-            var picker = startInput.data('daterangepicker');
-
-            if (startInput.val()) {
-                picker.setStartDate(startInput.val());
-            }
-            if (endInput.val()) {
-                picker.setEndDate(endInput.val());
-            }
-
-            endInput.on('focus click', function () {
-                startInput.focus();
-            });
-
-            if (mode === 'time') {
-                rangeElement.find('.calendar-table').hide();
-            }
-
-            startInput.on('apply.daterangepicker', function () {
-                formGroup.trigger('dms-change');
-            });
-        });
-});
-Dms.form.initializeCallbacks.push(function (element) {
 
     element.find('.dropzone-container').each(function () {
         var container = $(this);
@@ -2010,6 +1900,116 @@ Dms.form.initializeCallbacks.push(function (element) {
             dropzone.destroy();
         });
     });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+    element.find('input.date-or-time')
+        .each(function () {
+            var inputElement = $(this);
+            var formGroup = inputElement.closest('.form-group');
+            var phpDateFormat = inputElement.attr('data-date-format');
+            var dateFormat = Dms.utilities.convertPhpDateFormatToMomentFormat(phpDateFormat);
+            var mode = inputElement.attr('data-mode');
+
+            var config = {
+                locale: {
+                    format: dateFormat
+                },
+                parentEl: inputElement.closest('.date-picker-container'),
+                singleDatePicker: true,
+                showDropdowns: true,
+                autoApply: true,
+                linkedCalendars: false,
+                autoUpdateInput: false
+            };
+
+            if (mode === 'date-time') {
+                config.timePicker = true;
+                config.timePickerSeconds = phpDateFormat.indexOf('s') !== -1;
+            }
+
+            if (mode === 'time') {
+                config.timePicker = true;
+                config.timePickerSeconds = phpDateFormat.indexOf('s') !== -1;
+            }
+            // TODO: timezoned-date-time
+
+            inputElement.daterangepicker(config, function (date) {
+                inputElement.val(date.format(dateFormat));
+            });
+
+            var picker = inputElement.data('daterangepicker');
+
+            if (inputElement.val()) {
+                picker.setStartDate(inputElement.val());
+            }
+
+            if (mode === 'time') {
+                inputElement.closest('.date-picker-container').find('.calendar-table').hide();
+            }
+            
+            inputElement.on('apply.daterangepicker', function () {
+                formGroup.trigger('dms-change');
+            });
+        });
+
+    element.find('.date-or-time-range')
+        .each(function () {
+            var rangeElement = $(this);
+            var formGroup = rangeElement.closest('.form-group');
+            var startInput = rangeElement.find('.start-input');
+            var endInput = rangeElement.find('.end-input');
+            var dateFormat = Dms.utilities.convertPhpDateFormatToMomentFormat(startInput.attr('data-date-format'));
+            var mode = rangeElement.attr('data-mode');
+
+            var config = {
+                locale: {
+                    format: dateFormat
+                },
+                parentEl: rangeElement,
+                showDropdowns: true,
+                autoApply: !rangeElement.attr('data-dont-auto-apply'),
+                linkedCalendars: false,
+                autoUpdateInput: false
+            };
+
+            if (mode === 'date-time') {
+                config.timePicker = true;
+                config.timePickerSeconds = true;
+            }
+
+            if (mode === 'time') {
+                config.timePicker = true;
+                config.timePickerSeconds = true;
+            }
+            // TODO: timezoned-date-time
+
+            startInput.daterangepicker(config, function (start, end, label) {
+                startInput.val(start.format(dateFormat));
+                endInput.val(end.format(dateFormat));
+                rangeElement.triggerHandler('dms-range-updated');
+            });
+
+            var picker = startInput.data('daterangepicker');
+
+            if (startInput.val()) {
+                picker.setStartDate(startInput.val());
+            }
+            if (endInput.val()) {
+                picker.setEndDate(endInput.val());
+            }
+
+            endInput.on('focus click', function () {
+                startInput.focus();
+            });
+
+            if (mode === 'time') {
+                rangeElement.find('.calendar-table').hide();
+            }
+
+            startInput.on('apply.daterangepicker', function () {
+                formGroup.trigger('dms-change');
+            });
+        });
 });
 Dms.form.initializeCallbacks.push(function (element) {
     element.find('.dms-inner-form').each(function () {
@@ -2755,17 +2755,10 @@ Dms.form.initializeCallbacks.push(function (element) {
             });
         },
         relative_urls: false,
-        convert_urls: false,
-        document_base_url: '//' + window.location.host,
+        remove_script_host: true,
         file_picker_callback: function (callback, value, meta) {
             var wysiwygElement = $(tinymce.activeEditor.getElement()).closest('.dms-wysiwyg-container');
             showFilePickerDialog(meta.filetype, wysiwygElement, function (fileUrl) {
-                if (fileUrl.indexOf('http://') === 0) {
-                    fileUrl = fileUrl.substring('http:'.length);
-                } else if (fileUrl.indexOf('https://') === 0) {
-                    fileUrl = fileUrl.substring('https:'.length);
-                }
-
                 callback(fileUrl);
             });
         }

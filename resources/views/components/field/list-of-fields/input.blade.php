@@ -24,7 +24,7 @@
     </li>
 
     @if ($value !== null)
-        @foreach (array_values($value) as $key => $valueElement)
+        @foreach (array_values($processedValue) as $key => $valueElement)
             <li class="list-group-item field-list-item clearfix">
                 <div class="row">
                     <div class="col-xs-10 col-md-11 field-list-input">

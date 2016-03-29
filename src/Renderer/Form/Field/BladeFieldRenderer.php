@@ -41,6 +41,7 @@ abstract class BladeFieldRenderer extends FieldRenderer
         }
 
         $viewParams['value'] = $field->getUnprocessedInitialValue();
+        $viewParams['processedValue'] = $field->getInitialValue();
 
         return view($viewName)
             ->with('field', $field)

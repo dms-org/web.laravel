@@ -33,7 +33,11 @@ class ArrayOfFieldRenderer extends BladeFieldRenderer
         && !$fieldType->get(ArrayOfType::ATTR_UNIQUE_ELEMENTS);
     }
 
-    protected function renderField(FormRenderingContext $renderingContext, IField $field, IFieldType $fieldType) : string
+    protected function renderField(
+        FormRenderingContext $renderingContext,
+        IField $field,
+        IFieldType $fieldType
+    ) : string
     {
         /** @var ArrayOfType $fieldType */
         $elementField = $this->makeElementField($fieldType);
@@ -54,7 +58,12 @@ class ArrayOfFieldRenderer extends BladeFieldRenderer
         );
     }
 
-    public function renderFieldValue(FormRenderingContext $renderingContext, IField $field, $value, IFieldType $fieldType) : string
+    public function renderFieldValue(
+        FormRenderingContext $renderingContext,
+        IField $field,
+        $value,
+        IFieldType $fieldType
+    ) : string
     {
         /** @var ArrayOfType $fieldType */
         $elementField = $this->makeElementField($fieldType);
@@ -66,6 +75,7 @@ class ArrayOfFieldRenderer extends BladeFieldRenderer
                 'renderingContext' => $renderingContext,
                 'elementField'     => $elementField,
                 'fieldRenderer'    => $this->fieldRendererCollection->findRendererFor($renderingContext, $elementField),
+                'processedValue'   => $value === null ? null : $field->process($value),
             ]
         );
     }

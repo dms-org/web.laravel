@@ -1,5 +1,8 @@
 <script>
     window.Dms.config = {
+        csrf: {
+            token: {!! json_encode(csrf_token()) !!}
+        },
         routes: {
             loginUrl: {!! json_encode(route('dms::auth.login')) !!},
             localUrls: {

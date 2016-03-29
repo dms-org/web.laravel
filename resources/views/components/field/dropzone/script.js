@@ -120,7 +120,6 @@ Dms.form.initializeCallbacks.push(function (element) {
             paramName: 'file',
             maxFilesize: maxFileSize,
             maxFiles: isMultiple ? maxFiles : 1,
-            headers: Dms.utilities.getCsrfHeaders(),
             acceptedFiles: acceptedFiles.join(','),
 
             init: function () {
@@ -258,6 +257,12 @@ Dms.form.initializeCallbacks.push(function (element) {
                     })
                 };
             }
+        });
+
+        dropzone.on('sending', function (file, xhr, formData) {
+            $.each(Dms.utilities.getCsrfHeaders(), function (name, value) {
+                xhr.setRequestHeader(name, value);
+            });
         });
 
         var formatRequiredDimensions = function (file) {

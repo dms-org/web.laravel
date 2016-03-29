@@ -1,11 +1,15 @@
-Dms.utilities.getCsrfHeaders = function () {
+Dms.utilities.getCsrfHeaders = function (csrfToken) {
     return {
-        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        'X-CSRF-TOKEN': csrfToken || Dms.config.csrf.token
     };
 };
 
-Dms.global.initializeCallbacks.push(function () {
+Dms.csrf.initializeCallbacks.push(function (csrfToken) {
     $.ajaxSetup({
-        headers: Dms.utilities.getCsrfHeaders()
+        headers: Dms.utilities.getCsrfHeaders(csrfToken)
     });
+});
+
+Dms.csrf.initializeCallbacks.push(function (csrfToken) {
+    $('form[method=post],form[method=POST] input[name=_token]').val(csrfToken);
 });

@@ -83,7 +83,10 @@ class AuthController extends DmsController
             $this->clearLoginAttempts($request);
 
             if ($request->ajax()) {
-                return response('Authenticated', 200);
+                return \response()->json([
+                    'response'   => 'Authenticated',
+                    'csrf_token' => csrf_token(),
+                ]);
             } else {
                 return redirect()->intended(route('dms::index'));
             }

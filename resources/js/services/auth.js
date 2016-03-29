@@ -33,11 +33,13 @@ Dms.auth.handleActionWhenLoggedOut = function (loggedInCallback) {
             var request = Dms.ajax.createRequest({
                 type: 'POST',
                 url: Dms.config.routes.loginUrl,
+                dataType: 'json',
                 data: form.serialize()
             });
 
-            request.done(function () {
+            request.done(function (response) {
                 loginDialog.modal('hide');
+                Dms.csrf.initialize(response.csrf_token);
                 loggedInCallback();
             });
 

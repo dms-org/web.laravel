@@ -5,6 +5,7 @@ namespace Dms\Web\Laravel\Action\ResultHandler;
 use Dms\Common\Structure\FileSystem\File;
 use Dms\Core\Common\Crud\Action\Crud\CreateAction;
 use Dms\Core\Common\Crud\Action\Crud\EditAction;
+use Dms\Core\Common\Crud\ICrudModule;
 use Dms\Core\Module\IAction;
 use Dms\Web\Laravel\Action\ActionResultHandler;
 use Dms\Web\Laravel\File\ITemporaryFileService;
@@ -59,7 +60,7 @@ class FileResultHandler extends ActionResultHandler
      */
     protected function canHandleResult(ModuleContext $moduleContext, IAction $action, $result) : bool
     {
-        return !($action instanceof CreateAction || $action instanceof EditAction || $action->getName() === 'remove');
+        return !($action instanceof CreateAction || $action instanceof EditAction || $action->getName() === ICrudModule::REMOVE_ACTION);
     }
 
     /**

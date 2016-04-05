@@ -6,6 +6,7 @@ use Dms\Core\Common\Crud\Action\Crud\CreateAction;
 use Dms\Core\Common\Crud\Action\Crud\EditAction;
 use Dms\Core\Common\Crud\Action\Crud\ViewDetailsAction;
 use Dms\Core\Common\Crud\Action\Object\IObjectAction;
+use Dms\Core\Common\Crud\ICrudModule;
 use Dms\Core\Model\Object\Entity;
 use Dms\Core\Module\IAction;
 use Dms\Web\Laravel\Action\ActionResultHandler;
@@ -57,7 +58,7 @@ class GenericEntityResultHandler extends ActionResultHandler
         $class = get_class($result);
 
         return $result->getId() && $this->entityModuleMap->hasModuleFor($class)
-        && !($action instanceof IObjectAction && $action->getName() === 'remove')
+        && !($action instanceof IObjectAction && $action->getName() === ICrudModule::REMOVE_ACTION)
         && !($action instanceof EditAction)
         && !($action instanceof ViewDetailsAction)
         && !($action instanceof CreateAction);

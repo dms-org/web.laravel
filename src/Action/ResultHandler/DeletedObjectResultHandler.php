@@ -3,6 +3,7 @@
 namespace Dms\Web\Laravel\Action\ResultHandler;
 
 use Dms\Core\Common\Crud\Action\Object\IObjectAction;
+use Dms\Core\Common\Crud\ICrudModule;
 use Dms\Core\Common\Crud\IReadModule;
 use Dms\Core\Model\Object\TypedObject;
 use Dms\Core\Module\IAction;
@@ -35,7 +36,7 @@ class DeletedObjectResultHandler extends ActionResultHandler
      */
     protected function canHandleResult(ModuleContext $moduleContext, IAction $action, $result) : bool
     {
-        return $moduleContext->getModule() instanceof IReadModule && $action instanceof IObjectAction && $action->getName() === 'remove';
+        return $moduleContext->getModule() instanceof IReadModule && $action instanceof IObjectAction && $action->getName() === ICrudModule::REMOVE_ACTION;
     }
 
     /**

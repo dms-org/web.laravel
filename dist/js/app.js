@@ -225,6 +225,11 @@ Dms.ajax.parseData = function (data) {
     var dataMap = {};
 
     var queryString = $.param(data);
+
+    if (queryString === '') {
+        return dataMap;
+    }
+
     $.each(queryString.split('&'), function (index, parameter) {
         var parts = parameter.split('=');
         var name = decodeURIComponent(parts[0].replace(/\+/g, '%20'));
@@ -2513,9 +2518,6 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-
-});
-Dms.form.initializeCallbacks.push(function (element) {
     element.find('input[type="ip-address"]')
         .attr('type', 'text')
         .attr('data-parsley-ip-address', '1');
@@ -2550,6 +2552,9 @@ Dms.form.initializeCallbacks.push(function (element) {
             displayKey: 'val'
         });
     });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+
 });
 Dms.form.initializeCallbacks.push(function (element) {
 

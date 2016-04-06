@@ -68,6 +68,11 @@ Dms.ajax.parseData = function (data) {
     var dataMap = {};
 
     var queryString = $.param(data);
+
+    if (queryString === '') {
+        return dataMap;
+    }
+
     $.each(queryString.split('&'), function (index, parameter) {
         var parts = parameter.split('=');
         var name = decodeURIComponent(parts[0].replace(/\+/g, '%20'));

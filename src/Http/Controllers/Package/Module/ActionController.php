@@ -361,7 +361,7 @@ class ActionController extends DmsController
         if (app()->isLocal()) {
             throw $e;
         } else {
-            logger($e->getMessage(), $e->getTrace());
+            \logger()->error($e->getMessage() . $e->getTraceAsString());
             return response()->json([
                 'message_type' => 'danger',
                 'message'      => 'An internal error occurred',

@@ -361,6 +361,10 @@ class ActionController extends DmsController
         if (app()->isLocal()) {
             throw $e;
         } else {
+            if ($e instanceof UnhandleableActionExceptionException) {
+                $e = $e->getPrevious();
+            }
+
             \logger()->error($e->getMessage() . $e->getTraceAsString());
             return response()->json([
                 'message_type' => 'danger',

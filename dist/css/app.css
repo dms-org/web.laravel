@@ -110,7 +110,7 @@ a.dms-run-action-form {
 .dms-staged-form textarea.form-control {
   max-width: 100%; }
 
-.dms-staged-form .date-picker-container {
+.dms-staged-form .dms-date-picker-container {
   position: relative; }
 
 .dms-staged-form .dms-map-picker {

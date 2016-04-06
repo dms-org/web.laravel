@@ -1,4 +1,4 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Renderer\Form\Field;
 
@@ -56,11 +56,14 @@ class DateOrTimeRangeFieldRenderer extends BladeFieldRenderer
 
     protected function renderFieldValue(FormRenderingContext $renderingContext, IField $field, $value, IFieldType $fieldType) : string
     {
+        $mode = $this->getMode($fieldType);
+
         return $this->renderValueViewWithNullDefault(
             $field, $value,
             'dms::components.field.date-or-time.range.value',
             [
                 'format' => $fieldType->get(DateTimeTypeBase::ATTR_FORMAT),
+                'mode'   => $mode,
             ]
         );
     }

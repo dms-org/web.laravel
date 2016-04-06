@@ -12,18 +12,18 @@
             <div class="row">
                 <div class="col-sm-2 col-lg-1"><label for="chart-{{ md5($loadChartDataUrl) }}">Filter: </label></div>
                 <div class="col-sm-10 col-lg-11">
-                    <div class='dms-chart-range-picker input-group date-or-time-range' data-mode="{{ $dateMode }}" data-dont-auto-apply="1">
+                    <div class='dms-chart-range-picker input-group dms-date-or-time-range' data-mode="{{ $dateMode }}" data-dont-auto-apply="1">
                         <input
                                 id="chart-{{ md5($loadChartDataUrl) }}"
                                 type="text"
-                                class="form-control start-input"
+                                class="form-control dms-start-input"
                                 placeholder="Start"
                                 data-date-format="{{ $dateFormat }}"
                         />
                         <span class="input-group-addon">to</span>
                         <input
                                 type="text"
-                                class="form-control end-input"
+                                class="form-control dms-end-input"
                                 placeholder="End"
                                 data-date-format="{{ $dateFormat }}"
                         />

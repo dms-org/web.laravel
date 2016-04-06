@@ -1,7 +1,7 @@
-<div class='input-group date-or-time-range' data-mode="{{ $mode }}">
+<div class='input-group dms-date-or-time-range' data-mode="{{ $mode }}">
     <input
             type="text"
-            class="form-control start-input"
+            class="form-control dms-start-input"
             name="{{ $name }}[start]"
             placeholder="Start"
             @if($required) required @endif
@@ -15,7 +15,7 @@
     <span class="input-group-addon">to</span>
     <input
             type="text"
-            class="form-control end-input"
+            class="form-control dms-end-input"
             name="{{ $name }}[end]"
             placeholder="End"
             @if($required) required @endif

@@ -57,8 +57,8 @@ Dms.chart.initializeCallbacks.push(function (element) {
         chartRangePicker.on('dms-range-updated', function () {
             var horizontalAxis = chartContainer.attr('data-date-axis-name');
             criteria.conditions = [
-                {axis: horizontalAxis, operator: '>=', value: chartRangePicker.find('.start-input').val()},
-                {axis: horizontalAxis, operator: '<=', value: chartRangePicker.find('.end-input').val()}
+                {axis: horizontalAxis, operator: '>=', value: chartRangePicker.find('.dms-start-input').val()},
+                {axis: horizontalAxis, operator: '<=', value: chartRangePicker.find('.dms-end-input').val()}
             ];
 
             loadCurrentData();

@@ -1,8 +1,8 @@
-<div class="date-picker-container">
+<div class="dms-date-picker-container">
     <div class='input-group date'>
         <input
                 type="text"
-                class="form-control date-or-time"
+                class="form-control dms-date-or-time"
                 name="{{ $name }}"
                 placeholder="{{ $label }}"
                 @if($required) required @endif

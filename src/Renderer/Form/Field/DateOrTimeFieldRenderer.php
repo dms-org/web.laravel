@@ -56,11 +56,14 @@ class DateOrTimeFieldRenderer extends BladeFieldRenderer
 
     protected function renderFieldValue(FormRenderingContext $renderingContext, IField $field, $value, IFieldType $fieldType) : string
     {
+        $mode = $this->getMode($fieldType);
+
         return $this->renderValueViewWithNullDefault(
             $field, $value,
             'dms::components.field.date-or-time.single.value',
             [
                 'format' => $fieldType->get(DateTimeTypeBase::ATTR_FORMAT),
+                'mode'   => $mode,
             ]
         );
     }

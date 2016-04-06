@@ -96,8 +96,7 @@ class ActionController extends DmsController
         ActionSafetyChecker $actionSafetyChecker,
         ActionFormRenderer $actionFormRenderer,
         ObjectActionButtonBuilder $actionButtonBuilder
-    )
-    {
+    ) {
         parent::__construct($cms);
         $this->lang                = $cms->getLang();
         $this->inputTransformers   = $inputTransformers;
@@ -152,7 +151,14 @@ class ActionController extends DmsController
             ]);
     }
 
-    protected function loadFormStage(Request $request, ModuleContext $moduleContext, string $actionName, int $stageNumber, string $objectId = null, &$object = null) : IForm
+    protected function loadFormStage(
+        Request $request,
+        ModuleContext $moduleContext,
+        string $actionName,
+        int $stageNumber,
+        string $objectId = null,
+        &$object = null
+    ) : IForm
     {
         $action = $this->loadAction($moduleContext->getModule(), $actionName);
 
@@ -182,6 +188,7 @@ class ActionController extends DmsController
         }
 
         $input = $this->inputTransformers->transform($moduleContext, $action, $request->all());
+
         return $form->getFormForStage($stageNumber, $input);
     }
 
@@ -201,6 +208,7 @@ class ActionController extends DmsController
         }
 
         $renderingContext = new FormRenderingContext($moduleContext, $action, $stageNumber, $object);
+
         return response($this->actionFormRenderer->renderFormFields($renderingContext, $form), 200);
     }
 
@@ -245,13 +253,27 @@ class ActionController extends DmsController
             ]);
     }
 
-    public function runFieldRendererActionWithObject(Request $request, ModuleContext $moduleContext, string $actionName, string $objectId, int $stageNumber, string $fieldName, string $fieldRendererAction = null)
-    {
+    public function runFieldRendererActionWithObject(
+        Request $request,
+        ModuleContext $moduleContext,
+        string $actionName,
+        string $objectId,
+        int $stageNumber,
+        string $fieldName,
+        string $fieldRendererAction = null
+    ) {
         return $this->runFieldRendererAction($request, $moduleContext, $actionName, $stageNumber, $fieldName, $fieldRendererAction, $objectId);
     }
 
-    public function runFieldRendererAction(Request $request, ModuleContext $moduleContext, string $actionName, int $stageNumber, string $fieldName, string $fieldRendererAction = null, string $objectId = null)
-    {
+    public function runFieldRendererAction(
+        Request $request,
+        ModuleContext $moduleContext,
+        string $actionName,
+        int $stageNumber,
+        string $fieldName,
+        string $fieldRendererAction = null,
+        string $objectId = null
+    ) {
         $action = $this->loadAction($moduleContext->getModule(), $actionName);
         $form   = $this->loadFormStage($request, $moduleContext, $actionName, $stageNumber, $objectId, $object);
 
@@ -301,10 +323,12 @@ class ActionController extends DmsController
             /** @var IParameterizedAction $action */
             $input  = $this->inputTransformers->transform($moduleContext, $action, $request->all() + $extraData);
             $result = $action->run($input);
+
             return $result;
         } else {
             /** @var IUnparameterizedAction $action */
             $result = $action->run();
+
             return $result;
         }
     }
@@ -338,7 +362,8 @@ class ActionController extends DmsController
             throw $e;
         } else {
             return response()->json([
-                'message' => 'An internal error occurred',
+                'message_type' => 'danger',
+                'message'      => 'An internal error occurred',
             ], 500);
         }
     }
@@ -379,6 +404,7 @@ class ActionController extends DmsController
         try {
             /** @var ObjectIdType $objectField */
             $objectFieldType = $action->getObjectForm()->getField(IObjectAction::OBJECT_FIELD_NAME)->getType();
+
             return $this->loadObjectFromDataSource($objectId, $objectFieldType->getObjects());
         } catch (InvalidInputException $e) {
             DmsError::abort(404);

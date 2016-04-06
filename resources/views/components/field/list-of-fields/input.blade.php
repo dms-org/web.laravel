@@ -24,17 +24,19 @@
     </li>
 
     @if ($value !== null)
-        @foreach (array_values($processedValue) as $key => $valueElement)
+        <?php $i = 0 ?>
+        @foreach ($processedValue as $valueElement)
             <li class="list-group-item field-list-item clearfix">
                 <div class="row">
                     <div class="col-xs-10 col-md-11 field-list-input">
-                        {!! $fieldRenderer->render($renderingContext, $elementField->withName($name . '[' . $key . ']')->withInitialValue($valueElement)) !!}
+                        {!! $fieldRenderer->render($renderingContext, $elementField->withName($name . '[' . $i . ']')->withInitialValue($valueElement)) !!}
                     </div>
                     <div class="col-xs-2 col-md-1 field-list-button-container">
                         <button class="btn btn-danger btn-block btn-remove-field" tabindex="-1"><span class="fa fa-times"></span></button>
                     </div>
                 </div>
             </li>
+                <?php $i++ ?>
         @endforeach
     @endif
 

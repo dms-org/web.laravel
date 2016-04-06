@@ -43,18 +43,6 @@ abstract class CmsIntegrationTest extends TestCase
         static::$fixture = static::getFixture();
     }
 
-    public function setUp()
-    {
-        parent::setUp();
-
-        if (!static::$isSetUp) {
-            static::$fixture->setUpBeforeClass($this->app);
-            static::$isSetUp = true;
-        }
-
-        static::$fixture->setUp($this->app);
-    }
-
     protected function resolveApplicationConfiguration($app)
     {
         parent::resolveApplicationConfiguration($app);
@@ -99,6 +87,13 @@ abstract class CmsIntegrationTest extends TestCase
     {
         $app->singleton(ICms::class, static::$fixture->getCmsClass());
         $app->singleton(IOrm::class, static::$fixture->getOrmClass());
+
+        if (!static::$isSetUp) {
+            static::$fixture->setUpBeforeClass($app);
+            static::$isSetUp = true;
+        }
+
+        static::$fixture->setUp($app);
     }
 
     /**

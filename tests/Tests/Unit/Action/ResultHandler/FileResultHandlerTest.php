@@ -8,6 +8,7 @@ use Dms\Web\Laravel\Action\IActionResultHandler;
 use Dms\Web\Laravel\Action\ResultHandler\FileResultHandler;
 use Dms\Web\Laravel\File\ITemporaryFileService;
 use Dms\Web\Laravel\File\TemporaryFile;
+use Illuminate\Config\Repository;
 use Illuminate\Http\JsonResponse;
 
 /**
@@ -24,9 +25,10 @@ class FileResultHandlerTest extends ResultHandlerTest
             ->method('storeTempFile')
             ->willReturn(new TemporaryFile('some-token', $this->mockFile(), new DateTime(new \DateTime())));
 
-        app('config')->set('dms.storage.temp-files.download-expiry', 10);
+        $config = new Repository();
+        $config->set('dms.storage.temp-files.download-expiry', 10);
 
-        return new FileResultHandler($tempFileService, app('config'));
+        return new FileResultHandler($tempFileService, $config);
     }
 
     /**
@@ -44,7 +46,7 @@ class FileResultHandlerTest extends ResultHandlerTest
                 $this->mockAction(),
                 $this->mockFile(),
                 new JsonResponse([
-                    'message' => trans('dms::action.generic-response'),
+                    'message' => 'The action was successfully executed',
                     'files'   => [
                         [
                             'name'  => 'file-name',

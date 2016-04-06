@@ -20,7 +20,7 @@ class NullResultHandlerTest extends ResultHandlerTest
     public function resultHandlingTests() : array
     {
         return [
-            [$this->mockAction(), null, new JsonResponse(['message' => 'The action was executed successfully'])],
+            [$this->mockAction(), null, new JsonResponse(['message' => 'The action was successfully executed'])],
         ];
     }
 

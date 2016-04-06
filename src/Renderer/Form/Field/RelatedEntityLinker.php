@@ -1,7 +1,7 @@
 <?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Renderer\Form\Field;
-use Dms\Core\Exception\InvalidArgumentException;
+
 use Dms\Core\Form\Field\Options\EntityIdOptions;
 use Dms\Core\Form\IFieldOptions;
 use Dms\Web\Laravel\Util\EntityModuleMap;
@@ -28,7 +28,7 @@ class RelatedEntityLinker
         $entityModuleMap = app(EntityModuleMap::class);
 
         if ($entityModuleMap->hasModuleFor($options->getObjects()->getObjectType())) {
-            
+
             $module = $entityModuleMap->loadModuleFor($options->getObjects()->getObjectType());
 
             if ($module->getDetailsAction()->isAuthorized()) {

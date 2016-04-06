@@ -7,8 +7,6 @@ use Dms\Core\Module\IAction;
 use Dms\Core\Persistence\Db\Mapping\EntityOutOfSyncException;
 use Dms\Web\Laravel\Action\ActionExceptionHandler;
 use Dms\Web\Laravel\Http\ModuleContext;
-use Dms\Web\Laravel\Http\ModuleRequestRouter;
-use Dms\Web\Laravel\Util\EntityModuleMap;
 use Dms\Web\Laravel\Util\StringHumanizer;
 use Illuminate\Http\Response;
 
@@ -53,9 +51,9 @@ class EntityOutOfSyncExceptionHandler extends ActionExceptionHandler
         $entity               = $exception->getEntityBeingPersisted();
 
         /** @var IReadModule $module */
-        $module        = $moduleContext->getModule();
-        $label         = $module->getLabelFor($entity);
-        $type          = str_singular(StringHumanizer::humanize($module->getName()));
+        $module = $moduleContext->getModule();
+        $label  = $module->getLabelFor($entity);
+        $type   = str_singular(StringHumanizer::humanize($module->getName()));
 
         // TODO: add options to resave?
         if ($hasEntityBeenDeleted) {

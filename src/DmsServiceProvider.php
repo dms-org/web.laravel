@@ -60,6 +60,7 @@ use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Database\Connection;
+use Illuminate\Database\MySqlConnection;
 use Illuminate\Foundation\Application;
 use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Routing\Router;
@@ -281,7 +282,7 @@ class DmsServiceProvider extends ServiceProvider
             /** @var Connection $connection */
             $connection = $this->app->make(Connection::class);
 
-            if ($connection->getPdo()->getAttribute(\PDO::ATTR_DRIVER_NAME) === 'mysql'
+            if ($connection instanceof MySqlConnection
                 && version_compare($connection->getPdo()->getAttribute(\PDO::ATTR_SERVER_VERSION), '5.7.6', '>=')
             ) {
                 $connection->statement('SET optimizer_switch = \'derived_merge=off\'');

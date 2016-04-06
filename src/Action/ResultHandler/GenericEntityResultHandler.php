@@ -22,19 +22,17 @@ use Illuminate\Http\Response;
 class GenericEntityResultHandler extends ActionResultHandler
 {
     /**
-     * @var EntityModuleMap
+     * @var EntityModuleMap|null
      */
     protected $entityModuleMap;
 
-    /**
-     * EntityResultHandler constructor.
-     *
-     * @param EntityModuleMap $entityModuleMap
-     */
-    public function __construct(EntityModuleMap $entityModuleMap)
+    protected function getEntityModuleMap() : EntityModuleMap
     {
-        parent::__construct();
-        $this->entityModuleMap = $entityModuleMap;
+        if (!$this->entityModuleMap) {
+            $this->entityModuleMap = app(EntityModuleMap::class);
+        }
+        
+        return $this->entityModuleMap;
     }
 
     /**
@@ -57,7 +55,7 @@ class GenericEntityResultHandler extends ActionResultHandler
         /** @var Entity $result */
         $class = get_class($result);
 
-        return $result->getId() && $this->entityModuleMap->hasModuleFor($class)
+        return $result->getId() && $this->getEntityModuleMap()->hasModuleFor($class)
         && !($action instanceof IObjectAction && $action->getName() === ICrudModule::REMOVE_ACTION)
         && !($action instanceof EditAction)
         && !($action instanceof ViewDetailsAction)
@@ -73,7 +71,7 @@ class GenericEntityResultHandler extends ActionResultHandler
      */
     protected function handleResult(ModuleContext $moduleContext, IAction $action, $result)
     {
-        $module = $this->entityModuleMap->loadModuleFor(get_class($result));
+        $module = $this->getEntityModuleMap()->loadModuleFor(get_class($result));
 
         if (!$module->getDetailsAction()->isAuthorized()) {
             return (new NullResultHandler())->handle($moduleContext, $action, null);

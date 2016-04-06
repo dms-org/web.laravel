@@ -79,7 +79,7 @@ class FileResultHandler extends ActionResultHandler
         );
 
         return \response()->json([
-            'message' => trans('dms::action.generic-response'),
+            'message' => 'The action was successfully executed',
             'files'   => [
                 [
                     'name'  => $tempFile->getFile()->getClientFileNameWithFallback(),

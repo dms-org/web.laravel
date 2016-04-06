@@ -155,6 +155,10 @@ Dms.form.initializeCallbacks.push(function (element) {
             return fieldData;
         });
 
+        stagedForm.on('dms-before-submit', function () {
+            innerModuleForm.empty();
+        });
+
         var hasReset = false;
         var resetAjaxInterception = function () {
             if (hasReset) {

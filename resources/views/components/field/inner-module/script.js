@@ -1,6 +1,13 @@
 Dms.form.initializeCallbacks.push(function (element) {
     element.find('.dms-inner-module, .dms-display-inner-module').each(function () {
         var innerModule = $(this);
+
+        if (innerModule.data('dms-has-initialized-form')) {
+            return;
+        } else {
+            innerModule.data('dms-has-initialized-form', true);
+        }
+
         var fieldName = innerModule.attr('data-name');
         var rootUrl = innerModule.attr('data-root-url');
         var reloadStateUrl = rootUrl + '/state';
@@ -148,9 +155,19 @@ Dms.form.initializeCallbacks.push(function (element) {
             return fieldData;
         });
 
-        stagedForm.on('dms-post-submit-success', function () {
+        var hasReset = false;
+        var resetAjaxInterception = function () {
+            if (hasReset) {
+                return;
+            } else {
+                hasReset = true;
+            }
+            
             Dms.ajax.interceptors.splice(Dms.ajax.interceptors.indexOf(interceptor), 1);
             Dms.action.responseHandler = originalResponseHandler;
-        });
+        };
+
+        stagedForm.on('dms-post-submit-success', resetAjaxInterception);
+        innerModule.closest('.dms-page-content').on('dms-page-unloading', resetAjaxInterception);
     });
 });

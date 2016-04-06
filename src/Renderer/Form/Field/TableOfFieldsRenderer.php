@@ -136,11 +136,8 @@ class TableOfFieldsRenderer extends BladeFieldRenderer
         );
     }
 
-    protected function makeElementField(ArrayOfType $fieldType)
+    protected function makeElementField(ArrayOfType $fieldType) : IField
     {
-        return Field::element()
-            ->type($fieldType->getElementType())
-            ->attrs($fieldType->getAll([FieldType::ATTR_READ_ONLY]))
-            ->build();
+        return $fieldType->getElementField();
     }
 }

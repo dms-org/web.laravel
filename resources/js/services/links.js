@@ -157,6 +157,7 @@ Dms.global.initializeCallbacks.push(function (element) {
                     link.attr('id', Dms.utilities.idGenerator());
                 }
 
+                contentElement.triggerHandler('dms-page-unloading');
                 contentElement.empty().append(page.find('#page > .content > *'));
                 contentContainer.removeClass('loading');
                 Dms.all.initialize(contentElement);

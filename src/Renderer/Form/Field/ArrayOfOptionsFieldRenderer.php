@@ -83,10 +83,7 @@ class ArrayOfOptionsFieldRenderer extends BladeFieldRenderer
 
     protected function makeElementField(ArrayOfType $fieldType)
     {
-        return Field::element()
-            ->type($fieldType->getElementType())
-            ->attrs($fieldType->getAll([FieldType::ATTR_READ_ONLY]))
-            ->attr(FieldType::ATTR_REQUIRED, false)
-            ->build();
+        return $fieldType->getElementField()
+            ->withTypeAttributes([FieldType::ATTR_REQUIRED => false]);
     }
 }

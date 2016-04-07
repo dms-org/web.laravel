@@ -61864,6 +61864,15 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
+    element.find('.dms-inner-form').each(function () {
+        var innerForm = $(this);
+
+        if (innerForm.attr('data-readonly')) {
+            innerForm.find(':input').attr('readonly', 'readonly');
+        }
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
     element.find('.dms-inner-module, .dms-display-inner-module').each(function () {
         var innerModule = $(this);
 
@@ -62041,15 +62050,6 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-    element.find('.dms-inner-form').each(function () {
-        var innerForm = $(this);
-
-        if (innerForm.attr('data-readonly')) {
-            innerForm.find(':input').attr('readonly', 'readonly');
-        }
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
 
     element.find('ul.dms-field-list').each(function () {
         var listOfFields = $(this);
@@ -62153,6 +62153,7 @@ Dms.form.initializeCallbacks.push(function (element) {
     element.find('.dms-map-input').each(function () {
         var mapInput = $(this);
 
+        var inputMode = mapInput.attr('data-input-mode');
         var latitudeInput = mapInput.find('input.dms-lat-input');
         var longitudeInput = mapInput.find('input.dms-lng-input');
         var currentLocationButton = mapInput.find('.dms-current-location');
@@ -62165,7 +62166,7 @@ Dms.form.initializeCallbacks.push(function (element) {
             regionBias: 'AUS',
             map: {
                 id: mapCanvas.get(0),
-                zoom: 4,
+                zoom: 12,
                 center: new google.maps.LatLng(
                     latitudeInput.val() || mapInput.attr('data-default-latitude') || -26.4390917,
                     longitudeInput.val() || mapInput.attr('data-default-longitude') || 133.281323), // Default to australia
@@ -62225,16 +62226,19 @@ Dms.form.initializeCallbacks.push(function (element) {
             forceSetAddress = true;
         });
 
+        var triggerReverseGeocode = function () {
+            forceSetAddress = true;
+            addressPicker.markerDragged();
+            addressPicker.getGMap().setZoom(12);
+        };
+
         if (navigator.geolocation) {
             currentLocationButton.click(function () {
                 navigator.geolocation.getCurrentPosition(function (position) {
                     var location = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
                     addressPicker.getGMarker().setPosition(location);
                     addressPicker.getGMap().setCenter(location);
-                    // Trigger reverse geocode
-                    forceSetAddress = true;
-                    addressPicker.markerDragged();
-                    addressPicker.getGMap().setZoom(12);
+                    triggerReverseGeocode();
                 });
             });
         } else {
@@ -62257,6 +62261,16 @@ Dms.form.initializeCallbacks.push(function (element) {
                 addressSearchInput.typeahead('val', fullAddressInput.val());
             }
         });
+
+        if (inputMode === 'address' && fullAddressInput.val()) {
+            var geocoder = new google.maps.Geocoder();
+            geocoder.geocode({'address': fullAddressInput.val()}, function (results, status) {
+                if (status == google.maps.GeocoderStatus.OK) {
+                    addressPicker.getGMap().setCenter(results[0].geometry.location);
+                    addressPicker.getGMarker().setPosition(results[0].geometry.location);
+                }
+            });
+        }
     });
 
     $('.dms-display-map').each(function () {

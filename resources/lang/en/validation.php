@@ -37,6 +37,7 @@ return [
     'confirmed'                 => 'The :field confirmation does not match.',
     'date'                      => 'The :field is not a valid date.',
     'date_format'               => 'The :field does not match the format :format.',
+    'date-format'               => 'The :field does not match the format :format.',
     'different'                 => 'The :field and :other must be different.',
     'digits'                    => 'The :field must be :digits digits.',
     'digits_between'            => 'The :field must be between :min and :max digits.',

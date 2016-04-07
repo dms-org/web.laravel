@@ -128,6 +128,7 @@ return [
                 Dms\Web\Laravel\Action\ResultHandler\MessageResultHandler::class,
                 Dms\Web\Laravel\Action\ResultHandler\FileResultHandler::class,
                 Dms\Web\Laravel\Action\ResultHandler\GenericEntityResultHandler::class,
+                Dms\Web\Laravel\Action\ResultHandler\GenericEntityCollectionResultHandler::class,
             ],
             'exception-handlers' => [
                 Dms\Web\Laravel\Action\ExceptionHandler\AdminForbiddenExceptionHandler::class,

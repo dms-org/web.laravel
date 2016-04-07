@@ -59908,6 +59908,20 @@ Dms.action.responseHandler = function (httpStatusCode, actionUrl, response) {
 
         checkIfDownloadsHaveBegun();
     }
+
+    if (typeof response.content !== 'undefined') {
+        var contentDialog = $('.dms-content-dialog').first();
+
+        contentDialog.find('.modal-title').text(response.content_title || '')
+        var dialogBody = contentDialog.find('.modal-body');
+        dialogBody.html(response.content);
+        contentDialog.appendTo('body').modal('show');
+        Dms.all.initialize(dialogBody);
+
+        dialogBody.on('click', 'a[href]', function () {
+            contentDialog.modal('hide');
+        });
+    }
 };
 Dms.ajax.formData = function (form) {
     var formValues = {};
@@ -62356,45 +62370,6 @@ Dms.form.initializeCallbacks.push(function (element) {
 });
 Dms.form.initializeCallbacks.push(function (element) {
 
-});
-Dms.form.initializeCallbacks.push(function (element) {
-    element.find('input[type="ip-address"]')
-        .attr('type', 'text')
-        .attr('data-parsley-ip-address', '1');
-
-    element.find('input[data-autocomplete]').each(function () {
-        var options = JSON.parse($(this).attr('data-autocomplete'));
-        $(this).removeAttr('data-autocomplete');
-
-        var values = [];
-
-        $.each(options, function (index, value) {
-            values.push({ val: value });
-        });
-
-        var engine = new Bloodhound({
-            local: values,
-            datumTokenizer: function(d) {
-                return Bloodhound.tokenizers.whitespace(d.val);
-            },
-            queryTokenizer: Bloodhound.tokenizers.whitespace
-        });
-
-        engine.initialize();
-
-        $(this).typeahead( {
-            limit: 5,
-            hint: true,
-            highlight: true,
-            minLength: 1
-        }, {
-            source: engine.ttAdapter(),
-            displayKey: 'val'
-        });
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
-
     element.find('table.dms-field-table').each(function () {
         var tableOfFields = $(this);
         var form = tableOfFields.closest('.dms-staged-form');
@@ -62593,6 +62568,45 @@ Dms.form.initializeCallbacks.push(function (element) {
             tableOfFields.find('.btn-remove-row').remove();
             tableOfFields.find('.btn-add-row').remove();
         }
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+
+});
+Dms.form.initializeCallbacks.push(function (element) {
+    element.find('input[type="ip-address"]')
+        .attr('type', 'text')
+        .attr('data-parsley-ip-address', '1');
+
+    element.find('input[data-autocomplete]').each(function () {
+        var options = JSON.parse($(this).attr('data-autocomplete'));
+        $(this).removeAttr('data-autocomplete');
+
+        var values = [];
+
+        $.each(options, function (index, value) {
+            values.push({ val: value });
+        });
+
+        var engine = new Bloodhound({
+            local: values,
+            datumTokenizer: function(d) {
+                return Bloodhound.tokenizers.whitespace(d.val);
+            },
+            queryTokenizer: Bloodhound.tokenizers.whitespace
+        });
+
+        engine.initialize();
+
+        $(this).typeahead( {
+            limit: 5,
+            hint: true,
+            highlight: true,
+            minLength: 1
+        }, {
+            source: engine.ttAdapter(),
+            displayKey: 'val'
+        });
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {

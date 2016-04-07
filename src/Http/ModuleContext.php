@@ -97,6 +97,19 @@ class ModuleContext
     }
 
     /**
+     * @param Router  $moduleRouter
+     * @param IModule $module
+     *
+     * @return ModuleContext
+     */
+    public static function rootContextForModule(Router $moduleRouter, IModule $module) : ModuleContext
+    {
+        return self::rootContext($moduleRouter, $module->getPackageName(), $module->getName(), function () use ($module) {
+            return $module;
+        });
+    }
+
+    /**
      * @return string[]
      */
     public function getTitles()

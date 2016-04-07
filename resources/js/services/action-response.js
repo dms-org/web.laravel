@@ -61,4 +61,18 @@ Dms.action.responseHandler = function (httpStatusCode, actionUrl, response) {
 
         checkIfDownloadsHaveBegun();
     }
+
+    if (typeof response.content !== 'undefined') {
+        var contentDialog = $('.dms-content-dialog').first();
+
+        contentDialog.find('.modal-title').text(response.content_title || '')
+        var dialogBody = contentDialog.find('.modal-body');
+        dialogBody.html(response.content);
+        contentDialog.appendTo('body').modal('show');
+        Dms.all.initialize(dialogBody);
+
+        dialogBody.on('click', 'a[href]', function () {
+            contentDialog.modal('hide');
+        });
+    }
 };

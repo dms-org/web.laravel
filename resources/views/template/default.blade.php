@@ -57,7 +57,7 @@
                                 <li class="user-footer">
                                     <div class="pull-left">
                                         <a href="{{ route('dms::package.module.dashboard', ['admin', 'account']) }}" class="btn btn-default btn-flat">
-                                            <i class="fa fa-cog"></i>  Account
+                                            <i class="fa fa-cog"></i> Account
                                         </a>
                                     </div>
                                     <div class="pull-right">
@@ -136,7 +136,7 @@
 
         @include('dms::partials.alerts')
 
-        <!-- Content Wrapper. Contains page content -->
+                <!-- Content Wrapper. Contains page content -->
         <div class="content-wrapper">
             <div class="dms-page-content">
                 @include('dms::partials.content')
@@ -160,6 +160,23 @@
                     <!-- /.modal-content -->
                 </div>
                 <!-- /.modal-dialog -->
+            </div>
+
+            <!-- Modal -->
+            <div class="modal dms-content-dialog">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                            <h4 class="modal-title"></h4>
+                        </div>
+                        <div class="modal-body"></div>
+                        <div class="modal-footer">
+                            <button class="btn" data-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                    <!-- /.modal-content -->
+                </div>
             </div>
         </div>
 

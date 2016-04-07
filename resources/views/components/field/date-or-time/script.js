@@ -85,6 +85,7 @@ Dms.form.initializeCallbacks.push(function (element) {
         var stagedForm = formGroup.closest('.dms-staged-form');
         var startInput = rangeElement.find('.dms-start-input');
         var endInput = rangeElement.find('.dms-end-input');
+        var claerButton = rangeElement.find('.dms-btn-clear-input');
         var dateFormat = Dms.utilities.convertPhpDateFormatToMomentFormat(startInput.attr('data-date-format'));
         var mode = rangeElement.attr('data-mode');
 
@@ -92,7 +93,7 @@ Dms.form.initializeCallbacks.push(function (element) {
             locale: {
                 format: dateFormat
             },
-            parentEl: rangeElement,
+            parentEl: rangeElement.parent(),
             showDropdowns: true,
             autoApply: !rangeElement.attr('data-dont-auto-apply'),
             linkedCalendars: false,
@@ -147,6 +148,15 @@ Dms.form.initializeCallbacks.push(function (element) {
 
         startInput.on('apply.daterangepicker', function () {
             formGroup.trigger('dms-change');
+        });
+
+        claerButton.on('click', function () {
+            startInput.val('');
+            endInput.val('');
+        });
+
+        stagedForm.on('dms-before-submit', function () {
+            formGroup.toggleClass('dms-form-no-submit', !startInput.val() && !endInput.val());
         });
     });
 

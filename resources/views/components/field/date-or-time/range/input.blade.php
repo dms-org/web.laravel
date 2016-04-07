@@ -29,4 +29,11 @@
     <span class="input-group-addon" onclick="$(this).prev('input').focus()">
         <span class="fa fa-calendar"></span>
     </span>
+    @if(!$required)
+        <span class="input-group-btn">
+            <button class="btn btn-danger dms-btn-clear-input" type="button">
+                <i class="fa fa-times"></i>
+            </button>
+          </span>
+    @endif
 </div>

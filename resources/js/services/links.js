@@ -107,7 +107,7 @@ Dms.global.initializeCallbacks.push(function (element) {
 
     var currentAjaxRequest;
 
-    element.on('click', 'a[href^="' + rootUrl + '"]', function (e) {
+    element.on('click', 'a[href^="' + rootUrl + '"]:not([download])', function (e) {
         var link = $(this);
         var linkUrl = link.attr('href');
 

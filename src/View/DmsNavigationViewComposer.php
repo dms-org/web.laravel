@@ -80,7 +80,7 @@ class DmsNavigationViewComposer
                 $subNavigation = $this->filterElementsByPermissions($isSuperUser, $permissionNames, $element->getElements());
 
                 if ($subNavigation) {
-                    $navigation[] = count($subNavigation) === 1 ? $subNavigation[0] : $element->withElements($subNavigation);
+                    $navigation[] = $element->withElements($subNavigation);
                 }
             } elseif ($element instanceof NavigationElement) {
                 if ($isSuperUser || $element->shouldDisplay($permissionNames)) {

@@ -84,7 +84,7 @@ class GenericEntityCollectionResultHandler extends ActionResultHandler
         );
 
         return \response()->json([
-            'content_title' => StringHumanizer::title($module->getName()) . ' items',
+            'content_title' => StringHumanizer::title($module->getName()),
             'content'       => $tableHtml,
         ]);
     }

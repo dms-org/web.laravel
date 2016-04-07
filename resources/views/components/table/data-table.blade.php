@@ -48,7 +48,7 @@
 
         <tbody class="@if($allowsReorder) dms-table-body-sortable @endif">
         <?php $newObjectsIndex = 0 ?>
-        @foreach ($section->getRows() as $row)
+        @forelse ($section->getRows() as $row)
             <?php $rowData = $row->getData() ?>
             <tr>
                 @foreach ($columns as $columnName => $column)
@@ -76,9 +76,9 @@
                             @endif
                             @if(isset($rowActionButtons['remove']))
                                 <div class="dms-run-action-form inline"
-                                      data-action="{{ $rowActionButtons['remove']->getUrl($objectId) }}"
-                                      data-after-run-remove-closest="tr"
-                                      data-method="post">
+                                     data-action="{{ $rowActionButtons['remove']->getUrl($objectId) }}"
+                                     data-after-run-remove-closest="tr"
+                                     data-method="post">
                                     {!! csrf_field() !!}
                                     <button type="submit" class="btn btn-xs btn-danger">
                                         <i class="fa fa-trash-o"></i>
@@ -98,8 +98,8 @@
                                             <li>
                                                 @if($action->isPost())
                                                     <a class="dms-run-action-form inline"
-                                                          data-action="{{ $action->getUrl($objectId) }}"
-                                                          data-method="post">
+                                                       data-action="{{ $action->getUrl($objectId) }}"
+                                                       data-method="post">
                                                         {{ $action->getLabel() }}
                                                     </a>
                                                 @else
@@ -120,8 +120,15 @@
                     </td>
                 @endif
             </tr>
-        @endforeach
+    @empty
+        <tbody>
+        <tr>
+            <td colspan="{{ count($columns) + ($rowActionButtons || $allowsReorder ? 1 : 0) }}">
+                <div class="help-block text-center">There are no items</div>
+            </td>
+        </tr>
         </tbody>
+    @endforelse
     @empty
         <tbody>
         <tr>

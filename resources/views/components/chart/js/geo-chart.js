@@ -1,5 +1,5 @@
 Dms.chart.initializeCallbacks.push(function (element) {
-    
+
     element.find('.dms-geo-chart').each(function () {
         var chart = $(this);
         var isCityChart = chart.attr('data-city-chart');
@@ -25,10 +25,12 @@ Dms.chart.initializeCallbacks.push(function (element) {
 
             var transformedChartData = [headers];
 
-            $.each(chartData, function (index, row) {
-                transformedChartData.push((hasLatLng ? row.lat_lng : []).concat([row.label]).concat(row.values));
-            });
-
+            if (chartData.length) {
+                $.each(chartData, function (index, row) {
+                    transformedChartData.push((hasLatLng ? row.lat_lng : []).concat([row.label]).concat(row.values));
+                });
+            }
+            
             var data = google.visualization.arrayToDataTable(transformedChartData);
 
             var googleChart = new google.visualization.GeoChart(chart.get(0));

@@ -68,10 +68,12 @@ class DmsInstallCommand extends Command
         $this->info('Deleted: ' . database_path('migrations/') . '*');
 
         $filesystem->copy(__DIR__ . '/Stubs/AppCms.php.stub', app_path('AppCms.php'));
+        require_once app_path('AppCms.php');
         app()->singleton(ICms::class, \App\AppCms::class);
         $this->info('Created: ' . app_path('AppCms.php'));
 
         $filesystem->copy(__DIR__ . '/Stubs/AppOrm.php.stub', app_path('AppOrm.php'));
+        require_once app_path('AppOrm.php');
         app()->singleton(IOrm::class, \App\AppOrm::class);
         $this->info('Created: ' . app_path('AppOrm.php'));
 

@@ -82,6 +82,7 @@ class ScaffoldPersistenceCommand extends Command
 
         if (!$valueObjects && !$entities) {
             $this->output->error('No entities found under ' . $namespace . ' namespace');
+
             return;
         }
 
@@ -187,6 +188,7 @@ class ScaffoldPersistenceCommand extends Command
             '{name}'        => $mapperName,
             '{entity}'      => $entity,
             '{entity_name}' => $entityName,
+            '{table_name}'  => str_plural(snake_case($entityName)),
         ]);
 
         $this->createFile(PathHelper::combine($mapperDirectory, $mapperName . '.php'), $php);

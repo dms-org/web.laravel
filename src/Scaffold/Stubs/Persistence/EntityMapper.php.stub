@@ -21,6 +21,7 @@ class {name} extends EntityMapper
     protected function define(MapperDefinition $map)
     {
         $map->type({entity_name}::class);
+        $map->toTable('{table_name}');
 
         $map->idToPrimaryKey('id');
 

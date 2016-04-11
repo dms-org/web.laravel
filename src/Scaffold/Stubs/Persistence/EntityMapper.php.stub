@@ -8,8 +8,6 @@ use {entity};
 
 /**
  * The {entity} entity mapper.
- *
- * @author Elliot Levin <elliotlevin@hotmail.com>
  */
 class {name} extends EntityMapper
 {

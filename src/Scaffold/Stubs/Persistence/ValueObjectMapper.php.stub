@@ -8,8 +8,6 @@ use {value_object};
 
 /**
  * The {value_object} value object mapper.
- *
- * @author Elliot Levin <elliotlevin@hotmail.com>
  */
 class {name} extends IndependentValueObjectMapper
 {

@@ -183,7 +183,17 @@ class LaravelMigrationGenerator extends MigrationGenerator
         $tableDependencies = [];
 
         foreach ($table->getForeignKeys() as $foreignKey) {
-            $tableDependencies[] = $foreignKey->getForeignTableName();
+            $areAllLocalKeysNullable = true;
+
+            foreach ($foreignKey->getLocalColumns() as $column) {
+                if ($table->getColumn($column)->getNotnull()) {
+                    $areAllLocalKeysNullable = false;
+                }
+            }
+
+            if (!$areAllLocalKeysNullable) {
+                $tableDependencies[] = $foreignKey->getForeignTableName();
+            }
         }
 
         return $tableDependencies;
@@ -204,7 +214,42 @@ class LaravelMigrationGenerator extends MigrationGenerator
 
         $code->indent = 2;
 
+        // Drop foreign keys
+
         foreach ($diff->changedTables as $table) {
+            if (!$table->removedForeignKeys) {
+                continue;
+            }
+
+            $code->appendLine("Schema::table({$table->name}, function (Blueprint \$table) {");
+            $code->indent++;
+
+            foreach ($table->removedForeignKeys as $foreignKey) {
+                $code->appendLine($this->createDropForeignKeyCode($foreignKey->getName()));
+            }
+
+            $code->indent--;
+            $code->appendLine('});');
+            $code->appendLine();
+        }
+
+        // Update table structure
+
+        foreach ($diff->changedTables as $table) {
+            if (empty(array_filter([
+                $table->addedColumns,
+                $table->removedColumns,
+                $table->changedColumns,
+                $table->renamedColumns,
+                $table->addedIndexes,
+                $table->removedIndexes,
+                $table->changedIndexes,
+                $table->renamedIndexes,
+            ]))
+            ) {
+                continue;
+            }
+
             $oldName = var_export($table->name, true);
 
             if ($table->newName) {
@@ -252,19 +297,6 @@ class LaravelMigrationGenerator extends MigrationGenerator
                 $code->appendLine($this->createAddIndexCode($index));
             }
 
-            foreach ($table->addedForeignKeys as $foreignKey) {
-                $code->appendLine($this->createAddForeignKeyCode($foreignKey));
-            }
-
-            foreach ($table->removedForeignKeys as $foreignKey) {
-                $code->appendLine($this->createDropForeignKeyCode($foreignKey->getName()));
-            }
-
-            foreach ($table->changedForeignKeys as $foreignKey) {
-                $code->appendLine($this->createDropForeignKeyCode($foreignKey->getName()));
-                $code->appendLine($this->createAddForeignKeyCode($foreignKey));
-            }
-
             $code->indent--;
             $code->appendLine('});');
             $code->appendLine();
@@ -281,6 +313,52 @@ class LaravelMigrationGenerator extends MigrationGenerator
             $code->appendLine("Schema::drop({$tableName});");
         }
 
+        // Add Foreign keys
+
+        foreach ($diff->changedTables as $table) {
+            $name = var_export($table->newName ?: $table->name, true);
+
+            if (!$table->addedForeignKeys && !$table->changedForeignKeys) {
+                continue;
+            }
+
+            $code->appendLine("Schema::table({$name}, function (Blueprint \$table) {");
+            $code->indent++;
+
+            foreach ($table->addedForeignKeys as $foreignKey) {
+                $code->appendLine($this->createAddForeignKeyCode($foreignKey));
+            }
+
+            foreach ($table->changedForeignKeys as $foreignKey) {
+                $code->appendLine($this->createDropForeignKeyCode($foreignKey->getName()));
+                $code->appendLine($this->createAddForeignKeyCode($foreignKey));
+            }
+
+            $code->indent--;
+            $code->appendLine('});');
+            $code->appendLine();
+        }
+
+        foreach ($diff->newTables as $table) {
+            $name = var_export($table->getName(), true);
+
+            if (!$table->getForeignKeys()) {
+                continue;
+            }
+
+            $code->appendLine("Schema::table({$name}, function (Blueprint \$table) {");
+            $code->indent++;
+
+            foreach ($table->getForeignKeys() as $foreignKey) {
+                $code->appendLine($this->createAddForeignKeyCode($foreignKey));
+            }
+
+            $code->indent--;
+            $code->appendLine('});');
+            $code->appendLine();
+        }
+
+
         return $code->getCode();
     }
 
@@ -296,7 +374,6 @@ class LaravelMigrationGenerator extends MigrationGenerator
         }
 
         $code->appendLine();
-        $addedIndex = false;
 
         foreach ($table->getIndexes() as $index) {
             if ($hasAutoIncrement && $index->isPrimary()) {
@@ -304,15 +381,6 @@ class LaravelMigrationGenerator extends MigrationGenerator
             }
 
             $code->appendLine($this->createAddIndexCode($index));
-            $addedIndex = true;
-        }
-
-        if ($addedIndex && $table->getForeignKeys()) {
-            $code->appendLine();
-        }
-
-        foreach ($table->getForeignKeys() as $foreignKey) {
-            $code->appendLine($this->createAddForeignKeyCode($foreignKey));
         }
 
         $code->indent--;

@@ -7,6 +7,7 @@ use Dms\Core\Form\Field\Options\EntityIdOptions;
 use Dms\Core\Form\Field\Type\ArrayOfType;
 use Dms\Core\Form\Field\Type\FieldType;
 use Dms\Core\Form\IField;
+use Dms\Core\Form\IFieldOptions;
 use Dms\Core\Form\IFieldType;
 use Dms\Web\Laravel\Renderer\Form\FormRenderingContext;
 
@@ -44,6 +45,8 @@ class ArrayOfOptionsFieldRenderer extends BladeFieldRenderer
         /** @var ArrayOfType $fieldType */
         $elementField = $this->makeElementField($fieldType);
 
+        $options = $elementField->getType()->get(ArrayOfType::ATTR_OPTIONS);
+
         return $this->renderView(
             $field,
             'dms::components.field.checkbox-group.input',
@@ -53,7 +56,7 @@ class ArrayOfOptionsFieldRenderer extends BladeFieldRenderer
                 ArrayOfType::ATTR_EXACT_ELEMENTS => 'exactElements',
             ],
             [
-                'options' => $elementField->getType()->get(ArrayOfType::ATTR_OPTIONS)->getAll(),
+                'options' => $this->getOptionsWithValuesAsKeys($options),
             ]
         );
     }
@@ -75,7 +78,7 @@ class ArrayOfOptionsFieldRenderer extends BladeFieldRenderer
             $field, $value,
             'dms::components.field.checkbox-group.value',
             [
-                'options'     => $options->getAll(),
+                'options'     => $this->getOptionsWithValuesAsKeys($options),
                 'urlCallback' => $urlCallback,
             ]
         );
@@ -85,5 +88,16 @@ class ArrayOfOptionsFieldRenderer extends BladeFieldRenderer
     {
         return $fieldType->getElementField()
             ->withTypeAttributes([FieldType::ATTR_REQUIRED => false]);
+    }
+
+    private function getOptionsWithValuesAsKeys(IFieldOptions $options) : array
+    {
+        $indexedOptions = [];
+        
+        foreach($options->getAll() as $fieldOption) {
+            $indexedOptions[$fieldOption->getValue()] = $fieldOption;
+        }
+        
+        return $indexedOptions;
     }
 }

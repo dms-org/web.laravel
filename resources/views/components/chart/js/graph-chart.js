@@ -35,17 +35,21 @@ Dms.chart.initializeCallbacks.push(function (element) {
                 return;
             }
 
-            var unit;
+            var addUnitToDate;
             if (unitType === 'date') {
-                unit = 24 * 3600 * 1000;
+                addUnitToDate = function (date) {
+                    date.setDate(date.getDate() + 1);
+                };
             } else {
-                unit = 1000;
+                addUnitToDate = function (date) {
+                    date.setSeconds(date.getSeconds() + 1)
+                };
             }
 
-            for (var i = minTimestamp; i < maxTimestamp; i += unit) {
-                if (typeof timeRowLookup[i] === 'undefined') {
+            for (var i = new Date(minTimestamp); i.getTime() < maxTimestamp; addUnitToDate(i)) {
+                if (typeof timeRowLookup[i.getTime()] === 'undefined') {
                     var rowData = {};
-                    rowData[horizontalAxisKey] = i;
+                    rowData[horizontalAxisKey] = i.getTime();
 
                     $.each(verticalAxisKeys, function (index, verticalAxisKey) {
                         rowData[verticalAxisKey] = 0;

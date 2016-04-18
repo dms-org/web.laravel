@@ -221,7 +221,8 @@ class LaravelMigrationGenerator extends MigrationGenerator
                 continue;
             }
 
-            $code->appendLine("Schema::table({$table->name}, function (Blueprint \$table) {");
+            $tableName = var_export($table->name, true);
+            $code->appendLine("Schema::table({$tableName}, function (Blueprint \$table) {");
             $code->indent++;
 
             foreach ($table->removedForeignKeys as $foreignKey) {

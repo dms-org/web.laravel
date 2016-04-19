@@ -30,9 +30,10 @@ class ScaffoldPersistenceCommand extends Command
      * @var string
      */
     protected $signature = 'dms:scaffold:persistence
-                            {domain_namespace : The namespace of the entities}
-                            {output_abstract : The path to place the repository interfaces.}
-                            {output_implementation : The path to place the repository and mapper implementations.}';
+                            {entity_namespace : The namespace of the entities}
+                            {output_dir_abstract : The path to place the repository interfaces.}
+                            {output_dir_implementation : The path to place the repository and mapper implementations.}
+                            {--overwrite: Whether to overwrite existing files}';
 
     /**
      * The console command description.
@@ -73,10 +74,11 @@ class ScaffoldPersistenceCommand extends Command
     public function fire()
     {
         $this->loadAllApplicationClasses();
-        $namespace = ltrim($this->input->getArgument('domain_namespace'), '\\');
+        $namespace = ltrim($this->input->getArgument('entity_namespace'), '\\');
 
-        $abstractDirectory       = $this->input->getArgument('output_abstract');
-        $implementationDirectory = $this->input->getArgument('output_implementation');
+        $abstractDirectory       = $this->input->getArgument('output_dir_abstract');
+        $implementationDirectory = $this->input->getArgument('output_dir_implementation');
+        $overwrite               = (bool)$this->option('overwrite');
         $entities                = $this->getAllEntitiesUnder($namespace);
         $valueObjects            = $this->getAllValueObjectsUnder($namespace);
 
@@ -87,13 +89,13 @@ class ScaffoldPersistenceCommand extends Command
         }
 
         foreach ($entities as $entity) {
-            list($repositoryClass, $repositoryShortClassName) = $this->generateRepositoryInterface($abstractDirectory, $namespace, $entity);
-            $this->generateEntityMapper($implementationDirectory, $namespace, $entity);
-            $this->generateRepositoryImplementation($implementationDirectory, $namespace, $entity, $repositoryClass, $repositoryShortClassName);
+            list($repositoryClass, $repositoryShortClassName) = $this->generateRepositoryInterface($abstractDirectory, $namespace, $entity, $overwrite);
+            $this->generateEntityMapper($implementationDirectory, $namespace, $entity, $overwrite);
+            $this->generateRepositoryImplementation($implementationDirectory, $namespace, $entity, $repositoryClass, $repositoryShortClassName, $overwrite);
         }
 
         foreach ($valueObjects as $valueObject) {
-            $this->generateValueObjectMapper($implementationDirectory, $namespace, $valueObject);
+            $this->generateValueObjectMapper($implementationDirectory, $namespace, $valueObject, $overwrite);
         }
 
         $this->output->success('Done!');
@@ -146,7 +148,7 @@ class ScaffoldPersistenceCommand extends Command
         return trim(str_replace('/', '\\', substr(PathHelper::normalize(base_path($appDirectory)), strlen(PathHelper::normalize(app_path())))), '\\');
     }
 
-    private function generateRepositoryInterface(string $abstractDirectory, string $namespace, string $entity)
+    private function generateRepositoryInterface(string $abstractDirectory, string $namespace, string $entity, bool $overwrite)
     {
         $entityName        = (new \ReflectionClass($entity))->getShortName();
         $entityNamespace   = (new \ReflectionClass($entity))->getNamespaceName();
@@ -166,12 +168,12 @@ class ScaffoldPersistenceCommand extends Command
             '{entity_name}' => $entityName,
         ]);
 
-        $this->createFile(PathHelper::combine($repositoryDirectory, $repositoryName . '.php'), $php);
+        $this->createFile(PathHelper::combine($repositoryDirectory, $repositoryName . '.php'), $php, $overwrite);
 
         return [$repositoryClass, $repositoryName];
     }
 
-    private function generateEntityMapper(string $implementationDirectory, string $namespace, string $entity)
+    private function generateEntityMapper(string $implementationDirectory, string $namespace, string $entity, bool $overwrite)
     {
         $entityName        = (new \ReflectionClass($entity))->getShortName();
         $entityNamespace   = (new \ReflectionClass($entity))->getNamespaceName();
@@ -191,7 +193,7 @@ class ScaffoldPersistenceCommand extends Command
             '{table_name}'  => str_plural(snake_case($entityName)),
         ]);
 
-        $this->createFile(PathHelper::combine($mapperDirectory, $mapperName . '.php'), $php);
+        $this->createFile(PathHelper::combine($mapperDirectory, $mapperName . '.php'), $php, $overwrite);
     }
 
     private function generateRepositoryImplementation(
@@ -199,7 +201,8 @@ class ScaffoldPersistenceCommand extends Command
         string $namespace,
         string $entity,
         string $interfaceClass,
-        string $interfaceName
+        string $interfaceName,
+        bool $overwrite
     ) {
         $entityName        = (new \ReflectionClass($entity))->getShortName();
         $entityNamespace   = (new \ReflectionClass($entity))->getNamespaceName();
@@ -220,10 +223,10 @@ class ScaffoldPersistenceCommand extends Command
             '{interface_name}' => $interfaceName,
         ]);
 
-        $this->createFile(PathHelper::combine($repositoryDirectory, $repositoryName . '.php'), $php);
+        $this->createFile(PathHelper::combine($repositoryDirectory, $repositoryName . '.php'), $php, $overwrite);
     }
 
-    private function generateValueObjectMapper(string $implementationDirectory, string $namespace, string $valueObject)
+    private function generateValueObjectMapper(string $implementationDirectory, string $namespace, string $valueObject, bool $overwrite)
     {
         $valueObjectName      = (new \ReflectionClass($valueObject))->getShortName();
         $valueObjectNamespace = (new \ReflectionClass($valueObject))->getNamespaceName();
@@ -242,7 +245,7 @@ class ScaffoldPersistenceCommand extends Command
             '{value_object_name}' => $valueObjectName,
         ]);
 
-        $this->createFile(PathHelper::combine($mapperDirectory, $mapperName . '.php'), $php);
+        $this->createFile(PathHelper::combine($mapperDirectory, $mapperName . '.php'), $php, $overwrite);
     }
 
     protected function getAppNamespace() : string
@@ -250,9 +253,14 @@ class ScaffoldPersistenceCommand extends Command
         return trim($this->baseGetAppNamespace(), '\\');
     }
 
-    protected function createFile(string $filePath, string $code)
+    protected function createFile(string $filePath, string $code, bool $overwrite)
     {
         $this->filesystem->makeDirectory(dirname($filePath), 0755, true, true);
+
+        if (!$overwrite && $this->filesystem->exists($filePath)) {
+            return;
+        }
+
         $this->filesystem->put($filePath, $code);
     }
 }

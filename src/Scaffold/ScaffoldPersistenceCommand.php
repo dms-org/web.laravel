@@ -78,7 +78,7 @@ class ScaffoldPersistenceCommand extends Command
 
         $abstractDirectory       = $this->input->getArgument('output_dir_abstract');
         $implementationDirectory = $this->input->getArgument('output_dir_implementation');
-        $overwrite               = (bool)$this->option('overwrite');
+        $overwrite               = (bool)$this->option('--overwrite');
         $entities                = $this->getAllEntitiesUnder($namespace);
         $valueObjects            = $this->getAllValueObjectsUnder($namespace);
 

@@ -26,7 +26,7 @@ Dms.form.initializeCallbacks.push(function (element) {
                 return Dms.ajax.createFormData();
             }
 
-            var stageToDependentFieldsMap = JSON.parse(stagedForm.attr('data-stage-dependent-fields-stage-map'));
+            var stageToDependentFieldsMap = JSON.parse(formStage.attr('data-stage-dependent-fields-stage-map'));
             var dependentFieldsSelector = Dms.form.stages.makeDependentFieldSelectorForStageMap(stageToDependentFieldsMap, '*');
 
             return Dms.form.stages.createFormDataFromFields(stagedForm.find(dependentFieldsSelector));

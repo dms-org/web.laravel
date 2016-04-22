@@ -78,7 +78,7 @@ Dms.form.initializeCallbacks.push(function (element) {
             longitudeInput.val(result.lng());
             var address = result.address();
 
-            if (result.placeResult.name) {
+            if (result.placeResult.name && address.indexOf(result.placeResult.name) === -1) {
                 address = result.placeResult.name + ', ' + address;
             }
 
@@ -88,7 +88,7 @@ Dms.form.initializeCallbacks.push(function (element) {
 
         google.maps.event.addListener(addressPicker.getGMarker(), "dragend", function (event) {
             forceSetAddress = true;
-        });
+        });A
 
         var triggerReverseGeocode = function () {
             forceSetAddress = true;

@@ -61324,6 +61324,199 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
+    var convertFromUtcToLocal = function (dateFormat, value) {
+        if (value) {
+            return moment.utc(value, dateFormat).local().format(dateFormat);
+        } else {
+            return '';
+        }
+    };
+
+    var convertFromLocalToUtc = function (dateFormat, value) {
+        if (value) {
+            return moment(value, dateFormat).utc().format(dateFormat);
+        } else {
+            return '';
+        }
+    };
+
+    var submitUtcDateTimeViaHiddenInput = function (stagedForm, dateFormat, originalInput) {
+        var inputName = originalInput.data('dms-input-name') || originalInput.attr('name');
+        originalInput.removeAttr('name');
+        originalInput.data('dms-input-name', inputName);
+
+        stagedForm.find('input[type=hidden][name="' + inputName + '"]').remove();
+        stagedForm.append($('<input type="hidden" />').attr('name', inputName).val(convertFromLocalToUtc(dateFormat, originalInput.val())));
+    };
+
+    element.find('input.dms-date-or-time').each(function () {
+        var inputElement = $(this);
+        var formGroup = inputElement.closest('.form-group');
+        var stagedForm = formGroup.closest('.dms-staged-form');
+        var phpDateFormat = inputElement.attr('data-date-format');
+        var dateFormat = Dms.utilities.convertPhpDateFormatToMomentFormat(phpDateFormat);
+        var mode = inputElement.attr('data-mode');
+
+        var config = {
+            locale: {
+                format: dateFormat
+            },
+            parentEl: inputElement.closest('.dms-date-picker-container'),
+            singleDatePicker: true,
+            showDropdowns: true,
+            autoApply: true,
+            linkedCalendars: false,
+            autoUpdateInput: false
+        };
+
+        if (mode === 'date-time') {
+            config.timePicker = true;
+            config.timePickerSeconds = phpDateFormat.indexOf('s') !== -1;
+
+            inputElement.val(convertFromUtcToLocal(dateFormat, inputElement.val()));
+            stagedForm.on('dms-before-submit', function () {
+                submitUtcDateTimeViaHiddenInput(stagedForm, dateFormat, inputElement);
+            });
+        }
+
+        if (mode === 'time') {
+            config.timePicker = true;
+            config.timePickerSeconds = phpDateFormat.indexOf('s') !== -1;
+        }
+        // TODO: timezoned-date-time
+
+        inputElement.daterangepicker(config, function (date) {
+            inputElement.val(date.format(dateFormat));
+        });
+
+        var picker = inputElement.data('daterangepicker');
+
+        if (inputElement.val()) {
+            picker.setStartDate(inputElement.val());
+        }
+
+        if (mode === 'time') {
+            inputElement.closest('.date-picker-container').find('.calendar-table').hide();
+        }
+
+        inputElement.on('apply.daterangepicker', function () {
+            formGroup.trigger('dms-change');
+        });
+    });
+
+    element.find('.dms-date-or-time-range').each(function () {
+        var rangeElement = $(this);
+        var formGroup = rangeElement.closest('.form-group');
+        var stagedForm = formGroup.closest('.dms-staged-form');
+        var startInput = rangeElement.find('.dms-start-input');
+        var endInput = rangeElement.find('.dms-end-input');
+        var claerButton = rangeElement.find('.dms-btn-clear-input');
+        var dateFormat = Dms.utilities.convertPhpDateFormatToMomentFormat(startInput.attr('data-date-format'));
+        var mode = rangeElement.attr('data-mode');
+
+        var config = {
+            locale: {
+                format: dateFormat
+            },
+            parentEl: rangeElement.parent(),
+            showDropdowns: true,
+            autoApply: !rangeElement.attr('data-dont-auto-apply'),
+            linkedCalendars: false,
+            autoUpdateInput: false
+        };
+
+        if (mode === 'date-time') {
+            config.timePicker = true;
+            config.timePickerSeconds = true;
+
+            startInput.val(convertFromUtcToLocal(dateFormat, startInput.val()));
+            endInput.val(convertFromUtcToLocal(dateFormat, endInput.val()));
+            stagedForm.on('dms-before-submit', function () {
+                submitUtcDateTimeViaHiddenInput(stagedForm, dateFormat, startInput);
+                submitUtcDateTimeViaHiddenInput(stagedForm, dateFormat, endInput);
+            });
+        }
+
+        if (mode === 'time') {
+            config.timePicker = true;
+            config.timePickerSeconds = true;
+        }
+        // TODO: timezoned-date-time
+
+        startInput.daterangepicker(config, function (start, end, label) {
+            if (mode === 'date-time') {
+                start = start.local();
+                end = end.local();
+            }
+
+            startInput.val(start.format(dateFormat));
+            endInput.val(end.format(dateFormat));
+            rangeElement.triggerHandler('dms-range-updated');
+        });
+
+        var picker = startInput.data('daterangepicker');
+
+        if (startInput.val()) {
+            picker.setStartDate(startInput.val());
+        }
+        if (endInput.val()) {
+            picker.setEndDate(endInput.val());
+        }
+
+        endInput.on('focus click', function () {
+            startInput.focus();
+        });
+
+        if (mode === 'time') {
+            rangeElement.find('.calendar-table').hide();
+        }
+
+        startInput.on('apply.daterangepicker', function () {
+            formGroup.trigger('dms-change');
+        });
+
+        claerButton.on('click', function () {
+            startInput.val('');
+            endInput.val('');
+        });
+
+        stagedForm.on('dms-before-submit', function () {
+            formGroup.toggleClass('dms-form-no-submit', !startInput.val() && !endInput.val());
+        });
+    });
+
+    $('.dms-date-or-time-display[data-mode="date-time"]').each(function () {
+        var dateTimeDisplay = $(this);
+        var dateFormat = Dms.utilities.convertPhpDateFormatToMomentFormat(dateTimeDisplay.attr('data-date-format'));
+
+        dateTimeDisplay.text(convertFromUtcToLocal(dateFormat, dateTimeDisplay.text()));
+    });
+
+    $('.dms-date-or-time-range-display[data-mode="date-time"]').each(function () {
+        var dateTimeDisplay = $(this);
+        var startDisplay = dateTimeDisplay.find('.dms-start-display');
+        var endDisplay = dateTimeDisplay.find('.dms-end-display');
+        var dateFormat = Dms.utilities.convertPhpDateFormatToMomentFormat(dateTimeDisplay.attr('data-date-format'));
+
+        startDisplay.text(convertFromUtcToLocal(dateFormat, startDisplay.text()));
+        endDisplay.text(convertFromUtcToLocal(dateFormat, endDisplay.text()));
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+
+    element.find('.list-of-checkboxes').each(function () {
+        var listOfCheckboxes = $(this);
+        listOfCheckboxes.find('input[type=checkbox]').iCheck({
+            checkboxClass: 'icheckbox_square-blue',
+            increaseArea: '20%'
+        });
+
+        var firstCheckbox = listOfCheckboxes.find('input[type=checkbox]').first();
+        firstCheckbox.attr('data-parsley-min-elements', listOfCheckboxes.attr('data-min-elements'));
+        firstCheckbox.attr('data-parsley-max-elements', listOfCheckboxes.attr('data-max-elements'));
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
 
     element.find('.dropzone-container').each(function () {
         var container = $(this);
@@ -61677,196 +61870,12 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-    var convertFromUtcToLocal = function (dateFormat, value) {
-        if (value) {
-            return moment.utc(value, dateFormat).local().format(dateFormat);
-        } else {
-            return '';
+    element.find('.dms-inner-form').each(function () {
+        var innerForm = $(this);
+
+        if (innerForm.attr('data-readonly')) {
+            innerForm.find(':input').attr('readonly', 'readonly');
         }
-    };
-
-    var convertFromLocalToUtc = function (dateFormat, value) {
-        if (value) {
-            return moment(value, dateFormat).utc().format(dateFormat);
-        } else {
-            return '';
-        }
-    };
-
-    var submitUtcDateTimeViaHiddenInput = function (stagedForm, dateFormat, originalInput) {
-        var inputName = originalInput.data('dms-input-name') || originalInput.attr('name');
-        originalInput.removeAttr('name');
-        originalInput.data('dms-input-name', inputName);
-
-        stagedForm.find('input[type=hidden][name="' + inputName + '"]').remove();
-        stagedForm.append($('<input type="hidden" />').attr('name', inputName).val(convertFromLocalToUtc(dateFormat, originalInput.val())));
-    };
-
-    element.find('input.dms-date-or-time').each(function () {
-        var inputElement = $(this);
-        var formGroup = inputElement.closest('.form-group');
-        var stagedForm = formGroup.closest('.dms-staged-form');
-        var phpDateFormat = inputElement.attr('data-date-format');
-        var dateFormat = Dms.utilities.convertPhpDateFormatToMomentFormat(phpDateFormat);
-        var mode = inputElement.attr('data-mode');
-
-        var config = {
-            locale: {
-                format: dateFormat
-            },
-            parentEl: inputElement.closest('.dms-date-picker-container'),
-            singleDatePicker: true,
-            showDropdowns: true,
-            autoApply: true,
-            linkedCalendars: false,
-            autoUpdateInput: false
-        };
-
-        if (mode === 'date-time') {
-            config.timePicker = true;
-            config.timePickerSeconds = phpDateFormat.indexOf('s') !== -1;
-
-            inputElement.val(convertFromUtcToLocal(dateFormat, inputElement.val()));
-            stagedForm.on('dms-before-submit', function () {
-                submitUtcDateTimeViaHiddenInput(stagedForm, dateFormat, inputElement);
-            });
-        }
-
-        if (mode === 'time') {
-            config.timePicker = true;
-            config.timePickerSeconds = phpDateFormat.indexOf('s') !== -1;
-        }
-        // TODO: timezoned-date-time
-
-        inputElement.daterangepicker(config, function (date) {
-            inputElement.val(date.format(dateFormat));
-        });
-
-        var picker = inputElement.data('daterangepicker');
-
-        if (inputElement.val()) {
-            picker.setStartDate(inputElement.val());
-        }
-
-        if (mode === 'time') {
-            inputElement.closest('.date-picker-container').find('.calendar-table').hide();
-        }
-
-        inputElement.on('apply.daterangepicker', function () {
-            formGroup.trigger('dms-change');
-        });
-    });
-
-    element.find('.dms-date-or-time-range').each(function () {
-        var rangeElement = $(this);
-        var formGroup = rangeElement.closest('.form-group');
-        var stagedForm = formGroup.closest('.dms-staged-form');
-        var startInput = rangeElement.find('.dms-start-input');
-        var endInput = rangeElement.find('.dms-end-input');
-        var claerButton = rangeElement.find('.dms-btn-clear-input');
-        var dateFormat = Dms.utilities.convertPhpDateFormatToMomentFormat(startInput.attr('data-date-format'));
-        var mode = rangeElement.attr('data-mode');
-
-        var config = {
-            locale: {
-                format: dateFormat
-            },
-            parentEl: rangeElement.parent(),
-            showDropdowns: true,
-            autoApply: !rangeElement.attr('data-dont-auto-apply'),
-            linkedCalendars: false,
-            autoUpdateInput: false
-        };
-
-        if (mode === 'date-time') {
-            config.timePicker = true;
-            config.timePickerSeconds = true;
-
-            startInput.val(convertFromUtcToLocal(dateFormat, startInput.val()));
-            endInput.val(convertFromUtcToLocal(dateFormat, endInput.val()));
-            stagedForm.on('dms-before-submit', function () {
-                submitUtcDateTimeViaHiddenInput(stagedForm, dateFormat, startInput);
-                submitUtcDateTimeViaHiddenInput(stagedForm, dateFormat, endInput);
-            });
-        }
-
-        if (mode === 'time') {
-            config.timePicker = true;
-            config.timePickerSeconds = true;
-        }
-        // TODO: timezoned-date-time
-
-        startInput.daterangepicker(config, function (start, end, label) {
-            if (mode === 'date-time') {
-                start = start.local();
-                end = end.local();
-            }
-
-            startInput.val(start.format(dateFormat));
-            endInput.val(end.format(dateFormat));
-            rangeElement.triggerHandler('dms-range-updated');
-        });
-
-        var picker = startInput.data('daterangepicker');
-
-        if (startInput.val()) {
-            picker.setStartDate(startInput.val());
-        }
-        if (endInput.val()) {
-            picker.setEndDate(endInput.val());
-        }
-
-        endInput.on('focus click', function () {
-            startInput.focus();
-        });
-
-        if (mode === 'time') {
-            rangeElement.find('.calendar-table').hide();
-        }
-
-        startInput.on('apply.daterangepicker', function () {
-            formGroup.trigger('dms-change');
-        });
-
-        claerButton.on('click', function () {
-            startInput.val('');
-            endInput.val('');
-        });
-
-        stagedForm.on('dms-before-submit', function () {
-            formGroup.toggleClass('dms-form-no-submit', !startInput.val() && !endInput.val());
-        });
-    });
-
-    $('.dms-date-or-time-display[data-mode="date-time"]').each(function () {
-        var dateTimeDisplay = $(this);
-        var dateFormat = Dms.utilities.convertPhpDateFormatToMomentFormat(dateTimeDisplay.attr('data-date-format'));
-
-        dateTimeDisplay.text(convertFromUtcToLocal(dateFormat, dateTimeDisplay.text()));
-    });
-
-    $('.dms-date-or-time-range-display[data-mode="date-time"]').each(function () {
-        var dateTimeDisplay = $(this);
-        var startDisplay = dateTimeDisplay.find('.dms-start-display');
-        var endDisplay = dateTimeDisplay.find('.dms-end-display');
-        var dateFormat = Dms.utilities.convertPhpDateFormatToMomentFormat(dateTimeDisplay.attr('data-date-format'));
-
-        startDisplay.text(convertFromUtcToLocal(dateFormat, startDisplay.text()));
-        endDisplay.text(convertFromUtcToLocal(dateFormat, endDisplay.text()));
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
-
-    element.find('.list-of-checkboxes').each(function () {
-        var listOfCheckboxes = $(this);
-        listOfCheckboxes.find('input[type=checkbox]').iCheck({
-            checkboxClass: 'icheckbox_square-blue',
-            increaseArea: '20%'
-        });
-
-        var firstCheckbox = listOfCheckboxes.find('input[type=checkbox]').first();
-        firstCheckbox.attr('data-parsley-min-elements', listOfCheckboxes.attr('data-min-elements'));
-        firstCheckbox.attr('data-parsley-max-elements', listOfCheckboxes.attr('data-max-elements'));
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -62044,15 +62053,6 @@ Dms.form.initializeCallbacks.push(function (element) {
 
         stagedForm.on('dms-post-submit-success', resetAjaxInterception);
         innerModule.closest('.dms-page-content').on('dms-page-unloading', resetAjaxInterception);
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
-    element.find('.dms-inner-form').each(function () {
-        var innerForm = $(this);
-
-        if (innerForm.attr('data-readonly')) {
-            innerForm.find(':input').attr('readonly', 'readonly');
-        }
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -62236,7 +62236,7 @@ Dms.form.initializeCallbacks.push(function (element) {
             longitudeInput.val(result.lng());
             var address = result.address();
 
-            if (result.placeResult.name) {
+            if (result.placeResult.name && address.indexOf(result.placeResult.name) === -1) {
                 address = result.placeResult.name + ', ' + address;
             }
 
@@ -62339,12 +62339,6 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-    element.find('select[multiple]').multiselect({
-        enableFiltering: true,
-        includeSelectAllOption: true
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
     element.find('input[type="number"][data-max-decimal-places]').each(function () {
         $(this).attr('data-parsley-max-decimal-places', $(this).attr('data-max-decimal-places'));
     });
@@ -62374,6 +62368,12 @@ Dms.form.initializeCallbacks.push(function (element) {
     element.find('input[type=radio]').iCheck({
         radioClass: 'iradio_square-blue',
         increaseArea: '20%'
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+    element.find('select[multiple]').multiselect({
+        enableFiltering: true,
+        includeSelectAllOption: true
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -62411,6 +62411,9 @@ Dms.form.initializeCallbacks.push(function (element) {
             displayKey: 'val'
         });
     });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+
 });
 Dms.form.initializeCallbacks.push(function (element) {
 
@@ -62615,12 +62618,6 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-
-});
-Dms.form.initializeCallbacks.push(function (element) {
-
-});
-Dms.form.initializeCallbacks.push(function (element) {
     if (typeof tinymce === 'undefined') {
         return;
     }
@@ -62745,218 +62742,8 @@ Dms.form.initializeCallbacks.push(function (element) {
         });
     };
 });
-Dms.table.initializeCallbacks.push(function (element) {
-    var groupCounter = 0;
+Dms.form.initializeCallbacks.push(function (element) {
 
-    element.find('.dms-table-body-sortable').each(function () {
-        var tableBody = $(this);
-        var table = tableBody.closest('.dms-table');
-        var control = tableBody.closest('.dms-table-control');
-        var reorderRowsUrl = control.attr('data-reorder-row-action-url');
-
-        var performReorder = function (event) {
-            var newIndex = typeof event.newIndex === 'undefined' ? event.oldIndex : event.newIndex;
-
-            var criteria = control.data('dms-table-criteria');
-            var row = $(event.item);
-            var objectId = row.find('.dms-row-action-column').attr('data-object-id');
-            var reorderButtonHandle = row.find('.dms-drag-handle');
-
-            var reorderRequest = Dms.ajax.createRequest({
-                url: reorderRowsUrl,
-                type: 'post',
-                dataType: 'html',
-                data: {
-                    object: objectId,
-                    index: criteria.offset + newIndex + 1
-                }
-            });
-
-            if (reorderButtonHandle.is('button')) {
-                reorderButtonHandle.addClass('ladda-button').attr('data-style', 'expand-right');
-                var ladda = Ladda.create(reorderButtonHandle.get(0));
-                ladda.start();
-
-                reorderRequest.always(ladda.stop);
-            }
-
-            reorderRequest.done(function () {
-                table.triggerHandler('dms-load-table-data');
-            });
-
-            reorderRequest.fail(function () {
-                swal({
-                    title: "Could not reorder item",
-                    text: "An unexpected error occurred",
-                    type: "error"
-                });
-            });
-        };
-
-        var sortable = new Sortable(tableBody.get(0), {
-            group: "sortable-group" + groupCounter++,
-            sort: true,  // sorting inside list
-            animation: 150,  // ms, animation speed moving items when sorting, `0` — without animation
-            handle: ".dms-drag-handle",  // Drag handle selector within list items
-            draggable: "tr",  // Specifies which items inside the element should be sortable
-            ghostClass: "sortable-ghost",  // Class name for the drop placeholder
-            chosenClass: "sortable-chosen",  // Class name for the chosen item
-            dataIdAttr: 'data-id',
-
-            onEnd: performReorder
-
-        });
-    });
-});
-Dms.table.initializeCallbacks.push(function (element) {
-
-    element.find('.dms-table-control').each(function () {
-        var control = $(this);
-        var tableContainer = control.find('.dms-table-container');
-        var table = tableContainer.find('table.dms-table');
-        var filterForm = control.find('.dms-table-quick-filter-form');
-        var rowsPerPageSelect = control.find('.dms-table-rows-per-page-form select');
-        var paginationPreviousButton = control.find('.dms-table-pagination .dms-pagination-previous');
-        var paginationNextButton = control.find('.dms-table-pagination .dms-pagination-next');
-        var loadRowsUrl = control.attr('data-load-rows-url');
-        var stringFilterableComponentIds = JSON.parse(control.attr('data-string-filterable-component-ids')) || [];
-
-        var currentPage = 0;
-
-        var criteria = {
-            orderings: [],
-            condition_mode: 'or',
-            conditions: [],
-            offset: 0,
-            max_rows: rowsPerPageSelect.val()
-        };
-
-        var currentAjaxRequest;
-
-        var loadCurrentPage = function () {
-            if (currentAjaxRequest) {
-                currentAjaxRequest.abort();
-            }
-
-            tableContainer.addClass('loading');
-
-            criteria.offset = currentPage * criteria.max_rows;
-
-            currentAjaxRequest = Dms.ajax.createRequest({
-                url: loadRowsUrl,
-                type: 'post',
-                dataType: 'html',
-                data: criteria
-            });
-
-            currentAjaxRequest.done(function (tableData) {
-                table.html(tableData);
-                Dms.table.initialize(table);
-                Dms.form.initialize(table);
-
-                control.data('dms-table-criteria', criteria);
-                control.attr('data-has-loaded-table-data', true);
-
-                if (table.find('tbody tr').length < criteria.max_rows) {
-                    paginationNextButton.addClass('disabled');
-                }
-            });
-
-            currentAjaxRequest.fail(function () {
-                if (currentAjaxRequest.statusText === 'abort') {
-                    return;
-                }
-
-                tableContainer.addClass('has-error');
-
-                swal({
-                    title: "Could not load table data",
-                    text: "An unexpected error occurred",
-                    type: "error"
-                });
-            });
-
-            currentAjaxRequest.always(function () {
-                tableContainer.removeClass('loading');
-            });
-        };
-
-        filterForm.find('button').click(function () {
-            var orderByComponent = filterForm.find('[name=component]').val();
-
-            if (orderByComponent) {
-                criteria.orderings = [
-                    {
-                        component: orderByComponent,
-                        direction: filterForm.find('[name=direction]').val()
-                    }
-                ];
-            } else {
-                criteria.orderings = [];
-            }
-
-            criteria.conditions = [];
-
-            var filterByString = filterForm.find('[name=filter]').val();
-
-            if (filterByString) {
-                $.each(stringFilterableComponentIds, function (index, componentId) {
-                    criteria.conditions.push({
-                        component: componentId,
-                        operator: 'string-contains-case-insensitive',
-                        value: filterByString
-                    });
-                });
-            }
-
-            loadCurrentPage();
-        });
-
-        filterForm.find('input[name=filter]').on('keyup', function (event) {
-            var enterKey = 13;
-
-            if (event.keyCode === enterKey) {
-                filterForm.find('button').click();
-            }
-        });
-
-        rowsPerPageSelect.on('change', function () {
-            criteria.max_rows = $(this).val();
-
-            loadCurrentPage();
-        });
-
-        paginationPreviousButton.click(function () {
-            currentPage--;
-            paginationNextButton.removeClass('disabled');
-            paginationPreviousButton.toggleClass('disabled', currentPage === 0);
-            loadCurrentPage();
-        });
-
-        paginationNextButton.click(function () {
-            currentPage++;
-            paginationPreviousButton.removeClass('disabled');
-            loadCurrentPage();
-        });
-
-        paginationPreviousButton.addClass('disabled');
-
-        if (table.is(':visible')) {
-            loadCurrentPage();
-        }
-
-        table.on('dms-load-table-data', loadCurrentPage);
-    });
-
-    $('.dms-table-tabs').each(function () {
-        var tabs = $(this);
-
-        tabs.find('.dms-table-tab-show-button').on('click', function () {
-            var linkedTablePane = $($(this).attr('href'));
-
-            linkedTablePane.find('.dms-table-control:not([data-has-loaded-table-data]) .dms-table-container:not(.loading) .dms-table').triggerHandler('dms-load-table-data');
-        });
-    });
 });
 Dms.form.initializeCallbacks.push(function (element) {
 
@@ -63367,6 +63154,219 @@ Dms.form.initializeValidationCallbacks.push(function (element) {
     element.find('.dms-form').each(function () {
         var form = $(this);
         var parsley = Dms.form.validation.initialize(form);
+    });
+});
+Dms.table.initializeCallbacks.push(function (element) {
+    var groupCounter = 0;
+
+    element.find('.dms-table-body-sortable').each(function () {
+        var tableBody = $(this);
+        var table = tableBody.closest('.dms-table');
+        var control = tableBody.closest('.dms-table-control');
+        var reorderRowsUrl = control.attr('data-reorder-row-action-url');
+
+        var performReorder = function (event) {
+            var newIndex = typeof event.newIndex === 'undefined' ? event.oldIndex : event.newIndex;
+
+            var criteria = control.data('dms-table-criteria');
+            var row = $(event.item);
+            var objectId = row.find('.dms-row-action-column').attr('data-object-id');
+            var reorderButtonHandle = row.find('.dms-drag-handle');
+
+            var reorderRequest = Dms.ajax.createRequest({
+                url: reorderRowsUrl,
+                type: 'post',
+                dataType: 'html',
+                data: {
+                    object: objectId,
+                    index: criteria.offset + newIndex + 1
+                }
+            });
+
+            if (reorderButtonHandle.is('button')) {
+                reorderButtonHandle.addClass('ladda-button').attr('data-style', 'expand-right');
+                var ladda = Ladda.create(reorderButtonHandle.get(0));
+                ladda.start();
+
+                reorderRequest.always(ladda.stop);
+            }
+
+            reorderRequest.done(function () {
+                table.triggerHandler('dms-load-table-data');
+            });
+
+            reorderRequest.fail(function () {
+                swal({
+                    title: "Could not reorder item",
+                    text: "An unexpected error occurred",
+                    type: "error"
+                });
+            });
+        };
+
+        var sortable = new Sortable(tableBody.get(0), {
+            group: "sortable-group" + groupCounter++,
+            sort: true,  // sorting inside list
+            animation: 150,  // ms, animation speed moving items when sorting, `0` — without animation
+            handle: ".dms-drag-handle",  // Drag handle selector within list items
+            draggable: "tr",  // Specifies which items inside the element should be sortable
+            ghostClass: "sortable-ghost",  // Class name for the drop placeholder
+            chosenClass: "sortable-chosen",  // Class name for the chosen item
+            dataIdAttr: 'data-id',
+
+            onEnd: performReorder
+
+        });
+    });
+});
+Dms.table.initializeCallbacks.push(function (element) {
+
+    element.find('.dms-table-control').each(function () {
+        var control = $(this);
+        var tableContainer = control.find('.dms-table-container');
+        var table = tableContainer.find('table.dms-table');
+        var filterForm = control.find('.dms-table-quick-filter-form');
+        var rowsPerPageSelect = control.find('.dms-table-rows-per-page-form select');
+        var paginationPreviousButton = control.find('.dms-table-pagination .dms-pagination-previous');
+        var paginationNextButton = control.find('.dms-table-pagination .dms-pagination-next');
+        var loadRowsUrl = control.attr('data-load-rows-url');
+        var stringFilterableComponentIds = JSON.parse(control.attr('data-string-filterable-component-ids')) || [];
+
+        var currentPage = 0;
+
+        var criteria = {
+            orderings: [],
+            condition_mode: 'or',
+            conditions: [],
+            offset: 0,
+            max_rows: rowsPerPageSelect.val()
+        };
+
+        var currentAjaxRequest;
+
+        var loadCurrentPage = function () {
+            if (currentAjaxRequest) {
+                currentAjaxRequest.abort();
+            }
+
+            tableContainer.addClass('loading');
+
+            criteria.offset = currentPage * criteria.max_rows;
+
+            currentAjaxRequest = Dms.ajax.createRequest({
+                url: loadRowsUrl,
+                type: 'post',
+                dataType: 'html',
+                data: criteria
+            });
+
+            currentAjaxRequest.done(function (tableData) {
+                table.html(tableData);
+                Dms.table.initialize(table);
+                Dms.form.initialize(table);
+
+                control.data('dms-table-criteria', criteria);
+                control.attr('data-has-loaded-table-data', true);
+
+                if (table.find('tbody tr').length < criteria.max_rows) {
+                    paginationNextButton.addClass('disabled');
+                }
+            });
+
+            currentAjaxRequest.fail(function () {
+                if (currentAjaxRequest.statusText === 'abort') {
+                    return;
+                }
+
+                tableContainer.addClass('has-error');
+
+                swal({
+                    title: "Could not load table data",
+                    text: "An unexpected error occurred",
+                    type: "error"
+                });
+            });
+
+            currentAjaxRequest.always(function () {
+                tableContainer.removeClass('loading');
+            });
+        };
+
+        filterForm.find('button').click(function () {
+            var orderByComponent = filterForm.find('[name=component]').val();
+
+            if (orderByComponent) {
+                criteria.orderings = [
+                    {
+                        component: orderByComponent,
+                        direction: filterForm.find('[name=direction]').val()
+                    }
+                ];
+            } else {
+                criteria.orderings = [];
+            }
+
+            criteria.conditions = [];
+
+            var filterByString = filterForm.find('[name=filter]').val();
+
+            if (filterByString) {
+                $.each(stringFilterableComponentIds, function (index, componentId) {
+                    criteria.conditions.push({
+                        component: componentId,
+                        operator: 'string-contains-case-insensitive',
+                        value: filterByString
+                    });
+                });
+            }
+
+            loadCurrentPage();
+        });
+
+        filterForm.find('input[name=filter]').on('keyup', function (event) {
+            var enterKey = 13;
+
+            if (event.keyCode === enterKey) {
+                filterForm.find('button').click();
+            }
+        });
+
+        rowsPerPageSelect.on('change', function () {
+            criteria.max_rows = $(this).val();
+
+            loadCurrentPage();
+        });
+
+        paginationPreviousButton.click(function () {
+            currentPage--;
+            paginationNextButton.removeClass('disabled');
+            paginationPreviousButton.toggleClass('disabled', currentPage === 0);
+            loadCurrentPage();
+        });
+
+        paginationNextButton.click(function () {
+            currentPage++;
+            paginationPreviousButton.removeClass('disabled');
+            loadCurrentPage();
+        });
+
+        paginationPreviousButton.addClass('disabled');
+
+        if (table.is(':visible')) {
+            loadCurrentPage();
+        }
+
+        table.on('dms-load-table-data', loadCurrentPage);
+    });
+
+    $('.dms-table-tabs').each(function () {
+        var tabs = $(this);
+
+        tabs.find('.dms-table-tab-show-button').on('click', function () {
+            var linkedTablePane = $($(this).attr('href'));
+
+            linkedTablePane.find('.dms-table-control:not([data-has-loaded-table-data]) .dms-table-container:not(.loading) .dms-table').triggerHandler('dms-load-table-data');
+        });
     });
 });
 Dms.widget.initializeCallbacks.push(function () {

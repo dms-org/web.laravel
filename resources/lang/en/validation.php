@@ -47,6 +47,7 @@ return [
     'file-extensions'           => 'The :field field only allows files with the :extensions extension',
     'image'                     => 'The :field must be an image.',
     'in'                        => 'The selected :field is invalid.',
+    'object-id'                 => 'The selected :field is invalid.',
     'int'                       => 'The :field must be a whole number.',
     'integer'                   => 'The :field must be an integer.',
     'ip-address'                => 'The :field must be a valid IP address.',

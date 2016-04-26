@@ -24,11 +24,11 @@ Dms.form.stages.makeDependentFieldSelectorForStageMap = function (stageToDepende
 
     $.each(stageToDependentFieldMap, function (stageNumber, dependentFields) {
         if (dependentFields === '*') {
-            selectors.push('.dms-form-stage[data-stage-number="' + stageNumber + '"] :input');
+            selectors.push('.dms-form-stage[data-stage-number="' + stageNumber + '"] ' +  selector + ':input');
         } else {
             var fieldsInStageSelector = Dms.form.stages.makeDependentFieldSelectorFor(
                 dependentFields,
-                '.dms-form-stage[data-stage-number="' + stageNumber + '"] *',
+                '.dms-form-stage[data-stage-number="' + stageNumber + '"] ' + selector,
                 true
             );
 

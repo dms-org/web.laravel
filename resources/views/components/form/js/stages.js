@@ -20,15 +20,19 @@ Dms.form.initializeCallbacks.push(function (element) {
             var container = currentStage.closest('.dms-form-stage-container');
             var previousStages = container.prevAll('.dms-form-stage-container').find('.dms-form-stage');
             var loadStageUrl = currentStage.attr('data-load-stage-url');
-            var dependentFields = currentStage.attr('data-stage-dependent-fields');
-            var dependentFieldNames = dependentFields ? JSON.parse(dependentFields) : null;
+            var dependentFields = currentStage.attr('data-stage-dependent-fields-stage-map');
+            var stageToDependentFieldsMap = dependentFields ? JSON.parse(currentStage.attr('data-stage-dependent-fields-stage-map')) : null;
             var currentAjaxRequest = null;
             var previousLoadAttempt = 0;
             var minMillisecondsBetweenLoads = 2000;
             var isWaitingForNextLoadAttempt = false;
 
             var makeDependentFieldSelectorFor = function (selector) {
-                return Dms.form.stages.makeDependentFieldSelectorFor(dependentFieldNames, selector);
+                if (stageToDependentFieldsMap) {
+                    return Dms.form.stages.makeDependentFieldSelectorForStageMap(stageToDependentFieldsMap, selector);
+                } else {
+                    return Dms.form.stages.makeDependentFieldSelectorFor(null, selector);
+                }
             };
 
             var loadNextStage = function () {
@@ -37,13 +41,17 @@ Dms.form.initializeCallbacks.push(function (element) {
                     currentAjaxRequest.abort();
                 }
 
-                if (dependentFieldNames) {
+                if (stageToDependentFieldsMap) {
                     var hasLoadedAllRequiredFields = true;
 
-                    $.each(dependentFieldNames, function (index, fieldName) {
-                        if (previousStages.find(Dms.form.stages.makeDependentFieldSelectorFor([fieldName], '*')).length === 0) {
-                            hasLoadedAllRequiredFields = false;
-                        }
+                    $.each(stageToDependentFieldsMap, function (stageNumber, dependentFields) {
+                        var stage = previousStages.filter('[data-stage-number=' + stageNumber + ']');
+
+                        $.each(dependentFields, function (index, fieldName) {
+                            if (stage.find(Dms.form.stages.makeDependentFieldSelectorFor([fieldName], '*')).length === 0) {
+                                hasLoadedAllRequiredFields = false;
+                            }
+                        });
                     });
 
                     if (!hasLoadedAllRequiredFields) {
@@ -69,7 +77,7 @@ Dms.form.initializeCallbacks.push(function (element) {
                     return;
                 }
 
-                var previousFields = previousStages.find(makeDependentFieldSelectorFor('*'));
+                var previousFields = form.find(makeDependentFieldSelectorFor('*'));
 
                 if (!arePreviousFieldsValid(previousFields)) {
                     container.removeClass('loading');
@@ -132,19 +140,23 @@ Dms.form.initializeCallbacks.push(function (element) {
                 });
             };
 
-            previousStages.on('input', makeDependentFieldSelectorFor('input'), loadNextStage);
-            previousStages.on('input', makeDependentFieldSelectorFor('textarea'), loadNextStage);
-            previousStages.on('change', makeDependentFieldSelectorFor('select'), loadNextStage);
+            form.on('input', makeDependentFieldSelectorFor('input'), loadNextStage);
+            form.on('input', makeDependentFieldSelectorFor('textarea'), loadNextStage);
+            form.on('change', makeDependentFieldSelectorFor('select'), loadNextStage);
 
-            if (dependentFieldNames) {
+            if (stageToDependentFieldsMap) {
                 var selectors = [];
-                $.each(dependentFieldNames, function (index, fieldName) {
-                    selectors.push('.form-group[data-field-name="' + fieldName + '"]');
+
+                $.each(stageToDependentFieldsMap, function (stageNumber, dependentFields) {
+                    var stage = previousStages.filter('[data-stage-number=' + stageNumber + ']');
+                    $.each(dependentFields, function (index, fieldName) {
+                        selectors.push('.dms-form-stage[data-stage-number=' + stageNumber + '] .form-group[data-field-name="' + fieldName + '"]');
+                    });
                 });
 
-                previousStages.on('dms-change', selectors.join(','), loadNextStage);
+                form.on('dms-change', selectors.join(','), loadNextStage);
             } else {
-                previousStages.on('dms-change', '.form-group[data-field-name]', loadNextStage);
+                form.on('dms-change', '.form-group[data-field-name]', loadNextStage);
             }
         });
     });

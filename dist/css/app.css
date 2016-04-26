@@ -61,6 +61,9 @@ a.dms-run-action-form {
 .dms-staged-form-container.loading .dms-staged-form {
   opacity: .3; }
 
+.dms-form-stage-container:not(.loaded):not(.loading) + .dms-form-stage-container:not(.loaded):not(.loading) {
+  display: none; }
+
 .dms-staged-form .help-block-error {
   color: #a94442; }
 
@@ -70,9 +73,6 @@ a.dms-run-action-form {
 .dms-staged-form .dms-form-stage-container.loading .dms-form-stage {
   min-height: 50px;
   opacity: .3; }
-
-.dms-staged-form .dms-form-stage-container.loading:not(.loaded):not(.loading) + .dms-staged-form .dms-form-stage-container.loading:not(.loaded):not(.loading) {
-  display: none; }
 
 .dms-staged-form .dropzone {
   border: 2px dashed #0087F7;

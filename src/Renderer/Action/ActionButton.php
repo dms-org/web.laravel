@@ -2,7 +2,7 @@
 
 namespace Dms\Web\Laravel\Renderer\Action;
 
-use Dms\Core\Table\ITableRow;
+use Dms\Core\Model\ITypedObject;
 
 /**
  * The action button class.
@@ -30,21 +30,27 @@ class ActionButton
      * @var callable
      */
     private $urlCallback;
+    /**
+     * @var callable
+     */
+    private $objectSupportedCallback;
 
     /**
      * RowActionButton constructor.
      *
-     * @param bool     $isPost
-     * @param string   $name
-     * @param string   $label
-     * @param callable $urlCallback
+     * @param bool          $isPost
+     * @param string        $name
+     * @param string        $label
+     * @param callable      $urlCallback
+     * @param callable|null $objectSupportedCallback
      */
-    public function __construct(bool $isPost, string $name, string $label, callable $urlCallback)
+    public function __construct(bool $isPost, string $name, string $label, callable $urlCallback, callable $objectSupportedCallback = null)
     {
-        $this->isPost      = $isPost;
-        $this->name        = $name;
-        $this->label       = $label;
-        $this->urlCallback = $urlCallback;
+        $this->isPost                  = $isPost;
+        $this->name                    = $name;
+        $this->label                   = $label;
+        $this->urlCallback             = $urlCallback;
+        $this->objectSupportedCallback = $objectSupportedCallback;
     }
 
     /**
@@ -79,5 +85,25 @@ class ActionButton
     public function getLabel() : string
     {
         return $this->label;
+    }
+
+    /**
+     * @return bool
+     */
+    public function hasObjectSupportedCallback() : bool
+    {
+        return $this->objectSupportedCallback !== null;
+    }
+
+    /**
+     * @param ITypedObject $object
+     *
+     * @return bool
+     */
+    public function isSupported(ITypedObject $object) : bool
+    {
+        return $this->objectSupportedCallback
+            ? call_user_func($this->objectSupportedCallback, $object)
+            : true;
     }
 }

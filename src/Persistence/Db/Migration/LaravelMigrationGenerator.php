@@ -288,7 +288,7 @@ class LaravelMigrationGenerator extends MigrationGenerator
                 $code->appendLine($this->createDropIndexCode($index->getName()));
             }
 
-            foreach ($table->removedIndexes as $oldName => $index) {
+            foreach ($table->renamedIndexes as $oldName => $index) {
                 $code->appendLine($this->createDropIndexCode($oldName));
                 $code->appendLine($this->createAddIndexCode($index));
             }

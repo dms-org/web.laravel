@@ -88,7 +88,7 @@ Dms.form.initializeCallbacks.push(function (element) {
 
         google.maps.event.addListener(addressPicker.getGMarker(), "dragend", function (event) {
             forceSetAddress = true;
-        });A
+        });
 
         var triggerReverseGeocode = function () {
             forceSetAddress = true;

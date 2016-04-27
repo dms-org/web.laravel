@@ -13,6 +13,7 @@ use Dms\Core\Ioc\IIocContainer;
 use Dms\Core\Language\ILanguageProvider;
 use Dms\Core\Model\Object\TypedObjectAccessibilityAssertion;
 use Dms\Core\Persistence\Db\Connection\IConnection;
+use Dms\Core\Persistence\Db\Doctrine\Migration\CustomColumnDefinitionEventSubscriber;
 use Dms\Core\Util\DateTimeClock;
 use Dms\Core\Util\IClock;
 use Dms\Web\Laravel\Action\ActionExceptionHandlerCollection;
@@ -282,6 +283,11 @@ class DmsServiceProvider extends ServiceProvider
         $this->app->singleton(IConnection::class, function () {
             /** @var Connection $connection */
             $connection = $this->app->make(Connection::class);
+
+            if ($this->isRunningInConsole()) {
+                $connection->getDoctrineConnection()->getDatabasePlatform()->registerDoctrineTypeMapping('enum', 'string');
+                $connection->getDoctrineConnection()->getEventManager()->addEventSubscriber(new CustomColumnDefinitionEventSubscriber());
+            }
 
             if ($connection instanceof MySqlConnection
                 && version_compare($connection->getPdo()->getAttribute(\PDO::ATTR_SERVER_VERSION), '5.7.6', '>=')

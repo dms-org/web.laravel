@@ -71,7 +71,7 @@ Dms.form.initializeCallbacks.push(function (element) {
         }
 
         if (mode === 'time') {
-            inputElement.closest('.date-picker-container').find('.calendar-table').hide();
+            inputElement.closest('.dms-date-picker-container').find('.calendar-table').hide();
         }
 
         inputElement.on('apply.daterangepicker', function () {
@@ -143,7 +143,7 @@ Dms.form.initializeCallbacks.push(function (element) {
         });
 
         if (mode === 'time') {
-            rangeElement.find('.calendar-table').hide();
+            rangeElement.parent().find('.calendar-table').hide();
         }
 
         startInput.on('apply.daterangepicker', function () {

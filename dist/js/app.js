@@ -1672,7 +1672,7 @@ Dms.form.initializeCallbacks.push(function (element) {
         }
 
         if (mode === 'time') {
-            inputElement.closest('.date-picker-container').find('.calendar-table').hide();
+            inputElement.closest('.dms-date-picker-container').find('.calendar-table').hide();
         }
 
         inputElement.on('apply.daterangepicker', function () {
@@ -1744,7 +1744,7 @@ Dms.form.initializeCallbacks.push(function (element) {
         });
 
         if (mode === 'time') {
-            rangeElement.find('.calendar-table').hide();
+            rangeElement.parent().find('.calendar-table').hide();
         }
 
         startInput.on('apply.daterangepicker', function () {
@@ -2563,28 +2563,6 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-    element.find('.dms-money-input-group').each(function () {
-        var inputGroup = $(this);
-        var moneyInput = inputGroup.find('.dms-money-input');
-        var currencyInput = inputGroup.find('.dms-currency-input');
-
-        moneyInput.attr({
-            'type': 'number',
-            'data-parsley-type': 'number'
-        });
-
-        var updateDecimalDigits = function () {
-            var selectedOption = currencyInput.children('option:selected');
-
-            var decimalDigits = selectedOption.attr('data-fractional-digits');
-            moneyInput.attr('step', Math.pow(0.1, decimalDigits).toFixed(decimalDigits));
-        };
-
-        currencyInput.on('change', updateDecimalDigits);
-        updateDecimalDigits();
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
     element.find('select[multiple]').multiselect({
         enableFiltering: true,
         includeSelectAllOption: true
@@ -2624,6 +2602,28 @@ Dms.form.initializeCallbacks.push(function (element) {
 });
 Dms.form.initializeCallbacks.push(function (element) {
 
+});
+Dms.form.initializeCallbacks.push(function (element) {
+    element.find('.dms-money-input-group').each(function () {
+        var inputGroup = $(this);
+        var moneyInput = inputGroup.find('.dms-money-input');
+        var currencyInput = inputGroup.find('.dms-currency-input');
+
+        moneyInput.attr({
+            'type': 'number',
+            'data-parsley-type': 'number'
+        });
+
+        var updateDecimalDigits = function () {
+            var selectedOption = currencyInput.children('option:selected');
+
+            var decimalDigits = selectedOption.attr('data-fractional-digits');
+            moneyInput.attr('step', Math.pow(0.1, decimalDigits).toFixed(decimalDigits));
+        };
+
+        currencyInput.on('change', updateDecimalDigits);
+        updateDecimalDigits();
+    });
 });
 Dms.form.initializeCallbacks.push(function (element) {
     element.find('input[type="ip-address"]')
@@ -3414,37 +3414,6 @@ Dms.form.initializeValidationCallbacks.push(function (element) {
         var parsley = Dms.form.validation.initialize(form);
     });
 });
-Dms.widget.initializeCallbacks.push(function () {
-    $('.dms-widget-unparameterized-action, .dms-widget-parameterized-action').each(function () {
-        var widget = $(this);
-        var button = widget.find('button');
-
-        if (button.is('.btn-danger')) {
-            var isConfirmed = false;
-
-            button.click(function () {
-                if (isConfirmed) {
-                    isConfirmed = false;
-                    return;
-                }
-
-                swal({
-                    title: "Are you sure?",
-                    text: "This will execute the '" + widget.attr('data-action-label') + "' action",
-                    type: "warning",
-                    showCancelButton: true,
-                    confirmButtonColor: "#DD6B55",
-                    confirmButtonText: "Yes proceed!"
-                }, function () {
-                    isConfirmed = true;
-                    $(this).click();
-                });
-
-                return false;
-            });
-        }
-    });
-});
 Dms.table.initializeCallbacks.push(function (element) {
     var groupCounter = 0;
 
@@ -3656,6 +3625,37 @@ Dms.table.initializeCallbacks.push(function (element) {
 
             linkedTablePane.find('.dms-table-control:not([data-has-loaded-table-data]) .dms-table-container:not(.loading) .dms-table').triggerHandler('dms-load-table-data');
         });
+    });
+});
+Dms.widget.initializeCallbacks.push(function () {
+    $('.dms-widget-unparameterized-action, .dms-widget-parameterized-action').each(function () {
+        var widget = $(this);
+        var button = widget.find('button');
+
+        if (button.is('.btn-danger')) {
+            var isConfirmed = false;
+
+            button.click(function () {
+                if (isConfirmed) {
+                    isConfirmed = false;
+                    return;
+                }
+
+                swal({
+                    title: "Are you sure?",
+                    text: "This will execute the '" + widget.attr('data-action-label') + "' action",
+                    type: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#DD6B55",
+                    confirmButtonText: "Yes proceed!"
+                }, function () {
+                    isConfirmed = true;
+                    $(this).click();
+                });
+
+                return false;
+            });
+        }
     });
 });
 Dms.table.initializeCallbacks.push(function (element) {

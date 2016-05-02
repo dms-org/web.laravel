@@ -57,7 +57,14 @@ class TableRenderer
      * @throws \Exception
      * @throws \Throwable
      */
-    public function renderTableData(ModuleContext $moduleContext, ITableDisplay $table, IDataTable $tableData, string $viewName = null, bool $isFiltered = false, array $actionButtons = null) : string
+    public function renderTableData(
+        ModuleContext $moduleContext,
+        ITableDisplay $table,
+        IDataTable $tableData,
+        string $viewName = null,
+        bool $isFiltered = false,
+        array $actionButtons = null
+    ) : string
     {
         $columnRenderers = [];
 
@@ -122,6 +129,7 @@ class TableRenderer
                 'loadRowsUrl'                  => $moduleContext->getUrl('table.view.load', [$table->getName(), $viewName]),
                 'reorderRowActionUrl'          => $reorderRowActionUrl,
                 'stringFilterableComponentIds' => $this->getStringFilterableColumnComponentIds($table->getDataSource()),
+                'defaultAmount'                => $moduleContext->getModule()->getMetadata('default-items-per-page'),
             ])
             ->render();
     }

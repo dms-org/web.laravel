@@ -17,7 +17,7 @@
                 <div class="form-group">
                     <select name="items_per_page" class="form-control">
                         @foreach([25, 50, 100, 200, 1000] as $amount)
-                            <option value="{{ $amount }}" @if($amount === ($defaultAmount ?? null)) selected @endif>{{ $amount }}</option>
+                            <option value="{{ $amount }}" @if($amount == ($defaultAmount ?? null)) selected @endif>{{ $amount }}</option>
                         @endforeach
                     </select>
                 </div>

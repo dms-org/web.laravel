@@ -1584,22 +1584,6 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-    element.find('input.dms-colour-input').each(function () {
-        var config = {
-            theme: 'bootstrap'
-        };
-
-        if ($(this).hasClass('dms-colour-input-rgb')) {
-            config.format = 'rgb';
-        } else if ($(this).hasClass('dms-colour-input-rgba')) {
-            config.format = 'rgb';
-            config.opacity = true;
-        }
-
-        $(this).addClass('minicolors').minicolors(config);
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
     var convertFromUtcToLocal = function (dateFormat, value) {
         if (value) {
             return moment.utc(value, dateFormat).local().format(dateFormat);
@@ -1776,6 +1760,22 @@ Dms.form.initializeCallbacks.push(function (element) {
 
         startDisplay.text(convertFromUtcToLocal(dateFormat, startDisplay.text()));
         endDisplay.text(convertFromUtcToLocal(dateFormat, endDisplay.text()));
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+    element.find('input.dms-colour-input').each(function () {
+        var config = {
+            theme: 'bootstrap'
+        };
+
+        if ($(this).hasClass('dms-colour-input-rgb')) {
+            config.format = 'rgb';
+        } else if ($(this).hasClass('dms-colour-input-rgba')) {
+            config.format = 'rgb';
+            config.opacity = true;
+        }
+
+        $(this).addClass('minicolors').minicolors(config);
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -2563,6 +2563,28 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
+    element.find('.dms-money-input-group').each(function () {
+        var inputGroup = $(this);
+        var moneyInput = inputGroup.find('.dms-money-input');
+        var currencyInput = inputGroup.find('.dms-currency-input');
+
+        moneyInput.attr({
+            'type': 'number',
+            'data-parsley-type': 'number'
+        });
+
+        var updateDecimalDigits = function () {
+            var selectedOption = currencyInput.children('option:selected');
+
+            var decimalDigits = selectedOption.attr('data-fractional-digits');
+            moneyInput.attr('step', Math.pow(0.1, decimalDigits).toFixed(decimalDigits));
+        };
+
+        currencyInput.on('change', updateDecimalDigits);
+        updateDecimalDigits();
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
     element.find('select[multiple]').multiselect({
         enableFiltering: true,
         includeSelectAllOption: true
@@ -2601,31 +2623,6 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-
-});
-Dms.form.initializeCallbacks.push(function (element) {
-    element.find('.dms-money-input-group').each(function () {
-        var inputGroup = $(this);
-        var moneyInput = inputGroup.find('.dms-money-input');
-        var currencyInput = inputGroup.find('.dms-currency-input');
-
-        moneyInput.attr({
-            'type': 'number',
-            'data-parsley-type': 'number'
-        });
-
-        var updateDecimalDigits = function () {
-            var selectedOption = currencyInput.children('option:selected');
-
-            var decimalDigits = selectedOption.attr('data-fractional-digits');
-            moneyInput.attr('step', Math.pow(0.1, decimalDigits).toFixed(decimalDigits));
-        };
-
-        currencyInput.on('change', updateDecimalDigits);
-        updateDecimalDigits();
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
     element.find('input[type="ip-address"]')
         .attr('type', 'text')
         .attr('data-parsley-ip-address', '1');
@@ -2660,6 +2657,12 @@ Dms.form.initializeCallbacks.push(function (element) {
             displayKey: 'val'
         });
     });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+
+});
+Dms.form.initializeCallbacks.push(function (element) {
+
 });
 Dms.form.initializeCallbacks.push(function (element) {
 
@@ -2862,9 +2865,6 @@ Dms.form.initializeCallbacks.push(function (element) {
             tableOfFields.find('.btn-add-row').remove();
         }
     });
-});
-Dms.form.initializeCallbacks.push(function (element) {
-
 });
 Dms.form.initializeCallbacks.push(function (element) {
     if (typeof tinymce === 'undefined') {
@@ -3115,6 +3115,7 @@ Dms.form.initializeCallbacks.push(function (element) {
                     var currentValues = currentStage.getValues(true);
                     currentStage.html(html);
                     Dms.form.initialize(currentStage);
+                    Dms.table.initialize(currentStage);
                     currentStage.restoreValues(currentValues);
                     form.triggerHandler('dms-form-updated');
                 });

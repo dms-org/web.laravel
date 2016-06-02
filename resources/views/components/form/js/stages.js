@@ -102,6 +102,7 @@ Dms.form.initializeCallbacks.push(function (element) {
                     var currentValues = currentStage.getValues(true);
                     currentStage.html(html);
                     Dms.form.initialize(currentStage);
+                    Dms.table.initialize(currentStage);
                     currentStage.restoreValues(currentValues);
                     form.triggerHandler('dms-form-updated');
                 });

@@ -61978,7 +61978,7 @@ Dms.form.initializeCallbacks.push(function (element) {
 
             innerModule.find('.dms-table-control .dms-table').triggerHandler('dms-load-table-data');
             innerModuleForm.empty();
-            formGroup.trigger('dms-change');
+            formGroup.triggerHandler('dms-change');
         };
 
         var rootActionUrl = rootUrl + '/action/';
@@ -62367,15 +62367,15 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-    element.find('input[type=radio]').iCheck({
-        radioClass: 'iradio_square-blue',
-        increaseArea: '20%'
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
     element.find('select[multiple]').multiselect({
         enableFiltering: true,
         includeSelectAllOption: true
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+    element.find('input[type=radio]').iCheck({
+        radioClass: 'iradio_square-blue',
+        increaseArea: '20%'
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -62620,6 +62620,9 @@ Dms.form.initializeCallbacks.push(function (element) {
 
 });
 Dms.form.initializeCallbacks.push(function (element) {
+
+});
+Dms.form.initializeCallbacks.push(function (element) {
     if (typeof tinymce === 'undefined') {
         return;
     }
@@ -62743,9 +62746,6 @@ Dms.form.initializeCallbacks.push(function (element) {
             filePicker.empty();
         });
     };
-});
-Dms.form.initializeCallbacks.push(function (element) {
-
 });
 Dms.form.initializeCallbacks.push(function (element) {
 

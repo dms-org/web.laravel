@@ -98,7 +98,7 @@ Dms.form.initializeCallbacks.push(function (element) {
 
             innerModule.find('.dms-table-control .dms-table').triggerHandler('dms-load-table-data');
             innerModuleForm.empty();
-            formGroup.trigger('dms-change');
+            formGroup.triggerHandler('dms-change');
         };
 
         var rootActionUrl = rootUrl + '/action/';

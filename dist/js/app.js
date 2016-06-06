@@ -1584,6 +1584,22 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
+    element.find('input.dms-colour-input').each(function () {
+        var config = {
+            theme: 'bootstrap'
+        };
+
+        if ($(this).hasClass('dms-colour-input-rgb')) {
+            config.format = 'rgb';
+        } else if ($(this).hasClass('dms-colour-input-rgba')) {
+            config.format = 'rgb';
+            config.opacity = true;
+        }
+
+        $(this).addClass('minicolors').minicolors(config);
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
     var convertFromUtcToLocal = function (dateFormat, value) {
         if (value) {
             return moment.utc(value, dateFormat).local().format(dateFormat);
@@ -2224,7 +2240,7 @@ Dms.form.initializeCallbacks.push(function (element) {
 
             innerModule.find('.dms-table-control .dms-table').triggerHandler('dms-load-table-data');
             innerModuleForm.empty();
-            formGroup.triggerHandler('dms-change');
+            formGroup.trigger('dms-change');
         };
 
         var rootActionUrl = rootUrl + '/action/';
@@ -2301,22 +2317,6 @@ Dms.form.initializeCallbacks.push(function (element) {
 
         stagedForm.on('dms-post-submit-success', resetAjaxInterception);
         innerModule.closest('.dms-page-content').on('dms-page-unloading', resetAjaxInterception);
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
-    element.find('input.dms-colour-input').each(function () {
-        var config = {
-            theme: 'bootstrap'
-        };
-
-        if ($(this).hasClass('dms-colour-input-rgb')) {
-            config.format = 'rgb';
-        } else if ($(this).hasClass('dms-colour-input-rgba')) {
-            config.format = 'rgb';
-            config.opacity = true;
-        }
-
-        $(this).addClass('minicolors').minicolors(config);
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -2587,6 +2587,12 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
+    element.find('select[multiple]').multiselect({
+        enableFiltering: true,
+        includeSelectAllOption: true
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
     element.find('input[type="number"][data-max-decimal-places]').each(function () {
         $(this).attr('data-parsley-max-decimal-places', $(this).attr('data-max-decimal-places'));
     });
@@ -2613,16 +2619,13 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-    element.find('select[multiple]').multiselect({
-        enableFiltering: true,
-        includeSelectAllOption: true
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
     element.find('input[type=radio]').iCheck({
         radioClass: 'iradio_square-blue',
         increaseArea: '20%'
     });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+
 });
 Dms.form.initializeCallbacks.push(function (element) {
     element.find('input[type="ip-address"]')
@@ -2861,9 +2864,6 @@ Dms.form.initializeCallbacks.push(function (element) {
             tableOfFields.find('.btn-add-row').remove();
         }
     });
-});
-Dms.form.initializeCallbacks.push(function (element) {
-
 });
 Dms.form.initializeCallbacks.push(function (element) {
 

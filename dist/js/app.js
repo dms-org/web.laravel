@@ -1763,22 +1763,6 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-    element.find('input.dms-colour-input').each(function () {
-        var config = {
-            theme: 'bootstrap'
-        };
-
-        if ($(this).hasClass('dms-colour-input-rgb')) {
-            config.format = 'rgb';
-        } else if ($(this).hasClass('dms-colour-input-rgba')) {
-            config.format = 'rgb';
-            config.opacity = true;
-        }
-
-        $(this).addClass('minicolors').minicolors(config);
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
 
     element.find('.dropzone-container').each(function () {
         var container = $(this);
@@ -2151,6 +2135,7 @@ Dms.form.initializeCallbacks.push(function (element) {
         }
 
         var fieldName = innerModule.attr('data-name');
+        var formGroup = innerModule.closest('.form-group');
         var rootUrl = innerModule.attr('data-root-url');
         var reloadStateUrl = rootUrl + '/state';
         var innerModuleFormContainer = innerModule.find('.dms-inner-module-form-container');
@@ -2239,6 +2224,7 @@ Dms.form.initializeCallbacks.push(function (element) {
 
             innerModule.find('.dms-table-control .dms-table').triggerHandler('dms-load-table-data');
             innerModuleForm.empty();
+            formGroup.trigger('dms-change');
         };
 
         var rootActionUrl = rootUrl + '/action/';
@@ -2315,6 +2301,22 @@ Dms.form.initializeCallbacks.push(function (element) {
 
         stagedForm.on('dms-post-submit-success', resetAjaxInterception);
         innerModule.closest('.dms-page-content').on('dms-page-unloading', resetAjaxInterception);
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+    element.find('input.dms-colour-input').each(function () {
+        var config = {
+            theme: 'bootstrap'
+        };
+
+        if ($(this).hasClass('dms-colour-input-rgb')) {
+            config.format = 'rgb';
+        } else if ($(this).hasClass('dms-colour-input-rgba')) {
+            config.format = 'rgb';
+            config.opacity = true;
+        }
+
+        $(this).addClass('minicolors').minicolors(config);
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -2585,12 +2587,6 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-    element.find('select[multiple]').multiselect({
-        enableFiltering: true,
-        includeSelectAllOption: true
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
     element.find('input[type="number"][data-max-decimal-places]').each(function () {
         $(this).attr('data-parsley-max-decimal-places', $(this).attr('data-max-decimal-places'));
     });
@@ -2620,6 +2616,12 @@ Dms.form.initializeCallbacks.push(function (element) {
     element.find('input[type=radio]').iCheck({
         radioClass: 'iradio_square-blue',
         increaseArea: '20%'
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+    element.find('select[multiple]').multiselect({
+        enableFiltering: true,
+        includeSelectAllOption: true
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -2657,12 +2659,6 @@ Dms.form.initializeCallbacks.push(function (element) {
             displayKey: 'val'
         });
     });
-});
-Dms.form.initializeCallbacks.push(function (element) {
-
-});
-Dms.form.initializeCallbacks.push(function (element) {
-
 });
 Dms.form.initializeCallbacks.push(function (element) {
 
@@ -2867,6 +2863,9 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
+
+});
+Dms.form.initializeCallbacks.push(function (element) {
     if (typeof tinymce === 'undefined') {
         return;
     }
@@ -2990,6 +2989,9 @@ Dms.form.initializeCallbacks.push(function (element) {
             filePicker.empty();
         });
     };
+});
+Dms.form.initializeCallbacks.push(function (element) {
+
 });
 Dms.form.initializeCallbacks.push(function (element) {
 

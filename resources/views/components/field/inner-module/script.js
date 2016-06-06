@@ -9,6 +9,7 @@ Dms.form.initializeCallbacks.push(function (element) {
         }
 
         var fieldName = innerModule.attr('data-name');
+        var formGroup = innerModule.closest('.form-group');
         var rootUrl = innerModule.attr('data-root-url');
         var reloadStateUrl = rootUrl + '/state';
         var innerModuleFormContainer = innerModule.find('.dms-inner-module-form-container');
@@ -97,6 +98,7 @@ Dms.form.initializeCallbacks.push(function (element) {
 
             innerModule.find('.dms-table-control .dms-table').triggerHandler('dms-load-table-data');
             innerModuleForm.empty();
+            formGroup.trigger('dms-change');
         };
 
         var rootActionUrl = rootUrl + '/action/';

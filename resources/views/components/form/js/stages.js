@@ -48,7 +48,7 @@ Dms.form.initializeCallbacks.push(function (element) {
                         var stage = previousStages.filter('[data-stage-number=' + stageNumber + ']');
 
                         $.each(dependentFields, function (index, fieldName) {
-                            if (stage.find(Dms.form.stages.makeDependentFieldSelectorFor([fieldName], '*')).length === 0) {
+                            if (stage.find('.form-group[data-field-name="' + fieldName + '"]').length === 0) {
                                 hasLoadedAllRequiredFields = false;
                             }
                         });

@@ -31,9 +31,14 @@ class ArrayOfOptionsFieldRenderer extends BladeFieldRenderer
     protected function canRender(FormRenderingContext $renderingContext, IField $field, IFieldType $fieldType) : bool
     {
         /** @var ArrayOfType $fieldType */
+
+        /** @var IFieldOptions|null $elementOptions */
+        $elementOptions = $fieldType->getElementType()->get(FieldType::ATTR_OPTIONS);
+
         return !$fieldType->has(FieldType::ATTR_OPTIONS)
-        && $fieldType->getElementType()->has(FieldType::ATTR_OPTIONS)
-        && $fieldType->get(ArrayOfType::ATTR_UNIQUE_ELEMENTS);
+        && $fieldType->get(ArrayOfType::ATTR_UNIQUE_ELEMENTS)
+        && $elementOptions
+        && !$elementOptions->canFilterOptions();
     }
 
     protected function renderField(

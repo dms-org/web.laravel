@@ -4,15 +4,19 @@ namespace Dms\Web\Laravel\Renderer\Form\Field;
 
 use Dms\Core\Form\Field\Type\FieldType;
 use Dms\Core\Form\IField;
+use Dms\Core\Form\IFieldOptions;
 use Dms\Core\Form\IFieldType;
 use Dms\Web\Laravel\Renderer\Form\FormRenderingContext;
+use Dms\Web\Laravel\Renderer\Form\IFieldRendererWithActions;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 /**
  * The select-box options field renderer
  *
  * @author Elliot Levin <elliotlevin@hotmail.com>
  */
-class SelectOptionsFieldRender extends OptionsFieldRender
+class SelectOptionsFieldRender extends OptionsFieldRender implements IFieldRendererWithActions
 {
     /**
      * Gets the expected class of the field type for the field.
@@ -36,12 +40,68 @@ class SelectOptionsFieldRender extends OptionsFieldRender
         IFieldType $fieldType
     ) : string
     {
-        return $this->renderView(
-            $field,
-            'dms::components.field.select.input',
-            [
-                FieldType::ATTR_OPTIONS => 'options',
-            ]
-        );
+        /** @var IFieldOptions $options */
+        $options = $fieldType->get(FieldType::ATTR_OPTIONS);
+
+        if ($options->canFilterOptions()) {
+            $remoteDataUrl = $renderingContext->getFieldActionUrl($field) . '/load-options';
+
+            try {
+                $initialValue = $field->getUnprocessedInitialValue();
+                $option       = $initialValue === null ? null : $options->getOptionForValue($initialValue);
+            } catch (\Exception $e) {
+                $option = null;
+            }
+
+            return $this->renderView(
+                $field,
+                'dms::components.field.select.remote-data-input',
+                [
+                    FieldType::ATTR_OPTIONS => 'options',
+                ],
+                [
+                    'remoteDataUrl'  => $remoteDataUrl,
+                    'remoteMinChars' => min(3, max(1, (int)log10($options->count()))),
+                    'option'         => $option,
+                ]
+            );
+        } else {
+            return $this->renderView(
+                $field,
+                'dms::components.field.select.input',
+                [
+                    FieldType::ATTR_OPTIONS => 'options',
+                ]
+            );
+        }
+    }
+
+    /**
+     * @param FormRenderingContext $renderingContext
+     * @param IField               $field
+     * @param Request              $request
+     * @param string               $actionName
+     * @param array                $data
+     *
+     * @return Response
+     */
+    public function handleAction(FormRenderingContext $renderingContext, IField $field, Request $request, string $actionName = null, array $data)
+    {
+        if (ends_with($request->url(), '/load-options') && $request->has('query')) {
+            /** @var IFieldOptions $options */
+            $options = $field->getType()->get(FieldType::ATTR_OPTIONS);
+
+            $data = [];
+
+            foreach ($options->getFilteredOptions((string)$request->input('query')) as $option) {
+                if (!$option->isDisabled()) {
+                    $data[] = ['val' => $option->getValue(), 'label' => $option->getLabel()];
+                }
+            }
+
+            return \response()->json($data);
+        }
+
+        abort(404);
     }
 }

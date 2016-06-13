@@ -22,17 +22,6 @@ Dms.form.initializeCallbacks.push(function (element) {
             innerModule.find(':input').attr('readonly', 'readonly');
         }
 
-        var getDependentData = function () {
-            if (!formStage.is('.dms-dependent-form-stage')) {
-                return Dms.ajax.createFormData();
-            }
-
-            var stageToDependentFieldsMap = JSON.parse(formStage.attr('data-stage-dependent-fields-stage-map'));
-            var dependentFieldsSelector = Dms.form.stages.makeDependentFieldSelectorForStageMap(stageToDependentFieldsMap, '*');
-
-            return Dms.form.stages.createFormDataFromFields(stagedForm.find(dependentFieldsSelector));
-        };
-
         var fieldDataPrefix = '__field_action_data';
         var interceptor;
 
@@ -41,7 +30,7 @@ Dms.form.initializeCallbacks.push(function (element) {
                 return options.url.indexOf(rootUrl) === 0 && options.url !== reloadStateUrl;
             },
             before: function (options) {
-                var formData = getDependentData();
+                var formData = Dms.form.stages.getDependentDataForStage(formStage);
                 formData.append(fieldDataPrefix + '[current_state]', JSON.stringify(currentValue));
                 formData.append(fieldDataPrefix + '[request][url]', options.url.substring(rootUrl.length));
                 formData.append(fieldDataPrefix + '[request][method]', options.__emulatedType || options.type || 'get');

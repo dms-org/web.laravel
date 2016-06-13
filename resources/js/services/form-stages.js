@@ -62,3 +62,16 @@ Dms.form.stages.createFormDataFromFields = function (fields) {
 
     return formData;
 };
+
+Dms.form.stages.getDependentDataForStage = function (formStage) {
+    var stagedForm = formStage.closest('.dms-staged-form');
+    
+    if (!formStage.is('.dms-dependent-form-stage')) {
+        return Dms.ajax.createFormData();
+    }
+
+    var stageToDependentFieldsMap = JSON.parse(formStage.attr('data-stage-dependent-fields-stage-map'));
+    var dependentFieldsSelector = Dms.form.stages.makeDependentFieldSelectorForStageMap(stageToDependentFieldsMap, '*');
+
+    return Dms.form.stages.createFormDataFromFields(stagedForm.find(dependentFieldsSelector));
+};

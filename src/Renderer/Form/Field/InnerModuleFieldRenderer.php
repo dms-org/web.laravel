@@ -149,15 +149,6 @@ class InnerModuleFieldRenderer extends BladeFieldRendererWithActions implements 
             /** @var ICrudModule|IReadModule $currentModule */
             $currentModule = $moduleContext->getModule();
 
-            $subModulePath = $moduleContext->getUrl('action.form.object.stage.field.action', [
-                $currentModule instanceof ICrudModule && $currentModule->getEditAction()
-                    ? $currentModule->getEditAction()->getName()
-                    : $renderingContext->getAction()->getName(),
-                $renderingContext->getObjectId(),
-                $renderingContext->getCurrentStageNumber(),
-                $field->getName(),
-            ]);
-
             $moduleContext = $moduleContext->withBreadcrumb(
                 $currentModule->getLabelFor($renderingContext->getObject()),
                 $moduleContext->getUrl('action.form', [
@@ -165,14 +156,10 @@ class InnerModuleFieldRenderer extends BladeFieldRendererWithActions implements 
                     $renderingContext->getObjectId(),
                 ])
             );
-        } else {
-            $subModulePath = $moduleContext->getUrl('action.form.stage.field.action', [
-                $renderingContext->getAction()->getName(),
-                $renderingContext->getCurrentStageNumber(),
-                $field->getName(),
-            ]);
         }
 
+        $subModulePath = $renderingContext->getFieldActionUrl($field);
+        
         return $moduleContext
             ->inSubModuleContext($innerModule, $subModulePath)
             ->withBreadcrumb(StringHumanizer::title($innerModule->getName()), $subModulePath);

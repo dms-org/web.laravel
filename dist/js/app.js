@@ -755,6 +755,19 @@ Dms.form.stages.createFormDataFromFields = function (fields) {
 
     return formData;
 };
+
+Dms.form.stages.getDependentDataForStage = function (formStage) {
+    var stagedForm = formStage.closest('.dms-staged-form');
+    
+    if (!formStage.is('.dms-dependent-form-stage')) {
+        return Dms.ajax.createFormData();
+    }
+
+    var stageToDependentFieldsMap = JSON.parse(formStage.attr('data-stage-dependent-fields-stage-map'));
+    var dependentFieldsSelector = Dms.form.stages.makeDependentFieldSelectorForStageMap(stageToDependentFieldsMap, '*');
+
+    return Dms.form.stages.createFormDataFromFields(stagedForm.find(dependentFieldsSelector));
+};
 Dms.link.isLocalLink = function (url) {
     var rootUrl = Dms.config.routes.localUrls.root;
     var excludedUrls = Dms.config.routes.localUrls.exclude;
@@ -2164,17 +2177,6 @@ Dms.form.initializeCallbacks.push(function (element) {
             innerModule.find(':input').attr('readonly', 'readonly');
         }
 
-        var getDependentData = function () {
-            if (!formStage.is('.dms-dependent-form-stage')) {
-                return Dms.ajax.createFormData();
-            }
-
-            var stageToDependentFieldsMap = JSON.parse(formStage.attr('data-stage-dependent-fields-stage-map'));
-            var dependentFieldsSelector = Dms.form.stages.makeDependentFieldSelectorForStageMap(stageToDependentFieldsMap, '*');
-
-            return Dms.form.stages.createFormDataFromFields(stagedForm.find(dependentFieldsSelector));
-        };
-
         var fieldDataPrefix = '__field_action_data';
         var interceptor;
 
@@ -2183,7 +2185,7 @@ Dms.form.initializeCallbacks.push(function (element) {
                 return options.url.indexOf(rootUrl) === 0 && options.url !== reloadStateUrl;
             },
             before: function (options) {
-                var formData = getDependentData();
+                var formData = Dms.form.stages.getDependentDataForStage(formStage);
                 formData.append(fieldDataPrefix + '[current_state]', JSON.stringify(currentValue));
                 formData.append(fieldDataPrefix + '[request][url]', options.url.substring(rootUrl.length));
                 formData.append(fieldDataPrefix + '[request][method]', options.__emulatedType || options.type || 'get');
@@ -2317,91 +2319,6 @@ Dms.form.initializeCallbacks.push(function (element) {
 
         stagedForm.on('dms-post-submit-success', resetAjaxInterception);
         innerModule.closest('.dms-page-content').on('dms-page-unloading', resetAjaxInterception);
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
-
-    element.find('ul.dms-field-list').each(function () {
-        var listOfFields = $(this);
-        var form = listOfFields.closest('.dms-staged-form');
-        var formGroup = listOfFields.closest('.form-group');
-        var templateField = listOfFields.find('.field-list-template');
-        var addButton = listOfFields.find('.btn-add-field');
-        var isInvalidating = false;
-
-        var minFields = listOfFields.attr('data-min-elements');
-        var maxFields = listOfFields.attr('data-max-elements');
-
-        var getAmountOfInputs = function () {
-            return listOfFields.children('.field-list-item').length;
-        };
-
-        var invalidateControl = function () {
-            if (isInvalidating) {
-                return;
-            }
-
-            isInvalidating = true;
-
-            var amountOfInputs = getAmountOfInputs();
-
-            addButton.prop('disabled', amountOfInputs >= maxFields);
-            listOfFields.find('.btn-remove-field').prop('disabled', amountOfInputs <= minFields);
-
-            while (amountOfInputs < minFields) {
-                addNewField();
-                amountOfInputs++;
-            }
-
-            isInvalidating = false;
-        };
-
-        var addNewField = function () {
-            var newField = templateField.clone()
-                .removeClass('field-list-template')
-                .removeClass('hidden')
-                .removeClass('dms-form-no-submit')
-                .addClass('field-list-item');
-
-            var fieldInputElement = newField.find('.field-list-input');
-            fieldInputElement.html(fieldInputElement.text());
-
-            var currentIndex = getAmountOfInputs();
-
-            $.each(['name', 'data-name', 'data-field-name'], function (index, attr) {
-                fieldInputElement.find('[' + attr + '*="::index::"]').each(function () {
-                    $(this).attr(attr, $(this).attr(attr).replace('::index::', currentIndex));
-                });
-            });
-
-            addButton.closest('.field-list-add').before(newField);
-
-            Dms.form.initialize(fieldInputElement);
-            form.triggerHandler('dms-form-updated');
-
-            invalidateControl();
-        };
-
-        listOfFields.on('click', '.btn-remove-field', function () {
-            var field = $(this).closest('.field-list-item');
-            field.remove();
-            formGroup.trigger('dms-change');
-            form.triggerHandler('dms-form-updated');
-
-            invalidateControl();
-            // TODO: reindex
-        });
-
-        addButton.on('click', addNewField);
-
-        invalidateControl();
-
-        var requiresAnExactAmountOfFields = typeof minFields !== 'undefined' && minFields === maxFields;
-        if (requiresAnExactAmountOfFields && getAmountOfInputs() == minFields) {
-            addButton.closest('.field-list-add').remove();
-            listOfFields.find('.btn-remove-field').closest('.field-list-button-container').remove();
-            listOfFields.find('.field-list-input').removeClass('col-xs-10 col-md-11').addClass('col-xs-12');
-        }
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -2565,6 +2482,91 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
+
+    element.find('ul.dms-field-list').each(function () {
+        var listOfFields = $(this);
+        var form = listOfFields.closest('.dms-staged-form');
+        var formGroup = listOfFields.closest('.form-group');
+        var templateField = listOfFields.find('.field-list-template');
+        var addButton = listOfFields.find('.btn-add-field');
+        var isInvalidating = false;
+
+        var minFields = listOfFields.attr('data-min-elements');
+        var maxFields = listOfFields.attr('data-max-elements');
+
+        var getAmountOfInputs = function () {
+            return listOfFields.children('.field-list-item').length;
+        };
+
+        var invalidateControl = function () {
+            if (isInvalidating) {
+                return;
+            }
+
+            isInvalidating = true;
+
+            var amountOfInputs = getAmountOfInputs();
+
+            addButton.prop('disabled', amountOfInputs >= maxFields);
+            listOfFields.find('.btn-remove-field').prop('disabled', amountOfInputs <= minFields);
+
+            while (amountOfInputs < minFields) {
+                addNewField();
+                amountOfInputs++;
+            }
+
+            isInvalidating = false;
+        };
+
+        var addNewField = function () {
+            var newField = templateField.clone()
+                .removeClass('field-list-template')
+                .removeClass('hidden')
+                .removeClass('dms-form-no-submit')
+                .addClass('field-list-item');
+
+            var fieldInputElement = newField.find('.field-list-input');
+            fieldInputElement.html(fieldInputElement.text());
+
+            var currentIndex = getAmountOfInputs();
+
+            $.each(['name', 'data-name', 'data-field-name'], function (index, attr) {
+                fieldInputElement.find('[' + attr + '*="::index::"]').each(function () {
+                    $(this).attr(attr, $(this).attr(attr).replace('::index::', currentIndex));
+                });
+            });
+
+            addButton.closest('.field-list-add').before(newField);
+
+            Dms.form.initialize(fieldInputElement);
+            form.triggerHandler('dms-form-updated');
+
+            invalidateControl();
+        };
+
+        listOfFields.on('click', '.btn-remove-field', function () {
+            var field = $(this).closest('.field-list-item');
+            field.remove();
+            formGroup.trigger('dms-change');
+            form.triggerHandler('dms-form-updated');
+
+            invalidateControl();
+            // TODO: reindex
+        });
+
+        addButton.on('click', addNewField);
+
+        invalidateControl();
+
+        var requiresAnExactAmountOfFields = typeof minFields !== 'undefined' && minFields === maxFields;
+        if (requiresAnExactAmountOfFields && getAmountOfInputs() == minFields) {
+            addButton.closest('.field-list-add').remove();
+            listOfFields.find('.btn-remove-field').closest('.field-list-button-container').remove();
+            listOfFields.find('.field-list-input').removeClass('col-xs-10 col-md-11').addClass('col-xs-12');
+        }
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
     element.find('.dms-money-input-group').each(function () {
         var inputGroup = $(this);
         var moneyInput = inputGroup.find('.dms-money-input');
@@ -2625,7 +2627,51 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
+    element.find('.dms-select-with-remote-data').each(function () {
+        var control = $(this);
+        var input = control.find('.dms-select-input');
+        var hiddenInput = control.find('.dms-select-hidden-input');
+        var formGroup = control.closest('.form-group');
+        var formStage = control.closest('.dms-form-stage');
 
+        var remoteDataUrl = control.attr('data-remote-options-url');
+        var remoteMinChars = control.attr('data-remote-min-chars');
+
+        var engine = new Bloodhound({
+            datumTokenizer: function (datum) {
+                return Bloodhound.tokenizers.whitespace(datum.value);
+            },
+            queryTokenizer: Bloodhound.tokenizers.whitespace,
+            remote: {
+                url: remoteDataUrl + '?query=%QUERY',
+                ajax: {
+                    type: 'POST',
+                    cache: false,
+                    processData: false,
+                    contentType: false,
+                    beforeSend: function (jqXHR, settings) {
+                        settings.data = Dms.form.stages.getDependentDataForStage(formStage).getNativeFormData();
+                    }
+                },
+                filter: function (results) {
+                    return results;
+                }
+            }
+        });
+
+        engine.initialize();
+
+        input.typeahead(null, {
+            displayKey: 'label',
+            hint: true,
+            highlight: true,
+            minLength: remoteMinChars,
+            source: engine.ttAdapter()
+        }).on('typeahead:selected', function (event, data) {
+            hiddenInput.val(data.val);
+            formGroup.trigger('dms-change');
+        });
+    });
 });
 Dms.form.initializeCallbacks.push(function (element) {
     element.find('input[type="ip-address"]')
@@ -3417,6 +3463,37 @@ Dms.form.initializeValidationCallbacks.push(function (element) {
         var parsley = Dms.form.validation.initialize(form);
     });
 });
+Dms.widget.initializeCallbacks.push(function () {
+    $('.dms-widget-unparameterized-action, .dms-widget-parameterized-action').each(function () {
+        var widget = $(this);
+        var button = widget.find('button');
+
+        if (button.is('.btn-danger')) {
+            var isConfirmed = false;
+
+            button.click(function () {
+                if (isConfirmed) {
+                    isConfirmed = false;
+                    return;
+                }
+
+                swal({
+                    title: "Are you sure?",
+                    text: "This will execute the '" + widget.attr('data-action-label') + "' action",
+                    type: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#DD6B55",
+                    confirmButtonText: "Yes proceed!"
+                }, function () {
+                    isConfirmed = true;
+                    $(this).click();
+                });
+
+                return false;
+            });
+        }
+    });
+});
 Dms.table.initializeCallbacks.push(function (element) {
     var groupCounter = 0;
 
@@ -3628,37 +3705,6 @@ Dms.table.initializeCallbacks.push(function (element) {
 
             linkedTablePane.find('.dms-table-control:not([data-has-loaded-table-data]) .dms-table-container:not(.loading) .dms-table').triggerHandler('dms-load-table-data');
         });
-    });
-});
-Dms.widget.initializeCallbacks.push(function () {
-    $('.dms-widget-unparameterized-action, .dms-widget-parameterized-action').each(function () {
-        var widget = $(this);
-        var button = widget.find('button');
-
-        if (button.is('.btn-danger')) {
-            var isConfirmed = false;
-
-            button.click(function () {
-                if (isConfirmed) {
-                    isConfirmed = false;
-                    return;
-                }
-
-                swal({
-                    title: "Are you sure?",
-                    text: "This will execute the '" + widget.attr('data-action-label') + "' action",
-                    type: "warning",
-                    showCancelButton: true,
-                    confirmButtonColor: "#DD6B55",
-                    confirmButtonText: "Yes proceed!"
-                }, function () {
-                    isConfirmed = true;
-                    $(this).click();
-                });
-
-                return false;
-            });
-        }
     });
 });
 Dms.table.initializeCallbacks.push(function (element) {

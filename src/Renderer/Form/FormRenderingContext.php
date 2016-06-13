@@ -2,8 +2,10 @@
 
 namespace Dms\Web\Laravel\Renderer\Form;
 
+use Dms\Core\Common\Crud\ICrudModule;
 use Dms\Core\Common\Crud\IReadModule;
 use Dms\Core\Exception\InvalidArgumentException;
+use Dms\Core\Form\IField;
 use Dms\Core\Form\IForm;
 use Dms\Core\Model\ITypedObject;
 use Dms\Core\Module\IParameterizedAction;
@@ -116,7 +118,7 @@ class FormRenderingContext
     public function setObject(ITypedObject $object = null)
     {
         if (!$object) {
-            $this->object = null;
+            $this->object   = null;
             $this->objectId = null;
 
             return;
@@ -127,7 +129,7 @@ class FormRenderingContext
             throw InvalidArgumentException::format('Module must be an instance of %s', IReadModule::class);
         }
 
-        $this->object = $object;
+        $this->object   = $object;
         $this->objectId = $module->getDataSource()->getObjectId($object);
     }
 
@@ -169,5 +171,37 @@ class FormRenderingContext
     public function setCurrentForm(IForm $currentForm = null)
     {
         $this->currentForm = $currentForm;
+    }
+
+    /**
+     * @param IField $field
+     *
+     * @return string
+     */
+    public function getFieldActionUrl(IField $field) : string
+    {
+        $moduleContext = $this->moduleContext;
+        if ($this->objectId) {
+            /** @var ICrudModule|IReadModule $currentModule */
+            $currentModule = $moduleContext->getModule();
+
+            $url = $moduleContext->getUrl('action.form.object.stage.field.action', [
+                $currentModule instanceof ICrudModule && $currentModule->getEditAction()
+                    ? $currentModule->getEditAction()->getName()
+                    : $this->getAction()->getName(),
+                $this->getObjectId(),
+                $this->getCurrentStageNumber(),
+                $field->getName(),
+            ]);
+
+        } else {
+            $url = $moduleContext->getUrl('action.form.stage.field.action', [
+                $this->getAction()->getName(),
+                $this->getCurrentStageNumber(),
+                $field->getName(),
+            ]);
+        }
+
+        return $url;
     }
 }

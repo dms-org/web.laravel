@@ -6,7 +6,6 @@ use Dms\Core\Form\Field\Type\FieldType;
 use Dms\Core\Form\IField;
 use Dms\Core\Form\IFieldOptions;
 use Dms\Core\Form\IFieldType;
-use Dms\Core\Util\Hashing\ValueHasher;
 use Dms\Web\Laravel\Renderer\Form\FormRenderingContext;
 
 /**
@@ -30,11 +29,12 @@ abstract class OptionsFieldRender extends BladeFieldRenderer
         $label = null;
         $url   = null;
 
-        foreach ($options->getAll() as $option) {
-            if (ValueHasher::areEqual($value, $option->getValue())) {
-                $label = $option->getLabel();
-                $url   = $urlCallback ? $urlCallback($option->getValue()) : null;
-            }
+        try {
+            $option = $options->getOptionForValue($value);
+            $label  = $option->getLabel();
+            $url    = $urlCallback ? $urlCallback($option->getValue()) : null;
+        } catch (\Exception $e) {
+            
         }
 
         return $this->renderValueViewWithNullDefault(

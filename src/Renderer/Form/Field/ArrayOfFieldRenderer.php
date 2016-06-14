@@ -29,8 +29,7 @@ class ArrayOfFieldRenderer extends BladeFieldRenderer
     protected function canRender(FormRenderingContext $renderingContext, IField $field, IFieldType $fieldType) : bool
     {
         /** @var ArrayOfType $fieldType */
-        return !$fieldType->has(FieldType::ATTR_OPTIONS)
-        && !$fieldType->get(ArrayOfType::ATTR_UNIQUE_ELEMENTS);
+        return !$fieldType->has(FieldType::ATTR_OPTIONS);
     }
 
     protected function renderField(

@@ -8,7 +8,6 @@ use Dms\Core\Form\Field\Type\FieldType;
 use Dms\Core\Form\Field\Type\InnerCrudModuleType;
 use Dms\Core\Form\IField;
 use Dms\Core\Form\IFieldType;
-use Dms\Web\Laravel\Action\ActionService;
 use Dms\Web\Laravel\Http\ModuleRequestRouter;
 use Dms\Web\Laravel\Renderer\Action\ActionButton;
 use Dms\Web\Laravel\Renderer\Form\FormRenderingContext;
@@ -110,7 +109,7 @@ class InnerModuleFieldRenderer extends BladeFieldRendererWithActions implements 
             ]);
         }
 
-        $currentState      = json_decode($data['current_state'] ?: '[]', true);
+        $currentState      = json_decode(($data['current_state'] ?? false) ?: '[]', true);
         $requestUrl        = $data['request']['url'];
         $requestMethod     = $data['request']['method'];
         $requestParameters = $data['request']['parameters'] ?? [];

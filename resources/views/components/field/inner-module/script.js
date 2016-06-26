@@ -162,6 +162,7 @@ Dms.form.initializeCallbacks.push(function (element) {
             Dms.action.responseHandler = originalResponseHandler;
         };
 
+        formStage.on('dms-stage-reload', resetAjaxInterception);
         stagedForm.on('dms-post-submit-success', resetAjaxInterception);
         innerModule.closest('.dms-page-content').on('dms-page-unloading', resetAjaxInterception);
     });

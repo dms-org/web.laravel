@@ -122,12 +122,19 @@ class InnerModuleFieldRenderer extends BladeFieldRendererWithActions implements 
         /** @var Request $innerModuleRequest */
         $innerModuleRequest = Request::create($request->root() . $requestUrl, $requestMethod, $requestParameters);
 
+        $this->emulateAjaxRequest($innerModuleRequest);
+
         $innerModuleResponse = $moduleRequestRouter->dispatch($moduleContext, $innerModuleRequest);
 
         return response()->json([
             'new_state' => $field->unprocess($moduleContext->getModule()->getDataSource()),
             'response'  => $innerModuleResponse->getContent(),
         ], $innerModuleResponse->getStatusCode());
+    }
+
+    protected function emulateAjaxRequest(Request $innerModuleRequest)
+    {
+        $innerModuleRequest->headers->set('X-Requested-With', 'XMLHttpRequest');
     }
 
     protected function loadInnerModuleContext(IField $field, FormRenderingContext $renderingContext, array $moduleState = null)
@@ -158,7 +165,7 @@ class InnerModuleFieldRenderer extends BladeFieldRendererWithActions implements 
         }
 
         $subModulePath = $renderingContext->getFieldActionUrl($field);
-        
+
         return $moduleContext
             ->inSubModuleContext($innerModule, $subModulePath)
             ->withBreadcrumb(StringHumanizer::title($innerModule->getName()), $subModulePath);

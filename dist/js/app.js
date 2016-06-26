@@ -2317,8 +2317,94 @@ Dms.form.initializeCallbacks.push(function (element) {
             Dms.action.responseHandler = originalResponseHandler;
         };
 
+        formStage.on('dms-stage-reload', resetAjaxInterception);
         stagedForm.on('dms-post-submit-success', resetAjaxInterception);
         innerModule.closest('.dms-page-content').on('dms-page-unloading', resetAjaxInterception);
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+
+    element.find('ul.dms-field-list').each(function () {
+        var listOfFields = $(this);
+        var form = listOfFields.closest('.dms-staged-form');
+        var formGroup = listOfFields.closest('.form-group');
+        var templateField = listOfFields.find('.field-list-template');
+        var addButton = listOfFields.find('.btn-add-field');
+        var isInvalidating = false;
+
+        var minFields = listOfFields.attr('data-min-elements');
+        var maxFields = listOfFields.attr('data-max-elements');
+
+        var getAmountOfInputs = function () {
+            return listOfFields.children('.field-list-item').length;
+        };
+
+        var invalidateControl = function () {
+            if (isInvalidating) {
+                return;
+            }
+
+            isInvalidating = true;
+
+            var amountOfInputs = getAmountOfInputs();
+
+            addButton.prop('disabled', amountOfInputs >= maxFields);
+            listOfFields.find('.btn-remove-field').prop('disabled', amountOfInputs <= minFields);
+
+            while (amountOfInputs < minFields) {
+                addNewField();
+                amountOfInputs++;
+            }
+
+            isInvalidating = false;
+        };
+
+        var addNewField = function () {
+            var newField = templateField.clone()
+                .removeClass('field-list-template')
+                .removeClass('hidden')
+                .removeClass('dms-form-no-submit')
+                .addClass('field-list-item');
+
+            var fieldInputElement = newField.find('.field-list-input');
+            fieldInputElement.html(fieldInputElement.text());
+
+            var currentIndex = getAmountOfInputs();
+
+            $.each(['name', 'data-name', 'data-field-name'], function (index, attr) {
+                fieldInputElement.find('[' + attr + '*="::index::"]').each(function () {
+                    $(this).attr(attr, $(this).attr(attr).replace('::index::', currentIndex));
+                });
+            });
+
+            addButton.closest('.field-list-add').before(newField);
+
+            Dms.form.initialize(fieldInputElement);
+            form.triggerHandler('dms-form-updated');
+
+            invalidateControl();
+        };
+
+        listOfFields.on('click', '.btn-remove-field', function () {
+            var field = $(this).closest('.field-list-item');
+            field.remove();
+            formGroup.trigger('dms-change');
+            form.triggerHandler('dms-form-updated');
+
+            invalidateControl();
+            // TODO: reindex
+        });
+
+        addButton.on('click', addNewField);
+
+        invalidateControl();
+
+        var requiresAnExactAmountOfFields = typeof minFields !== 'undefined' && minFields === maxFields;
+        if (requiresAnExactAmountOfFields && getAmountOfInputs() == minFields) {
+            addButton.closest('.field-list-add').remove();
+            listOfFields.find('.btn-remove-field').closest('.field-list-button-container').remove();
+            listOfFields.find('.field-list-input').removeClass('col-xs-10 col-md-11').addClass('col-xs-12');
+        }
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -2479,91 +2565,6 @@ Dms.form.initializeCallbacks.push(function (element) {
             map: map,
             title: mapCanvas.attr('data-title')
         });
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
-
-    element.find('ul.dms-field-list').each(function () {
-        var listOfFields = $(this);
-        var form = listOfFields.closest('.dms-staged-form');
-        var formGroup = listOfFields.closest('.form-group');
-        var templateField = listOfFields.find('.field-list-template');
-        var addButton = listOfFields.find('.btn-add-field');
-        var isInvalidating = false;
-
-        var minFields = listOfFields.attr('data-min-elements');
-        var maxFields = listOfFields.attr('data-max-elements');
-
-        var getAmountOfInputs = function () {
-            return listOfFields.children('.field-list-item').length;
-        };
-
-        var invalidateControl = function () {
-            if (isInvalidating) {
-                return;
-            }
-
-            isInvalidating = true;
-
-            var amountOfInputs = getAmountOfInputs();
-
-            addButton.prop('disabled', amountOfInputs >= maxFields);
-            listOfFields.find('.btn-remove-field').prop('disabled', amountOfInputs <= minFields);
-
-            while (amountOfInputs < minFields) {
-                addNewField();
-                amountOfInputs++;
-            }
-
-            isInvalidating = false;
-        };
-
-        var addNewField = function () {
-            var newField = templateField.clone()
-                .removeClass('field-list-template')
-                .removeClass('hidden')
-                .removeClass('dms-form-no-submit')
-                .addClass('field-list-item');
-
-            var fieldInputElement = newField.find('.field-list-input');
-            fieldInputElement.html(fieldInputElement.text());
-
-            var currentIndex = getAmountOfInputs();
-
-            $.each(['name', 'data-name', 'data-field-name'], function (index, attr) {
-                fieldInputElement.find('[' + attr + '*="::index::"]').each(function () {
-                    $(this).attr(attr, $(this).attr(attr).replace('::index::', currentIndex));
-                });
-            });
-
-            addButton.closest('.field-list-add').before(newField);
-
-            Dms.form.initialize(fieldInputElement);
-            form.triggerHandler('dms-form-updated');
-
-            invalidateControl();
-        };
-
-        listOfFields.on('click', '.btn-remove-field', function () {
-            var field = $(this).closest('.field-list-item');
-            field.remove();
-            formGroup.trigger('dms-change');
-            form.triggerHandler('dms-form-updated');
-
-            invalidateControl();
-            // TODO: reindex
-        });
-
-        addButton.on('click', addNewField);
-
-        invalidateControl();
-
-        var requiresAnExactAmountOfFields = typeof minFields !== 'undefined' && minFields === maxFields;
-        if (requiresAnExactAmountOfFields && getAmountOfInputs() == minFields) {
-            addButton.closest('.field-list-add').remove();
-            listOfFields.find('.btn-remove-field').closest('.field-list-button-container').remove();
-            listOfFields.find('.field-list-input').removeClass('col-xs-10 col-md-11').addClass('col-xs-12');
-        }
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -3159,6 +3160,7 @@ Dms.form.initializeCallbacks.push(function (element) {
                 });
 
                 currentAjaxRequest.done(function (html) {
+                    currentStage.triggerHandler('dms-stage-reload');
                     container.addClass('loaded');
                     var currentValues = currentStage.getValues(true);
                     currentStage.html(html);
@@ -3463,37 +3465,6 @@ Dms.form.initializeValidationCallbacks.push(function (element) {
         var parsley = Dms.form.validation.initialize(form);
     });
 });
-Dms.widget.initializeCallbacks.push(function () {
-    $('.dms-widget-unparameterized-action, .dms-widget-parameterized-action').each(function () {
-        var widget = $(this);
-        var button = widget.find('button');
-
-        if (button.is('.btn-danger')) {
-            var isConfirmed = false;
-
-            button.click(function () {
-                if (isConfirmed) {
-                    isConfirmed = false;
-                    return;
-                }
-
-                swal({
-                    title: "Are you sure?",
-                    text: "This will execute the '" + widget.attr('data-action-label') + "' action",
-                    type: "warning",
-                    showCancelButton: true,
-                    confirmButtonColor: "#DD6B55",
-                    confirmButtonText: "Yes proceed!"
-                }, function () {
-                    isConfirmed = true;
-                    $(this).click();
-                });
-
-                return false;
-            });
-        }
-    });
-});
 Dms.table.initializeCallbacks.push(function (element) {
     var groupCounter = 0;
 
@@ -3705,6 +3676,37 @@ Dms.table.initializeCallbacks.push(function (element) {
 
             linkedTablePane.find('.dms-table-control:not([data-has-loaded-table-data]) .dms-table-container:not(.loading) .dms-table').triggerHandler('dms-load-table-data');
         });
+    });
+});
+Dms.widget.initializeCallbacks.push(function () {
+    $('.dms-widget-unparameterized-action, .dms-widget-parameterized-action').each(function () {
+        var widget = $(this);
+        var button = widget.find('button');
+
+        if (button.is('.btn-danger')) {
+            var isConfirmed = false;
+
+            button.click(function () {
+                if (isConfirmed) {
+                    isConfirmed = false;
+                    return;
+                }
+
+                swal({
+                    title: "Are you sure?",
+                    text: "This will execute the '" + widget.attr('data-action-label') + "' action",
+                    type: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#DD6B55",
+                    confirmButtonText: "Yes proceed!"
+                }, function () {
+                    isConfirmed = true;
+                    $(this).click();
+                });
+
+                return false;
+            });
+        }
     });
 });
 Dms.table.initializeCallbacks.push(function (element) {

@@ -98,6 +98,7 @@ Dms.form.initializeCallbacks.push(function (element) {
                 });
 
                 currentAjaxRequest.done(function (html) {
+                    currentStage.triggerHandler('dms-stage-reload');
                     container.addClass('loaded');
                     var currentValues = currentStage.getValues(true);
                     currentStage.html(html);

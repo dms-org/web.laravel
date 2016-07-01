@@ -4,8 +4,6 @@ namespace Dms\Web\Laravel\Http;
 
 /** @var \Illuminate\Routing\Router $router */
 
-use Dms\Web\Laravel\Error\DmsError;
-
 $router    = app('router');
 $namespace = __NAMESPACE__ . '\\Controllers';
 
@@ -45,7 +43,5 @@ $router->group(['prefix' => 'dms', 'middleware' => 'dms.web', 'as' => 'dms::', '
             $moduleRouter->registerOnMainRouter($router);
         });
 
-        $router->any( '{catch_all}', function () {
-            DmsError::abort(404);
-        } )->where('catch_all', '(.*)');
+        $router->any('{catch_all}', 'ErrorController@notFound')->where('catch_all', '(.*)');
     });

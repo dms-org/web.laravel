@@ -10,6 +10,12 @@ use Illuminate\Http\Exception\HttpResponseException;
  */
 class DmsError
 {
+    /**
+     * @param int    $statusCode
+     * @param string $message
+     *
+     * @return void
+     */
     public static function abort(int $statusCode, string $message = '')
     {
         if (request()->ajax()) {

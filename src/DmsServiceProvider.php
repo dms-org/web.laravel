@@ -20,7 +20,7 @@ use Dms\Core\Util\IClock;
 use Dms\Web\Laravel\Action\ActionExceptionHandlerCollection;
 use Dms\Web\Laravel\Action\ActionInputTransformerCollection;
 use Dms\Web\Laravel\Action\ActionResultHandlerCollection;
-use Dms\Web\Laravel\Auth\DmsUserProvider;
+use Dms\Web\Laravel\Auth\AdminDmsUserProvider;
 use Dms\Web\Laravel\Auth\GenericDmsUserProvider;
 use Dms\Web\Laravel\Auth\LaravelAuthSystem;
 use Dms\Web\Laravel\Auth\Password\BcryptPasswordHasher;
@@ -162,7 +162,7 @@ class DmsServiceProvider extends ServiceProvider
 
     private function registerAuth()
     {
-        $this->app->singleton(DmsUserProvider::class, DmsUserProvider::class);
+        $this->app->singleton(AdminDmsUserProvider::class, AdminDmsUserProvider::class);
         $this->app->singleton(IAuthSystem::class, LaravelAuthSystem::class);
 
         $this->app->singleton(IPasswordHasherFactory::class, function () {
@@ -184,17 +184,13 @@ class DmsServiceProvider extends ServiceProvider
         /** @var AuthManager $auth */
         $auth = $this->app['auth'];
 
-        $auth->provider('dms', function (Container $app) {
-            return $app->make(DmsUserProvider::class);
-        });
-
         $this->app['config']->set('auth.guards.dms', [
             'driver'   => 'session',
             'provider' => 'dms-users',
         ]);
 
         $this->app['config']->set('auth.providers.dms-users', [
-            'driver' => 'dms',
+            'driver' => 'dms-admin',
             'model'  => Auth\Admin::class,
         ]);
 
@@ -204,6 +200,10 @@ class DmsServiceProvider extends ServiceProvider
             'table'    => DmsOrm::NAMESPACE . 'password_resets',
             'expire'   => 60,
         ]);
+
+        $auth->provider('dms-admin', function (Container $app) {
+            return $app->make(AdminDmsUserProvider::class);
+        });
 
         $auth->provider('dms', function ($app, array $config) {
             return new GenericDmsUserProvider(

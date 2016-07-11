@@ -14,7 +14,7 @@ use Illuminate\Contracts\Auth\UserProvider;
  *
  * @author Elliot Levin <elliotlevin@hotmail.com>
  */
-class DmsUserProvider implements UserProvider
+class AdminDmsUserProvider implements UserProvider
 {
     /**
      * @var IAdminRepository

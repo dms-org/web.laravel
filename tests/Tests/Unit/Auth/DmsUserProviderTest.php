@@ -4,7 +4,7 @@ namespace Dms\Web\Laravel\Tests\Unit\Auth;
 
 use Dms\Core\Persistence\Db\Mapping\IOrm;
 use Dms\Core\Tests\Persistence\Db\Integration\Mapping\DbIntegrationTest;
-use Dms\Web\Laravel\Auth\DmsUserProvider;
+use Dms\Web\Laravel\Auth\AdminDmsUserProvider;
 use Dms\Web\Laravel\Auth\Password\BcryptPasswordHasher;
 use Dms\Web\Laravel\Auth\Password\PasswordHasherFactory;
 use Dms\Web\Laravel\Auth\Persistence\AuthOrm;
@@ -17,7 +17,7 @@ use Dms\Web\Laravel\Auth\Admin;
 class DmsUserProviderTest extends DbIntegrationTest
 {
     /**
-     * @var DmsUserProvider
+     * @var AdminDmsUserProvider
      */
     protected $userProvider;
 
@@ -45,7 +45,7 @@ class DmsUserProviderTest extends DbIntegrationTest
         ], 'bcrypt', 10);
 
         $this->userRepo     = new AdminRepository($this->connection, $this->orm);
-        $this->userProvider = new DmsUserProvider($this->userRepo, $hasher);
+        $this->userProvider = new AdminDmsUserProvider($this->userRepo, $hasher);
 
         $this->setDataInDb([
             'users' => [

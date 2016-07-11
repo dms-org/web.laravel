@@ -14,12 +14,14 @@ use Dms\Core\Language\ILanguageProvider;
 use Dms\Core\Model\Object\TypedObjectAccessibilityAssertion;
 use Dms\Core\Persistence\Db\Connection\IConnection;
 use Dms\Core\Persistence\Db\Doctrine\Migration\CustomColumnDefinitionEventSubscriber;
+use Dms\Core\Persistence\Db\Mapping\IOrm;
 use Dms\Core\Util\DateTimeClock;
 use Dms\Core\Util\IClock;
 use Dms\Web\Laravel\Action\ActionExceptionHandlerCollection;
 use Dms\Web\Laravel\Action\ActionInputTransformerCollection;
 use Dms\Web\Laravel\Action\ActionResultHandlerCollection;
 use Dms\Web\Laravel\Auth\DmsUserProvider;
+use Dms\Web\Laravel\Auth\GenericDmsUserProvider;
 use Dms\Web\Laravel\Auth\LaravelAuthSystem;
 use Dms\Web\Laravel\Auth\Password\BcryptPasswordHasher;
 use Dms\Web\Laravel\Auth\Password\IPasswordHasherFactory;
@@ -69,7 +71,6 @@ use Illuminate\Routing\Router;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
-use Interop\Container\ContainerInterface;
 use League\Flysystem\Adapter\Local;
 use League\Flysystem\Filesystem;
 use Psr\Cache\CacheItemPoolInterface;
@@ -203,6 +204,14 @@ class DmsServiceProvider extends ServiceProvider
             'table'    => DmsOrm::NAMESPACE . 'password_resets',
             'expire'   => 60,
         ]);
+
+        $auth->provider('dms', function ($app, array $config) {
+            return new GenericDmsUserProvider(
+                $this->app->make(IOrm::class),
+                $this->app->make(IConnection::class),
+                $config
+            );
+        });
     }
 
     private function loadTranslations()

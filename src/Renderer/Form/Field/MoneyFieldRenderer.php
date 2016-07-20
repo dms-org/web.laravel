@@ -1,11 +1,11 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Renderer\Form\Field;
 
 use Dms\Common\Structure\Money\Form\MoneyType;
 use Dms\Core\Form\Field\Type\FieldType;
-use Dms\Core\Form\Field\Type\FloatType;
 use Dms\Core\Form\IField;
+use Dms\Core\Form\IFieldOptions;
 use Dms\Core\Form\IFieldType;
 use Dms\Web\Laravel\Renderer\Form\FormRenderingContext;
 
@@ -33,6 +33,13 @@ class MoneyFieldRenderer extends BladeFieldRenderer
 
     protected function renderField(FormRenderingContext $renderingContext, IField $field, IFieldType $fieldType) : string
     {
+        /** @var MoneyType $field */
+        /** @var IFieldOptions $currencyOptions */
+        $currencyOptions = $field->form()
+            ->getField('currency')
+            ->getType()
+            ->get(FieldType::ATTR_OPTIONS);
+
         return $this->renderView(
             $field,
             'dms::components.field.money.input',
@@ -40,7 +47,8 @@ class MoneyFieldRenderer extends BladeFieldRenderer
 
             ],
             [
-                'defaultCurrency' => config('dms.localisation.form.defaults.currency')
+                'currencyOptions' => $currencyOptions,
+                'defaultCurrency' => config('dms.localisation.form.defaults.currency'),
             ]
         );
     }

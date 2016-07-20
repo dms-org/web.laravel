@@ -9,14 +9,17 @@
             @if($readonly) readonly @endif
             @if($value !== null) value="{{ $value['amount'] }}" @endif
     />
-    <select class="form-control dms-currency-input" name="{{ $name }}[currency]" @if($required) required @endif>
-        @foreach (\Dms\Common\Structure\Money\Currency::getAll() as $currency)
-            <?php $code = $currency->getCurrencyCode() ?>
-            <option value="{{ $code }}"
+    <select class="form-control dms-currency-input" name="{{ $name }}[currency]"
+            @if($required) required @endif
+            @if($readonly) readonly @endif
+    >
+        @foreach ($currencyOptions->getAll() as $option)
+            <?php $currency = new \Dms\Common\Structure\Money\Currency($option->getValue()) ?>
+            <option value="{{ $option->getValue() }}"
                     data-fractional-digits="{{ $currency->getDefaultFractionDigits() }}"
                     @if($value ? $code === $value['currency'] : $code === $defaultCurrency) selected="selected" @endif
             >
-                {{ $currency->getDisplayName() }} ({{ $code }})
+                {{ $option->getLabel() }}
             </option>
         @endforeach
     </select>

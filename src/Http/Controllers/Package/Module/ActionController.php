@@ -4,6 +4,8 @@ namespace Dms\Web\Laravel\Http\Controllers\Package\Module;
 
 use Dms\Core\Common\Crud\Action\Object\IObjectAction;
 use Dms\Core\Common\Crud\IReadModule;
+use Dms\Core\Form\Field\Type\ArrayOfType;
+use Dms\Core\Form\Field\Type\InnerFormType;
 use Dms\Core\Form\Field\Type\ObjectIdType;
 use Dms\Core\Form\IForm;
 use Dms\Core\Form\InvalidFormSubmissionException;
@@ -277,12 +279,13 @@ class ActionController extends DmsController
         $action = $this->loadAction($moduleContext->getModule(), $actionName);
         $form   = $this->loadFormStage($request, $moduleContext, $actionName, $stageNumber, $objectId, $object);
 
-        if (!$form->hasField($fieldName)) {
+        $field = $this->findFieldFromBracketSyntaxName($form, $fieldName);
+
+        if (!$field) {
             DmsError::abort(404);
         }
 
         $renderingContext = new FormRenderingContext($moduleContext, $action, $stageNumber, $object);
-        $field            = $form->getField($fieldName);
         $renderer         = $this->actionFormRenderer->getFormRenderer()->getFieldRenderers()->findRendererFor($renderingContext, $field);
 
         if (!($renderer instanceof IFieldRendererWithActions)) {
@@ -290,6 +293,34 @@ class ActionController extends DmsController
         }
 
         return $renderer->handleAction($renderingContext, $field, $request, $fieldRendererAction, $request->get('__field_action_data') ?? []);
+    }
+
+    protected function findFieldFromBracketSyntaxName(IForm $form, string $fieldName)
+    {
+        $parts = array_map(function (string $part) {
+            return trim($part, '][');
+        }, explode('[', $fieldName));
+
+        foreach ($parts as $key => $part) {
+            if (!$form->hasField($part)) {
+                return null;
+            }
+
+            $field     = $form->getField($part);
+            $fieldType = $field->getType();
+
+            $isLastPart = $key === count($parts) - 1;
+
+            if ($isLastPart) {
+                return $field;
+            } elseif ($fieldType instanceof InnerFormType) {
+                $form = $fieldType->getForm();
+            } elseif ($fieldType instanceof ArrayOfType && $key === count($parts) - 2) {
+                return $fieldType->getElementField()->withName(end($parts));
+            } else {
+                return null;
+            }
+        }
     }
 
     public function runAction(Request $request, ModuleContext $moduleContext, string $actionName)
@@ -366,6 +397,7 @@ class ActionController extends DmsController
             }
 
             \logger()->error($e->getMessage() . $e->getTraceAsString());
+
             return response()->json([
                 'message_type' => 'danger',
                 'message'      => 'An internal error occurred',

@@ -18,5 +18,12 @@ Dms.form.initializeCallbacks.push(function (element) {
 
         currencyInput.on('change', updateDecimalDigits);
         updateDecimalDigits();
+
+        var updateShouldSubmitData = function () {
+            inputGroup.toggleClass('dms-form-no-submit', moneyInput.val() === '');
+        };
+
+        moneyInput.on('change input', updateShouldSubmitData);
+        updateShouldSubmitData();
     });
 });

@@ -7,6 +7,7 @@ use Dms\Common\Structure\FileSystem\IApplicationDirectories;
 use Dms\Core\Auth\IAdminRepository;
 use Dms\Core\Auth\IAuthSystem;
 use Dms\Core\Auth\IRoleRepository;
+use Dms\Core\Event\IEventDispatcher;
 use Dms\Core\Exception\InvalidOperationException;
 use Dms\Core\ICms;
 use Dms\Core\Ioc\IIocContainer;
@@ -32,6 +33,7 @@ use Dms\Web\Laravel\Auth\Persistence\AdminRepository;
 use Dms\Web\Laravel\Auth\Persistence\RoleRepository;
 use Dms\Web\Laravel\Document\DirectoryTree;
 use Dms\Web\Laravel\Document\PublicFileModule;
+use Dms\Web\Laravel\Event\LaravelEventDispatcher;
 use Dms\Web\Laravel\File\Command\ClearTempFilesCommand;
 use Dms\Web\Laravel\File\ITemporaryFileService;
 use Dms\Web\Laravel\File\LaravelApplicationDirectories;
@@ -74,6 +76,7 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
 use League\Flysystem\Adapter\Local;
 use League\Flysystem\Filesystem;
 use Psr\Cache\CacheItemPoolInterface;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 /**
  * The DMS service provider
@@ -103,6 +106,7 @@ class DmsServiceProvider extends ServiceProvider
         $this->registerAuth();
         $this->registerLang();
         $this->registerCache();
+        $this->registerEvents();
         $this->registerModuleServices();
         $this->registerModules();
         $this->registerHttpRoutes();
@@ -228,6 +232,16 @@ class DmsServiceProvider extends ServiceProvider
     {
         $this->app->singleton(CacheItemPoolInterface::class, function () {
             return new FilesystemCachePool(new Filesystem(new Local(storage_path('dms/cache'))));
+        });
+    }
+
+    private function registerEvents()
+    {
+        $this->app->bind(IEventDispatcher::class, function () {
+            /** @var LaravelEventDispatcher $eventDispatcher */
+            $eventDispatcher = new LaravelEventDispatcher($this->app['events']);
+
+            return $eventDispatcher->inNamespace('dms::');
         });
     }
 

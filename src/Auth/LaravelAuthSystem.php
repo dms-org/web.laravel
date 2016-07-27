@@ -6,12 +6,14 @@ use Dms\Core\Auth\AdminBannedException;
 use Dms\Core\Auth\AdminForbiddenException;
 use Dms\Core\Auth\IAdmin;
 use Dms\Core\Auth\IAdminRepository;
-use Dms\Core\Auth\IAuthSystem;
+use Dms\Core\Auth\AuthSystem;
 use Dms\Core\Auth\InvalidCredentialsException;
 use Dms\Core\Auth\IPermission;
 use Dms\Core\Auth\IRoleRepository;
 use Dms\Core\Auth\NotAuthenticatedException;
+use Dms\Core\Event\IEventDispatcher;
 use Dms\Core\Exception\InvalidArgumentException;
+use Dms\Core\Ioc\IIocContainer;
 use Dms\Web\Laravel\Auth\Password\IPasswordHasherFactory;
 use Illuminate\Auth\AuthManager;
 use Illuminate\Contracts\Auth\StatefulGuard;
@@ -21,7 +23,7 @@ use Illuminate\Contracts\Auth\StatefulGuard;
  *
  * @author Elliot Levin <elliotlevin@hotmail.com>
  */
-class LaravelAuthSystem implements IAuthSystem
+class LaravelAuthSystem extends AuthSystem
 {
     /**
      * @var StatefulGuard
@@ -49,24 +51,31 @@ class LaravelAuthSystem implements IAuthSystem
     protected $currentUsersPermissions;
 
     /**
+     * @var IIocContainer
+     */
+    protected $iocContainer;
+
+    /**
      * LaravelAuthSystem constructor.
      *
      * @param AuthManager            $laravelAuth
      * @param IAdminRepository       $userRepository
      * @param IRoleRepository        $roleRepository
      * @param IPasswordHasherFactory $passwordHasherFactory
+     * @param IIocContainer          $iocContainer
      */
     public function __construct(
         AuthManager $laravelAuth,
         IAdminRepository $userRepository,
         IRoleRepository $roleRepository,
-        IPasswordHasherFactory $passwordHasherFactory
-    )
-    {
+        IPasswordHasherFactory $passwordHasherFactory,
+        IIocContainer $iocContainer
+    ) {
         $this->laravelAuth           = $laravelAuth->guard('dms');
         $this->userRepository        = $userRepository;
         $this->passwordHasherFactory = $passwordHasherFactory;
         $this->roleRepository        = $roleRepository;
+        $this->iocContainer          = $iocContainer;
     }
 
     /**
@@ -161,6 +170,7 @@ class LaravelAuthSystem implements IAuthSystem
     public function isAuthenticated() : bool
     {
         $user = $this->laravelAuth->user();
+
         return $user !== null;
     }
 
@@ -254,5 +264,21 @@ class LaravelAuthSystem implements IAuthSystem
         }
 
         return $this->currentUsersPermissions;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getIocContainer() : IIocContainer
+    {
+        return $this->iocContainer;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getEventDispatcher() : IEventDispatcher
+    {
+        return $this->iocContainer->get(IEventDispatcher::class);
     }
 }

@@ -1569,20 +1569,6 @@ Dms.chart.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-    element.find('input[type=checkbox].single-checkbox').iCheck({
-        checkboxClass: 'icheckbox_square-blue',
-        increaseArea: '20%'
-    });
-
-    element.find('input[type=checkbox]').each(function () {
-        var formGroup = $(this).closest('.form-group');
-
-        $(this).on('ifToggled', function(event){
-            formGroup.trigger('dms-change');
-        });
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
 
     element.find('.list-of-checkboxes').each(function () {
         var listOfCheckboxes = $(this);
@@ -1597,19 +1583,17 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-    element.find('input.dms-colour-input').each(function () {
-        var config = {
-            theme: 'bootstrap'
-        };
+    element.find('input[type=checkbox].single-checkbox').iCheck({
+        checkboxClass: 'icheckbox_square-blue',
+        increaseArea: '20%'
+    });
 
-        if ($(this).hasClass('dms-colour-input-rgb')) {
-            config.format = 'rgb';
-        } else if ($(this).hasClass('dms-colour-input-rgba')) {
-            config.format = 'rgb';
-            config.opacity = true;
-        }
+    element.find('input[type=checkbox]').each(function () {
+        var formGroup = $(this).closest('.form-group');
 
-        $(this).addClass('minicolors').minicolors(config);
+        $(this).on('ifToggled', function(event){
+            formGroup.trigger('dms-change');
+        });
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -2154,6 +2138,22 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
+    element.find('input.dms-colour-input').each(function () {
+        var config = {
+            theme: 'bootstrap'
+        };
+
+        if ($(this).hasClass('dms-colour-input-rgb')) {
+            config.format = 'rgb';
+        } else if ($(this).hasClass('dms-colour-input-rgba')) {
+            config.format = 'rgb';
+            config.opacity = true;
+        }
+
+        $(this).addClass('minicolors').minicolors(config);
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
     element.find('.dms-inner-module, .dms-display-inner-module').each(function () {
         var innerModule = $(this);
 
@@ -2587,12 +2587,13 @@ Dms.form.initializeCallbacks.push(function (element) {
 
         currencyInput.on('change', updateDecimalDigits);
         updateDecimalDigits();
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
-    element.find('select[multiple]').multiselect({
-        enableFiltering: true,
-        includeSelectAllOption: true
+
+        var updateShouldSubmitData = function () {
+            inputGroup.toggleClass('dms-form-no-submit', moneyInput.val() === '');
+        };
+
+        moneyInput.on('change input', updateShouldSubmitData);
+        updateShouldSubmitData();
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -2910,6 +2911,12 @@ Dms.form.initializeCallbacks.push(function (element) {
             tableOfFields.find('.btn-remove-row').remove();
             tableOfFields.find('.btn-add-row').remove();
         }
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+    element.find('select[multiple]').multiselect({
+        enableFiltering: true,
+        includeSelectAllOption: true
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {

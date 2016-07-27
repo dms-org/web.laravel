@@ -15,7 +15,6 @@ class IndexTest extends CmsIntegrationTest
         return new DemoFixture();
     }
 
-
     public function testUnauthenticatedIndexRedirectsToLoginPage()
     {
         $this->route('GET', 'dms::index');

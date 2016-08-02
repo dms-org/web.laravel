@@ -14,7 +14,7 @@ Dms.form.validation.displayMessages = function (form, fieldMessages, generalMess
     }
 
     var makeHelpBlock = function () {
-        return $('<span />').addClass('help-block help-block-error');
+        return $('<div />').addClass('help-block help-block-error');
     };
 
     var helpBlock = makeHelpBlock();
@@ -68,7 +68,7 @@ Dms.form.validation.displayMessages = function (form, fieldMessages, generalMess
 
         var helpBlock = makeHelpBlock();
         $.each($.unique(messages), function (index, message) {
-            helpBlock.append($('<p />').append($('<strong />').text(message)));
+            helpBlock.append($('<p/>').append($('<strong />').text(message)));
         });
 
         fieldGroup.addClass('has-error');

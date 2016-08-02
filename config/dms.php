@@ -31,8 +31,8 @@ return [
         'form' => [
             'defaults' => [
                 'currency' => 'AUD',
-                'map'      => [-25.3455606, 131.0195906]
-            ]
+                'map'      => [-25.3455606, 131.0195906],
+            ],
         ],
     ],
 
@@ -134,6 +134,7 @@ return [
                 Dms\Web\Laravel\Action\ExceptionHandler\AdminForbiddenExceptionHandler::class,
                 Dms\Web\Laravel\Action\ExceptionHandler\InvalidFormSubmissionExceptionHandler::class,
                 Dms\Web\Laravel\Action\ExceptionHandler\EntityOutOfSyncExceptionHandler::class,
+                Dms\Web\Laravel\Action\ExceptionHandler\ErrorMessageExceptionHandler::class,
             ],
         ],
 

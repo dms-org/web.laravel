@@ -21,9 +21,9 @@
     },
     "require": {
         "php": ">=7.0.0",
-        "dms/core": "dev-master",
-        "dms/common.structure": "dev-master",
-        "dms/package.analytics": "dev-master",
+        "dms/core": "^0.1",
+        "dms/common.structure": "^0.1",
+        "dms/package.analytics": "^0.1",
         "laravel/framework": "5.2.*",
         "monii/container-interop-laravel": "^1.0",
         "marcj/topsort": "^1.0",

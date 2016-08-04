@@ -105,3 +105,38 @@ Dms.utilities.scrollToView = function (element) {
         $('html,body').animate({scrollTop: topOfElement - window.innerHeight / 3}, 500);
     }
 };
+
+Dms.utilities.throttleCallback = function (fn, threshhold, scope) {
+    var last, deferTimer;
+
+    return function () {
+        var context = scope || this;
+
+        var now = +new Date,
+            args = arguments;
+        if (last && now < last + threshhold) {
+            // hold on to it
+            clearTimeout(deferTimer);
+            deferTimer = setTimeout(function () {
+                last = now;
+                fn.apply(context, args);
+            }, threshhold);
+        } else {
+            last = now;
+            fn.apply(context, args);
+        }
+    };
+};
+
+Dms.utilities.debounceCallback = function (fn, delay) {
+    var timeout;
+    return function () {
+        var context = this, args = arguments;
+        clearTimeout(timeout);
+        timeout = setTimeout(function () {
+            timeout = null;
+            if (!immediate) func.apply(context, args);
+        }, wait);
+        if (immediate && !timeout) func.apply(context, args);
+    };
+};

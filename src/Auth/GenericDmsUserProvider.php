@@ -23,6 +23,11 @@ use Illuminate\Hashing\BcryptHasher;
 class GenericDmsUserProvider implements UserProviderInterface
 {
     /**
+     * @var \Dms\Core\Persistence\Db\Mapping\IEntityMapper
+     */
+    protected $mapper;
+
+    /**
      * @var IRepository
      */
     protected $repository;
@@ -49,7 +54,8 @@ class GenericDmsUserProvider implements UserProviderInterface
             }
         }
 
-        $this->repository = new DbRepository($connection, $orm->getEntityMapper($config['class']));
+        $this->mapper     = $orm->getEntityMapper($config['class']);
+        $this->repository = new DbRepository($connection, $this->mapper);
         $this->config     = $config;
     }
 

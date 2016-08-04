@@ -38,6 +38,16 @@ class GenericDmsUserProvider implements UserProviderInterface
     protected $config;
 
     /**
+     * @var callable
+     */
+    protected $wrapperCallback;
+
+    /**
+     * @var callable
+     */
+    protected $unwrapperCallback;
+
+    /**
      * UserProvider constructor.
      *
      * @param IOrm        $orm
@@ -57,6 +67,34 @@ class GenericDmsUserProvider implements UserProviderInterface
         $this->mapper     = $orm->getEntityMapper($config['class']);
         $this->repository = new DbRepository($connection, $this->mapper);
         $this->config     = $config;
+
+        $this->wrapperCallback = $config['wrapper'] ?? function (Authenticatable $authenticatable) {
+                return $authenticatable;
+            };
+
+        $this->unwrapperCallback = $config['unwrapper'] ?? function (Authenticatable $authenticatable) {
+                return $authenticatable;
+            };
+    }
+
+    /**
+     * @param $entity
+     *
+     * @return Authenticatable
+     */
+    protected function wrapUser($entity) : Authenticatable
+    {
+        return call_user_func($this->wrapperCallback, $entity);
+    }
+
+    /**
+     * @param Authenticatable $authenticatable
+     *
+     * @return mixed
+     */
+    protected function unwrapUser(Authenticatable $authenticatable)
+    {
+        return call_user_func($this->unwrapperCallback, $authenticatable);
     }
 
     /**
@@ -68,7 +106,7 @@ class GenericDmsUserProvider implements UserProviderInterface
      */
     public function retrieveById($id)
     {
-        return $this->repository->tryGet((int)$id);
+        return $this->wrapUser($this->repository->tryGet((int)$id));
     }
 
     /**
@@ -87,7 +125,9 @@ class GenericDmsUserProvider implements UserProviderInterface
                 ->where($this->config['remember_token'], '=', $token)
         );
 
-        return reset($users) ?: null;
+        return $users
+            ? $this->wrapUser(reset($users))
+            : null;
     }
 
     /**
@@ -100,6 +140,8 @@ class GenericDmsUserProvider implements UserProviderInterface
      */
     public function updateRememberToken(Authenticatable $user, $token)
     {
+        $user = $this->unwrapUser($user);
+        
         $user = $this->validateUser($user);
 
         $user->setRememberToken($token);
@@ -119,7 +161,9 @@ class GenericDmsUserProvider implements UserProviderInterface
 
         $users = $this->repository->matching($criteria);
 
-        return reset($users) ?: null;
+        return $users
+            ? $this->wrapUser(reset($users))
+            : null;
     }
 
     /**

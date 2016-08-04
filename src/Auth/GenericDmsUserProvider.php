@@ -196,6 +196,8 @@ class GenericDmsUserProvider implements UserProviderInterface
      */
     public function validateCredentials(Authenticatable $user, array $credentials) : bool
     {
+        $user = $this->unwrapUser($user);
+        
         $user = $this->validateUser($user);
 
         /** @var BcryptHasher $app */
@@ -215,7 +217,7 @@ class GenericDmsUserProvider implements UserProviderInterface
         $userClass = $this->repository->getObjectType();
 
         if (!($user instanceof $userClass)) {
-            throw TypeMismatchException::format('Expecting instance of %s, %s given', User::class, get_class($user));
+            throw TypeMismatchException::format('Expecting instance of %s, %s given', $userClass, get_class($user));
         }
 
         return $user;

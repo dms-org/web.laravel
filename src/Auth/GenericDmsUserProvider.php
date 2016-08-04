@@ -140,11 +140,11 @@ class GenericDmsUserProvider implements UserProviderInterface
      */
     public function updateRememberToken(Authenticatable $user, $token)
     {
+        $user->setRememberToken($token);
+
         $user = $this->unwrapUser($user);
-        
         $user = $this->validateUser($user);
 
-        $user->setRememberToken($token);
         $this->repository->save($user);
     }
 

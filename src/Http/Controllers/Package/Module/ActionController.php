@@ -2,6 +2,7 @@
 
 namespace Dms\Web\Laravel\Http\Controllers\Package\Module;
 
+use Dms\Core\Common\Crud\Action\Crud\ViewDetailsAction;
 use Dms\Core\Common\Crud\Action\Object\IObjectAction;
 use Dms\Core\Common\Crud\IReadModule;
 use Dms\Core\Form\Field\Type\ArrayOfType;
@@ -190,6 +191,13 @@ class ActionController extends DmsController
         }
 
         $input = $this->inputTransformers->transform($moduleContext, $action, $request->all());
+
+        if ($request->input('__initial_dependent_data')) {
+            for ($i = 1; $i < $stageNumber; $i++) {
+                $formStage = $form->getFormForStage($i, $input);
+                $input += $formStage->unprocess($formStage->getInitialValues());
+            }
+        }
 
         return $form->getFormForStage($stageNumber, $input);
     }

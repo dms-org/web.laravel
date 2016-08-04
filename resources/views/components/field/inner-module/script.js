@@ -11,6 +11,7 @@ Dms.form.initializeCallbacks.push(function (element) {
         var fieldName = innerModule.attr('data-name');
         var formGroup = innerModule.closest('.form-group');
         var rootUrl = innerModule.attr('data-root-url');
+        var isDisplayOnly = innerModule.attr('data-display-only');
         var reloadStateUrl = rootUrl + '/state';
         var innerModuleFormContainer = innerModule.find('.dms-inner-module-form-container');
         var innerModuleForm = innerModuleFormContainer.find('.dms-inner-module-form');
@@ -30,7 +31,17 @@ Dms.form.initializeCallbacks.push(function (element) {
                 return options.url.indexOf(rootUrl) === 0 && options.url !== reloadStateUrl;
             },
             before: function (options) {
-                var formData = Dms.form.stages.getDependentDataForStage(formStage);
+                var formData;
+
+                if (isDisplayOnly) {
+                    formData = Dms.ajax.createFormData();
+                    formData.append('__initial_dependent_data', '1')
+                } else {
+                    formData = Dms.form.stages.getDependentDataForStage(formStage);
+                }
+
+
+                formData.append(fieldDataPrefix + '[current_state]', JSON.stringify(currentValue));
                 formData.append(fieldDataPrefix + '[current_state]', JSON.stringify(currentValue));
                 formData.append(fieldDataPrefix + '[request][url]', options.url.substring(rootUrl.length));
                 formData.append(fieldDataPrefix + '[request][method]', options.__emulatedType || options.type || 'get');

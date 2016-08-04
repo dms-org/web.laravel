@@ -1,5 +1,6 @@
 <div class="dms-display-inner-module"
      data-root-url="{{ $rootUrl }}"
+     data-display-only="1"
 >
     <div class="dms-inner-module-panel panel panel-default">
         <div class="panel-body">

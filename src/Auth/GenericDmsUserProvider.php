@@ -207,12 +207,12 @@ class GenericDmsUserProvider implements UserProviderInterface
     }
 
     /**
-     * @param Authenticatable $user
+     * @param object $user
      *
-     * @return Authenticatable
+     * @return object
      * @throws TypeMismatchException
      */
-    private function validateUser(Authenticatable $user) : Authenticatable
+    private function validateUser($user)
     {
         $userClass = $this->repository->getObjectType();
 

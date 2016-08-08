@@ -23,8 +23,21 @@ class HelperTest extends CmsIntegrationTest
         asset_file_url(new File(__FILE__));
     }
 
+
+    public function testNonExistentFileInWrongPath()
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        asset_file_url(new File(__FILE__ . 'fsdfsdf'));
+    }
+
     public function testAssetFileInCorrectPathUrl()
     {
         $this->assertSame(asset('.gitignore'), asset_file_url(new File(public_path('.gitignore'))));
+    }
+
+    public function testNonExistentFileInCorrectPathUrl()
+    {
+        $this->assertSame(asset('non-existent'), asset_file_url(new File(realpath(public_path()) .  DIRECTORY_SEPARATOR . 'non-existent')));
     }
 }

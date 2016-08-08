@@ -11,7 +11,7 @@ if (!function_exists('asset_file')) {
      */
     function asset_file_url(\Dms\Core\File\IFile $file) : string
     {
-        $filePath   = realpath($file->getFullPath());
+        $filePath   = $file->exists() ? realpath($file->getFullPath()) : $file->getFullPath();
         $publicPath = realpath(public_path());
 
         if (!starts_with($filePath, $publicPath)) {

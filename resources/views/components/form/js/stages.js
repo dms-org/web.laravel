@@ -149,9 +149,9 @@ Dms.form.initializeCallbacks.push(function (element) {
                 });
             };
 
-            previousStages.on('input', makeDependentFieldSelectorFor('input'), loadNextStage);
-            previousStages.on('input', makeDependentFieldSelectorFor('textarea'), loadNextStage);
-            previousStages.on('change', makeDependentFieldSelectorFor('select'), loadNextStage);
+            form.on('input', makeDependentFieldSelectorFor('input'), loadNextStage);
+            form.on('input', makeDependentFieldSelectorFor('textarea'), loadNextStage);
+            form.on('change', makeDependentFieldSelectorFor('select'), loadNextStage);
 
             if (stageToDependentFieldsMap) {
                 var selectors = [];

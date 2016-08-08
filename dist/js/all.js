@@ -61372,22 +61372,6 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-    element.find('input.dms-colour-input').each(function () {
-        var config = {
-            theme: 'bootstrap'
-        };
-
-        if ($(this).hasClass('dms-colour-input-rgb')) {
-            config.format = 'rgb';
-        } else if ($(this).hasClass('dms-colour-input-rgba')) {
-            config.format = 'rgb';
-            config.opacity = true;
-        }
-
-        $(this).addClass('minicolors').minicolors(config);
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
 
     element.find('.list-of-checkboxes').each(function () {
         var listOfCheckboxes = $(this);
@@ -61934,6 +61918,22 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
+    element.find('input.dms-colour-input').each(function () {
+        var config = {
+            theme: 'bootstrap'
+        };
+
+        if ($(this).hasClass('dms-colour-input-rgb')) {
+            config.format = 'rgb';
+        } else if ($(this).hasClass('dms-colour-input-rgba')) {
+            config.format = 'rgb';
+            config.opacity = true;
+        }
+
+        $(this).addClass('minicolors').minicolors(config);
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
     element.find('.dms-inner-form').each(function () {
         var innerForm = $(this);
 
@@ -62397,12 +62397,6 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-    element.find('select[multiple]').multiselect({
-        enableFiltering: true,
-        includeSelectAllOption: true
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
     element.find('input[type="number"][data-max-decimal-places]').each(function () {
         $(this).attr('data-parsley-max-decimal-places', $(this).attr('data-max-decimal-places'));
     });
@@ -62432,6 +62426,12 @@ Dms.form.initializeCallbacks.push(function (element) {
     element.find('input[type=radio]').iCheck({
         radioClass: 'iradio_square-blue',
         increaseArea: '20%'
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+    element.find('select[multiple]').multiselect({
+        enableFiltering: true,
+        includeSelectAllOption: true
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -62896,7 +62896,14 @@ Dms.form.initializeCallbacks.push(function (element) {
                 }
             };
 
-            var loadNextStage = function () {
+            var loadNextStage = function (event) {
+                if (event && event.target) {
+                    var formForEventTarget = $(event.target).closest('.dms-staged-form');
+
+                    if (!formForEventTarget.is(form)) {
+                        return;
+                    }
+                }
 
                 if (currentAjaxRequest) {
                     currentAjaxRequest.abort();
@@ -63003,9 +63010,9 @@ Dms.form.initializeCallbacks.push(function (element) {
                 });
             };
 
-            form.on('input', makeDependentFieldSelectorFor('input'), loadNextStage);
-            form.on('input', makeDependentFieldSelectorFor('textarea'), loadNextStage);
-            form.on('change', makeDependentFieldSelectorFor('select'), loadNextStage);
+            previousStages.on('input', makeDependentFieldSelectorFor('input'), loadNextStage);
+            previousStages.on('input', makeDependentFieldSelectorFor('textarea'), loadNextStage);
+            previousStages.on('change', makeDependentFieldSelectorFor('select'), loadNextStage);
 
             if (stageToDependentFieldsMap) {
                 var selectors = [];

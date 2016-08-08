@@ -35,7 +35,14 @@ Dms.form.initializeCallbacks.push(function (element) {
                 }
             };
 
-            var loadNextStage = function () {
+            var loadNextStage = function (event) {
+                if (event && event.target) {
+                    var formForEventTarget = $(event.target).closest('.dms-staged-form');
+
+                    if (!formForEventTarget.is(form)) {
+                        return;
+                    }
+                }
 
                 if (currentAjaxRequest) {
                     currentAjaxRequest.abort();
@@ -142,9 +149,9 @@ Dms.form.initializeCallbacks.push(function (element) {
                 });
             };
 
-            form.on('input', makeDependentFieldSelectorFor('input'), loadNextStage);
-            form.on('input', makeDependentFieldSelectorFor('textarea'), loadNextStage);
-            form.on('change', makeDependentFieldSelectorFor('select'), loadNextStage);
+            previousStages.on('input', makeDependentFieldSelectorFor('input'), loadNextStage);
+            previousStages.on('input', makeDependentFieldSelectorFor('textarea'), loadNextStage);
+            previousStages.on('change', makeDependentFieldSelectorFor('select'), loadNextStage);
 
             if (stageToDependentFieldsMap) {
                 var selectors = [];

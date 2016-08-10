@@ -22,6 +22,8 @@ class AppOrm extends Orm
      */
     protected function define(OrmDefinition $orm)
     {
+        $orm->enableLazyLoading();
+
         $orm->encompass(DmsOrm::inDefaultNamespace());
 
         // TODO: Register your mappers...

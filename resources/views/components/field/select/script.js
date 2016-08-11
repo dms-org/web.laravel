@@ -1,6 +1,7 @@
 Dms.form.initializeCallbacks.push(function (element) {
     element.find('.dms-select-with-remote-data').each(function () {
         var control = $(this);
+        var formStage = control.closest('.dms-form-stage')
         var input = control.find('.dms-select-input');
         var hiddenInput = control.find('.dms-select-hidden-input');
         var formGroup = control.closest('.form-group');
@@ -15,16 +16,21 @@ Dms.form.initializeCallbacks.push(function (element) {
             hint: true,
             highlight: true,
             minLength: remoteMinChars,
-            source: Dms.utilities.throttleCallback(function (query, callback) {
+            source: Dms.utilities.debounceCallback(function (query, callback) {
                 if (currentRequest) {
                     currentRequest.abort();
                 }
+
+                var formData = Dms.form.stages.getDependentDataForStage(formStage);
 
                 currentRequest = Dms.ajax.createRequest({
                     url: remoteDataUrl + '?query=' + encodeURIComponent(query),
                     type: 'POST',
                     dataType: 'json',
-                    cache: false
+                    cache: false,
+                    processData: false,
+                    contentType: false,
+                    data: formData
                 });
 
                 currentRequest.done(function (results) {

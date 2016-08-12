@@ -43,3 +43,13 @@
         }
     }
 }
+
+.dms-content-dialog {
+    .dms-content-iframe {
+        border: 1px solid #ccc;
+        width: 100%;
+        min-height: 100%;
+        min-height: 50vh;
+        overflow: scroll;
+    }
+}

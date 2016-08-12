@@ -65,9 +65,25 @@ Dms.action.responseHandler = function (httpStatusCode, actionUrl, response) {
     if (typeof response.content !== 'undefined') {
         var contentDialog = $('.dms-content-dialog').first();
 
-        contentDialog.find('.modal-title').text(response.content_title || '')
+        contentDialog.find('.modal-title').text(response.content_title || '');
+
         var dialogBody = contentDialog.find('.modal-body');
-        dialogBody.html(response.content);
+        dialogBody.empty();
+
+        if (response.iframe) {
+            var iframe = $('<iframe />');
+            iframe.addClass('dms-content-iframe');
+            dialogBody.append(iframe);
+            setTimeout(function () {
+                var document = iframe.contents().get(0);
+                document.open();
+                document.write(response.content);
+                document.close();
+            }, 1);
+        } else {
+            dialogBody.html(response.content);
+        }
+
         contentDialog.appendTo('body').modal('show');
         Dms.all.initialize(dialogBody);
 

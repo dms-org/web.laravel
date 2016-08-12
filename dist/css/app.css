@@ -327,6 +327,13 @@ a:not(.btn).ladda-button .ladda-spinner > div > div > div {
     .dms-login-dialog .dms-login-form-container.loading .dms-login-form {
       opacity: .3; }
 
+.dms-content-dialog .dms-content-iframe {
+  border: 1px solid #ccc;
+  width: 100%;
+  min-height: 100%;
+  min-height: 50vh;
+  overflow: scroll; }
+
 body {
   font-family: Arial, sans-serif !important; }
 

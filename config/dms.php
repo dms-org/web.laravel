@@ -127,6 +127,7 @@ return [
                 Dms\Web\Laravel\Action\ResultHandler\NullResultHandler::class,
                 Dms\Web\Laravel\Action\ResultHandler\MessageResultHandler::class,
                 Dms\Web\Laravel\Action\ResultHandler\FileResultHandler::class,
+                Dms\Web\Laravel\Action\ResultHandler\HtmlResultHandler::class,
                 Dms\Web\Laravel\Action\ResultHandler\GenericEntityResultHandler::class,
                 Dms\Web\Laravel\Action\ResultHandler\GenericEntityCollectionResultHandler::class,
             ],

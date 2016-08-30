@@ -3,8 +3,8 @@
 namespace Dms\Web\Laravel\Auth;
 
 use Dms\Common\Structure\Web\EmailAddress;
-use Dms\Core\Auth\IHashedPassword;
 use Dms\Core\Auth\IAdmin;
+use Dms\Core\Auth\IHashedPassword;
 use Dms\Core\Exception\InvalidArgumentException;
 use Dms\Core\Exception\InvalidOperationException;
 use Dms\Core\Model\EntityIdCollection;
@@ -12,6 +12,7 @@ use Dms\Core\Model\Object\ClassDefinition;
 use Dms\Core\Model\Object\Entity;
 use Dms\Web\Laravel\Auth\Password\HashedPassword;
 use Dms\Web\Laravel\Auth\Persistence\Mapper\AdminMapper;
+use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\CanResetPassword;
 
@@ -292,5 +293,17 @@ class Admin extends Entity implements IAdmin, Authenticatable, CanResetPassword
     public function getEmailForPasswordReset()
     {
         return $this->emailAddress->asString();
+    }
+
+    /**
+     * Send the password reset notification.
+     *
+     * @param string $token
+     *
+     * @return void
+     */
+    public function sendPasswordResetNotification($token)
+    {
+        \Mail::to($this->getEmailForPasswordReset())->send((new ResetPassword($token))->toMail());
     }
 }

@@ -37,7 +37,11 @@ class DmsController extends Controller
         $this->cms = $cms;
         $this->auth = app()->make(IAuthSystem::class);
 
-        $this->loadSharedViewVariables(request());
+        $this->middleware(function ($request, $next) {
+            $this->loadSharedViewVariables(request());
+
+            return $next($request);
+        });
     }
 
     /**

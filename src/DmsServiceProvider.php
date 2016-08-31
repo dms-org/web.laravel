@@ -68,6 +68,7 @@ use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Database\Connection;
 use Illuminate\Database\MySqlConnection;
 use Illuminate\Foundation\Application;
+use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Routing\Router;
 use Illuminate\Session\Middleware\StartSession;
@@ -279,6 +280,7 @@ class DmsServiceProvider extends ServiceProvider
             StartSession::class,
             ShareErrorsFromSession::class,
             VerifyCsrfToken::class,
+            SubstituteBindings::class,
         ]);
 
         $router->middleware('dms.auth', Authenticate::class);

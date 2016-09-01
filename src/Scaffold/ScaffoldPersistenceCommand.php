@@ -30,10 +30,10 @@ class ScaffoldPersistenceCommand extends Command
      * @var string
      */
     protected $signature = 'dms:scaffold:persistence
-                            {entity_namespace : The namespace of the entities}
-                            {output_dir_abstract : The path to place the repository interfaces.}
-                            {output_dir_implementation : The path to place the repository and mapper implementations.}
-                            {--overwrite: Whether to overwrite existing files}';
+                            {entity_namespace=App\\Domain\\Entities : The namespace of the entities}
+                            {output_dir_abstract=app/Domain/Services/Persistence : The path to place the repository interfaces.}
+                            {output_dir_implementation=app/Infrastructure/Persistence : The path to place the repository and mapper implementations.}
+                            {--overwrite : Whether to overwrite existing files}';
 
     /**
      * The console command description.

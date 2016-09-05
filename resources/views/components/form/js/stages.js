@@ -93,7 +93,7 @@ Dms.form.initializeCallbacks.push(function (element) {
 
                 Dms.form.validation.clearMessages(form);
 
-                var formData = Dms.form.stages.createFormDataFromFields(previousFields);
+                var formData = Dms.form.stages.getDependentDataForStage(currentStage);
 
                 currentAjaxRequest = Dms.ajax.createRequest({
                     url: loadStageUrl,

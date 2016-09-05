@@ -42,7 +42,6 @@ Dms.form.initializeCallbacks.push(function (element) {
 
 
                 formData.append(fieldDataPrefix + '[current_state]', JSON.stringify(currentValue));
-                formData.append(fieldDataPrefix + '[current_state]', JSON.stringify(currentValue));
                 formData.append(fieldDataPrefix + '[request][url]', options.url.substring(rootUrl.length));
                 formData.append(fieldDataPrefix + '[request][method]', options.__emulatedType || options.type || 'get');
 

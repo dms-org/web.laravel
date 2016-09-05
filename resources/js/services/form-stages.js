@@ -24,7 +24,7 @@ Dms.form.stages.makeDependentFieldSelectorForStageMap = function (stageToDepende
 
     $.each(stageToDependentFieldMap, function (stageNumber, dependentFields) {
         if (dependentFields === '*') {
-            selectors.push('.dms-form-stage[data-stage-number="' + stageNumber + '"] ' +  selector + ':input');
+            selectors.push('.dms-form-stage[data-stage-number="' + stageNumber + '"] ' + selector + ':input');
         } else {
             var fieldsInStageSelector = Dms.form.stages.makeDependentFieldSelectorFor(
                 dependentFields,
@@ -65,7 +65,7 @@ Dms.form.stages.createFormDataFromFields = function (fields) {
 
 Dms.form.stages.getDependentDataForStage = function (formStage) {
     var stagedForm = formStage.closest('.dms-staged-form');
-    
+
     if (!formStage.is('.dms-dependent-form-stage')) {
         return Dms.ajax.createFormData();
     }
@@ -73,5 +73,39 @@ Dms.form.stages.getDependentDataForStage = function (formStage) {
     var stageToDependentFieldsMap = JSON.parse(formStage.attr('data-stage-dependent-fields-stage-map'));
     var dependentFieldsSelector = Dms.form.stages.makeDependentFieldSelectorForStageMap(stageToDependentFieldsMap, '*');
 
-    return Dms.form.stages.createFormDataFromFields(stagedForm.find(dependentFieldsSelector));
+    var formData = Dms.form.stages.createFormDataFromFields(stagedForm.find(dependentFieldsSelector));
+
+    stagedForm.find('.form-group').each(function () {
+        var formGroup = $(this);
+
+        if (!formGroup.closest('.dms-staged-form').is(stagedForm)) {
+            return;
+        }
+
+        var isDependent = false;
+
+        $.each(stageToDependentFieldsMap, function (stageNumber, fields) {
+            if (formGroup.closest('.dms-form-stage').attr('data-stage-number') == stageNumber
+            && fields === '*' || $.inArray(formGroup.attr('data-field-name'), fields) !== -1) {
+                isDependent = true;
+                return false;
+            }
+        });
+
+        if (!isDependent) {
+            return;
+        }
+
+        var additionalDataToSubmit = formGroup.triggerHandler('dms-get-input-data');
+
+        if (additionalDataToSubmit) {
+            $.each(Dms.ajax.parseData(additionalDataToSubmit), function (name, entries) {
+                $.each(entries, function (index, entry) {
+                    formData.append(name, entry.value, entry.filename);
+                });
+            });
+        }
+    });
+
+    return formData;
 };

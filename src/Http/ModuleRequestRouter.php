@@ -167,7 +167,7 @@ class ModuleRequestRouter
 
         $originalMiddlewareFlag = app()->bound('middleware.disable') ? app()->make('middleware.disable') : false;
         $originalRequest        = app()->bound('request') ? app()->make('request') : null;
-        $originalModuleContext        = app()->bound(ModuleContext::class) ? app()->make(ModuleContext::class) : null;
+        $originalModuleContext  = app()->bound(ModuleContext::class) ? app()->make(ModuleContext::class) : null;
 
         app()->instance('middleware.disable', true);
         app()->instance('request', $request);
@@ -177,7 +177,13 @@ class ModuleRequestRouter
 
         app()->instance('middleware.disable', $originalMiddlewareFlag);
         app()->instance('request', $originalRequest);
-        app()->instance(ModuleContext::class, $originalModuleContext);
+
+        if ($originalModuleContext) {
+            \app()->instance(ModuleContext::class, $originalModuleContext);
+        } else {
+            \app()->offsetUnset(ModuleContext::class);
+        }
+
         array_pop($this->currentModuleContextStack);
 
         return $response;

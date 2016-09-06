@@ -83,6 +83,9 @@ class ObjectActionButtonBuilder
                 StringHumanizer::title($action->getName()),
                 function (string $objectId) use ($formUrl) {
                     return str_replace('__object__', $objectId, $formUrl);
+                },
+                function (ITypedObject $object) use ($action) {
+                    return $action->isSupported($object);
                 }
             );
         }

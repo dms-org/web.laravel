@@ -50,6 +50,7 @@
         <?php $newObjectsIndex = 0 ?>
         @forelse ($section->getRows() as $row)
             <?php $rowData = $row->getData() ?>
+            <?php $object = $row instanceof \Dms\Core\Table\Data\Object\TableRowWithObject ? $row->getObject() : null ?>
             <tr>
                 @foreach ($columns as $columnName => $column)
                     @unless($groupData[$columnName] ?? false)
@@ -95,17 +96,19 @@
                                     </button>
                                     <ul class="dropdown-menu  dropdown-menu-right">
                                         @foreach(array_diff_key($rowActionButtons, ['details' => true, 'edit' => true, 'remove' => true]) as $action)
-                                            <li>
-                                                @if($action->isPost())
-                                                    <a class="dms-run-action-form inline"
-                                                       data-action="{{ $action->getUrl($objectId) }}"
-                                                       data-method="post">
-                                                        {{ $action->getLabel() }}
-                                                    </a>
-                                                @else
-                                                    <a href="{{ $action->getUrl($objectId) }}">{{ $action->getLabel() }}</a>
-                                                @endif
-                                            </li>
+                                            @if(!$object || $action->isSupported($object))
+                                                <li>
+                                                    @if($action->isPost())
+                                                        <a class="dms-run-action-form inline"
+                                                           data-action="{{ $action->getUrl($objectId) }}"
+                                                           data-method="post">
+                                                            {{ $action->getLabel() }}
+                                                        </a>
+                                                    @else
+                                                        <a href="{{ $action->getUrl($objectId) }}">{{ $action->getLabel() }}</a>
+                                                    @endif
+                                                </li>
+                                            @endif
                                         @endforeach
                                     </ul>
                                 </div>

@@ -46,12 +46,13 @@
                         <!-- User Account: style can be found in dropdown.less -->
                         <li class="dropdown user user-menu">
                             <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-                                <span><i class="fa fa-user"></i> {{ $user->getFullName() }}</span>
+                                <img src="https://www.gravatar.com/avatar/{{ md5($user->getEmailAddress()) }}" class="user-image" alt="User Image">
+                                <span>{{ $user->getFullName() }}</span>
                             </a>
                             <ul class="dropdown-menu">
                                 <!-- Menu Body-->
                                 <li class="user-body">
-                                    <a href="{{ route('dms::package.module.dashboard', ['admin', 'account']) }}">{{ $user->getUsername() }} ({{ $user->getEmailAddress() }})</a>
+                                    <a href="{{ route('dms::package.module.dashboard', ['admin', 'account']) }}">{{ $user->getUsername() }}</a>
                                 </li>
                                 <!-- Menu Footer-->
                                 <li class="user-footer">
@@ -77,8 +78,11 @@
             <section class="sidebar">
                 <!-- Sidebar user panel -->
                 <div class="user-panel">
+                    <div class="pull-left image">
+                        <img src="https://www.gravatar.com/avatar/{{ md5($user->getEmailAddress()) }}" class="img-circle" alt="User Image">
+                    </div>
                     <div class="pull-left info">
-                        <p>{{ $user->getUsername() }}</p>
+                        <p>{{ $user->getFullName() }}</p>
                         <a href="{{ route('dms::package.module.dashboard', ['admin', 'account']) }}">
                             <i class="fa fa-circle text-success"></i> {{ $user->getEmailAddress() }}
                         </a>

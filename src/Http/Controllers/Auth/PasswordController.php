@@ -67,9 +67,7 @@ class PasswordController extends DmsController
         $this->validate($request, ['email' => 'required|email']);
 
         $credentials = ['emailAddress' => new EmailAddress($request->get('email'))];
-        $response    = $this->passwordBroker->sendResetLink($credentials, function (Message $message) {
-            $message->subject('Your Password Reset Link');
-        });
+        $response    = $this->passwordBroker->sendResetLink($credentials);
 
         switch ($response) {
             case PasswordBroker::RESET_LINK_SENT:

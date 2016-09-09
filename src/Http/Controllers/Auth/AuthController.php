@@ -6,6 +6,7 @@ use Dms\Core\Auth\AdminBannedException;
 use Dms\Core\Auth\InvalidCredentialsException;
 use Dms\Core\Auth\NotAuthenticatedException;
 use Dms\Core\ICms;
+use Dms\Web\Laravel\Auth\Oauth\OauthProviderCollection;
 use Dms\Web\Laravel\Http\Controllers\DmsController;
 use Illuminate\Cache\RateLimiter;
 use Illuminate\Http\Request;
@@ -18,15 +19,21 @@ use Illuminate\Http\Request;
 class AuthController extends DmsController
 {
     /**
+     * @var OauthProviderCollection
+     */
+    protected $oauthProviderCollection;
+
+    /**
      * Create a new authentication controller instance.
      *
      * @param ICms $cms
      */
-    public function __construct(ICms $cms)
+    public function __construct(ICms $cms, OauthProviderCollection $oauthProviderCollection)
     {
         parent::__construct($cms);
 
         $this->middleware('dms.guest', ['except' => 'logout']);
+        $this->oauthProviderCollection = $oauthProviderCollection;
     }
 
     /**
@@ -56,7 +63,7 @@ class AuthController extends DmsController
      */
     public function showLoginForm()
     {
-        return view('dms::auth.login');
+        return view('dms::auth.login', ['oauthProviders' => $this->oauthProviderCollection->getAll()]);
     }
 
     /**

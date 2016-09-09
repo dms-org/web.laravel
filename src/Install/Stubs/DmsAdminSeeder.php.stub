@@ -3,7 +3,7 @@
 use Dms\Common\Structure\Web\EmailAddress;
 use Dms\Core\Auth\IAdminRepository;
 use Dms\Web\Laravel\Auth\Password\IPasswordHasherFactory;
-use Dms\Web\Laravel\Auth\Admin;
+use Dms\Web\Laravel\Auth\LocalAdmin;
 use Illuminate\Database\Seeder;
 
 /**
@@ -44,7 +44,7 @@ class DmsAdminSeeder extends Seeder
     {
         $this->repo->clear();
 
-        $this->repo->save(new Admin(
+        $this->repo->save(new LocalAdmin(
             'Admin',
             new EmailAddress('admin@admin.com'),
             'admin',

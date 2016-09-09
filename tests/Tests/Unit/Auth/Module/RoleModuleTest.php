@@ -17,6 +17,7 @@ use Dms\Core\Persistence\ArrayRepository;
 use Dms\Core\Persistence\IRepository;
 use Dms\Core\Tests\Common\Crud\Modules\CrudModuleTest;
 use Dms\Core\Tests\Module\Mock\MockAuthSystem;
+use Dms\Web\Laravel\Auth\LocalAdmin;
 use Dms\Web\Laravel\Auth\Module\RoleModule;
 use Dms\Web\Laravel\Auth\Role;
 use Dms\Web\Laravel\Auth\Admin;
@@ -64,10 +65,10 @@ class RoleModuleTest extends CrudModuleTest
 
     protected function mockUserDataSource() : IAdminRepository
     {
-        $admin = new Admin('test', new EmailAddress('admin@admin.com'), 'admin', $this->getMockForAbstractClass(IHashedPassword::class));
+        $admin = new LocalAdmin('test', new EmailAddress('admin@admin.com'), 'admin', $this->getMockForAbstractClass(IHashedPassword::class));
         $admin->setId(1);
 
-        $person = new Admin('test', new EmailAddress('person@person.com'), 'person', $this->getMockForAbstractClass(IHashedPassword::class));
+        $person = new LocalAdmin('test', new EmailAddress('person@person.com'), 'person', $this->getMockForAbstractClass(IHashedPassword::class));
         $person->setId(2);
 
         return new class(Admin::collection([$admin, $person])) extends ArrayRepository implements IAdminRepository

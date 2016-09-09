@@ -18,7 +18,9 @@ use Dms\Core\Tests\Common\Crud\Modules\CrudModuleTest;
 use Dms\Core\Tests\Module\Mock\MockAuthSystem;
 use Dms\Core\Widget\TableWidget;
 use Dms\Web\Laravel\Auth\Admin;
+use Dms\Web\Laravel\Auth\LocalAdmin;
 use Dms\Web\Laravel\Auth\Module\AdminUserModule;
+use Dms\Web\Laravel\Auth\OauthAdmin;
 use Dms\Web\Laravel\Auth\Password\HashedPassword;
 use Dms\Web\Laravel\Auth\Password\IPasswordHasher;
 use Dms\Web\Laravel\Auth\Password\IPasswordHasherFactory;
@@ -45,13 +47,16 @@ class AdminUserModuleTest extends CrudModuleTest
      */
     protected function buildRepositoryDataSource() : IMutableObjectSet
     {
-        $admin = new Admin('Test', new EmailAddress('admin@admin.com'), 'admin', $this->getMockForAbstractClass(IHashedPassword::class));
+        $admin = new LocalAdmin('Test', new EmailAddress('admin@admin.com'), 'admin', $this->getMockForAbstractClass(IHashedPassword::class));
         $admin->setId(1);
 
-        $person = new Admin('Person', new EmailAddress('person@person.com'), 'person', $this->getMockForAbstractClass(IHashedPassword::class));
+        $person = new LocalAdmin('Person', new EmailAddress('person@person.com'), 'person', $this->getMockForAbstractClass(IHashedPassword::class));
         $person->setId(2);
 
-        return new class(Admin::collection([$admin, $person])) extends ArrayRepository implements IAdminRepository
+        $oauthAdmin = new OauthAdmin('google', '1233', 'Google Guy', new EmailAddress('person@person.com'), 'person');
+        $oauthAdmin->setId(3);
+
+        return new class(Admin::collection([$admin, $person, $oauthAdmin])) extends ArrayRepository implements IAdminRepository
         {
         };
     }
@@ -182,7 +187,7 @@ class AdminUserModuleTest extends CrudModuleTest
             'roles'    => [$adminRoleId],
         ]);
 
-        $this->assertInstanceOf(Admin::class, $user);
+        $this->assertInstanceOf(LocalAdmin::class, $user);
 
         $this->assertSame('New User', $user->getFullName());
         $this->assertSame('new@user.com', $user->getEmailAddress());
@@ -229,9 +234,11 @@ class AdminUserModuleTest extends CrudModuleTest
 
     public function testSummaryTableWidget()
     {
+        /** @var TableWidget $widget */
         $widget = $this->module->getWidget('summary-table');
 
         $this->assertSame('summary-table', $widget->getName());
         $this->assertInstanceOf(TableWidget::class, $widget);
+        $this->assertCount(3, $widget->loadData()->getSections()[0]->getRows());
     }
 }

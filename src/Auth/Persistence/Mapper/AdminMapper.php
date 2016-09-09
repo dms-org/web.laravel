@@ -1,12 +1,14 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Auth\Persistence\Mapper;
 
 use Dms\Common\Structure\Web\Persistence\EmailAddressMapper;
 use Dms\Core\Persistence\Db\Mapping\Definition\MapperDefinition;
 use Dms\Core\Persistence\Db\Mapping\EntityMapper;
-use Dms\Web\Laravel\Auth\Role;
 use Dms\Web\Laravel\Auth\Admin;
+use Dms\Web\Laravel\Auth\LocalAdmin;
+use Dms\Web\Laravel\Auth\OauthAdmin;
+use Dms\Web\Laravel\Auth\Role;
 
 /**
  * The user entity mapper.
@@ -15,7 +17,7 @@ use Dms\Web\Laravel\Auth\Admin;
  */
 class AdminMapper extends EntityMapper
 {
-    const AUTH_IDENTIFIER_COLUMN = 'username';
+    const AUTH_IDENTIFIER_COLUMN = 'id';
     const AUTH_PASSWORD_COLUMN = 'password_hash';
     const AUTH_REMEMBER_TOKEN_COLUMN = 'remember_token';
 
@@ -31,7 +33,9 @@ class AdminMapper extends EntityMapper
         $map->type(Admin::class);
         $map->toTable('users');
 
-        $map->idToPrimaryKey('id');
+        $map->idToPrimaryKey(self::AUTH_IDENTIFIER_COLUMN);
+
+        $map->column('type')->asEnum(['local', 'oauth']);
 
         $map->property(Admin::FULL_NAME)
             ->to('full_name')
@@ -42,13 +46,10 @@ class AdminMapper extends EntityMapper
             ->using(new EmailAddressMapper('email'));
 
         $map->property(Admin::USERNAME)
-            ->to(self::AUTH_IDENTIFIER_COLUMN)
+            ->to('username')
             ->unique()
             ->asVarchar(255);
 
-        $map->embedded(Admin::PASSWORD)
-            ->withColumnsPrefixedBy('password_')
-            ->using(new HashedPasswordMapper());
 
         $map->property(Admin::IS_SUPER_USER)
             ->to('is_super_user')
@@ -58,11 +59,6 @@ class AdminMapper extends EntityMapper
             ->to('is_banned')
             ->asBool();
 
-        $map->property(Admin::REMEMBER_TOKEN)
-            ->to(self::AUTH_REMEMBER_TOKEN_COLUMN)
-            ->nullable()
-            ->asVarchar(255);
-
         $map->relation(Admin::ROLE_IDS)
             ->to(Role::class)
             ->toManyIds()
@@ -70,5 +66,30 @@ class AdminMapper extends EntityMapper
             ->throughJoinTable('user_roles')
             ->withParentIdAs('user_id')
             ->withRelatedIdAs('role_id');
+        
+        $map->subclass()->withTypeInColumn('type', 'local')->define(function (MapperDefinition $map) {
+            $map->type(LocalAdmin::class);
+
+            $map->embedded(LocalAdmin::PASSWORD)
+                ->withColumnsPrefixedBy('password_')
+                ->using(new HashedPasswordMapper());
+
+            $map->property(LocalAdmin::REMEMBER_TOKEN)
+                ->to(self::AUTH_REMEMBER_TOKEN_COLUMN)
+                ->nullable()
+                ->asVarchar(255);
+        });
+
+        $map->subclass()->withTypeInColumn('type', 'oauth')->define(function (MapperDefinition $map) {
+            $map->type(OauthAdmin::class);
+
+            $map->property(OauthAdmin::OAUTH_PROVIDER_NAME)
+                ->to('oauth_provider_name')
+                ->asVarchar(255);
+
+            $map->property(OauthAdmin::OAUTH_ACCOUNT_ID)
+                ->to('oauth_account_id')
+                ->asVarchar(255);
+        });
     }
 }

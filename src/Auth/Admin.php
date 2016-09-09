@@ -4,32 +4,26 @@ namespace Dms\Web\Laravel\Auth;
 
 use Dms\Common\Structure\Web\EmailAddress;
 use Dms\Core\Auth\IAdmin;
-use Dms\Core\Auth\IHashedPassword;
 use Dms\Core\Exception\InvalidArgumentException;
 use Dms\Core\Exception\InvalidOperationException;
 use Dms\Core\Model\EntityIdCollection;
 use Dms\Core\Model\Object\ClassDefinition;
 use Dms\Core\Model\Object\Entity;
-use Dms\Web\Laravel\Auth\Password\HashedPassword;
 use Dms\Web\Laravel\Auth\Persistence\Mapper\AdminMapper;
-use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Contracts\Auth\Authenticatable;
-use Illuminate\Contracts\Auth\CanResetPassword;
 
 /**
  * The laravel admin entity.
  *
  * @author Elliot Levin <elliotlevin@hotmail.com>
  */
-class Admin extends Entity implements IAdmin, Authenticatable, CanResetPassword
+abstract class Admin extends Entity implements IAdmin, Authenticatable
 {
     const FULL_NAME = 'fullName';
     const EMAIL_ADDRESS = 'emailAddress';
     const USERNAME = 'username';
-    const PASSWORD = 'password';
     const IS_SUPER_USER = 'isSuperUser';
     const IS_BANNED = 'isBanned';
-    const REMEMBER_TOKEN = 'rememberToken';
     const ROLE_IDS = 'roleIds';
 
     /**
@@ -48,11 +42,6 @@ class Admin extends Entity implements IAdmin, Authenticatable, CanResetPassword
     protected $username;
 
     /**
-     * @var HashedPassword
-     */
-    protected $password;
-
-    /**
      * @var bool
      */
     protected $isSuperUser;
@@ -63,22 +52,16 @@ class Admin extends Entity implements IAdmin, Authenticatable, CanResetPassword
     protected $isBanned;
 
     /**
-     * @var string|null
-     */
-    protected $rememberToken;
-
-    /**
      * @var EntityIdCollection
      */
     protected $roleIds;
 
     /**
-     * LaravelUser constructor.
+     * Admin constructor.
      *
      * @param string                  $fullName
      * @param EmailAddress            $emailAddress
      * @param string                  $username
-     * @param IHashedPassword         $password
      * @param bool                    $isSuperUser
      * @param bool                    $isBanned
      * @param EntityIdCollection|null $roleIds
@@ -87,7 +70,6 @@ class Admin extends Entity implements IAdmin, Authenticatable, CanResetPassword
         string $fullName,
         EmailAddress $emailAddress,
         string $username,
-        IHashedPassword $password,
         bool $isSuperUser = false,
         bool $isBanned = false,
         EntityIdCollection $roleIds = null
@@ -97,7 +79,6 @@ class Admin extends Entity implements IAdmin, Authenticatable, CanResetPassword
         $this->fullName     = $fullName;
         $this->emailAddress = $emailAddress;
         $this->username     = $username;
-        $this->password     = HashedPassword::from($password);
         $this->isSuperUser  = $isSuperUser;
         $this->isBanned     = $isBanned;
         $this->roleIds      = $roleIds ?: new EntityIdCollection();
@@ -113,20 +94,16 @@ class Admin extends Entity implements IAdmin, Authenticatable, CanResetPassword
     protected function defineEntity(ClassDefinition $class)
     {
         $class->property($this->fullName)->asString();
-        
+
         $class->property($this->emailAddress)->asObject(EmailAddress::class);
 
         $class->property($this->username)->asString();
-
-        $class->property($this->password)->asObject(HashedPassword::class);
 
         $class->property($this->isSuperUser)->asBool();
 
         $class->property($this->isBanned)->asBool();
 
         $class->property($this->roleIds)->asType(EntityIdCollection::type());
-
-        $class->property($this->rememberToken)->nullable()->asString();
     }
 
     /**
@@ -183,22 +160,6 @@ class Admin extends Entity implements IAdmin, Authenticatable, CanResetPassword
     public function setUsername(string $username)
     {
         $this->username = $username;
-    }
-
-    /**
-     * @return IHashedPassword
-     */
-    public function getPassword() : IHashedPassword
-    {
-        return $this->password;
-    }
-
-    /**
-     * @param IHashedPassword $password
-     */
-    public function setPassword(IHashedPassword $password)
-    {
-        $this->password = $password;
     }
 
     /**
@@ -267,70 +228,6 @@ class Admin extends Entity implements IAdmin, Authenticatable, CanResetPassword
      */
     public function getAuthIdentifier()
     {
-        return $this->username;
-    }
-
-    /**
-     * Get the password for the user.
-     *
-     * @return string
-     */
-    public function getAuthPassword() : string
-    {
-        return AdminMapper::AUTH_PASSWORD_COLUMN;
-    }
-
-    /**
-     * Get the token value for the "remember me" session.
-     *
-     * @return string
-     */
-    public function getRememberToken()
-    {
-        return $this->rememberToken;
-    }
-
-    /**
-     * Set the token value for the "remember me" session.
-     *
-     * @param  string $value
-     *
-     * @return void
-     */
-    public function setRememberToken($value)
-    {
-        $this->rememberToken = $value;
-    }
-
-    /**
-     * Get the column name for the "remember me" token.
-     *
-     * @return string
-     */
-    public function getRememberTokenName()
-    {
-        return AdminMapper::AUTH_REMEMBER_TOKEN_COLUMN;
-    }
-
-    /**
-     * Get the e-mail address where password reset links are sent.
-     *
-     * @return string
-     */
-    public function getEmailForPasswordReset()
-    {
-        return $this->emailAddress->asString();
-    }
-
-    /**
-     * Send the password reset notification.
-     *
-     * @param string $token
-     *
-     * @return void
-     */
-    public function sendPasswordResetNotification($token)
-    {
-        \Mail::to($this->getEmailForPasswordReset())->send((new ResetPassword($token))->toMail());
+        return $this->getId();
     }
 }

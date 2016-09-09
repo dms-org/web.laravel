@@ -51,6 +51,7 @@ class DmsUserProviderTest extends DbIntegrationTest
             'users' => [
                 [
                     'id'                   => 1,
+                    'type'                 => 'local',
                     'full_name'            => 'Admin',
                     'email'                => 'admin@admin.com',
                     'username'             => 'admin',
@@ -60,9 +61,12 @@ class DmsUserProviderTest extends DbIntegrationTest
                     'is_super_user'        => true,
                     'is_banned'            => false,
                     'remember_token'       => 'some_token',
+                    'oauth_account_id'     => null,
+                    'oauth_provider_name'  => null,
                 ],
                 [
                     'id'                   => 2,
+                    'type'                 => 'local',
                     'full_name'            => 'User',
                     'email'                => 'user@user.com',
                     'username'             => 'user',
@@ -72,21 +76,23 @@ class DmsUserProviderTest extends DbIntegrationTest
                     'is_super_user'        => false,
                     'is_banned'            => false,
                     'remember_token'       => null,
+                    'oauth_account_id'     => null,
+                    'oauth_provider_name'  => null,
                 ],
             ],
         ]);
     }
 
-    public function testRetrieveByUsername()
+    public function testRetrieveById()
     {
         /** @var Admin $user */
-        $user = $this->userProvider->retrieveById('admin');
+        $user = $this->userProvider->retrieveById(1);
 
         $this->assertInstanceOf(Admin::class, $user);
         $this->assertSame(1, $user->getId());
 
         /** @var Admin $user */
-        $user = $this->userProvider->retrieveById('user');
+        $user = $this->userProvider->retrieveById(2);
 
         $this->assertInstanceOf(Admin::class, $user);
         $this->assertSame(2, $user->getId());
@@ -133,12 +139,12 @@ class DmsUserProviderTest extends DbIntegrationTest
     public function testRetrieveByToken()
     {
         /** @var Admin $user */
-        $user = $this->userProvider->retrieveByToken('admin', 'some_token');
+        $user = $this->userProvider->retrieveByToken(1, 'some_token');
 
         $this->assertInstanceOf(Admin::class, $user);
         $this->assertSame(1, $user->getId());
 
-        $this->assertSame(null, $this->userProvider->retrieveByToken('admin', 'non_existent_token'));
+        $this->assertSame(null, $this->userProvider->retrieveByToken(1, 'non_existent_token'));
     }
 
     public function testValidateCredentials()

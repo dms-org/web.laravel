@@ -87,7 +87,15 @@
                                 </div>
                             @endif
 
-                            @if(array_diff_key($rowActionButtons, ['details' => true, 'edit' => true, 'remove' => true]))
+                            <?php
+                            $specificRowButtons = array_filter(
+                                    array_diff_key($rowActionButtons, ['details' => true, 'edit' => true, 'remove' => true]),
+                                    function ($action) use ($object) {
+                                        return !$object || $action->isSupported($object);
+                                    }
+                            );
+                            ?>
+                            @if($specificRowButtons)
                                 <div class="inline dropdown-container">
                                     <button type="button" class="btn btn-xs btn-default dropdown-toggle"
                                             data-toggle="dropdown"
@@ -95,7 +103,7 @@
                                         &nbsp;<span class="fa fa-caret-down"></span>&nbsp;
                                     </button>
                                     <ul class="dropdown-menu  dropdown-menu-right">
-                                        @foreach(array_diff_key($rowActionButtons, ['details' => true, 'edit' => true, 'remove' => true]) as $action)
+                                        @foreach($specificRowButtons as $action)
                                             @if(!$object || $action->isSupported($object))
                                                 <li>
                                                     @if($action->isPost())

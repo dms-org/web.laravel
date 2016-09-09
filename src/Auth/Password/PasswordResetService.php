@@ -1,9 +1,11 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Auth\Password;
 
 use Dms\Core\Auth\IAdmin;
 use Dms\Core\Auth\IAdminRepository;
+use Dms\Core\Exception\InvalidArgumentException;
+use Dms\Web\Laravel\Auth\LocalAdmin;
 
 /**
  * The password reset service
@@ -15,7 +17,7 @@ class PasswordResetService implements IPasswordResetService
     /**
      * @var IAdminRepository
      */
-    private $userRepository;
+    private $adminRepository;
 
     /**
      * @var IPasswordHasherFactory
@@ -25,29 +27,32 @@ class PasswordResetService implements IPasswordResetService
     /**
      * PasswordResetService constructor.
      *
-     * @param IAdminRepository        $userRepository
+     * @param IAdminRepository       $userRepository
      * @param IPasswordHasherFactory $hasherFactory
      */
     public function __construct(IAdminRepository $userRepository, IPasswordHasherFactory $hasherFactory)
     {
-        $this->userRepository = $userRepository;
-        $this->hasherFactory = $hasherFactory;
+        $this->adminRepository = $userRepository;
+        $this->hasherFactory   = $hasherFactory;
     }
 
     /**
      * Resets the user's password.
      *
-     * @param IAdmin  $user
+     * @param IAdmin $admin
      * @param string $newPassword
      *
      * @return void
      */
-    public function resetUserPassword(IAdmin $user, string $newPassword)
+    public function resetUserPassword(IAdmin $admin, string $newPassword)
     {
+        InvalidArgumentException::verifyInstanceOf($admin, 'admin', $admin, LocalAdmin::class);
+
         $hashedPassword = $this->hasherFactory->buildDefault()->hash($newPassword);
 
-        $user->setPassword($hashedPassword);
+        /** @var LocalAdmin $admin */
+        $admin->setPassword($hashedPassword);
 
-        $this->userRepository->save($user);
+        $this->adminRepository->save($admin);
     }
 }

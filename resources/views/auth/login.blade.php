@@ -2,6 +2,12 @@
 @section('content')
     <p class="login-box-msg">Log in to continue</p>
 
+    @if (session('error'))
+        <div class="alert alert-danger">
+            {{ session('error') }}
+        </div>
+    @endif
+
     <form action="{{ route('dms::auth.login') }}" method="post">
         {!! csrf_field() !!}
 
@@ -35,5 +41,16 @@
     </form>
 
     <br>
-    <a href="{{ route('dms::auth.password.forgot') }}">I forgot my password</a>
+    <a class="btn-block" href="{{ route('dms::auth.password.forgot') }}">I forgot my password</a>
+    <br>
+
+    @foreach ($oauthProviders as $oauthProvider)
+        <div class="row">
+            <div class="col-sm-12">
+                <a class="btn btn-block btn-default" data-no-ajax="1" href="{{ route('dms::auth.oauth.redirect', [$oauthProvider->getName()]) }}">
+                    {{ $oauthProvider->getLabel() }}
+                </a>
+            </div>
+        </div>
+    @endforeach
 @endsection

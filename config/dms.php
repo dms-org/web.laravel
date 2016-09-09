@@ -11,11 +11,32 @@ return [
     | login. By default, a user will be locked out for 60 seconds every 5 failed
     | login attempts.
     |
+    | You may specify any number of oauth providers to allow user's authenticated
+    | from other providers to login to the backend. The 'client-id' and
+    | 'client-secret' can be configured from the provider. The redirect
+    | uri is: '/dms/auth/oauth/{name}/response'
+    |
+    |
     */
     'auth'         => [
-        'login' => [
+        'login'           => [
             'max-attempts' => 5,
             'lockout-time' => 60,
+        ],
+        'oauth-providers' => [
+            [
+                'name'           => 'developer',
+                'label'          => 'Developer Login',
+                'provider'       => \Dms\Web\Laravel\Auth\Oauth\Provider\GoogleOauthProvider::class,
+                'client-id'      => '',
+                'client-secret'  => '',
+                'super-user'     => true,
+                'roles'          => ['Developer'],
+                'allowed-emails' => [
+                    // 'some@mail.com',
+                    // '*@some-domain.com.au',
+                ],
+            ],
         ],
     ],
 

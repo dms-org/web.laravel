@@ -8,6 +8,8 @@ use Dms\Core\Auth\Permission;
 use Dms\Core\Persistence\Db\Mapping\IOrm;
 use Dms\Core\Tests\Persistence\Db\Integration\Mapping\DbIntegrationTest;
 use Dms\Web\Laravel\Auth\Admin;
+use Dms\Web\Laravel\Auth\LocalAdmin;
+use Dms\Web\Laravel\Auth\OauthAdmin;
 use Dms\Web\Laravel\Auth\Password\HashedPassword;
 use Dms\Web\Laravel\Auth\Password\PasswordResetToken;
 use Dms\Web\Laravel\Auth\Persistence\AdminRepository;
@@ -61,9 +63,9 @@ class AuthOrmTest extends DbIntegrationTest
         $this->passwordResetTokenRepo = new PasswordResetTokenRepository($this->connection, $this->orm);
     }
 
-    public function testSaveUser()
+    public function testSaveLocalAdmin()
     {
-        $this->userRepo->save(new Admin(
+        $this->userRepo->save(new LocalAdmin(
             'Admin',
             new EmailAddress('admin@admin.com'),
             'admin',
@@ -78,15 +80,53 @@ class AuthOrmTest extends DbIntegrationTest
             'users'           => [
                 [
                     'id'                   => 1,
+                    'type'                 => 'local',
                     'full_name'            => 'Admin',
                     'email'                => 'admin@admin.com',
                     'username'             => 'admin',
+                    'is_super_user'        => false,
+                    'is_banned'            => false,
                     'password_hash'        => 'hash',
                     'password_algorithm'   => 'bcrypt',
                     'password_cost_factor' => 10,
+                    'remember_token'       => null,
+                    'oauth_provider_name'  => null,
+                    'oauth_account_id'     => null,
+                ],
+            ],
+        ]);
+    }
+
+    public function testSaveOauthAdmin()
+    {
+        $this->userRepo->save(new OauthAdmin(
+            'google',
+            'account-id',
+            'Admin',
+            new EmailAddress('admin@admin.com'),
+            'admin'
+        ));
+
+        $this->assertDatabaseDataSameAs([
+            'password_resets' => [],
+            'permissions'     => [],
+            'roles'           => [],
+            'user_roles'      => [],
+            'users'           => [
+                [
+                    'id'                   => 1,
+                    'type'                 => 'oauth',
+                    'full_name'            => 'Admin',
+                    'email'                => 'admin@admin.com',
+                    'username'             => 'admin',
                     'is_super_user'        => false,
                     'is_banned'            => false,
+                    'password_hash'        => null,
+                    'password_algorithm'   => null,
+                    'password_cost_factor' => null,
                     'remember_token'       => null,
+                    'oauth_provider_name'  => 'google',
+                    'oauth_account_id'     => 'account-id',
                 ],
             ],
         ]);
@@ -102,20 +142,23 @@ class AuthOrmTest extends DbIntegrationTest
             'users'           => [
                 [
                     'id'                   => 1,
+                    'type'                 => 'local',
                     'full_name'            => 'Admin',
                     'email'                => 'admin@admin.com',
                     'username'             => 'admin',
+                    'is_super_user'        => false,
+                    'is_banned'            => false,
                     'password_hash'        => 'hash',
                     'password_algorithm'   => 'bcrypt',
                     'password_cost_factor' => 10,
-                    'is_super_user'        => false,
-                    'is_banned'            => false,
                     'remember_token'       => null,
+                    'oauth_provider_name'  => null,
+                    'oauth_account_id'     => null,
                 ],
             ],
         ]);
 
-        $expected = new Admin(
+        $expected = new LocalAdmin(
             'Admin',
             new EmailAddress('admin@admin.com'),
             'admin',
@@ -205,7 +248,7 @@ class AuthOrmTest extends DbIntegrationTest
 
     public function testAssociateUserToRole()
     {
-        $user = new Admin('Admin', new EmailAddress('admin@admin.com'), 'admin', new HashedPassword('hash', 'bcrypt', 10));
+        $user = new LocalAdmin('Admin', new EmailAddress('admin@admin.com'), 'admin', new HashedPassword('hash', 'bcrypt', 10));
         $role = new Role('admin', Permission::collection());
 
         $this->userRepo->save($user);
@@ -221,15 +264,18 @@ class AuthOrmTest extends DbIntegrationTest
             'users'           => [
                 [
                     'id'                   => 1,
+                    'type'                 => 'local',
                     'full_name'            => 'Admin',
                     'email'                => 'admin@admin.com',
                     'username'             => 'admin',
+                    'is_super_user'        => false,
+                    'is_banned'            => false,
                     'password_hash'        => 'hash',
                     'password_algorithm'   => 'bcrypt',
                     'password_cost_factor' => 10,
-                    'is_super_user'        => false,
-                    'is_banned'            => false,
                     'remember_token'       => null,
+                    'oauth_provider_name'  => null,
+                    'oauth_account_id'     => null,
                 ],
             ],
             'roles'           => [
@@ -249,15 +295,18 @@ class AuthOrmTest extends DbIntegrationTest
             'users'           => [
                 [
                     'id'                   => 1,
+                    'type'                 => 'local',
                     'full_name'            => 'Admin',
                     'email'                => 'admin@admin.com',
                     'username'             => 'admin',
+                    'is_super_user'        => false,
+                    'is_banned'            => false,
                     'password_hash'        => 'hash',
                     'password_algorithm'   => 'bcrypt',
                     'password_cost_factor' => 10,
-                    'is_super_user'        => false,
-                    'is_banned'            => false,
                     'remember_token'       => null,
+                    'oauth_provider_name'  => null,
+                    'oauth_account_id'     => null,
                 ],
             ],
             'roles'           => [
@@ -268,7 +317,7 @@ class AuthOrmTest extends DbIntegrationTest
             ],
         ]);
 
-        $expected                 = new Admin(
+        $expected                 = new LocalAdmin(
             'Admin',
             new EmailAddress('admin@admin.com'),
             'admin',

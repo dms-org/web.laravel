@@ -2,7 +2,6 @@
 
 namespace Dms\Web\Laravel\Auth;
 
-use Dms\Core\Auth\IAdmin;
 use Dms\Core\Auth\IAdminRepository;
 use Dms\Core\Exception\TypeMismatchException;
 use Dms\Web\Laravel\Auth\Password\IPasswordHasherFactory;
@@ -29,7 +28,7 @@ class AdminDmsUserProvider implements UserProvider
     /**
      * DmsUserProvider constructor.
      *
-     * @param IAdminRepository        $repository
+     * @param IAdminRepository       $repository
      * @param IPasswordHasherFactory $passwordHasherFactory
      */
     public function __construct(IAdminRepository $repository, IPasswordHasherFactory $passwordHasherFactory)
@@ -41,53 +40,55 @@ class AdminDmsUserProvider implements UserProvider
     /**
      * Retrieve a user by their unique identifier.
      *
-     * @param  mixed $username
+     * @param  mixed $id
      *
      * @return \Illuminate\Contracts\Auth\Authenticatable|null
      */
-    public function retrieveById($username)
+    public function retrieveById($id)
     {
-        $users = $this->repository->matching(
-            $this->repository->criteria()
-                ->where(Admin::USERNAME, '=', $username)
-        );
-
-        return reset($users) ?: null;
+        return $this->repository->tryGet((int)$id);
     }
 
     /**
      * Retrieve a user by their unique identifier and "remember me" token.
      *
-     * @param  mixed  $username
+     * @param  mixed  $id
      * @param  string $token
      *
      * @return \Illuminate\Contracts\Auth\Authenticatable|null
      */
-    public function retrieveByToken($username, $token)
+    public function retrieveByToken($id, $token)
     {
-        $users = $this->repository->matching(
+        /** @var LocalAdmin[] $admins */
+        $admins = $this->repository->matching(
             $this->repository->criteria()
-                ->where(Admin::USERNAME, '=', $username)
-                ->where(Admin::REMEMBER_TOKEN, '=', $token)
+                ->whereInstanceOf(LocalAdmin::class)
+                ->where(LocalAdmin::ID, '=', (int)$id)
         );
 
-        return reset($users) ?: null;
+        foreach ($admins as $key => $admin) {
+            if ($admin->getRememberToken() !== $token) {
+                unset($admins[$key]);
+            }
+        }
+
+        return reset($admins) ?: null;
     }
 
     /**
      * Update the "remember me" token for the given user in storage.
      *
-     * @param  \Illuminate\Contracts\Auth\Authenticatable $user
+     * @param  \Illuminate\Contracts\Auth\Authenticatable $admin
      * @param  string                                     $token
      *
      * @return void
      */
-    public function updateRememberToken(Authenticatable $user, $token)
+    public function updateRememberToken(Authenticatable $admin, $token)
     {
-        $user = $this->validateUser($user);
+        $admin = $this->validateLocalAdmin($admin);
 
-        $user->setRememberToken($token);
-        $this->repository->save($user);
+        $admin->setRememberToken($token);
+        $this->repository->save($admin);
     }
 
     /**
@@ -101,9 +102,9 @@ class AdminDmsUserProvider implements UserProvider
     {
         $criteria = $this->criteriaFromCredentialsArray($credentials);
 
-        $users = $this->repository->matching($criteria);
+        $admins = $this->repository->matching($criteria);
 
-        return reset($users) ?: null;
+        return reset($admins) ?: null;
     }
 
     /**
@@ -127,32 +128,32 @@ class AdminDmsUserProvider implements UserProvider
     /**
      * Validate a user against the given credentials.
      *
-     * @param  \Illuminate\Contracts\Auth\Authenticatable $user
+     * @param  \Illuminate\Contracts\Auth\Authenticatable $admin
      * @param  array                                      $credentials
      *
      * @return bool
      */
-    public function validateCredentials(Authenticatable $user, array $credentials) : bool
+    public function validateCredentials(Authenticatable $admin, array $credentials) : bool
     {
-        $user = $this->validateUser($user);
+        $admin = $this->validateLocalAdmin($admin);
 
-        $passwordHasher = $this->passwordHasherFactory->buildFor($user->getPassword());
+        $passwordHasher = $this->passwordHasherFactory->buildFor($admin->getPassword());
 
-        return $passwordHasher->verify($credentials['password'], $user->getPassword());
+        return $passwordHasher->verify($credentials['password'], $admin->getPassword());
     }
 
     /**
-     * @param Authenticatable $user
+     * @param Authenticatable $admin
      *
-     * @return IAdmin|Authenticatable
+     * @return LocalAdmin|Authenticatable
      * @throws TypeMismatchException
      */
-    private function validateUser(Authenticatable $user)
+    private function validateLocalAdmin(Authenticatable $admin)
     {
-        if (!($user instanceof IAdmin)) {
-            throw TypeMismatchException::format('Expecting instance of %s, %s given', IAdmin::class, get_class($user));
+        if (!($admin instanceof LocalAdmin)) {
+            throw TypeMismatchException::format('Expecting instance of %s, %s given', LocalAdmin::class, get_class($admin));
         }
 
-        return $user;
+        return $admin;
     }
 }

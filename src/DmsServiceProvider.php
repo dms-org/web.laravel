@@ -24,6 +24,8 @@ use Dms\Web\Laravel\Action\ActionResultHandlerCollection;
 use Dms\Web\Laravel\Auth\AdminDmsUserProvider;
 use Dms\Web\Laravel\Auth\GenericDmsUserProvider;
 use Dms\Web\Laravel\Auth\LaravelAuthSystem;
+use Dms\Web\Laravel\Auth\Oauth\OauthProvider;
+use Dms\Web\Laravel\Auth\Oauth\OauthProviderCollection;
 use Dms\Web\Laravel\Auth\Password\BcryptPasswordHasher;
 use Dms\Web\Laravel\Auth\Password\IPasswordHasherFactory;
 use Dms\Web\Laravel\Auth\Password\IPasswordResetService;
@@ -77,7 +79,6 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
 use League\Flysystem\Adapter\Local;
 use League\Flysystem\Filesystem;
 use Psr\Cache\CacheItemPoolInterface;
-use Symfony\Component\EventDispatcher\EventDispatcher;
 
 /**
  * The DMS service provider
@@ -216,6 +217,26 @@ class DmsServiceProvider extends ServiceProvider
                 $this->app->make(IConnection::class),
                 $config
             );
+        });
+
+        $auth->provider('dms', function ($app, array $config) {
+            return new GenericDmsUserProvider(
+                $this->app->make(IOrm::class),
+                $this->app->make(IConnection::class),
+                $config
+            );
+        });
+
+        $this->app->singleton(OauthProviderCollection::class, function () {
+            $providers = [];
+
+            foreach ($this->app['config']->get('dms.auth.oauth-providers', []) as $providerConfig) {
+                /** @var OauthProvider $providerClass */
+                $providerClass = $providerConfig['provider'];
+                $providers[]   = $providerClass::fromConfiguration($providerConfig);
+            }
+
+            return new OauthProviderCollection($providers);
         });
     }
 

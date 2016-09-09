@@ -3,7 +3,6 @@
 namespace Dms\Web\Laravel\Auth\Module;
 
 use Dms\Common\Structure\Field;
-use Dms\Core\Auth\IAdmin;
 use Dms\Core\Auth\IAdminRepository;
 use Dms\Core\Auth\IAuthSystem;
 use Dms\Core\Auth\IRoleRepository;
@@ -14,6 +13,8 @@ use Dms\Core\Common\Crud\Definition\Table\SummaryTableDefinition;
 use Dms\Core\Language\Message;
 use Dms\Core\Model\EntityIdCollection;
 use Dms\Web\Laravel\Auth\Admin;
+use Dms\Web\Laravel\Auth\LocalAdmin;
+use Dms\Web\Laravel\Auth\OauthAdmin;
 use Dms\Web\Laravel\Auth\Password\IPasswordHasherFactory;
 use Dms\Web\Laravel\Auth\Password\IPasswordResetService;
 use Dms\Web\Laravel\Auth\Role;
@@ -60,8 +61,7 @@ class AdminUserModule extends CrudModule
         IPasswordHasherFactory $hasher,
         IAuthSystem $authSystem,
         IPasswordResetService $passwordResetService
-    )
-    {
+    ) {
         $this->roleRepo             = $roleRepo;
         $this->hasher               = $hasher;
         $this->passwordResetService = $passwordResetService;
@@ -78,29 +78,42 @@ class AdminUserModule extends CrudModule
         $module->name('users');
 
         $module->metadata([
-            'icon' => 'users'
+            'icon' => 'users',
         ]);
 
         $module->labelObjects()->fromProperty(Admin::FULL_NAME);
 
         $module->crudForm(function (CrudFormDefinition $form) {
-            $form->section('Details', [
-                $form->field(
-                    AdminProfileFields::buildFullNameField($this->dataSource)
-                )->bindToProperty(Admin::FULL_NAME),
-                //
-                $form->field(
-                    AdminProfileFields::buildUsernameField($this->dataSource)
-                )->bindToProperty(Admin::USERNAME),
-                //
-                $form->field(
-                    AdminProfileFields::buildEmailField($this->dataSource)
-                )->bindToProperty(Admin::EMAIL_ADDRESS),
-            ]);
+            $form->dependentOnObject(function (CrudFormDefinition $form, Admin $admin = null) {
+                $fullNameField = AdminProfileFields::buildFullNameField($this->dataSource);
+                $userNameField = AdminProfileFields::buildUsernameField($this->dataSource);
+                $emailField    = AdminProfileFields::buildEmailField($this->dataSource);
+
+                if ($admin && !($admin instanceof LocalAdmin)) {
+                    foreach ([$fullNameField, $userNameField, $emailField] as $field) {
+                        $field->readonly();
+                    }
+                }
+
+                $form->section('Details', array_filter([
+                    $admin
+                        ? $form->field(
+                        Field::create('type', 'Type')->string()->readonly()->value($this->getAdminType($admin))
+                    )->withoutBinding()
+                        : null,
+                    //
+                    $form->field($fullNameField)->bindToProperty(Admin::FULL_NAME),
+                    //
+                    $form->field($userNameField)->bindToProperty(Admin::USERNAME),
+                    //
+                    $form->field($emailField)->bindToProperty(Admin::EMAIL_ADDRESS),
+                ]));
+            });
 
             if ($form->isCreateForm()) {
+                $form->mapToSubClass(LocalAdmin::class);
+
                 $form->section('Password', [
-                    //
                     $form->field(
                         Field::create('password', 'Password')
                             ->string()
@@ -110,7 +123,7 @@ class AdminUserModule extends CrudModule
                     )->withoutBinding(),
                 ]);
 
-                $form->onSubmit(function (Admin $user, array $input) {
+                $form->onSubmit(function (LocalAdmin $user, array $input) {
                     $user->setPassword($this->hasher->buildDefault()->hash($input['password']));
                 });
             }
@@ -135,11 +148,14 @@ class AdminUserModule extends CrudModule
         });
 
         $module->objectAction('reset-password')
+            ->where(function (Admin $admin) {
+                return $admin instanceof LocalAdmin;
+            })
             ->authorize(self::EDIT_PERMISSION)
             ->form(new AdminPasswordResetForm())
             ->returns(Message::class)
-            ->handler(function (IAdmin $user, AdminPasswordResetForm $input) {
-                $this->passwordResetService->resetUserPassword($user, $input->newPassword);
+            ->handler(function (LocalAdmin $admin, AdminPasswordResetForm $input) {
+                $this->passwordResetService->resetUserPassword($admin, $input->newPassword);
 
                 return new Message('auth.user.password-reset');
             });
@@ -147,6 +163,10 @@ class AdminUserModule extends CrudModule
         $module->removeAction()->deleteFromDataSource();
 
         $module->summaryTable(function (SummaryTableDefinition $table) {
+            $table->mapCallback(function (Admin $admin) {
+                return $this->getAdminType($admin);
+            })->to(Field::create('type', 'Type')->string());
+
             $table->mapProperty(Admin::USERNAME)->to(Field::create('username', 'Username')->string());
             $table->mapProperty(Admin::EMAIL_ADDRESS)->to(Field::create('email', 'Email')->email());
             $table->mapProperty(Admin::IS_SUPER_USER)->to(Field::create('super_admin', 'Super Admin')->bool());
@@ -162,5 +182,18 @@ class AdminUserModule extends CrudModule
             ->label('Accounts')
             ->withTable(self::SUMMARY_TABLE)
             ->allRows();
+    }
+
+    protected function getAdminType(Admin $admin) : string
+    {
+        if ($admin instanceof LocalAdmin) {
+            return 'Local';
+        }
+
+        if ($admin instanceof OauthAdmin) {
+            return ucwords($admin->getOauthProviderName());
+        }
+
+        return '<unknown>';
     }
 }

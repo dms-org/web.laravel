@@ -3,8 +3,7 @@
 namespace Dms\Web\Laravel\Http;
 
 /** @var \Illuminate\Routing\Router $router */
-
-$router    = app('router');
+$router = app('router');
 $namespace = __NAMESPACE__ . '\\Controllers';
 
 $router->group(['prefix' => 'dms', 'middleware' => 'dms.web', 'as' => 'dms::', 'namespace' => $namespace],
@@ -14,6 +13,9 @@ $router->group(['prefix' => 'dms', 'middleware' => 'dms.web', 'as' => 'dms::', '
             $router->get('login', 'AuthController@showLoginForm')->name('login');
             $router->post('login', 'AuthController@login');
             $router->get('logout', 'AuthController@logout')->name('logout');
+
+            $router->get('oauth/{provider}/redirect', 'OauthController@redirectToProvider')->name('oauth.redirect');
+            $router->get('oauth/{provider}/response', 'OauthController@handleProviderResponse')->name('oauth.response');
 
             // Password Reset Routes...
             $router->get('password/email', 'PasswordController@showResetLinkEmailForm')->name('password.forgot');

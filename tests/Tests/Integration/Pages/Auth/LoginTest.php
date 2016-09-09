@@ -14,6 +14,7 @@ class LoginTest extends CmsIntegrationTest
     {
         return new DemoFixture();
     }
+    
     public function testLoginPageShowsForm()
     {
         $this->route('GET', 'dms::auth.login');

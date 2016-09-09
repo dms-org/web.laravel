@@ -3,10 +3,10 @@
 namespace Dms\Web\Laravel\Tests\Unit\Auth\Module;
 
 use Dms\Common\Structure\Web\EmailAddress;
+use Dms\Core\Auth\IAdminRepository;
 use Dms\Core\Auth\IHashedPassword;
 use Dms\Core\Auth\IPermission;
 use Dms\Core\Auth\IRoleRepository;
-use Dms\Core\Auth\IAdminRepository;
 use Dms\Core\Auth\Permission;
 use Dms\Core\Common\Crud\Action\Object\IObjectAction;
 use Dms\Core\Common\Crud\ICrudModule;
@@ -17,13 +17,13 @@ use Dms\Core\Persistence\ArrayRepository;
 use Dms\Core\Tests\Common\Crud\Modules\CrudModuleTest;
 use Dms\Core\Tests\Module\Mock\MockAuthSystem;
 use Dms\Core\Widget\TableWidget;
+use Dms\Web\Laravel\Auth\Admin;
 use Dms\Web\Laravel\Auth\Module\AdminUserModule;
 use Dms\Web\Laravel\Auth\Password\HashedPassword;
 use Dms\Web\Laravel\Auth\Password\IPasswordHasher;
 use Dms\Web\Laravel\Auth\Password\IPasswordHasherFactory;
 use Dms\Web\Laravel\Auth\Password\IPasswordResetService;
 use Dms\Web\Laravel\Auth\Role;
-use Dms\Web\Laravel\Auth\Admin;
 
 /**
  * @author Elliot Levin <elliotlevin@hotmail.com>
@@ -45,10 +45,10 @@ class AdminUserModuleTest extends CrudModuleTest
      */
     protected function buildRepositoryDataSource() : IMutableObjectSet
     {
-        $admin = new Admin(new EmailAddress('admin@admin.com'), 'admin', $this->getMockForAbstractClass(IHashedPassword::class));
+        $admin = new Admin('Test', new EmailAddress('admin@admin.com'), 'admin', $this->getMockForAbstractClass(IHashedPassword::class));
         $admin->setId(1);
 
-        $person = new Admin(new EmailAddress('person@person.com'), 'person', $this->getMockForAbstractClass(IHashedPassword::class));
+        $person = new Admin('Person', new EmailAddress('person@person.com'), 'person', $this->getMockForAbstractClass(IHashedPassword::class));
         $person->setId(2);
 
         return new class(Admin::collection([$admin, $person])) extends ArrayRepository implements IAdminRepository
@@ -175,6 +175,7 @@ class AdminUserModuleTest extends CrudModuleTest
         $adminRoleId = 1;
         /** @var Admin $user */
         $user = $action->run([
+            'name'     => 'New User',
             'email'    => 'new@user.com',
             'username' => 'user',
             'password' => 'abc123',
@@ -183,6 +184,7 @@ class AdminUserModuleTest extends CrudModuleTest
 
         $this->assertInstanceOf(Admin::class, $user);
 
+        $this->assertSame('New User', $user->getFullName());
         $this->assertSame('new@user.com', $user->getEmailAddress());
         $this->assertSame('user', $user->getUsername());
         $this->assertTrue($this->hasHasherBeenCalled);
@@ -199,6 +201,7 @@ class AdminUserModuleTest extends CrudModuleTest
         // Not changing the email should be fine as it is still unique
         $action->run([
             IObjectAction::OBJECT_FIELD_NAME => 1,
+            'name'                           => 'Admin',
             'email'                          => 'admin@admin.com',
             'username'                       => 'admin',
             'roles'                          => [$adminRoleId],
@@ -207,6 +210,7 @@ class AdminUserModuleTest extends CrudModuleTest
         $this->assertThrows(function () use ($action, $adminRoleId) {
             $action->run([
                 IObjectAction::OBJECT_FIELD_NAME => 1,
+                'name'                           => 'Admin',
                 'email'                          => 'person@person.com', // This should cause a duplicate
                 'username'                       => 'admin',
                 'roles'                          => [$adminRoleId],
@@ -216,6 +220,7 @@ class AdminUserModuleTest extends CrudModuleTest
         // Changing it to something new should be fine
         $action->run([
             IObjectAction::OBJECT_FIELD_NAME => 1,
+            'name'                           => 'Admin',
             'email'                          => 'some-new-email@admin.com',
             'username'                       => 'admin',
             'roles'                          => [$adminRoleId],

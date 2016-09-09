@@ -46,12 +46,12 @@
                         <!-- User Account: style can be found in dropdown.less -->
                         <li class="dropdown user user-menu">
                             <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-                                <span><i class="fa fa-user"></i> {{ $user->getUsername() }}</span>
+                                <span><i class="fa fa-user"></i> {{ $user->getFullName() }}</span>
                             </a>
                             <ul class="dropdown-menu">
                                 <!-- Menu Body-->
                                 <li class="user-body">
-                                    <a href="{{ route('dms::package.module.dashboard', ['admin', 'account']) }}">{{ $user->getEmailAddress() }}</a>
+                                    <a href="{{ route('dms::package.module.dashboard', ['admin', 'account']) }}">{{ $user->getUsername() }} ({{ $user->getEmailAddress() }})</a>
                                 </li>
                                 <!-- Menu Footer-->
                                 <li class="user-footer">

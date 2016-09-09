@@ -7,14 +7,14 @@ use Dms\Common\Structure\Web\EmailAddress;
 use Dms\Core\Auth\Permission;
 use Dms\Core\Persistence\Db\Mapping\IOrm;
 use Dms\Core\Tests\Persistence\Db\Integration\Mapping\DbIntegrationTest;
+use Dms\Web\Laravel\Auth\Admin;
 use Dms\Web\Laravel\Auth\Password\HashedPassword;
 use Dms\Web\Laravel\Auth\Password\PasswordResetToken;
+use Dms\Web\Laravel\Auth\Persistence\AdminRepository;
 use Dms\Web\Laravel\Auth\Persistence\AuthOrm;
 use Dms\Web\Laravel\Auth\Persistence\PasswordResetTokenRepository;
 use Dms\Web\Laravel\Auth\Persistence\RoleRepository;
-use Dms\Web\Laravel\Auth\Persistence\AdminRepository;
 use Dms\Web\Laravel\Auth\Role;
-use Dms\Web\Laravel\Auth\Admin;
 
 /**
  * @author Elliot Levin <elliotlevin@hotmail.com>
@@ -64,6 +64,7 @@ class AuthOrmTest extends DbIntegrationTest
     public function testSaveUser()
     {
         $this->userRepo->save(new Admin(
+            'Admin',
             new EmailAddress('admin@admin.com'),
             'admin',
             new HashedPassword('hash', 'bcrypt', 10)
@@ -77,6 +78,7 @@ class AuthOrmTest extends DbIntegrationTest
             'users'           => [
                 [
                     'id'                   => 1,
+                    'full_name'            => 'Admin',
                     'email'                => 'admin@admin.com',
                     'username'             => 'admin',
                     'password_hash'        => 'hash',
@@ -100,6 +102,7 @@ class AuthOrmTest extends DbIntegrationTest
             'users'           => [
                 [
                     'id'                   => 1,
+                    'full_name'            => 'Admin',
                     'email'                => 'admin@admin.com',
                     'username'             => 'admin',
                     'password_hash'        => 'hash',
@@ -113,6 +116,7 @@ class AuthOrmTest extends DbIntegrationTest
         ]);
 
         $expected = new Admin(
+            'Admin',
             new EmailAddress('admin@admin.com'),
             'admin',
             new HashedPassword('hash', 'bcrypt', 10)
@@ -201,7 +205,7 @@ class AuthOrmTest extends DbIntegrationTest
 
     public function testAssociateUserToRole()
     {
-        $user = new Admin(new EmailAddress('admin@admin.com'), 'admin', new HashedPassword('hash', 'bcrypt', 10));
+        $user = new Admin('Admin', new EmailAddress('admin@admin.com'), 'admin', new HashedPassword('hash', 'bcrypt', 10));
         $role = new Role('admin', Permission::collection());
 
         $this->userRepo->save($user);
@@ -217,6 +221,7 @@ class AuthOrmTest extends DbIntegrationTest
             'users'           => [
                 [
                     'id'                   => 1,
+                    'full_name'            => 'Admin',
                     'email'                => 'admin@admin.com',
                     'username'             => 'admin',
                     'password_hash'        => 'hash',
@@ -244,6 +249,7 @@ class AuthOrmTest extends DbIntegrationTest
             'users'           => [
                 [
                     'id'                   => 1,
+                    'full_name'            => 'Admin',
                     'email'                => 'admin@admin.com',
                     'username'             => 'admin',
                     'password_hash'        => 'hash',
@@ -263,6 +269,7 @@ class AuthOrmTest extends DbIntegrationTest
         ]);
 
         $expected                 = new Admin(
+            'Admin',
             new EmailAddress('admin@admin.com'),
             'admin',
             new HashedPassword('hash', 'bcrypt', 10)

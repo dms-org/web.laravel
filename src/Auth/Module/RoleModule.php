@@ -102,9 +102,7 @@ class RoleModule extends CrudModule
                     Field::create('users', 'Users')
                         ->entityIdsFrom($this->userRepo)
                         ->defaultTo([])
-                        ->labelledByCallback(function (Admin $user) {
-                            return $user->getUsername() . ' <' . $user->getEmailAddress() . '>';
-                        })
+                        ->labelledBy(Admin::FULL_NAME)
                         ->mapToCollection(EntityIdCollection::type())
                 )->bindToProperty(Role::USER_IDS),
             ]);

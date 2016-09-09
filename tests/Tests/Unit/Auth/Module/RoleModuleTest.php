@@ -64,10 +64,10 @@ class RoleModuleTest extends CrudModuleTest
 
     protected function mockUserDataSource() : IAdminRepository
     {
-        $admin = new Admin(new EmailAddress('admin@admin.com'), 'admin', $this->getMockForAbstractClass(IHashedPassword::class));
+        $admin = new Admin('test', new EmailAddress('admin@admin.com'), 'admin', $this->getMockForAbstractClass(IHashedPassword::class));
         $admin->setId(1);
 
-        $person = new Admin(new EmailAddress('person@person.com'), 'person', $this->getMockForAbstractClass(IHashedPassword::class));
+        $person = new Admin('test', new EmailAddress('person@person.com'), 'person', $this->getMockForAbstractClass(IHashedPassword::class));
         $person->setId(2);
 
         return new class(Admin::collection([$admin, $person])) extends ArrayRepository implements IAdminRepository

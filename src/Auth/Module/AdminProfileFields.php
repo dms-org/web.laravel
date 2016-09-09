@@ -14,6 +14,15 @@ use Dms\Web\Laravel\Auth\Admin;
  */
 class AdminProfileFields
 {
+    public static function buildFullNameField(IAdminRepository $dataSource) : FieldBuilderBase
+    {
+        return Field::create('name', 'Full Name')
+            ->string()
+            ->required()
+            ->uniqueIn($dataSource, Admin::FULL_NAME)
+            ->maxLength(100);
+    }
+
     public static function buildUsernameField(IAdminRepository $dataSource) : FieldBuilderBase
     {
         return Field::create('username', 'Username')

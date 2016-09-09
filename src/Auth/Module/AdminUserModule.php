@@ -81,16 +81,13 @@ class AdminUserModule extends CrudModule
             'icon' => 'users'
         ]);
 
-        $module->labelObjects()->fromCallback(function (Admin $user) {
-            return $user->getUsername() . ' <' . $user->getEmailAddress() . '>';
-        });
-
-        $module->labelObjects()->fromCallback(function (Admin $user) {
-            return $user->getUsername() . ' <' . $user->getEmailAddress() . '>';
-        });
+        $module->labelObjects()->fromProperty(Admin::FULL_NAME);
 
         $module->crudForm(function (CrudFormDefinition $form) {
             $form->section('Details', [
+                $form->field(
+                    AdminProfileFields::buildFullNameField($this->dataSource)
+                )->bindToProperty(Admin::FULL_NAME),
                 //
                 $form->field(
                     AdminProfileFields::buildUsernameField($this->dataSource)

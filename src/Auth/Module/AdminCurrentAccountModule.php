@@ -48,8 +48,7 @@ class AdminCurrentAccountModule extends Module
         IPasswordHasherFactory $hasher,
         IAuthSystem $authSystem,
         IPasswordResetService $passwordResetService
-    )
-    {
+    ) {
         $this->dataSource           = $dataSource;
         $this->hasher               = $hasher;
         $this->passwordResetService = $passwordResetService;
@@ -66,7 +65,7 @@ class AdminCurrentAccountModule extends Module
         $module->name('account');
 
         $module->metadata([
-            'icon' => 'cog'
+            'icon' => 'cog',
         ]);
 
         /** @var Admin $user */
@@ -74,6 +73,7 @@ class AdminCurrentAccountModule extends Module
 
         $module->action('update-profile')
             ->form(Form::create()->section('Details', [
+                AdminProfileFields::buildFullNameField($this->dataSource)->value($user->getFullName()),
                 AdminProfileFields::buildEmailField($this->dataSource)->value($user->getEmailAddressObject()),
                 AdminProfileFields::buildUsernameField($this->dataSource)->value($user->getUsername()),
             ]))
@@ -82,6 +82,7 @@ class AdminCurrentAccountModule extends Module
                 /** @var Admin $user */
                 $user = $this->authSystem->getAuthenticatedUser();
 
+                $user->setFullName($input['name']);
                 $user->setUsername($input['username']);
                 $user->setEmailAddress($input['email']);
 

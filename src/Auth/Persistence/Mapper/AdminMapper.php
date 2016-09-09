@@ -33,6 +33,10 @@ class AdminMapper extends EntityMapper
 
         $map->idToPrimaryKey('id');
 
+        $map->property(Admin::FULL_NAME)
+            ->to('full_name')
+            ->asVarchar(255);
+
         $map->embedded(Admin::EMAIL_ADDRESS)
             ->unique()
             ->using(new EmailAddressMapper('email'));

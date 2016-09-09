@@ -5,8 +5,8 @@ namespace Dms\Web\Laravel\Tests\Integration;
 use Dms\Common\Structure\Web\EmailAddress;
 use Dms\Core\ICms;
 use Dms\Core\Persistence\Db\Mapping\IOrm;
-use Dms\Web\Laravel\Auth\Password\HashedPassword;
 use Dms\Web\Laravel\Auth\Admin;
+use Dms\Web\Laravel\Auth\Password\HashedPassword;
 use Dms\Web\Laravel\DmsServiceProvider;
 use Dms\Web\Laravel\Tests\Integration\Fixtures\DmsFixture;
 use Illuminate\Routing\RouteCollection;
@@ -119,9 +119,10 @@ abstract class CmsIntegrationTest extends TestCase
     protected function getMockUser()
     {
         return new Admin(
-                new EmailAddress('test@test.com'),
-                'admin',
-                new HashedPassword('some-hash', 'algo', 10)
+            'Test Admin',
+            new EmailAddress('test@test.com'),
+            'admin',
+            new HashedPassword('some-hash', 'algo', 10)
         );
     }
 }

@@ -45,6 +45,7 @@ class DmsAdminSeeder extends Seeder
         $this->repo->clear();
 
         $this->repo->save(new Admin(
+            'Admin',
             new EmailAddress('admin@admin.com'),
             'admin',
             $this->hasherFactory->buildDefault()->hash('admin'),

@@ -4,12 +4,12 @@ namespace Dms\Web\Laravel\Tests\Unit\Auth;
 
 use Dms\Core\Persistence\Db\Mapping\IOrm;
 use Dms\Core\Tests\Persistence\Db\Integration\Mapping\DbIntegrationTest;
+use Dms\Web\Laravel\Auth\Admin;
 use Dms\Web\Laravel\Auth\AdminDmsUserProvider;
 use Dms\Web\Laravel\Auth\Password\BcryptPasswordHasher;
 use Dms\Web\Laravel\Auth\Password\PasswordHasherFactory;
-use Dms\Web\Laravel\Auth\Persistence\AuthOrm;
 use Dms\Web\Laravel\Auth\Persistence\AdminRepository;
-use Dms\Web\Laravel\Auth\Admin;
+use Dms\Web\Laravel\Auth\Persistence\AuthOrm;
 
 /**
  * @author Elliot Levin <elliotlevin@hotmail.com>
@@ -51,6 +51,7 @@ class DmsUserProviderTest extends DbIntegrationTest
             'users' => [
                 [
                     'id'                   => 1,
+                    'full_name'            => 'Admin',
                     'email'                => 'admin@admin.com',
                     'username'             => 'admin',
                     'password_hash'        => $hasher->buildDefault()->hash('password')->getHash(),
@@ -62,6 +63,7 @@ class DmsUserProviderTest extends DbIntegrationTest
                 ],
                 [
                     'id'                   => 2,
+                    'full_name'            => 'User',
                     'email'                => 'user@user.com',
                     'username'             => 'user',
                     'password_hash'        => $hasher->buildDefault()->hash('password1')->getHash(),

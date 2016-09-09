@@ -23,6 +23,7 @@ use Illuminate\Contracts\Auth\CanResetPassword;
  */
 class Admin extends Entity implements IAdmin, Authenticatable, CanResetPassword
 {
+    const FULL_NAME = 'fullName';
     const EMAIL_ADDRESS = 'emailAddress';
     const USERNAME = 'username';
     const PASSWORD = 'password';
@@ -30,6 +31,11 @@ class Admin extends Entity implements IAdmin, Authenticatable, CanResetPassword
     const IS_BANNED = 'isBanned';
     const REMEMBER_TOKEN = 'rememberToken';
     const ROLE_IDS = 'roleIds';
+
+    /**
+     * @var string
+     */
+    protected $fullName;
 
     /**
      * @var EmailAddress
@@ -69,6 +75,7 @@ class Admin extends Entity implements IAdmin, Authenticatable, CanResetPassword
     /**
      * LaravelUser constructor.
      *
+     * @param string                  $fullName
      * @param EmailAddress            $emailAddress
      * @param string                  $username
      * @param IHashedPassword         $password
@@ -77,6 +84,7 @@ class Admin extends Entity implements IAdmin, Authenticatable, CanResetPassword
      * @param EntityIdCollection|null $roleIds
      */
     public function __construct(
+        string $fullName,
         EmailAddress $emailAddress,
         string $username,
         IHashedPassword $password,
@@ -86,6 +94,7 @@ class Admin extends Entity implements IAdmin, Authenticatable, CanResetPassword
     ) {
         parent::__construct();
 
+        $this->fullName     = $fullName;
         $this->emailAddress = $emailAddress;
         $this->username     = $username;
         $this->password     = HashedPassword::from($password);
@@ -103,6 +112,8 @@ class Admin extends Entity implements IAdmin, Authenticatable, CanResetPassword
      */
     protected function defineEntity(ClassDefinition $class)
     {
+        $class->property($this->fullName)->asString();
+        
         $class->property($this->emailAddress)->asObject(EmailAddress::class);
 
         $class->property($this->username)->asString();
@@ -116,6 +127,14 @@ class Admin extends Entity implements IAdmin, Authenticatable, CanResetPassword
         $class->property($this->roleIds)->asType(EntityIdCollection::type());
 
         $class->property($this->rememberToken)->nullable()->asString();
+    }
+
+    /**
+     * @return string
+     */
+    public function getFullName() : string
+    {
+        return $this->fullName;
     }
 
     /**
@@ -140,6 +159,14 @@ class Admin extends Entity implements IAdmin, Authenticatable, CanResetPassword
     public function getUsername() : string
     {
         return $this->username;
+    }
+
+    /**
+     * @param string $fullName
+     */
+    public function setFullName(string $fullName)
+    {
+        $this->fullName = $fullName;
     }
 
     /**

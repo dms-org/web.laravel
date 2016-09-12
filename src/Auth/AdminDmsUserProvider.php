@@ -85,7 +85,9 @@ class AdminDmsUserProvider implements UserProvider
      */
     public function updateRememberToken(Authenticatable $admin, $token)
     {
-        $admin = $this->validateLocalAdmin($admin);
+        if (!($admin instanceof LocalAdmin)) {
+            return;
+        }
 
         $admin->setRememberToken($token);
         $this->repository->save($admin);

@@ -73,7 +73,7 @@ class AdminCurrentAccountModule extends Module
 
         $module->action('update-profile')
             ->form(Form::create()->section('Details', [
-                AdminProfileFields::buildFullNameField($this->dataSource)->value($user->getFullName()),
+                AdminProfileFields::buildFullNameField($this->dataSource)->value($user->getFullName())->attr('help-text', 'Some help text message...'),
                 AdminProfileFields::buildEmailField($this->dataSource)->value($user->getEmailAddressObject()),
                 AdminProfileFields::buildUsernameField($this->dataSource)->value($user->getUsername()),
             ]))

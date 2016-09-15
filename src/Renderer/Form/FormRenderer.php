@@ -62,9 +62,10 @@ class FormRenderer
 
             foreach ($section->getFields() as $field) {
                 $sections[$title][$field->getLabel()] = [
-                    'name'    => $field->getName(),
-                    'content' => $this->fieldRenderers->findRendererFor($renderingContext, $field)->render($renderingContext, $field),
-                    'hidden'  => $field->getType()->get(FieldType::ATTR_HIDDEN),
+                    'name'     => $field->getName(),
+                    'content'  => $this->fieldRenderers->findRendererFor($renderingContext, $field)->render($renderingContext, $field),
+                    'hidden'   => $field->getType()->get(FieldType::ATTR_HIDDEN),
+                    'helpText' => $field->getType()->get('help-text'),
                 ];
             }
         }

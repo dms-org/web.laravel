@@ -2,14 +2,13 @@
 
 namespace Dms\Web\Laravel\Renderer\Form\Field;
 
-use Dms\Core\Form\Field\Builder\Field;
-use Dms\Core\Form\Field\Options\EntityIdOptions;
 use Dms\Core\Form\Field\Type\ArrayOfType;
 use Dms\Core\Form\Field\Type\FieldType;
 use Dms\Core\Form\IField;
 use Dms\Core\Form\IFieldOptions;
 use Dms\Core\Form\IFieldType;
 use Dms\Web\Laravel\Renderer\Form\FormRenderingContext;
+use Dms\Web\Laravel\Util\DisguisedClosure;
 
 /**
  * The array of options field renderer
@@ -84,7 +83,7 @@ class ArrayOfOptionsFieldRenderer extends BladeFieldRenderer
             'dms::components.field.checkbox-group.value',
             [
                 'options'     => $this->getOptionsWithValuesAsKeys($options),
-                'urlCallback' => $urlCallback,
+                'urlCallback' => new DisguisedClosure($urlCallback),
             ]
         );
     }
@@ -98,11 +97,11 @@ class ArrayOfOptionsFieldRenderer extends BladeFieldRenderer
     private function getOptionsWithValuesAsKeys(IFieldOptions $options) : array
     {
         $indexedOptions = [];
-        
-        foreach($options->getAll() as $fieldOption) {
+
+        foreach ($options->getAll() as $fieldOption) {
             $indexedOptions[$fieldOption->getValue()] = $fieldOption;
         }
-        
+
         return $indexedOptions;
     }
 }

@@ -61166,249 +61166,6 @@ Dms.global.initializeCallbacks.push(function () {
         equalto: "This must match the confirmation field."
     }, true);
 });
-Dms.chart.initializeCallbacks.push(function (element) {
-
-    element.find('.dms-chart-control').each(function () {
-        var control = $(this);
-        var chartContainer = control.find('.dms-chart-container');
-        var chartElement = chartContainer.find('.dms-chart');
-        var chartRangePicker = chartContainer.find('.dms-chart-range-picker');
-        var loadChartUrl = control.attr('data-load-chart-url');
-
-        var criteria = {
-            orderings: [],
-            conditions: []
-        };
-
-        var currentAjaxRequest;
-
-        var loadCurrentData = function () {
-            chartContainer.addClass('loading');
-
-            if (currentAjaxRequest) {
-                currentAjaxRequest.abort();
-            }
-
-            currentAjaxRequest = Dms.ajax.createRequest({
-                url: loadChartUrl,
-                type: 'post',
-                dataType: 'html',
-                data: criteria
-            });
-
-            currentAjaxRequest.done(function (chartData) {
-                chartElement.html(chartData);
-                Dms.chart.initialize(chartElement);
-            });
-
-            currentAjaxRequest.fail(function () {
-                if (currentAjaxRequest.statusText === 'abort') {
-                    return;
-                }
-
-                chartContainer.addClass('error');
-
-                swal({
-                    title: "Could not load chart data",
-                    text: "An unexpected error occurred",
-                    type: "error"
-                });
-            });
-
-            currentAjaxRequest.always(function () {
-                chartContainer.removeClass('loading');
-            });
-        };
-
-        loadCurrentData();
-
-        chartRangePicker.on('dms-range-updated', function () {
-            var horizontalAxis = chartContainer.attr('data-date-axis-name');
-            criteria.conditions = [
-                {axis: horizontalAxis, operator: '>=', value: chartRangePicker.find('.dms-start-input').val()},
-                {axis: horizontalAxis, operator: '<=', value: chartRangePicker.find('.dms-end-input').val()}
-            ];
-
-            loadCurrentData();
-        });
-    });
-});
-Dms.chart.initializeCallbacks.push(function (element) {
-
-    element.find('.dms-geo-chart').each(function () {
-        var chart = $(this);
-        var isCityChart = chart.attr('data-city-chart');
-        var hasLatLng = chart.attr('data-has-lat-lng');
-        var chartData = JSON.parse(chart.attr('data-chart-data'));
-        var region = chart.attr('data-region');
-        var locationLabel = chart.attr('data-location-label');
-        var valueLabels = JSON.parse(chart.attr('data-value-labels'));
-
-        Dms.loader.register('google-geo-charts', function (callback) {
-            google.charts.load('current', {'packages': ['geochart']});
-            google.charts.setOnLoadCallback(callback);
-        }, function () {
-            var headers = [];
-
-            if (hasLatLng) {
-                headers.push('Latitude');
-                headers.push('Longitude');
-            }
-
-            headers.push(locationLabel);
-            headers = headers.concat(valueLabels);
-
-            var transformedChartData = [headers];
-
-            if (chartData.length) {
-                $.each(chartData, function (index, row) {
-                    transformedChartData.push((hasLatLng ? row.lat_lng : []).concat([row.label]).concat(row.values));
-                });
-            }
-            
-            var data = google.visualization.arrayToDataTable(transformedChartData);
-
-            var googleChart = new google.visualization.GeoChart(chart.get(0));
-
-            var drawChart = function () {
-                googleChart.draw(data, {
-                    displayMode: isCityChart ? 'markers' : 'regions',
-                    region: region
-                });
-            };
-
-            var resizeTimeoutId;
-            $(window).resize(function () {
-                if (resizeTimeoutId) {
-                    clearTimeout(resizeTimeoutId);
-                }
-
-                resizeTimeoutId = setTimeout(function () {
-                    drawChart();
-                    resizeTimeoutId = null;
-                }, 500);
-            });
-
-            drawChart();
-        });
-    });
-});
-Dms.chart.initializeCallbacks.push(function (element) {
-    element.find('.dms-graph-chart').each(function () {
-        var chart = $(this);
-        var dateFormat = Dms.utilities.convertPhpDateFormatToMomentFormat(chart.attr('data-date-format'));
-        var chartData = JSON.parse(chart.attr('data-chart-data'));
-        var chartType = chart.attr('data-chart-type');
-        var horizontalAxisKey = chart.attr('data-horizontal-axis-key');
-        var horizontalAxisUnitType = chart.attr('data-horizontal-unit-type');
-        var verticalAxisKeys = JSON.parse(chart.attr('data-vertical-axis-keys'));
-        var verticalAxisLabels = JSON.parse(chart.attr('data-vertical-axis-labels'));
-        var minTimestamp;
-        var maxTimestamp;
-        var timeRowLookup = {};
-
-        if (!chart.attr('id')) {
-            chart.attr('id', Dms.utilities.idGenerator());
-        }
-
-        $.each(chartData, function (index, row) {
-            var timestamp = moment(row[horizontalAxisKey], dateFormat).valueOf();
-            row[horizontalAxisKey] = timestamp;
-            timeRowLookup[timestamp] = true;
-
-            if (!minTimestamp || timestamp < minTimestamp) {
-                minTimestamp = timestamp;
-            }
-
-            if (!maxTimestamp || timestamp > maxTimestamp) {
-                maxTimestamp = timestamp;
-            }
-        });
-
-        var zeroFillMissingValues = function (unitType, chartData) {
-            if (chartData.length === 0) {
-                return;
-            }
-
-            var addUnitToDate;
-            if (unitType === 'date') {
-                addUnitToDate = function (date) {
-                    date.setDate(date.getDate() + 1);
-                };
-            } else {
-                addUnitToDate = function (date) {
-                    date.setSeconds(date.getSeconds() + 1)
-                };
-            }
-
-            for (var i = new Date(minTimestamp); i.getTime() < maxTimestamp; addUnitToDate(i)) {
-                if (typeof timeRowLookup[i.getTime()] === 'undefined') {
-                    var rowData = {};
-                    rowData[horizontalAxisKey] = i.getTime();
-
-                    $.each(verticalAxisKeys, function (index, verticalAxisKey) {
-                        rowData[verticalAxisKey] = 0;
-                    });
-
-                    chartData.push(rowData);
-                }
-            }
-        };
-
-        zeroFillMissingValues(horizontalAxisUnitType, chartData);
-
-        var morrisConfig = {
-            element: chart.attr('id'),
-            data: chartData,
-            xkey: horizontalAxisKey,
-            ykeys: verticalAxisKeys,
-            labels: verticalAxisLabels,
-            resize: true,
-            redraw: true,
-            dateFormat: function (timestamp) {
-                return moment(timestamp).format(dateFormat);
-            }
-        };
-
-        var morrisChart;
-        if (chartType === 'bar') {
-            morrisChart = Morris.Bar(morrisConfig);
-        } else if (chartType === 'area') {
-            morrisChart = Morris.Area(morrisConfig);
-        } else {
-            morrisChart = Morris.Line(morrisConfig);
-        }
-
-        $(window).on('resize', function () {
-            if (morrisChart.raphael) {
-                morrisChart.redraw();
-            }
-        });
-    });
-});
-Dms.chart.initializeCallbacks.push(function (element) {
-    element.find('.dms-pie-chart').each(function () {
-        var chart = $(this);
-        var chartData = JSON.parse(chart.attr('data-chart-data'));
-
-        if (!chart.attr('id')) {
-            chart.attr('id', Dms.utilities.idGenerator());
-        }
-
-        var morrisChart = Morris.Donut({
-            element: chart.attr('id'),
-            data: chartData,
-            resize: true,
-            redraw: true
-        });
-
-        $(window).on('resize', function () {
-            if (morrisChart.raphael) {
-                morrisChart.redraw();
-            }
-        });
-    });
-});
 Dms.form.initializeCallbacks.push(function (element) {
     element.find('input[type=checkbox].single-checkbox').iCheck({
         checkboxClass: 'icheckbox_square-blue',
@@ -61435,6 +61192,22 @@ Dms.form.initializeCallbacks.push(function (element) {
         var firstCheckbox = listOfCheckboxes.find('input[type=checkbox]').first();
         firstCheckbox.attr('data-parsley-min-elements', listOfCheckboxes.attr('data-min-elements'));
         firstCheckbox.attr('data-parsley-max-elements', listOfCheckboxes.attr('data-max-elements'));
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+    element.find('input.dms-colour-input').each(function () {
+        var config = {
+            theme: 'bootstrap'
+        };
+
+        if ($(this).hasClass('dms-colour-input-rgb')) {
+            config.format = 'rgb';
+        } else if ($(this).hasClass('dms-colour-input-rgba')) {
+            config.format = 'rgb';
+            config.opacity = true;
+        }
+
+        $(this).addClass('minicolors').minicolors(config);
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -61614,15 +61387,6 @@ Dms.form.initializeCallbacks.push(function (element) {
 
         startDisplay.text(convertFromUtcToLocal(dateFormat, startDisplay.text()));
         endDisplay.text(convertFromUtcToLocal(dateFormat, endDisplay.text()));
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
-    element.find('.dms-inner-form').each(function () {
-        var innerForm = $(this);
-
-        if (innerForm.attr('data-readonly')) {
-            innerForm.find(':input').attr('readonly', 'readonly');
-        }
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -61979,19 +61743,97 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-    element.find('input.dms-colour-input').each(function () {
-        var config = {
-            theme: 'bootstrap'
+    element.find('.dms-inner-form').each(function () {
+        var innerForm = $(this);
+
+        if (innerForm.attr('data-readonly')) {
+            innerForm.find(':input').attr('readonly', 'readonly');
+        }
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+
+    element.find('ul.dms-field-list').each(function () {
+        var listOfFields = $(this);
+        var form = listOfFields.closest('.dms-staged-form');
+        var formGroup = listOfFields.closest('.form-group');
+        var templateField = listOfFields.find('.field-list-template');
+        var addButton = listOfFields.find('.btn-add-field');
+        var isInvalidating = false;
+
+        var minFields = listOfFields.attr('data-min-elements');
+        var maxFields = listOfFields.attr('data-max-elements');
+
+        var getAmountOfInputs = function () {
+            return listOfFields.children('.field-list-item').length;
         };
 
-        if ($(this).hasClass('dms-colour-input-rgb')) {
-            config.format = 'rgb';
-        } else if ($(this).hasClass('dms-colour-input-rgba')) {
-            config.format = 'rgb';
-            config.opacity = true;
-        }
+        var invalidateControl = function () {
+            if (isInvalidating) {
+                return;
+            }
 
-        $(this).addClass('minicolors').minicolors(config);
+            isInvalidating = true;
+
+            var amountOfInputs = getAmountOfInputs();
+
+            addButton.prop('disabled', amountOfInputs >= maxFields);
+            listOfFields.find('.btn-remove-field').prop('disabled', amountOfInputs <= minFields);
+
+            while (amountOfInputs < minFields) {
+                addNewField();
+                amountOfInputs++;
+            }
+
+            isInvalidating = false;
+        };
+
+        var addNewField = function () {
+            var newField = templateField.clone()
+                .removeClass('field-list-template')
+                .removeClass('hidden')
+                .removeClass('dms-form-no-submit')
+                .addClass('field-list-item');
+
+            var fieldInputElement = newField.find('.field-list-input');
+            fieldInputElement.html(fieldInputElement.text());
+
+            var currentIndex = getAmountOfInputs();
+
+            $.each(['name', 'data-name', 'data-field-name'], function (index, attr) {
+                fieldInputElement.find('[' + attr + '*="::index::"]').each(function () {
+                    $(this).attr(attr, $(this).attr(attr).replace('::index::', currentIndex));
+                });
+            });
+
+            addButton.closest('.field-list-add').before(newField);
+
+            Dms.form.initialize(fieldInputElement);
+            form.triggerHandler('dms-form-updated');
+
+            invalidateControl();
+        };
+
+        listOfFields.on('click', '.btn-remove-field', function () {
+            var field = $(this).closest('.field-list-item');
+            field.remove();
+            formGroup.trigger('dms-change');
+            form.triggerHandler('dms-form-updated');
+
+            invalidateControl();
+            // TODO: reindex
+        });
+
+        addButton.on('click', addNewField);
+
+        invalidateControl();
+
+        var requiresAnExactAmountOfFields = typeof minFields !== 'undefined' && minFields === maxFields;
+        if (requiresAnExactAmountOfFields && getAmountOfInputs() == minFields) {
+            addButton.closest('.field-list-add').remove();
+            listOfFields.find('.btn-remove-field').closest('.field-list-button-container').remove();
+            listOfFields.find('.field-list-input').removeClass('col-xs-10 col-md-11').addClass('col-xs-12');
+        }
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -62334,91 +62176,6 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-
-    element.find('ul.dms-field-list').each(function () {
-        var listOfFields = $(this);
-        var form = listOfFields.closest('.dms-staged-form');
-        var formGroup = listOfFields.closest('.form-group');
-        var templateField = listOfFields.find('.field-list-template');
-        var addButton = listOfFields.find('.btn-add-field');
-        var isInvalidating = false;
-
-        var minFields = listOfFields.attr('data-min-elements');
-        var maxFields = listOfFields.attr('data-max-elements');
-
-        var getAmountOfInputs = function () {
-            return listOfFields.children('.field-list-item').length;
-        };
-
-        var invalidateControl = function () {
-            if (isInvalidating) {
-                return;
-            }
-
-            isInvalidating = true;
-
-            var amountOfInputs = getAmountOfInputs();
-
-            addButton.prop('disabled', amountOfInputs >= maxFields);
-            listOfFields.find('.btn-remove-field').prop('disabled', amountOfInputs <= minFields);
-
-            while (amountOfInputs < minFields) {
-                addNewField();
-                amountOfInputs++;
-            }
-
-            isInvalidating = false;
-        };
-
-        var addNewField = function () {
-            var newField = templateField.clone()
-                .removeClass('field-list-template')
-                .removeClass('hidden')
-                .removeClass('dms-form-no-submit')
-                .addClass('field-list-item');
-
-            var fieldInputElement = newField.find('.field-list-input');
-            fieldInputElement.html(fieldInputElement.text());
-
-            var currentIndex = getAmountOfInputs();
-
-            $.each(['name', 'data-name', 'data-field-name'], function (index, attr) {
-                fieldInputElement.find('[' + attr + '*="::index::"]').each(function () {
-                    $(this).attr(attr, $(this).attr(attr).replace('::index::', currentIndex));
-                });
-            });
-
-            addButton.closest('.field-list-add').before(newField);
-
-            Dms.form.initialize(fieldInputElement);
-            form.triggerHandler('dms-form-updated');
-
-            invalidateControl();
-        };
-
-        listOfFields.on('click', '.btn-remove-field', function () {
-            var field = $(this).closest('.field-list-item');
-            field.remove();
-            formGroup.trigger('dms-change');
-            form.triggerHandler('dms-form-updated');
-
-            invalidateControl();
-            // TODO: reindex
-        });
-
-        addButton.on('click', addNewField);
-
-        invalidateControl();
-
-        var requiresAnExactAmountOfFields = typeof minFields !== 'undefined' && minFields === maxFields;
-        if (requiresAnExactAmountOfFields && getAmountOfInputs() == minFields) {
-            addButton.closest('.field-list-add').remove();
-            listOfFields.find('.btn-remove-field').closest('.field-list-button-container').remove();
-            listOfFields.find('.field-list-input').removeClass('col-xs-10 col-md-11').addClass('col-xs-12');
-        }
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
     element.find('.dms-money-input-group').each(function () {
         var inputGroup = $(this);
         var moneyInput = inputGroup.find('.dms-money-input');
@@ -62454,12 +62211,6 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-    element.find('input[type=radio]').iCheck({
-        radioClass: 'iradio_square-blue',
-        increaseArea: '20%'
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
     element.find('input[type="number"][data-max-decimal-places]').each(function () {
         $(this).attr('data-parsley-max-decimal-places', $(this).attr('data-max-decimal-places'));
     });
@@ -62483,6 +62234,12 @@ Dms.form.initializeCallbacks.push(function (element) {
                 'data-parsley-type': 'integer'
             });
         }
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+    element.find('input[type=radio]').iCheck({
+        radioClass: 'iradio_square-blue',
+        increaseArea: '20%'
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -62565,6 +62322,9 @@ Dms.form.initializeCallbacks.push(function (element) {
             displayKey: 'val'
         });
     });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+
 });
 Dms.form.initializeCallbacks.push(function (element) {
 
@@ -62769,9 +62529,6 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-
-});
-Dms.form.initializeCallbacks.push(function (element) {
     if (typeof tinymce === 'undefined') {
         return;
     }
@@ -62895,6 +62652,249 @@ Dms.form.initializeCallbacks.push(function (element) {
             filePicker.empty();
         });
     };
+});
+Dms.chart.initializeCallbacks.push(function (element) {
+
+    element.find('.dms-chart-control').each(function () {
+        var control = $(this);
+        var chartContainer = control.find('.dms-chart-container');
+        var chartElement = chartContainer.find('.dms-chart');
+        var chartRangePicker = chartContainer.find('.dms-chart-range-picker');
+        var loadChartUrl = control.attr('data-load-chart-url');
+
+        var criteria = {
+            orderings: [],
+            conditions: []
+        };
+
+        var currentAjaxRequest;
+
+        var loadCurrentData = function () {
+            chartContainer.addClass('loading');
+
+            if (currentAjaxRequest) {
+                currentAjaxRequest.abort();
+            }
+
+            currentAjaxRequest = Dms.ajax.createRequest({
+                url: loadChartUrl,
+                type: 'post',
+                dataType: 'html',
+                data: criteria
+            });
+
+            currentAjaxRequest.done(function (chartData) {
+                chartElement.html(chartData);
+                Dms.chart.initialize(chartElement);
+            });
+
+            currentAjaxRequest.fail(function () {
+                if (currentAjaxRequest.statusText === 'abort') {
+                    return;
+                }
+
+                chartContainer.addClass('error');
+
+                swal({
+                    title: "Could not load chart data",
+                    text: "An unexpected error occurred",
+                    type: "error"
+                });
+            });
+
+            currentAjaxRequest.always(function () {
+                chartContainer.removeClass('loading');
+            });
+        };
+
+        loadCurrentData();
+
+        chartRangePicker.on('dms-range-updated', function () {
+            var horizontalAxis = chartContainer.attr('data-date-axis-name');
+            criteria.conditions = [
+                {axis: horizontalAxis, operator: '>=', value: chartRangePicker.find('.dms-start-input').val()},
+                {axis: horizontalAxis, operator: '<=', value: chartRangePicker.find('.dms-end-input').val()}
+            ];
+
+            loadCurrentData();
+        });
+    });
+});
+Dms.chart.initializeCallbacks.push(function (element) {
+
+    element.find('.dms-geo-chart').each(function () {
+        var chart = $(this);
+        var isCityChart = chart.attr('data-city-chart');
+        var hasLatLng = chart.attr('data-has-lat-lng');
+        var chartData = JSON.parse(chart.attr('data-chart-data'));
+        var region = chart.attr('data-region');
+        var locationLabel = chart.attr('data-location-label');
+        var valueLabels = JSON.parse(chart.attr('data-value-labels'));
+
+        Dms.loader.register('google-geo-charts', function (callback) {
+            google.charts.load('current', {'packages': ['geochart']});
+            google.charts.setOnLoadCallback(callback);
+        }, function () {
+            var headers = [];
+
+            if (hasLatLng) {
+                headers.push('Latitude');
+                headers.push('Longitude');
+            }
+
+            headers.push(locationLabel);
+            headers = headers.concat(valueLabels);
+
+            var transformedChartData = [headers];
+
+            if (chartData.length) {
+                $.each(chartData, function (index, row) {
+                    transformedChartData.push((hasLatLng ? row.lat_lng : []).concat([row.label]).concat(row.values));
+                });
+            }
+            
+            var data = google.visualization.arrayToDataTable(transformedChartData);
+
+            var googleChart = new google.visualization.GeoChart(chart.get(0));
+
+            var drawChart = function () {
+                googleChart.draw(data, {
+                    displayMode: isCityChart ? 'markers' : 'regions',
+                    region: region
+                });
+            };
+
+            var resizeTimeoutId;
+            $(window).resize(function () {
+                if (resizeTimeoutId) {
+                    clearTimeout(resizeTimeoutId);
+                }
+
+                resizeTimeoutId = setTimeout(function () {
+                    drawChart();
+                    resizeTimeoutId = null;
+                }, 500);
+            });
+
+            drawChart();
+        });
+    });
+});
+Dms.chart.initializeCallbacks.push(function (element) {
+    element.find('.dms-graph-chart').each(function () {
+        var chart = $(this);
+        var dateFormat = Dms.utilities.convertPhpDateFormatToMomentFormat(chart.attr('data-date-format'));
+        var chartData = JSON.parse(chart.attr('data-chart-data'));
+        var chartType = chart.attr('data-chart-type');
+        var horizontalAxisKey = chart.attr('data-horizontal-axis-key');
+        var horizontalAxisUnitType = chart.attr('data-horizontal-unit-type');
+        var verticalAxisKeys = JSON.parse(chart.attr('data-vertical-axis-keys'));
+        var verticalAxisLabels = JSON.parse(chart.attr('data-vertical-axis-labels'));
+        var minTimestamp;
+        var maxTimestamp;
+        var timeRowLookup = {};
+
+        if (!chart.attr('id')) {
+            chart.attr('id', Dms.utilities.idGenerator());
+        }
+
+        $.each(chartData, function (index, row) {
+            var timestamp = moment(row[horizontalAxisKey], dateFormat).valueOf();
+            row[horizontalAxisKey] = timestamp;
+            timeRowLookup[timestamp] = true;
+
+            if (!minTimestamp || timestamp < minTimestamp) {
+                minTimestamp = timestamp;
+            }
+
+            if (!maxTimestamp || timestamp > maxTimestamp) {
+                maxTimestamp = timestamp;
+            }
+        });
+
+        var zeroFillMissingValues = function (unitType, chartData) {
+            if (chartData.length === 0) {
+                return;
+            }
+
+            var addUnitToDate;
+            if (unitType === 'date') {
+                addUnitToDate = function (date) {
+                    date.setDate(date.getDate() + 1);
+                };
+            } else {
+                addUnitToDate = function (date) {
+                    date.setSeconds(date.getSeconds() + 1)
+                };
+            }
+
+            for (var i = new Date(minTimestamp); i.getTime() < maxTimestamp; addUnitToDate(i)) {
+                if (typeof timeRowLookup[i.getTime()] === 'undefined') {
+                    var rowData = {};
+                    rowData[horizontalAxisKey] = i.getTime();
+
+                    $.each(verticalAxisKeys, function (index, verticalAxisKey) {
+                        rowData[verticalAxisKey] = 0;
+                    });
+
+                    chartData.push(rowData);
+                }
+            }
+        };
+
+        zeroFillMissingValues(horizontalAxisUnitType, chartData);
+
+        var morrisConfig = {
+            element: chart.attr('id'),
+            data: chartData,
+            xkey: horizontalAxisKey,
+            ykeys: verticalAxisKeys,
+            labels: verticalAxisLabels,
+            resize: true,
+            redraw: true,
+            dateFormat: function (timestamp) {
+                return moment(timestamp).format(dateFormat);
+            }
+        };
+
+        var morrisChart;
+        if (chartType === 'bar') {
+            morrisChart = Morris.Bar(morrisConfig);
+        } else if (chartType === 'area') {
+            morrisChart = Morris.Area(morrisConfig);
+        } else {
+            morrisChart = Morris.Line(morrisConfig);
+        }
+
+        $(window).on('resize', function () {
+            if (morrisChart.raphael) {
+                morrisChart.redraw();
+            }
+        });
+    });
+});
+Dms.chart.initializeCallbacks.push(function (element) {
+    element.find('.dms-pie-chart').each(function () {
+        var chart = $(this);
+        var chartData = JSON.parse(chart.attr('data-chart-data'));
+
+        if (!chart.attr('id')) {
+            chart.attr('id', Dms.utilities.idGenerator());
+        }
+
+        var morrisChart = Morris.Donut({
+            element: chart.attr('id'),
+            data: chartData,
+            resize: true,
+            redraw: true
+        });
+
+        $(window).on('resize', function () {
+            if (morrisChart.raphael) {
+                morrisChart.redraw();
+            }
+        });
+    });
 });
 Dms.form.initializeCallbacks.push(function (element) {
 
@@ -63328,6 +63328,37 @@ Dms.form.initializeValidationCallbacks.push(function (element) {
         var parsley = Dms.form.validation.initialize(form);
     });
 });
+Dms.widget.initializeCallbacks.push(function () {
+    $('.dms-widget-unparameterized-action, .dms-widget-parameterized-action').each(function () {
+        var widget = $(this);
+        var button = widget.find('button');
+
+        if (button.is('.btn-danger')) {
+            var isConfirmed = false;
+
+            button.click(function () {
+                if (isConfirmed) {
+                    isConfirmed = false;
+                    return;
+                }
+
+                swal({
+                    title: "Are you sure?",
+                    text: "This will execute the '" + widget.attr('data-action-label') + "' action",
+                    type: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#DD6B55",
+                    confirmButtonText: "Yes proceed!"
+                }, function () {
+                    isConfirmed = true;
+                    $(this).click();
+                });
+
+                return false;
+            });
+        }
+    });
+});
 Dms.table.initializeCallbacks.push(function (element) {
     var groupCounter = 0;
 
@@ -63539,37 +63570,6 @@ Dms.table.initializeCallbacks.push(function (element) {
 
             linkedTablePane.find('.dms-table-control:not([data-has-loaded-table-data]) .dms-table-container:not(.loading) .dms-table').triggerHandler('dms-load-table-data');
         });
-    });
-});
-Dms.widget.initializeCallbacks.push(function () {
-    $('.dms-widget-unparameterized-action, .dms-widget-parameterized-action').each(function () {
-        var widget = $(this);
-        var button = widget.find('button');
-
-        if (button.is('.btn-danger')) {
-            var isConfirmed = false;
-
-            button.click(function () {
-                if (isConfirmed) {
-                    isConfirmed = false;
-                    return;
-                }
-
-                swal({
-                    title: "Are you sure?",
-                    text: "This will execute the '" + widget.attr('data-action-label') + "' action",
-                    type: "warning",
-                    showCancelButton: true,
-                    confirmButtonColor: "#DD6B55",
-                    confirmButtonText: "Yes proceed!"
-                }, function () {
-                    isConfirmed = true;
-                    $(this).click();
-                });
-
-                return false;
-            });
-        }
     });
 });
 Dms.table.initializeCallbacks.push(function (element) {

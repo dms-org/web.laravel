@@ -15943,6 +15943,10 @@ a:not(.btn).ladda-button .ladda-spinner > div > div > div {
   min-height: 50vh;
   overflow: scroll; }
 
+.tt-dropdown-menu {
+  max-height: 300px;
+  overflow-y: scroll; }
+
 body {
   font-family: Arial, sans-serif !important; }
 

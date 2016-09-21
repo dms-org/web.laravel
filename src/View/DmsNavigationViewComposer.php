@@ -96,7 +96,7 @@ class DmsNavigationViewComposer
     {
         $navigation = [];
 
-        $navigation[] = new NavigationElement('Home', route('dms::index'), 'tachometer');
+        $navigation[] = new NavigationElement('Home', 'dms::index', [], 'tachometer');
 
         foreach ($this->cms->loadPackages() as $package) {
             $packageNavigation = [];
@@ -104,7 +104,8 @@ class DmsNavigationViewComposer
             if ($package->hasDashboard()) {
                 $packageNavigation[] = new NavigationElement(
                     'Dashboard',
-                    route('dms::package.dashboard', [$package->getName()]),
+                    'dms::package.dashboard',
+                    [$package->getName()],
                     'tachometer',
                     $this->getPermissionGroups($package->loadDashboard()),
                     true
@@ -114,11 +115,11 @@ class DmsNavigationViewComposer
             $packageLabel = StringHumanizer::title($package->getName());
 
             foreach ($package->loadModules() as $module) {
-                $moduleDashboardUrl  = route('dms::package.module.dashboard', [$package->getName(), $module->getName()]);
                 $moduleLabel         = StringHumanizer::title($module->getName());
                 $packageNavigation[] = new NavigationElement(
                     $moduleLabel,
-                    $moduleDashboardUrl,
+                    'dms::package.module.dashboard',
+                    [$package->getName(), $module->getName()],
                     $this->getModuleIcon($module),
                     $this->getPermissionNames($module->getRequiredPermissions())
                 );

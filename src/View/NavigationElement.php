@@ -12,12 +12,17 @@ class NavigationElement
     /**
      * @var string
      */
-    protected $url;
+    protected $label;
 
     /**
      * @var string
      */
-    protected $label;
+    protected $routeName;
+
+    /**
+     * @var array
+     */
+    protected $routeParams;
 
     /**
      * @var string
@@ -38,15 +43,23 @@ class NavigationElement
      * NavigationElement constructor.
      *
      * @param string   $label
-     * @param string   $url
+     * @param string   $routeName
+     * @param array    $routeParams
      * @param string   $icon
      * @param string[] $requiredPermissionNames
      * @param bool     $requiresAnyFromGroups
      */
-    public function __construct(string $label, string $url, string $icon, array $requiredPermissionNames = [], bool $requiresAnyFromGroups = false)
-    {
+    public function __construct(
+        string $label,
+        string $routeName,
+        array $routeParams,
+        string $icon,
+        array $requiredPermissionNames = [],
+        bool $requiresAnyFromGroups = false
+    ) {
         $this->label                 = $label;
-        $this->url                   = $url;
+        $this->routeName             = $routeName;
+        $this->routeParams           = $routeParams;
         $this->icon                  = $icon;
         $this->requiredPermissions   = $requiredPermissionNames;
         $this->requiresAnyFromGroups = $requiresAnyFromGroups;
@@ -73,7 +86,7 @@ class NavigationElement
      */
     public function getUrl() : string
     {
-        return $this->url;
+        return route($this->routeName, $this->routeParams);
     }
 
     /**

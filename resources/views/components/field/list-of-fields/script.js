@@ -4,8 +4,8 @@ Dms.form.initializeCallbacks.push(function (element) {
         var listOfFields = $(this);
         var form = listOfFields.closest('.dms-staged-form');
         var formGroup = listOfFields.closest('.form-group');
-        var templateField = listOfFields.find('.field-list-template');
-        var addButton = listOfFields.find('.btn-add-field');
+        var templateField = listOfFields.children('.field-list-template');
+        var addButton = listOfFields.children('.field-list-add').find('.btn-add-field');
         var isInvalidating = false;
 
         var minFields = listOfFields.attr('data-min-elements');

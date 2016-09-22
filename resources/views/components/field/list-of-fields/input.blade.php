@@ -15,7 +15,7 @@
     <li class="list-group-item hidden field-list-template clearfix dms-no-validation dms-form-no-submit">
         <div class="row">
             <div class="col-xs-10 col-md-11 field-list-input">
-                {{ $fieldRenderer->render($renderingContext, $elementField->withName($name . '[::index::]')->withInitialValue(null)) }}
+                {!! htmlspecialchars($fieldRenderer->render($renderingContext, $elementField->withName($name . '[::index::]')->withInitialValue(null))) !!}
             </div>
             <div class="col-xs-2 col-md-1 field-list-button-container">
                 <button class="btn btn-danger btn-block btn-remove-field" tabindex="-1"><span class="fa fa-times"></span></button>

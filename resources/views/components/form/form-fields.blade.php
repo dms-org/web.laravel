@@ -19,7 +19,7 @@
                     <div class="col-lg-10 col-md-9 col-sm-8">
                         {!! $field['content'] !!}
                         <div class="dms-validation-messages-container"></div>
-                        @if($field['helpText'])
+                        @if($field['helpText'] ?? false)
                             <p class="help-block">{{ $field['helpText'] }}</p>
                         @endif
                     </div>

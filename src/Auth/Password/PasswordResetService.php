@@ -46,7 +46,7 @@ class PasswordResetService implements IPasswordResetService
      */
     public function resetUserPassword(IAdmin $admin, string $newPassword)
     {
-        InvalidArgumentException::verifyInstanceOf($admin, 'admin', $admin, LocalAdmin::class);
+        InvalidArgumentException::verifyInstanceOf(LocalAdmin::class, 'admin', $admin, LocalAdmin::class);
 
         $hashedPassword = $this->hasherFactory->buildDefault()->hash($newPassword);
 

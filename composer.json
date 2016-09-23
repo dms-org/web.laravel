@@ -41,6 +41,7 @@
     },
     "require-dev": {
         "dms/common.testing": "dev-master",
-        "orchestra/testbench": "~3.0"
+        "orchestra/testbench": "~3.0",
+        "dms/package.content": "^0.1.9"
     }
 }

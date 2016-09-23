@@ -9,7 +9,7 @@ use Dms\Core\Form\Field\Type\FieldType;
 use Dms\Core\Form\Field\Type\InnerFormType;
 use Dms\Core\Form\IField;
 use Dms\Core\Form\IFieldType;
-use Dms\Web\Laravel\Renderer\Form\FormRenderer;
+use Dms\Web\Laravel\Renderer\Form\DefaultFormRenderer;
 use Dms\Web\Laravel\Renderer\Form\FormRenderingContext;
 
 /**
@@ -45,7 +45,7 @@ class InnerFormFieldRenderer extends BladeFieldRenderer
     {
         /** @var InnerFormType $fieldType */
         $formWithArrayFields = $fieldType->getInnerArrayForm($field->getName());
-        $formRenderer        = new FormRenderer($this->fieldRendererCollection);
+        $formRenderer        = new DefaultFormRenderer($this->fieldRendererCollection);
 
 
         return $this->renderView(
@@ -69,7 +69,7 @@ class InnerFormFieldRenderer extends BladeFieldRenderer
         $fieldType = $field->withInitialValue($field->process($value))->getType();
 
         $formWithArrayFields = $fieldType->getInnerArrayForm($field->getName());
-        $formRenderer        = new FormRenderer($this->fieldRendererCollection);
+        $formRenderer        = new DefaultFormRenderer($this->fieldRendererCollection);
 
         return $this->renderValueViewWithNullDefault(
             $field, $value,

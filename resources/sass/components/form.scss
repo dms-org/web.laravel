@@ -12,7 +12,6 @@ a.dms-run-action-form {
     }
 }
 
-
 .dms-form-stage-container:not(.loaded):not(.loading) + .dms-form-stage-container:not(.loaded):not(.loading) {
     // Don't display consecutive unloaded form stages
     display: none;
@@ -179,5 +178,26 @@ a.dms-run-action-form {
         cursor: default;
         pointer-events: none;
         opacity: .7;
+    }
+}
+
+.dms-display-html {
+    width: 100%;
+    border: 1px solid #bbb;
+    border-radius: 3px;
+    padding: 5px;
+    height: 30vh;
+    position: relative;
+
+    .dms-display-iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+    }
+
+    .dms-view-more-button {
+        position: absolute;
+        top: 10px;
+        right: 10px;
     }
 }

@@ -85,7 +85,8 @@ window.Dms = {
         }
     },
     loader: {}, // @see ./services/loader.js,
-    utilities: {} // @see ./services/utilities.js
+    utilities: {}, // @see ./services/utilities.js
+    controls: {} // @see ./services/controls/*.js
 };
 
 $(document).ready(function () {
@@ -156,33 +157,9 @@ Dms.action.responseHandler = function (httpStatusCode, actionUrl, response) {
     }
 
     if (typeof response.content !== 'undefined') {
-        var contentDialog = $('.dms-content-dialog').first();
+        var title = response.content_title || '';
 
-        contentDialog.find('.modal-title').text(response.content_title || '');
-
-        var dialogBody = contentDialog.find('.modal-body');
-        dialogBody.empty();
-
-        if (response.iframe) {
-            var iframe = $('<iframe />');
-            iframe.addClass('dms-content-iframe');
-            dialogBody.append(iframe);
-            setTimeout(function () {
-                var document = iframe.contents().get(0);
-                document.open();
-                document.write(response.content);
-                document.close();
-            }, 1);
-        } else {
-            dialogBody.html(response.content);
-        }
-
-        contentDialog.appendTo('body').modal('show');
-        Dms.all.initialize(dialogBody);
-
-        dialogBody.on('click', 'a[href]', function () {
-            contentDialog.modal('hide');
-        });
+        Dms.controls.showContentDialog(title, response.content, !!response.iframe);
     }
 };
 Dms.ajax.formData = function (form) {
@@ -1244,6 +1221,35 @@ Dms.utilities.debounceCallback = function (func, wait, immediate) {
         if (callNow) func.apply(context, args);
     };
 };
+Dms.controls.showContentDialog = function (title, content, showInIframe) {
+    var contentDialog = $('.dms-content-dialog').first();
+
+    contentDialog.find('.modal-title').text(title || '');
+
+    var dialogBody = contentDialog.find('.modal-body');
+    dialogBody.empty();
+
+    if (showInIframe) {
+        var iframe = $('<iframe />');
+        iframe.addClass('dms-content-iframe');
+        dialogBody.append(iframe);
+        setTimeout(function () {
+            var document = iframe.contents().get(0);
+            document.open();
+            document.write(content);
+            document.close();
+        }, 1);
+    } else {
+        dialogBody.html(content);
+    }
+
+    contentDialog.appendTo('body').modal('show');
+    Dms.all.initialize(dialogBody);
+
+    dialogBody.on('click', 'a[href]', function () {
+        contentDialog.modal('hide');
+    });
+};
 window.Parsley.addValidator('ipAddress', {
     requirementType: 'boolean',
     validateString: function (value) {
@@ -1411,20 +1417,6 @@ Dms.global.initializeCallbacks.push(function () {
         check: "You must select between %s and %s choices.",
         equalto: "This must match the confirmation field."
     }, true);
-});
-Dms.form.initializeCallbacks.push(function (element) {
-
-    element.find('.list-of-checkboxes').each(function () {
-        var listOfCheckboxes = $(this);
-        listOfCheckboxes.find('input[type=checkbox]').iCheck({
-            checkboxClass: 'icheckbox_square-blue',
-            increaseArea: '20%'
-        });
-
-        var firstCheckbox = listOfCheckboxes.find('input[type=checkbox]').first();
-        firstCheckbox.attr('data-parsley-min-elements', listOfCheckboxes.attr('data-min-elements'));
-        firstCheckbox.attr('data-parsley-max-elements', listOfCheckboxes.attr('data-max-elements'));
-    });
 });
 Dms.chart.initializeCallbacks.push(function (element) {
 
@@ -1684,6 +1676,20 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
+
+    element.find('.list-of-checkboxes').each(function () {
+        var listOfCheckboxes = $(this);
+        listOfCheckboxes.find('input[type=checkbox]').iCheck({
+            checkboxClass: 'icheckbox_square-blue',
+            increaseArea: '20%'
+        });
+
+        var firstCheckbox = listOfCheckboxes.find('input[type=checkbox]').first();
+        firstCheckbox.attr('data-parsley-min-elements', listOfCheckboxes.attr('data-min-elements'));
+        firstCheckbox.attr('data-parsley-max-elements', listOfCheckboxes.attr('data-max-elements'));
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
     var convertFromUtcToLocal = function (dateFormat, value) {
         if (value) {
             return moment.utc(value, dateFormat).local().format(dateFormat);
@@ -1863,10 +1869,27 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
+    element.find('input.dms-colour-input').each(function () {
+        var config = {
+            theme: 'bootstrap'
+        };
+
+        if ($(this).hasClass('dms-colour-input-rgb')) {
+            config.format = 'rgb';
+        } else if ($(this).hasClass('dms-colour-input-rgba')) {
+            config.format = 'rgb';
+            config.opacity = true;
+        }
+
+        $(this).addClass('minicolors').minicolors(config);
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
 
     element.find('.dropzone-container').each(function () {
         var container = $(this);
         var uniqueId = Dms.utilities.idGenerator();
+        var formGroup = container.closest('.form-group');
         var form = container.closest('.dms-staged-form');
         var dropzoneElement = container.find('.dms-dropzone');
         var fieldName = container.attr('data-name');
@@ -2002,7 +2025,6 @@ Dms.form.initializeCallbacks.push(function (element) {
 
                         if (file.action === 'keep-existing') {
                             file.action = 'delete-existing';
-                            updateSubmissionState();
                         }
 
                         if (dropzone.options.maxFiles === 0) {
@@ -2018,7 +2040,7 @@ Dms.form.initializeCallbacks.push(function (element) {
                         file.action = 'delete-existing';
                     }
 
-                    updateSubmissionState();
+                    formGroup.trigger('dms-change');
                 });
 
                 this.on("complete", function (file) {
@@ -2060,12 +2082,13 @@ Dms.form.initializeCallbacks.push(function (element) {
 
                         file.previewElement.appendChild(editImageButton);
                     }
+
+                    formGroup.trigger('dms-change');
                 });
 
                 this.on('success', function (file, response) {
                     file.action = 'store-new';
                     file.tempFileToken = response.tokens['file'];
-                    updateSubmissionState();
                 });
 
                 this.on("thumbnail", function (file) {
@@ -2157,10 +2180,9 @@ Dms.form.initializeCallbacks.push(function (element) {
 
         dropzoneElement.addClass('dropzone');
 
-        var updateSubmissionState = function () {
-            form.find('.file-action-' + uniqueId).remove();
-            form.find('.file-token-' + uniqueId).remove();
-
+        formGroup.on('dms-get-input-data', function () {
+            var fieldData = {};
+            
             var allFiles = [];
 
             $.each(existingFiles.concat(dropzone.getAcceptedFiles()), function (index, file) {
@@ -2190,45 +2212,19 @@ Dms.form.initializeCallbacks.push(function (element) {
                     ? fieldName + '[' + index + ']'
                     : fieldName;
 
-                form.append($('<input />').attr({
-                    'class': 'file-action-' + uniqueId,
-                    'type': 'hidden',
-                    'name': fileFieldName + '[action]',
-                    'value': file.action
-                }));
+                fieldData[fileFieldName + '[action]'] = file.action;
 
                 if (file.tempFileToken) {
-                    form.append($('<input />').attr({
-                        'class': 'file-token-' + uniqueId,
-                        'type': 'hidden',
-                        'name': Dms.utilities.combineFieldNames(tempFilePrefix, fileFieldName + '[file]'),
-                        'value': file.tempFileToken
-                    }));
+                    fieldData[Dms.utilities.combineFieldNames(tempFilePrefix, fileFieldName + '[file]')] = file.tempFileToken;
                 }
             });
-        };
 
-        updateSubmissionState();
+            return fieldData;
+        });
 
         dropzoneElement.closest('.dms-staged-form').on('dms-post-submit-success', function () {
             dropzone.destroy();
         });
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
-    element.find('input.dms-colour-input').each(function () {
-        var config = {
-            theme: 'bootstrap'
-        };
-
-        if ($(this).hasClass('dms-colour-input-rgb')) {
-            config.format = 'rgb';
-        } else if ($(this).hasClass('dms-colour-input-rgba')) {
-            config.format = 'rgb';
-            config.opacity = true;
-        }
-
-        $(this).addClass('minicolors').minicolors(config);
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -2421,91 +2417,6 @@ Dms.form.initializeCallbacks.push(function (element) {
 });
 Dms.form.initializeCallbacks.push(function (element) {
 
-    element.find('ul.dms-field-list').each(function () {
-        var listOfFields = $(this);
-        var form = listOfFields.closest('.dms-staged-form');
-        var formGroup = listOfFields.closest('.form-group');
-        var templateField = listOfFields.children('.field-list-template');
-        var addButton = listOfFields.children('.field-list-add').find('.btn-add-field');
-        var isInvalidating = false;
-
-        var minFields = listOfFields.attr('data-min-elements');
-        var maxFields = listOfFields.attr('data-max-elements');
-
-        var getAmountOfInputs = function () {
-            return listOfFields.children('.field-list-item').length;
-        };
-
-        var invalidateControl = function () {
-            if (isInvalidating) {
-                return;
-            }
-
-            isInvalidating = true;
-
-            var amountOfInputs = getAmountOfInputs();
-
-            addButton.prop('disabled', amountOfInputs >= maxFields);
-            listOfFields.find('.btn-remove-field').prop('disabled', amountOfInputs <= minFields);
-
-            while (amountOfInputs < minFields) {
-                addNewField();
-                amountOfInputs++;
-            }
-
-            isInvalidating = false;
-        };
-
-        var addNewField = function () {
-            var newField = templateField.clone()
-                .removeClass('field-list-template')
-                .removeClass('hidden')
-                .removeClass('dms-form-no-submit')
-                .addClass('field-list-item');
-
-            var fieldInputElement = newField.find('.field-list-input');
-            fieldInputElement.html(fieldInputElement.text());
-
-            var currentIndex = getAmountOfInputs();
-
-            $.each(['name', 'data-name', 'data-field-name'], function (index, attr) {
-                fieldInputElement.find('[' + attr + '*="::index::"]').each(function () {
-                    $(this).attr(attr, $(this).attr(attr).replace('::index::', currentIndex));
-                });
-            });
-
-            addButton.closest('.field-list-add').before(newField);
-
-            Dms.form.initialize(fieldInputElement);
-            form.triggerHandler('dms-form-updated');
-
-            invalidateControl();
-        };
-
-        listOfFields.on('click', '.btn-remove-field', function () {
-            var field = $(this).closest('.field-list-item');
-            field.remove();
-            formGroup.trigger('dms-change');
-            form.triggerHandler('dms-form-updated');
-
-            invalidateControl();
-            // TODO: reindex
-        });
-
-        addButton.on('click', addNewField);
-
-        invalidateControl();
-
-        var requiresAnExactAmountOfFields = typeof minFields !== 'undefined' && minFields === maxFields;
-        if (requiresAnExactAmountOfFields && getAmountOfInputs() == minFields) {
-            addButton.closest('.field-list-add').remove();
-            listOfFields.find('.btn-remove-field').closest('.field-list-button-container').remove();
-            listOfFields.find('.field-list-input').removeClass('col-xs-10 col-md-11').addClass('col-xs-12');
-        }
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
-
     var disableZoomScrollingUntilHoveredFor = function (milliseconds, googleMap) {
         googleMap.set('scrollwheel', false);
         var timeout;
@@ -2665,6 +2576,97 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
+
+    element.find('ul.dms-field-list').each(function () {
+        var listOfFields = $(this);
+        var form = listOfFields.closest('.dms-staged-form');
+        var formGroup = listOfFields.closest('.form-group');
+        var templateField = listOfFields.children('.field-list-template');
+        var addButton = listOfFields.children('.field-list-add').find('.btn-add-field');
+        var isInvalidating = false;
+
+        var minFields = listOfFields.attr('data-min-elements');
+        var maxFields = listOfFields.attr('data-max-elements');
+
+        var getAmountOfInputs = function () {
+            return listOfFields.children('.field-list-item').length;
+        };
+
+        var invalidateControl = function () {
+            if (isInvalidating) {
+                return;
+            }
+
+            isInvalidating = true;
+
+            var amountOfInputs = getAmountOfInputs();
+
+            addButton.prop('disabled', amountOfInputs >= maxFields);
+            listOfFields.find('.btn-remove-field').prop('disabled', amountOfInputs <= minFields);
+
+            while (amountOfInputs < minFields) {
+                addNewField();
+                amountOfInputs++;
+            }
+
+            isInvalidating = false;
+        };
+
+        var addNewField = function () {
+            var newField = templateField.clone()
+                .removeClass('field-list-template')
+                .removeClass('hidden')
+                .removeClass('dms-form-no-submit')
+                .addClass('field-list-item');
+
+            var fieldInputElement = newField.find('.field-list-input');
+            fieldInputElement.html(fieldInputElement.text());
+
+            var currentIndex = getAmountOfInputs();
+
+            $.each(['name', 'data-name', 'data-field-name'], function (index, attr) {
+                fieldInputElement.find('[' + attr + '*="::index::"]').each(function () {
+                    $(this).attr(attr, $(this).attr(attr).replace('::index::', currentIndex));
+                });
+            });
+
+            addButton.closest('.field-list-add').before(newField);
+
+            Dms.form.initialize(fieldInputElement);
+            form.triggerHandler('dms-form-updated');
+
+            invalidateControl();
+        };
+
+        listOfFields.on('click', '.btn-remove-field', function () {
+            var field = $(this).closest('.field-list-item');
+            field.remove();
+            formGroup.trigger('dms-change');
+            form.triggerHandler('dms-form-updated');
+
+            invalidateControl();
+            // TODO: reindex
+        });
+
+        addButton.on('click', addNewField);
+
+        invalidateControl();
+
+        var requiresAnExactAmountOfFields = typeof minFields !== 'undefined' && minFields === maxFields;
+        if (requiresAnExactAmountOfFields && getAmountOfInputs() == minFields) {
+            addButton.closest('.field-list-add').remove();
+            listOfFields.find('.btn-remove-field').closest('.field-list-button-container').remove();
+            listOfFields.find('.field-list-input').removeClass('col-xs-10 col-md-11').addClass('col-xs-12');
+        }
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+    element.find('select[multiple]').multiselect({
+        enableFiltering: true,
+        includeSelectAllOption: true
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
     element.find('.dms-money-input-group').each(function () {
         var inputGroup = $(this);
         var moneyInput = inputGroup.find('.dms-money-input');
@@ -2691,12 +2693,6 @@ Dms.form.initializeCallbacks.push(function (element) {
 
         moneyInput.on('change input', updateShouldSubmitData);
         updateShouldSubmitData();
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
-    element.find('select[multiple]').multiselect({
-        enableFiltering: true,
-        includeSelectAllOption: true
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -3059,6 +3055,9 @@ Dms.form.initializeCallbacks.push(function (element) {
             editor.on('change', function () {
                 editor.save();
             });
+            editor.on('keyup cut paste change', function (e) {
+                $(tinymce.activeEditor.getElement()).closest('.form-group').trigger('dms-change');
+            });
         },
         relative_urls: false,
         remove_script_host: true,
@@ -3141,6 +3140,20 @@ Dms.form.initializeCallbacks.push(function (element) {
             filePicker.empty();
         });
     };
+
+
+    element.find('.dms-display-html').each(function () {
+        var control = $(this);
+        var viewMoreButton = control.find('.dms-view-more-button');
+        var iframe = control.find('iframe').get(0);
+        var iframeDocument = iframe.contentDocument || iframe.contentWindow.document;
+
+        iframeDocument.body.innerHTML = control.attr('data-value');
+
+        viewMoreButton.on('click', function () {
+            Dms.controls.showContentDialog('Preview', iframeDocument.body.innerHTML, true);
+        });
+    });
 });
 Dms.form.initializeCallbacks.push(function (element) {
 

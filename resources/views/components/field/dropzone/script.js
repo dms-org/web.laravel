@@ -3,6 +3,7 @@ Dms.form.initializeCallbacks.push(function (element) {
     element.find('.dropzone-container').each(function () {
         var container = $(this);
         var uniqueId = Dms.utilities.idGenerator();
+        var formGroup = container.closest('.form-group');
         var form = container.closest('.dms-staged-form');
         var dropzoneElement = container.find('.dms-dropzone');
         var fieldName = container.attr('data-name');
@@ -138,7 +139,6 @@ Dms.form.initializeCallbacks.push(function (element) {
 
                         if (file.action === 'keep-existing') {
                             file.action = 'delete-existing';
-                            updateSubmissionState();
                         }
 
                         if (dropzone.options.maxFiles === 0) {
@@ -154,7 +154,7 @@ Dms.form.initializeCallbacks.push(function (element) {
                         file.action = 'delete-existing';
                     }
 
-                    updateSubmissionState();
+                    formGroup.trigger('dms-change');
                 });
 
                 this.on("complete", function (file) {
@@ -196,12 +196,13 @@ Dms.form.initializeCallbacks.push(function (element) {
 
                         file.previewElement.appendChild(editImageButton);
                     }
+
+                    formGroup.trigger('dms-change');
                 });
 
                 this.on('success', function (file, response) {
                     file.action = 'store-new';
                     file.tempFileToken = response.tokens['file'];
-                    updateSubmissionState();
                 });
 
                 this.on("thumbnail", function (file) {
@@ -293,10 +294,9 @@ Dms.form.initializeCallbacks.push(function (element) {
 
         dropzoneElement.addClass('dropzone');
 
-        var updateSubmissionState = function () {
-            form.find('.file-action-' + uniqueId).remove();
-            form.find('.file-token-' + uniqueId).remove();
-
+        formGroup.on('dms-get-input-data', function () {
+            var fieldData = {};
+            
             var allFiles = [];
 
             $.each(existingFiles.concat(dropzone.getAcceptedFiles()), function (index, file) {
@@ -326,25 +326,15 @@ Dms.form.initializeCallbacks.push(function (element) {
                     ? fieldName + '[' + index + ']'
                     : fieldName;
 
-                form.append($('<input />').attr({
-                    'class': 'file-action-' + uniqueId,
-                    'type': 'hidden',
-                    'name': fileFieldName + '[action]',
-                    'value': file.action
-                }));
+                fieldData[fileFieldName + '[action]'] = file.action;
 
                 if (file.tempFileToken) {
-                    form.append($('<input />').attr({
-                        'class': 'file-token-' + uniqueId,
-                        'type': 'hidden',
-                        'name': Dms.utilities.combineFieldNames(tempFilePrefix, fileFieldName + '[file]'),
-                        'value': file.tempFileToken
-                    }));
+                    fieldData[Dms.utilities.combineFieldNames(tempFilePrefix, fileFieldName + '[file]')] = file.tempFileToken;
                 }
             });
-        };
 
-        updateSubmissionState();
+            return fieldData;
+        });
 
         dropzoneElement.closest('.dms-staged-form').on('dms-post-submit-success', function () {
             dropzone.destroy();

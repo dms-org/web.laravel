@@ -2,7 +2,6 @@
 
 namespace Dms\Web\Laravel\Http\Controllers\Package\Module;
 
-use Dms\Core\Common\Crud\Action\Crud\ViewDetailsAction;
 use Dms\Core\Common\Crud\Action\Object\IObjectAction;
 use Dms\Core\Common\Crud\IReadModule;
 use Dms\Core\Form\Field\Type\ArrayOfType;
@@ -33,6 +32,7 @@ use Dms\Web\Laravel\Renderer\Action\ObjectActionButtonBuilder;
 use Dms\Web\Laravel\Renderer\Form\ActionFormRenderer;
 use Dms\Web\Laravel\Renderer\Form\FormRenderingContext;
 use Dms\Web\Laravel\Renderer\Form\IFieldRendererWithActions;
+use Dms\Web\Laravel\Renderer\Form\IFormRendererWithActions;
 use Dms\Web\Laravel\Util\ActionSafetyChecker;
 use Dms\Web\Laravel\Util\StringHumanizer;
 use Illuminate\Http\Exception\HttpResponseException;
@@ -263,6 +263,39 @@ class ActionController extends DmsController
             ]);
     }
 
+    public function runFormRendererActionWithObject(
+        Request $request,
+        ModuleContext $moduleContext,
+        string $actionName,
+        string $objectId,
+        int $stageNumber,
+        string $fieldRendererAction = null
+    ) {
+        return $this->runFormRendererActionWithObject($request, $moduleContext, $actionName, $stageNumber, $fieldRendererAction, $objectId);
+    }
+
+    public function runFormRendererAction(
+        Request $request,
+        ModuleContext $moduleContext,
+        string $actionName,
+        int $stageNumber,
+        string $formRendererAction = null,
+        string $objectId = null
+    ) {
+        $action = $this->loadAction($moduleContext->getModule(), $actionName);
+        $form   = $this->loadFormStage($request, $moduleContext, $actionName, $stageNumber, $objectId, $object);
+
+        $renderingContext = new FormRenderingContext($moduleContext, $action, $stageNumber, $object);
+        $renderer         = $this->actionFormRenderer->getFormRenderer($renderingContext, $form);
+
+        if (!($renderer instanceof IFormRendererWithActions)) {
+            DmsError::abort(404);
+        }
+
+        return $renderer->handleAction($renderingContext, $form, $request, $formRendererAction, $request->get('__field_action_data') ?? []);
+    }
+
+
     public function runFieldRendererActionWithObject(
         Request $request,
         ModuleContext $moduleContext,
@@ -294,7 +327,9 @@ class ActionController extends DmsController
         }
 
         $renderingContext = new FormRenderingContext($moduleContext, $action, $stageNumber, $object);
-        $renderer         = $this->actionFormRenderer->getFormRenderer()->getFieldRenderers()->findRendererFor($renderingContext, $field);
+        $renderer         = $this->actionFormRenderer->getFormRenderer($renderingContext, $form)
+            ->getFieldRenderers()
+            ->findRendererFor($renderingContext, $field);
 
         if (!($renderer instanceof IFieldRendererWithActions)) {
             DmsError::abort(404);

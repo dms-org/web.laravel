@@ -2,7 +2,6 @@
 
 namespace Dms\Web\Laravel\Renderer\Form;
 
-use Dms\Core\Common\Crud\Action\Object\IObjectAction;
 use Dms\Core\Form\IForm;
 use Dms\Core\Model\ITypedObject;
 use Dms\Core\Module\IParameterizedAction;
@@ -17,9 +16,9 @@ use Dms\Web\Laravel\Util\KeywordTypeIdentifier;
 class ActionFormRenderer
 {
     /**
-     * @var FormRenderer
+     * @var FormRendererCollection
      */
-    protected $formRenderer;
+    protected $formRendererCollection;
 
     /**
      * @var KeywordTypeIdentifier
@@ -29,21 +28,24 @@ class ActionFormRenderer
     /**
      * ActionFormRenderer constructor.
      *
-     * @param FormRenderer          $formRenderer
-     * @param KeywordTypeIdentifier $keywordTypeIdentifier
+     * @param FormRendererCollection $formRendererCollection
+     * @param KeywordTypeIdentifier  $keywordTypeIdentifier
      */
-    public function __construct(FormRenderer $formRenderer, KeywordTypeIdentifier $keywordTypeIdentifier)
+    public function __construct(FormRendererCollection $formRendererCollection, KeywordTypeIdentifier $keywordTypeIdentifier)
     {
-        $this->formRenderer          = $formRenderer;
-        $this->keywordTypeIdentifier = $keywordTypeIdentifier;
+        $this->formRendererCollection = $formRendererCollection;
+        $this->keywordTypeIdentifier  = $keywordTypeIdentifier;
     }
 
     /**
-     * @return FormRenderer
+     * @param FormRenderingContext $renderingContext
+     * @param IForm                $form
+     *
+     * @return IFormRenderer
      */
-    public function getFormRenderer()
+    public function getFormRenderer(FormRenderingContext $renderingContext, IForm $form) : IFormRenderer
     {
-        return $this->formRenderer;
+        return $this->formRendererCollection->findRendererFor($renderingContext, $form);
     }
 
     /**
@@ -59,19 +61,25 @@ class ActionFormRenderer
      * @throws \Exception
      * @throws \Throwable
      */
-    public function renderActionForm(ModuleContext $moduleContext, IParameterizedAction $action, array $hiddenValues = [], ITypedObject $object = null, int $initialStageNumber = 1) : string
+    public function renderActionForm(
+        ModuleContext $moduleContext,
+        IParameterizedAction $action,
+        array $hiddenValues = [],
+        ITypedObject $object = null,
+        int $initialStageNumber = 1
+    ) : string
     {
         return view('dms::components.form.staged-form')
             ->with([
-                'moduleContext'      => $moduleContext,
-                'renderingContext'   => new FormRenderingContext($moduleContext, $action, null, $object),
-                'action'             => $action,
-                'stagedForm'         => $action->getStagedForm(),
-                'formRenderer'       => $this->formRenderer,
-                'actionName'         => $action->getName(),
-                'submitButtonClass'  => $this->keywordTypeIdentifier->getTypeFromName($action->getName()),
-                'hiddenValues'       => $hiddenValues,
-                'initialStageNumber' => $initialStageNumber,
+                'moduleContext'          => $moduleContext,
+                'renderingContext'       => new FormRenderingContext($moduleContext, $action, null, $object),
+                'action'                 => $action,
+                'stagedForm'             => $action->getStagedForm(),
+                'formRendererCollection' => $this->formRendererCollection,
+                'actionName'             => $action->getName(),
+                'submitButtonClass'      => $this->keywordTypeIdentifier->getTypeFromName($action->getName()),
+                'hiddenValues'           => $hiddenValues,
+                'initialStageNumber'     => $initialStageNumber,
             ])
             ->render();
     }
@@ -86,6 +94,6 @@ class ActionFormRenderer
      */
     public function renderFormFields(FormRenderingContext $renderingContext, IForm $form) : string
     {
-        return $this->formRenderer->renderFields($renderingContext, $form);
+        return $this->getFormRenderer($renderingContext, $form)->renderFields($renderingContext, $form);
     }
 }

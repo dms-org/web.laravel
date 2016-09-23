@@ -2,7 +2,7 @@
 <?php /** @var \Dms\Web\Laravel\Renderer\Form\FormRenderingContext $renderingContext */ ?>
 <?php /** @var \Dms\Core\Module\IAction $action */ ?>
 <?php /** @var \Dms\Core\Form\IStagedForm $stagedForm */ ?>
-<?php /** @var \Dms\Web\Laravel\Renderer\Form\FormRenderer $formRenderer */ ?>
+<?php /** @var \Dms\Web\Laravel\Renderer\Form\FormRendererCollection $formRendererCollection */ ?>
 <?php /** @var array $hiddenValues */ ?>
 <div class="dms-staged-form-container">
     <div
@@ -33,7 +33,7 @@
                 <?php $form = $stage->loadForm() ?>
                 <div class="dms-form-stage-container loaded">
                     <div class="dms-form-stage" data-stage-number="{{ $stageNumber }}">
-                        {!!  $formRenderer->renderFields($renderingContext, $form) !!}
+                        {!!  $formRendererCollection->findRendererFor($renderingContext, $form)->renderFields($renderingContext, $form) !!}
                     </div>
                 </div>
                 <?php $currentData += $form->getInitialValues() ?>
@@ -46,11 +46,11 @@
                             data-load-stage-url="{{ $moduleContext->getUrl('action.form.stage', [$actionName, $absoluteStageNumber]) }}"
                             @if($stage->getRequiredFieldNames() !== null)
                             data-stage-dependent-fields="{{ json_encode($stage->getRequiredFieldNames()) }}"
-                            data-stage-dependent-fields-stage-map="{{ json_encode($stagedForm->getRequiredFieldGroupedByStagesForStage($stageNumber)) }}"
                             @endif
+                            data-stage-dependent-fields-stage-map="{{ json_encode($stagedForm->getRequiredFieldGroupedByStagesForStage($stageNumber)) }}"
                     >
                         @if ($form)
-                            {!!  $formRenderer->renderFields($renderingContext, $form) !!}
+                            {!!  $formRendererCollection->findRendererFor($renderingContext, $form)->renderFields($renderingContext, $form) !!}
                             <?php $currentData += $form->getInitialValues() ?>
                         @else
                             <div class="row">

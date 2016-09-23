@@ -55,6 +55,7 @@ use Dms\Web\Laravel\Persistence\Db\LaravelConnection;
 use Dms\Web\Laravel\Persistence\Db\Migration\AutoGenerateMigrationCommand;
 use Dms\Web\Laravel\Renderer\Chart\ChartRendererCollection;
 use Dms\Web\Laravel\Renderer\Form\FieldRendererCollection;
+use Dms\Web\Laravel\Renderer\Form\FormRendererCollection;
 use Dms\Web\Laravel\Renderer\Module\ModuleRendererCollection;
 use Dms\Web\Laravel\Renderer\Package\PackageRendererCollection;
 use Dms\Web\Laravel\Renderer\Table\ColumnComponentRendererCollection;
@@ -394,6 +395,12 @@ class DmsServiceProvider extends ServiceProvider
 
     private function registerRenderers()
     {
+        $this->app->singleton(FormRendererCollection::class, function () {
+            return new FormRendererCollection($this->makeAll(
+                config('dms.services.renderers.forms')
+            ));
+        });
+
         $this->app->singleton(FieldRendererCollection::class, function () {
             return new FieldRendererCollection($this->makeAll(
                 config('dms.services.renderers.form-fields')

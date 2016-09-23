@@ -9,7 +9,7 @@ use Dms\Core\Form\Stage\IndependentFormStage;
 use Dms\Core\Module\IAction;
 use Dms\Web\Laravel\Action\ActionResultHandler;
 use Dms\Web\Laravel\Http\ModuleContext;
-use Dms\Web\Laravel\Renderer\Form\FormRenderer;
+use Dms\Web\Laravel\Renderer\Form\DefaultFormRenderer;
 use Dms\Web\Laravel\Renderer\Form\FormRenderingContext;
 use Illuminate\Http\Response;
 
@@ -21,16 +21,16 @@ use Illuminate\Http\Response;
 class ViewDetailsResultHandler extends ActionResultHandler
 {
     /**
-     * @var FormRenderer
+     * @var DefaultFormRenderer
      */
     protected $formRenderer;
 
     /**
      * ViewDetailsResultHandler constructor.
      *
-     * @param FormRenderer $formRenderer
+     * @param DefaultFormRenderer $formRenderer
      */
-    public function __construct(FormRenderer $formRenderer)
+    public function __construct(DefaultFormRenderer $formRenderer)
     {
         parent::__construct();
         $this->formRenderer = $formRenderer;

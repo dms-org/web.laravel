@@ -162,6 +162,9 @@ return [
         ],
 
         'renderers' => [
+            'forms' => [
+                \Dms\Web\Laravel\Renderer\Form\DefaultFormRenderer::class,
+            ],
             'form-fields' => [
                 Dms\Web\Laravel\Renderer\Form\Field\AddressFieldRenderer::class,
                 Dms\Web\Laravel\Renderer\Form\Field\ArrayOfFilesFieldsRenderer::class,

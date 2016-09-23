@@ -5,7 +5,7 @@ namespace Dms\Web\Laravel\Renderer\Widget;
 use Dms\Core\Widget\FormDataWidget;
 use Dms\Core\Widget\IWidget;
 use Dms\Web\Laravel\Http\ModuleContext;
-use Dms\Web\Laravel\Renderer\Form\FormRenderer;
+use Dms\Web\Laravel\Renderer\Form\DefaultFormRenderer;
 use Dms\Web\Laravel\Renderer\Form\FormRenderingContext;
 
 /**
@@ -16,16 +16,16 @@ use Dms\Web\Laravel\Renderer\Form\FormRenderingContext;
 class FormDataWidgetRenderer extends WidgetRenderer
 {
     /**
-     * @var FormRenderer
+     * @var DefaultFormRenderer
      */
     protected $formRenderer;
 
     /**
      * FormDataWidgetRenderer constructor.
      *
-     * @param FormRenderer $formRenderer
+     * @param DefaultFormRenderer $formRenderer
      */
-    public function __construct(FormRenderer $formRenderer)
+    public function __construct(DefaultFormRenderer $formRenderer)
     {
         $this->formRenderer = $formRenderer;
     }

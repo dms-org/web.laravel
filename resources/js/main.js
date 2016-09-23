@@ -85,7 +85,8 @@ window.Dms = {
         }
     },
     loader: {}, // @see ./services/loader.js,
-    utilities: {} // @see ./services/utilities.js
+    utilities: {}, // @see ./services/utilities.js
+    controls: {} // @see ./services/controls/*.js
 };
 
 $(document).ready(function () {

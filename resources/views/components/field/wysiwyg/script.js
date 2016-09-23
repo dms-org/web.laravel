@@ -40,6 +40,9 @@ Dms.form.initializeCallbacks.push(function (element) {
             editor.on('change', function () {
                 editor.save();
             });
+            editor.on('keyup cut paste change', function (e) {
+                $(tinymce.activeEditor.getElement()).closest('.form-group').trigger('dms-change');
+            });
         },
         relative_urls: false,
         remove_script_host: true,
@@ -122,4 +125,18 @@ Dms.form.initializeCallbacks.push(function (element) {
             filePicker.empty();
         });
     };
+
+
+    element.find('.dms-display-html').each(function () {
+        var control = $(this);
+        var viewMoreButton = control.find('.dms-view-more-button');
+        var iframe = control.find('iframe').get(0);
+        var iframeDocument = iframe.contentDocument || iframe.contentWindow.document;
+
+        iframeDocument.body.innerHTML = control.attr('data-value');
+
+        viewMoreButton.on('click', function () {
+            Dms.controls.showContentDialog('Preview', iframeDocument.body.innerHTML, true);
+        });
+    });
 });

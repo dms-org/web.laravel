@@ -58,6 +58,16 @@ class ModuleRequestRouter
             )->name('action.form.stage');
 
             $router->any(
+                '/action/{action}/form/stage/{stage}/form/{form_action?}',
+                'Package\Module\ActionController@runFormRendererAction'
+            )->where('form_action', '(.*)')->name('action.form.stage.action');
+
+            $router->any(
+                '/action/{action}/form/{object_id}/stage/{stage}/form/{form_action?}',
+                'Package\Module\ActionController@runFormRendererActionWithObject'
+            )->where('form_action', '(.*)')->name('action.form.object.stage.action');
+
+            $router->any(
                 '/action/{action}/form/stage/{stage}/field/{field_name}/{field_action?}',
                 'Package\Module\ActionController@runFieldRendererAction'
             )->where('field_action', '(.*)')->name('action.form.stage.field.action');

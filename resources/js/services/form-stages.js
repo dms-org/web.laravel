@@ -85,11 +85,22 @@ Dms.form.stages.getDependentDataForStage = function (formStage) {
         var isDependent = false;
 
         $.each(stageToDependentFieldsMap, function (stageNumber, fields) {
-            if (formGroup.closest('.dms-form-stage').attr('data-stage-number') == stageNumber
-            && fields === '*' || $.inArray(formGroup.attr('data-field-name'), fields) !== -1) {
-                isDependent = true;
+            if (isDependent) {
                 return false;
             }
+
+            var formGroupFieldName = formGroup.attr('data-field-name');
+
+            if (formGroup.closest('.dms-form-stage').attr('data-stage-number') == stageNumber
+                && (fields === '*' || $.inArray(formGroupFieldName, fields) !== -1)) {
+                isDependent = true;
+            }
+
+            $.each(fields, function (index, fieldName) {
+                if (formGroupFieldName.lastIndexOf(fieldName + '[', 0) === 0) {
+                    isDependent = true;
+                }
+            });
         });
 
         if (!isDependent) {

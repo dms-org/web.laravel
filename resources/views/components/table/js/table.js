@@ -52,17 +52,18 @@ Dms.table.initializeCallbacks.push(function (element) {
                 }
             });
 
-            currentAjaxRequest.fail(function () {
+            currentAjaxRequest.fail(function (response) {
                 if (currentAjaxRequest.statusText === 'abort') {
                     return;
                 }
 
                 tableContainer.addClass('has-error');
 
-                swal({
+                Dms.controls.showErrorDialog({
                     title: "Could not load table data",
                     text: "An unexpected error occurred",
-                    type: "error"
+                    type: "error",
+                    debugInfo: response.responseText
                 });
             });
 

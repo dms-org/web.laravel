@@ -176,15 +176,16 @@ Dms.global.initializeCallbacks.push(function (element) {
             });
         });
 
-        currentAjaxRequest.fail(function () {
+        currentAjaxRequest.fail(function (response) {
             if (currentAjaxRequest.statusText === 'abort') {
                 return;
             }
 
-            swal({
+            Dms.controls.showErrorDialog({
                 title: "Could not load page",
                 text: "An unexpected error occurred",
-                type: "error"
+                type: "error",
+                debugInfo: response.responseText
             });
 
             contentContainer.removeClass('loading');

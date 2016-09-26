@@ -33,17 +33,18 @@ Dms.chart.initializeCallbacks.push(function (element) {
                 Dms.chart.initialize(chartElement);
             });
 
-            currentAjaxRequest.fail(function () {
+            currentAjaxRequest.fail(function (response) {
                 if (currentAjaxRequest.statusText === 'abort') {
                     return;
                 }
 
                 chartContainer.addClass('error');
 
-                swal({
+                Dms.controls.showErrorDialog({
                     title: "Could not load chart data",
                     text: "An unexpected error occurred",
-                    type: "error"
+                    type: "error",
+                    debugInfo: response.responseText
                 });
             });
 

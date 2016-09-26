@@ -1,5 +1,6 @@
 <script>
     window.Dms.config = {
+        debug: {!! json_encode(config('app.debug', false)) !!},
         csrf: {
             token: {!! json_encode(csrf_token()) !!}
         },

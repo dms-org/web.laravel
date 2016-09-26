@@ -127,7 +127,7 @@ Dms.form.initializeCallbacks.push(function (element) {
                             break;
 
                         case 400: // Bad request
-                            swal({
+                            Dms.controls.showErrorDialog({
                                 title: "Could not load form",
                                 text: JSON.parse(xhr.responseText).message,
                                 type: "error"
@@ -135,10 +135,11 @@ Dms.form.initializeCallbacks.push(function (element) {
                             break;
 
                         default: // Unknown error
-                            swal({
+                            Dms.controls.showErrorDialog({
                                 title: "Could not load form",
                                 text: "An unexpected error occurred",
-                                type: "error"
+                                type: "error",
+                                debugInfo: xhr.responseText
                             });
                             break;
                     }

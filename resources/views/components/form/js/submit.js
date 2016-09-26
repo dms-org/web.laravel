@@ -107,7 +107,7 @@ Dms.form.initializeCallbacks.push(function (element) {
 
                 switch (xhr.status) {
                     case 401: // Unauthorized
-                        swal({
+                        Dms.controls.showErrorDialog({
                             title: "Could not perform action",
                             text: "You do not possess the necessary permissions to authorize this action",
                             type: "error"
@@ -125,10 +125,11 @@ Dms.form.initializeCallbacks.push(function (element) {
                             Dms.action.responseHandler(xhr.status, submitUrl, response);
                         } catch (e) {
                             // Unknown error
-                            swal({
+                            Dms.controls.showErrorDialog({
                                 title: "Could not submit form",
                                 text: "An unexpected error occurred",
-                                type: "error"
+                                type: "error",
+                                debugInfo: xhr.responseText
                             });
                             break;
                         }

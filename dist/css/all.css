@@ -15953,10 +15953,10 @@ a:not(.btn).ladda-button .ladda-spinner > div > div > div {
       opacity: .3; }
 
 @media screen and (min-width: 1500px) {
-  .dms-content-dialog .modal-lg {
+  .dms-content-dialog .modal-lg, .dms-error-dialog .modal-lg {
     width: 1300px; } }
 
-.dms-content-dialog .dms-content-iframe {
+.dms-content-dialog .dms-content-iframe, .dms-error-dialog .dms-content-iframe {
   border: 1px solid #ccc;
   width: 100%;
   min-height: 100%;

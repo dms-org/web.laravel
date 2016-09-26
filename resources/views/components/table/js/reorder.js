@@ -37,11 +37,12 @@ Dms.table.initializeCallbacks.push(function (element) {
                 table.triggerHandler('dms-load-table-data');
             });
 
-            reorderRequest.fail(function () {
-                swal({
+            reorderRequest.fail(function (response) {
+                Dms.controls.showErrorDialog({
                     title: "Could not reorder item",
                     text: "An unexpected error occurred",
-                    type: "error"
+                    type: "error",
+                    debugInfo: response.responseText
                 });
             });
         };

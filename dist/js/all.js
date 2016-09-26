@@ -60738,15 +60738,16 @@ Dms.global.initializeCallbacks.push(function (element) {
             });
         });
 
-        currentAjaxRequest.fail(function () {
+        currentAjaxRequest.fail(function (response) {
             if (currentAjaxRequest.statusText === 'abort') {
                 return;
             }
 
-            swal({
+            Dms.controls.showErrorDialog({
                 title: "Could not load page",
                 text: "An unexpected error occurred",
-                type: "error"
+                type: "error",
+                debugInfo: response.responseText
             });
 
             contentContainer.removeClass('loading');
@@ -61015,6 +61016,40 @@ Dms.controls.showContentDialog = function (title, content, showInIframe) {
         contentDialog.modal('hide');
     });
 };
+Dms.controls.showErrorDialog = function (config) {
+    if (Dms.config.debug && config.debugInfo) {
+
+        var errorDialog = $('.dms-error-dialog').first();
+
+        errorDialog.find('.modal-title').text(config.title || 'An error occurred');
+
+        var dialogBody = errorDialog.find('.modal-body');
+        dialogBody.empty();
+
+        var iframe = $('<iframe />');
+        iframe.addClass('dms-content-iframe');
+        dialogBody.append(iframe);
+        setTimeout(function () {
+            var document = iframe.contents().get(0);
+            document.open();
+            document.write(config.debugInfo);
+            document.close();
+        }, 1);
+
+        errorDialog.appendTo('body').modal('show');
+
+        errorDialog.find('.dms-refresh-page-button').on('click', function () {
+            window.location.reload();
+        });
+
+    } else {
+        config = $.extend({}, config, {
+            type: 'error'
+        });
+
+        swal(config);
+    }
+};
 window.Parsley.addValidator('ipAddress', {
     requirementType: 'boolean',
     validateString: function (value) {
@@ -61218,17 +61253,18 @@ Dms.chart.initializeCallbacks.push(function (element) {
                 Dms.chart.initialize(chartElement);
             });
 
-            currentAjaxRequest.fail(function () {
+            currentAjaxRequest.fail(function (response) {
                 if (currentAjaxRequest.statusText === 'abort') {
                     return;
                 }
 
                 chartContainer.addClass('error');
 
-                swal({
+                Dms.controls.showErrorDialog({
                     title: "Could not load chart data",
                     text: "An unexpected error occurred",
-                    type: "error"
+                    type: "error",
+                    debugInfo: response.responseText
                 });
             });
 
@@ -61468,6 +61504,185 @@ Dms.form.initializeCallbacks.push(function (element) {
         }
 
         $(this).addClass('minicolors').minicolors(config);
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+    var convertFromUtcToLocal = function (dateFormat, value) {
+        if (value) {
+            return moment.utc(value, dateFormat).local().format(dateFormat);
+        } else {
+            return '';
+        }
+    };
+
+    var convertFromLocalToUtc = function (dateFormat, value) {
+        if (value) {
+            return moment(value, dateFormat).utc().format(dateFormat);
+        } else {
+            return '';
+        }
+    };
+
+    var submitUtcDateTimeViaHiddenInput = function (stagedForm, dateFormat, originalInput) {
+        var inputName = originalInput.data('dms-input-name') || originalInput.attr('name');
+        originalInput.removeAttr('name');
+        originalInput.data('dms-input-name', inputName);
+
+        stagedForm.find('input[type=hidden][name="' + inputName + '"]').remove();
+        stagedForm.append($('<input type="hidden" />').attr('name', inputName).val(convertFromLocalToUtc(dateFormat, originalInput.val())));
+    };
+
+    element.find('input.dms-date-or-time').each(function () {
+        var inputElement = $(this);
+        var formGroup = inputElement.closest('.form-group');
+        var stagedForm = formGroup.closest('.dms-staged-form');
+        var phpDateFormat = inputElement.attr('data-date-format');
+        var dateFormat = Dms.utilities.convertPhpDateFormatToMomentFormat(phpDateFormat);
+        var mode = inputElement.attr('data-mode');
+
+        var config = {
+            locale: {
+                format: dateFormat
+            },
+            parentEl: inputElement.closest('.dms-date-picker-container'),
+            singleDatePicker: true,
+            showDropdowns: true,
+            autoApply: true,
+            linkedCalendars: false,
+            autoUpdateInput: false
+        };
+
+        if (mode === 'date-time') {
+            config.timePicker = true;
+            config.timePickerSeconds = phpDateFormat.indexOf('s') !== -1;
+
+            inputElement.val(convertFromUtcToLocal(dateFormat, inputElement.val()));
+            stagedForm.on('dms-before-submit', function () {
+                submitUtcDateTimeViaHiddenInput(stagedForm, dateFormat, inputElement);
+            });
+        }
+
+        if (mode === 'time') {
+            config.timePicker = true;
+            config.timePickerSeconds = phpDateFormat.indexOf('s') !== -1;
+        }
+        // TODO: timezoned-date-time
+
+        inputElement.daterangepicker(config, function (date) {
+            inputElement.val(date.format(dateFormat));
+        });
+
+        var picker = inputElement.data('daterangepicker');
+
+        if (inputElement.val()) {
+            picker.setStartDate(inputElement.val());
+        }
+
+        if (mode === 'time') {
+            inputElement.closest('.dms-date-picker-container').find('.calendar-table').hide();
+        }
+
+        inputElement.on('apply.daterangepicker', function () {
+            formGroup.trigger('dms-change');
+        });
+    });
+
+    element.find('.dms-date-or-time-range').each(function () {
+        var rangeElement = $(this);
+        var formGroup = rangeElement.closest('.form-group');
+        var stagedForm = formGroup.closest('.dms-staged-form');
+        var startInput = rangeElement.find('.dms-start-input');
+        var endInput = rangeElement.find('.dms-end-input');
+        var claerButton = rangeElement.find('.dms-btn-clear-input');
+        var dateFormat = Dms.utilities.convertPhpDateFormatToMomentFormat(startInput.attr('data-date-format'));
+        var mode = rangeElement.attr('data-mode');
+
+        var config = {
+            locale: {
+                format: dateFormat
+            },
+            parentEl: rangeElement.parent(),
+            showDropdowns: true,
+            autoApply: !rangeElement.attr('data-dont-auto-apply'),
+            linkedCalendars: false,
+            autoUpdateInput: false
+        };
+
+        if (mode === 'date-time') {
+            config.timePicker = true;
+            config.timePickerSeconds = true;
+
+            startInput.val(convertFromUtcToLocal(dateFormat, startInput.val()));
+            endInput.val(convertFromUtcToLocal(dateFormat, endInput.val()));
+            stagedForm.on('dms-before-submit', function () {
+                submitUtcDateTimeViaHiddenInput(stagedForm, dateFormat, startInput);
+                submitUtcDateTimeViaHiddenInput(stagedForm, dateFormat, endInput);
+            });
+        }
+
+        if (mode === 'time') {
+            config.timePicker = true;
+            config.timePickerSeconds = true;
+        }
+        // TODO: timezoned-date-time
+
+        startInput.daterangepicker(config, function (start, end, label) {
+            if (mode === 'date-time') {
+                start = start.local();
+                end = end.local();
+            }
+
+            startInput.val(start.format(dateFormat));
+            endInput.val(end.format(dateFormat));
+            rangeElement.triggerHandler('dms-range-updated');
+        });
+
+        var picker = startInput.data('daterangepicker');
+
+        if (startInput.val()) {
+            picker.setStartDate(startInput.val());
+        }
+        if (endInput.val()) {
+            picker.setEndDate(endInput.val());
+        }
+
+        endInput.on('focus click', function () {
+            startInput.focus();
+        });
+
+        if (mode === 'time') {
+            rangeElement.parent().find('.calendar-table').hide();
+        }
+
+        startInput.on('apply.daterangepicker', function () {
+            formGroup.trigger('dms-change');
+        });
+
+        claerButton.on('click', function () {
+            startInput.val('');
+            endInput.val('');
+        });
+
+        stagedForm.on('dms-before-submit', function () {
+            formGroup.toggleClass('dms-form-no-submit', !startInput.val() && !endInput.val());
+        });
+    });
+
+    $('.dms-date-or-time-display[data-mode="date-time"]').each(function () {
+        var dateTimeDisplay = $(this);
+        var dateFormat = Dms.utilities.convertPhpDateFormatToMomentFormat(dateTimeDisplay.attr('data-date-format'));
+
+        dateTimeDisplay.text(convertFromUtcToLocal(dateFormat, dateTimeDisplay.text()));
+    });
+
+    $('.dms-date-or-time-range-display[data-mode="date-time"]').each(function () {
+        var dateTimeDisplay = $(this);
+        var startDisplay = dateTimeDisplay.find('.dms-start-display');
+        var endDisplay = dateTimeDisplay.find('.dms-end-display');
+        var dateFormat = Dms.utilities.convertPhpDateFormatToMomentFormat(dateTimeDisplay.attr('data-date-format'));
+
+        startDisplay.text(convertFromUtcToLocal(dateFormat, startDisplay.text()));
+        endDisplay.text(convertFromUtcToLocal(dateFormat, endDisplay.text()));
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -61823,185 +62038,6 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-    var convertFromUtcToLocal = function (dateFormat, value) {
-        if (value) {
-            return moment.utc(value, dateFormat).local().format(dateFormat);
-        } else {
-            return '';
-        }
-    };
-
-    var convertFromLocalToUtc = function (dateFormat, value) {
-        if (value) {
-            return moment(value, dateFormat).utc().format(dateFormat);
-        } else {
-            return '';
-        }
-    };
-
-    var submitUtcDateTimeViaHiddenInput = function (stagedForm, dateFormat, originalInput) {
-        var inputName = originalInput.data('dms-input-name') || originalInput.attr('name');
-        originalInput.removeAttr('name');
-        originalInput.data('dms-input-name', inputName);
-
-        stagedForm.find('input[type=hidden][name="' + inputName + '"]').remove();
-        stagedForm.append($('<input type="hidden" />').attr('name', inputName).val(convertFromLocalToUtc(dateFormat, originalInput.val())));
-    };
-
-    element.find('input.dms-date-or-time').each(function () {
-        var inputElement = $(this);
-        var formGroup = inputElement.closest('.form-group');
-        var stagedForm = formGroup.closest('.dms-staged-form');
-        var phpDateFormat = inputElement.attr('data-date-format');
-        var dateFormat = Dms.utilities.convertPhpDateFormatToMomentFormat(phpDateFormat);
-        var mode = inputElement.attr('data-mode');
-
-        var config = {
-            locale: {
-                format: dateFormat
-            },
-            parentEl: inputElement.closest('.dms-date-picker-container'),
-            singleDatePicker: true,
-            showDropdowns: true,
-            autoApply: true,
-            linkedCalendars: false,
-            autoUpdateInput: false
-        };
-
-        if (mode === 'date-time') {
-            config.timePicker = true;
-            config.timePickerSeconds = phpDateFormat.indexOf('s') !== -1;
-
-            inputElement.val(convertFromUtcToLocal(dateFormat, inputElement.val()));
-            stagedForm.on('dms-before-submit', function () {
-                submitUtcDateTimeViaHiddenInput(stagedForm, dateFormat, inputElement);
-            });
-        }
-
-        if (mode === 'time') {
-            config.timePicker = true;
-            config.timePickerSeconds = phpDateFormat.indexOf('s') !== -1;
-        }
-        // TODO: timezoned-date-time
-
-        inputElement.daterangepicker(config, function (date) {
-            inputElement.val(date.format(dateFormat));
-        });
-
-        var picker = inputElement.data('daterangepicker');
-
-        if (inputElement.val()) {
-            picker.setStartDate(inputElement.val());
-        }
-
-        if (mode === 'time') {
-            inputElement.closest('.dms-date-picker-container').find('.calendar-table').hide();
-        }
-
-        inputElement.on('apply.daterangepicker', function () {
-            formGroup.trigger('dms-change');
-        });
-    });
-
-    element.find('.dms-date-or-time-range').each(function () {
-        var rangeElement = $(this);
-        var formGroup = rangeElement.closest('.form-group');
-        var stagedForm = formGroup.closest('.dms-staged-form');
-        var startInput = rangeElement.find('.dms-start-input');
-        var endInput = rangeElement.find('.dms-end-input');
-        var claerButton = rangeElement.find('.dms-btn-clear-input');
-        var dateFormat = Dms.utilities.convertPhpDateFormatToMomentFormat(startInput.attr('data-date-format'));
-        var mode = rangeElement.attr('data-mode');
-
-        var config = {
-            locale: {
-                format: dateFormat
-            },
-            parentEl: rangeElement.parent(),
-            showDropdowns: true,
-            autoApply: !rangeElement.attr('data-dont-auto-apply'),
-            linkedCalendars: false,
-            autoUpdateInput: false
-        };
-
-        if (mode === 'date-time') {
-            config.timePicker = true;
-            config.timePickerSeconds = true;
-
-            startInput.val(convertFromUtcToLocal(dateFormat, startInput.val()));
-            endInput.val(convertFromUtcToLocal(dateFormat, endInput.val()));
-            stagedForm.on('dms-before-submit', function () {
-                submitUtcDateTimeViaHiddenInput(stagedForm, dateFormat, startInput);
-                submitUtcDateTimeViaHiddenInput(stagedForm, dateFormat, endInput);
-            });
-        }
-
-        if (mode === 'time') {
-            config.timePicker = true;
-            config.timePickerSeconds = true;
-        }
-        // TODO: timezoned-date-time
-
-        startInput.daterangepicker(config, function (start, end, label) {
-            if (mode === 'date-time') {
-                start = start.local();
-                end = end.local();
-            }
-
-            startInput.val(start.format(dateFormat));
-            endInput.val(end.format(dateFormat));
-            rangeElement.triggerHandler('dms-range-updated');
-        });
-
-        var picker = startInput.data('daterangepicker');
-
-        if (startInput.val()) {
-            picker.setStartDate(startInput.val());
-        }
-        if (endInput.val()) {
-            picker.setEndDate(endInput.val());
-        }
-
-        endInput.on('focus click', function () {
-            startInput.focus();
-        });
-
-        if (mode === 'time') {
-            rangeElement.parent().find('.calendar-table').hide();
-        }
-
-        startInput.on('apply.daterangepicker', function () {
-            formGroup.trigger('dms-change');
-        });
-
-        claerButton.on('click', function () {
-            startInput.val('');
-            endInput.val('');
-        });
-
-        stagedForm.on('dms-before-submit', function () {
-            formGroup.toggleClass('dms-form-no-submit', !startInput.val() && !endInput.val());
-        });
-    });
-
-    $('.dms-date-or-time-display[data-mode="date-time"]').each(function () {
-        var dateTimeDisplay = $(this);
-        var dateFormat = Dms.utilities.convertPhpDateFormatToMomentFormat(dateTimeDisplay.attr('data-date-format'));
-
-        dateTimeDisplay.text(convertFromUtcToLocal(dateFormat, dateTimeDisplay.text()));
-    });
-
-    $('.dms-date-or-time-range-display[data-mode="date-time"]').each(function () {
-        var dateTimeDisplay = $(this);
-        var startDisplay = dateTimeDisplay.find('.dms-start-display');
-        var endDisplay = dateTimeDisplay.find('.dms-end-display');
-        var dateFormat = Dms.utilities.convertPhpDateFormatToMomentFormat(dateTimeDisplay.attr('data-date-format'));
-
-        startDisplay.text(convertFromUtcToLocal(dateFormat, startDisplay.text()));
-        endDisplay.text(convertFromUtcToLocal(dateFormat, endDisplay.text()));
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
     element.find('.dms-inner-module, .dms-display-inner-module').each(function () {
         var innerModule = $(this);
 
@@ -62127,15 +62163,16 @@ Dms.form.initializeCallbacks.push(function (element) {
                 Dms.form.initialize(innerModuleForm);
             });
 
-            currentAjaxRequest.fail(function () {
+            currentAjaxRequest.fail(function (response) {
                 if (currentAjaxRequest.statusText === 'abort') {
                     return;
                 }
 
-                swal({
+                Dms.controls.showErrorDialog({
                     title: "Could not load form",
                     text: "An unexpected error occurred",
-                    type: "error"
+                    type: "error",
+                    debugInfo: response.responseText
                 });
             });
 
@@ -62178,6 +62215,91 @@ Dms.form.initializeCallbacks.push(function (element) {
         formStage.on('dms-stage-reload', resetAjaxInterception);
         stagedForm.on('dms-post-submit-success', resetAjaxInterception);
         innerModule.closest('.dms-page-content').on('dms-page-unloading', resetAjaxInterception);
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+
+    element.find('ul.dms-field-list').each(function () {
+        var listOfFields = $(this);
+        var form = listOfFields.closest('.dms-staged-form');
+        var formGroup = listOfFields.closest('.form-group');
+        var templateField = listOfFields.children('.field-list-template');
+        var addButton = listOfFields.children('.field-list-add').find('.btn-add-field');
+        var isInvalidating = false;
+
+        var minFields = listOfFields.attr('data-min-elements');
+        var maxFields = listOfFields.attr('data-max-elements');
+
+        var getAmountOfInputs = function () {
+            return listOfFields.children('.field-list-item').length;
+        };
+
+        var invalidateControl = function () {
+            if (isInvalidating) {
+                return;
+            }
+
+            isInvalidating = true;
+
+            var amountOfInputs = getAmountOfInputs();
+
+            addButton.prop('disabled', amountOfInputs >= maxFields);
+            listOfFields.find('.btn-remove-field').prop('disabled', amountOfInputs <= minFields);
+
+            while (amountOfInputs < minFields) {
+                addNewField();
+                amountOfInputs++;
+            }
+
+            isInvalidating = false;
+        };
+
+        var addNewField = function () {
+            var newField = templateField.clone()
+                .removeClass('field-list-template')
+                .removeClass('hidden')
+                .removeClass('dms-form-no-submit')
+                .addClass('field-list-item');
+
+            var fieldInputElement = newField.find('.field-list-input');
+            fieldInputElement.html(fieldInputElement.text());
+
+            var currentIndex = getAmountOfInputs();
+
+            $.each(['name', 'data-name', 'data-field-name'], function (index, attr) {
+                fieldInputElement.find('[' + attr + '*="::index::"]').each(function () {
+                    $(this).attr(attr, $(this).attr(attr).replace('::index::', currentIndex));
+                });
+            });
+
+            addButton.closest('.field-list-add').before(newField);
+
+            Dms.form.initialize(fieldInputElement);
+            form.triggerHandler('dms-form-updated');
+
+            invalidateControl();
+        };
+
+        listOfFields.on('click', '.btn-remove-field', function () {
+            var field = $(this).closest('.field-list-item');
+            field.remove();
+            formGroup.trigger('dms-change');
+            form.triggerHandler('dms-form-updated');
+
+            invalidateControl();
+            // TODO: reindex
+        });
+
+        addButton.on('click', addNewField);
+
+        invalidateControl();
+
+        var requiresAnExactAmountOfFields = typeof minFields !== 'undefined' && minFields === maxFields;
+        if (requiresAnExactAmountOfFields && getAmountOfInputs() == minFields) {
+            addButton.closest('.field-list-add').remove();
+            listOfFields.find('.btn-remove-field').closest('.field-list-button-container').remove();
+            listOfFields.find('.field-list-input').removeClass('col-xs-10 col-md-11').addClass('col-xs-12');
+        }
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -62341,91 +62463,6 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-
-    element.find('ul.dms-field-list').each(function () {
-        var listOfFields = $(this);
-        var form = listOfFields.closest('.dms-staged-form');
-        var formGroup = listOfFields.closest('.form-group');
-        var templateField = listOfFields.children('.field-list-template');
-        var addButton = listOfFields.children('.field-list-add').find('.btn-add-field');
-        var isInvalidating = false;
-
-        var minFields = listOfFields.attr('data-min-elements');
-        var maxFields = listOfFields.attr('data-max-elements');
-
-        var getAmountOfInputs = function () {
-            return listOfFields.children('.field-list-item').length;
-        };
-
-        var invalidateControl = function () {
-            if (isInvalidating) {
-                return;
-            }
-
-            isInvalidating = true;
-
-            var amountOfInputs = getAmountOfInputs();
-
-            addButton.prop('disabled', amountOfInputs >= maxFields);
-            listOfFields.find('.btn-remove-field').prop('disabled', amountOfInputs <= minFields);
-
-            while (amountOfInputs < minFields) {
-                addNewField();
-                amountOfInputs++;
-            }
-
-            isInvalidating = false;
-        };
-
-        var addNewField = function () {
-            var newField = templateField.clone()
-                .removeClass('field-list-template')
-                .removeClass('hidden')
-                .removeClass('dms-form-no-submit')
-                .addClass('field-list-item');
-
-            var fieldInputElement = newField.find('.field-list-input');
-            fieldInputElement.html(fieldInputElement.text());
-
-            var currentIndex = getAmountOfInputs();
-
-            $.each(['name', 'data-name', 'data-field-name'], function (index, attr) {
-                fieldInputElement.find('[' + attr + '*="::index::"]').each(function () {
-                    $(this).attr(attr, $(this).attr(attr).replace('::index::', currentIndex));
-                });
-            });
-
-            addButton.closest('.field-list-add').before(newField);
-
-            Dms.form.initialize(fieldInputElement);
-            form.triggerHandler('dms-form-updated');
-
-            invalidateControl();
-        };
-
-        listOfFields.on('click', '.btn-remove-field', function () {
-            var field = $(this).closest('.field-list-item');
-            field.remove();
-            formGroup.trigger('dms-change');
-            form.triggerHandler('dms-form-updated');
-
-            invalidateControl();
-            // TODO: reindex
-        });
-
-        addButton.on('click', addNewField);
-
-        invalidateControl();
-
-        var requiresAnExactAmountOfFields = typeof minFields !== 'undefined' && minFields === maxFields;
-        if (requiresAnExactAmountOfFields && getAmountOfInputs() == minFields) {
-            addButton.closest('.field-list-add').remove();
-            listOfFields.find('.btn-remove-field').closest('.field-list-button-container').remove();
-            listOfFields.find('.field-list-input').removeClass('col-xs-10 col-md-11').addClass('col-xs-12');
-        }
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
     element.find('.dms-money-input-group').each(function () {
         var inputGroup = $(this);
         var moneyInput = inputGroup.find('.dms-money-input');
@@ -62461,12 +62498,6 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-    element.find('input[type=radio]').iCheck({
-        radioClass: 'iradio_square-blue',
-        increaseArea: '20%'
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
     element.find('input[type="number"][data-max-decimal-places]').each(function () {
         $(this).attr('data-parsley-max-decimal-places', $(this).attr('data-max-decimal-places'));
     });
@@ -62490,6 +62521,12 @@ Dms.form.initializeCallbacks.push(function (element) {
                 'data-parsley-type': 'integer'
             });
         }
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+    element.find('input[type=radio]').iCheck({
+        radioClass: 'iradio_square-blue',
+        increaseArea: '20%'
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -63069,7 +63106,7 @@ Dms.form.initializeCallbacks.push(function (element) {
                             break;
 
                         case 400: // Bad request
-                            swal({
+                            Dms.controls.showErrorDialog({
                                 title: "Could not load form",
                                 text: JSON.parse(xhr.responseText).message,
                                 type: "error"
@@ -63077,10 +63114,11 @@ Dms.form.initializeCallbacks.push(function (element) {
                             break;
 
                         default: // Unknown error
-                            swal({
+                            Dms.controls.showErrorDialog({
                                 title: "Could not load form",
                                 text: "An unexpected error occurred",
-                                type: "error"
+                                type: "error",
+                                debugInfo: xhr.responseText
                             });
                             break;
                     }
@@ -63221,7 +63259,7 @@ Dms.form.initializeCallbacks.push(function (element) {
 
                 switch (xhr.status) {
                     case 401: // Unauthorized
-                        swal({
+                        Dms.controls.showErrorDialog({
                             title: "Could not perform action",
                             text: "You do not possess the necessary permissions to authorize this action",
                             type: "error"
@@ -63239,10 +63277,11 @@ Dms.form.initializeCallbacks.push(function (element) {
                             Dms.action.responseHandler(xhr.status, submitUrl, response);
                         } catch (e) {
                             // Unknown error
-                            swal({
+                            Dms.controls.showErrorDialog({
                                 title: "Could not submit form",
                                 text: "An unexpected error occurred",
-                                type: "error"
+                                type: "error",
+                                debugInfo: xhr.responseText
                             });
                             break;
                         }
@@ -63391,11 +63430,12 @@ Dms.table.initializeCallbacks.push(function (element) {
                 table.triggerHandler('dms-load-table-data');
             });
 
-            reorderRequest.fail(function () {
-                swal({
+            reorderRequest.fail(function (response) {
+                Dms.controls.showErrorDialog({
                     title: "Could not reorder item",
                     text: "An unexpected error occurred",
-                    type: "error"
+                    type: "error",
+                    debugInfo: response.responseText
                 });
             });
         };
@@ -63469,17 +63509,18 @@ Dms.table.initializeCallbacks.push(function (element) {
                 }
             });
 
-            currentAjaxRequest.fail(function () {
+            currentAjaxRequest.fail(function (response) {
                 if (currentAjaxRequest.statusText === 'abort') {
                     return;
                 }
 
                 tableContainer.addClass('has-error');
 
-                swal({
+                Dms.controls.showErrorDialog({
                     title: "Could not load table data",
                     text: "An unexpected error occurred",
-                    type: "error"
+                    type: "error",
+                    debugInfo: response.responseText
                 });
             });
 

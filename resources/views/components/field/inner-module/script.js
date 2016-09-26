@@ -124,15 +124,16 @@ Dms.form.initializeCallbacks.push(function (element) {
                 Dms.form.initialize(innerModuleForm);
             });
 
-            currentAjaxRequest.fail(function () {
+            currentAjaxRequest.fail(function (response) {
                 if (currentAjaxRequest.statusText === 'abort') {
                     return;
                 }
 
-                swal({
+                Dms.controls.showErrorDialog({
                     title: "Could not load form",
                     text: "An unexpected error occurred",
-                    type: "error"
+                    type: "error",
+                    debugInfo: response.responseText
                 });
             });
 

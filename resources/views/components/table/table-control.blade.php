@@ -1,4 +1,5 @@
 <?php /** @var \Dms\Core\Table\IColumn[] $columns */ ?>
+<?php /** @var \Dms\Core\Table\ITableDataSource $tableDataSource */ ?>
 <?php /** @var \Dms\Core\Module\ITableView $table */ ?>
 <div
         class="dms-table-control clearfix"
@@ -34,7 +35,11 @@
                     <select name="component" class="form-control">
                         <option value="">Please select</option>
                         @foreach($columns as $column)
+                            @continue($column->isHidden())
+
                             @foreach($column->getComponents() as $component)
+                                @continue(!$tableDataSource->canUseColumnComponentInCriteria($column->getComponentId($component->getName())))
+
                                 <option value="{{ $column->getName() . '.' . $component->getName() }}">
                                     @if($column->getLabel() === $component->getLabel())
                                         {{ $column->getLabel() }}

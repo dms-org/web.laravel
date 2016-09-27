@@ -89,6 +89,7 @@ class TableRenderer
 
         return view('dms::components.table.data-table')
             ->with([
+                'dataSource'       => $table->getDataSource(),
                 'columns'          => $tableData->getStructure()->getColumns(),
                 'columnRenderers'  => $columnRenderers,
                 'sections'         => $tableData->getSections(),
@@ -125,6 +126,7 @@ class TableRenderer
         return view('dms::components.table.table-control')
             ->with([
                 'columns'                      => $columns,
+                'tableDataSource'              => $table->getDataSource(),
                 'table'                        => $table->getView($viewName),
                 'loadRowsUrl'                  => $moduleContext->getUrl('table.view.load', [$table->getName(), $viewName]),
                 'reorderRowActionUrl'          => $reorderRowActionUrl,

@@ -1,3 +1,4 @@
+<?php /** @var \Dms\Core\Table\ITableDataSource $dataSource */ ?>
 <?php /** @var \Dms\Core\Table\IColumn[] $columns */ ?>
 <?php /** @var \Dms\Core\Table\ITableSection[] $sections */ ?>
 <?php /** @var \Dms\Web\Laravel\Renderer\Table\IColumnRenderer[] $columnRenderers */ ?>
@@ -9,7 +10,10 @@
         <tr>
             @foreach ($columns as $column)
                 <th data-column-name="{{ $column->getName() }}"
-                    @if($column->isHidden()) class="hidden" @endif>{!! $columnRenderers[$column->getName()]->renderHeader() !!}</th>
+                    @if($column->isHidden()) class="hidden" @endif
+                >
+                    {!! $columnRenderers[$column->getName()]->renderHeader() !!}
+                </th>
             @endforeach
             @if($rowActionButtons)
                 <th class="dms-row-action-column"><span class="pull-right">Actions</span></th>

@@ -63497,7 +63497,7 @@ Dms.table.initializeCallbacks.push(function (element) {
             });
 
             currentAjaxRequest.done(function (tableData) {
-                table.html(tableData);
+                table.empty().append($(tableData).children());
                 Dms.table.initialize(table);
                 Dms.form.initialize(table);
 
@@ -63507,6 +63507,8 @@ Dms.table.initializeCallbacks.push(function (element) {
                 if (table.find('tbody tr').length < criteria.max_rows) {
                     paginationNextButton.addClass('disabled');
                 }
+
+                renderOrderState();
             });
 
             currentAjaxRequest.fail(function (response) {
@@ -63529,7 +63531,18 @@ Dms.table.initializeCallbacks.push(function (element) {
             });
         };
 
-        filterForm.find('button').click(function () {
+        var renderOrderState = function () {
+            var orderByComponent = criteria.orderings.length ? criteria.orderings[0].component : null;
+            var orderDirection = criteria.orderings.length ? criteria.orderings[0].direction : null;
+
+            filterForm.find('[name=component]').val(orderByComponent || '');
+            filterForm.find('[name=direction]').val(orderDirection || 'asc');
+
+            table.find('th[data-order]').removeClass('dms-ordered-asc').removeClass('dms-ordered-desc');
+            table.find('th[data-order="' + orderByComponent + '"]').addClass('dms-ordered-' + orderDirection);
+        };
+
+        filterForm.find('[name=component], [name=direction]').on('change', function () {
             var orderByComponent = filterForm.find('[name=component]').val();
 
             if (orderByComponent) {
@@ -63542,6 +63555,23 @@ Dms.table.initializeCallbacks.push(function (element) {
             } else {
                 criteria.orderings = [];
             }
+
+            renderOrderState();
+        });
+
+        table.on('click', 'th[data-order]', function () {
+            criteria.orderings = [
+                {
+                    component: $(this).attr('data-order'),
+                    direction: $(this).hasClass('dms-ordered-asc') ? 'desc' : 'asc'
+                }
+            ];
+
+            renderOrderState();
+            loadCurrentPage();
+        });
+
+        filterForm.find('button').click(function () {
 
             criteria.conditions = [];
 

@@ -30,6 +30,31 @@ a[disabled] {
   .dms-table-container.loading table {
     opacity: .3; }
 
+.dms-table th[data-order] {
+  cursor: pointer; }
+  .dms-table th[data-order] .dms-order-icons {
+    transition: .2s opacity;
+    opacity: .4;
+    margin-left: 5px; }
+    .dms-table th[data-order] .dms-order-icons i {
+      display: none; }
+    .dms-table th[data-order] .dms-order-icons i.fa-sort {
+      display: inline; }
+  .dms-table th[data-order]:hover .dms-order-icons {
+    opacity: 1; }
+  .dms-table th[data-order].dms-ordered-asc .dms-order-icons {
+    opacity: 1; }
+    .dms-table th[data-order].dms-ordered-asc .dms-order-icons .fa-sort {
+      display: none; }
+    .dms-table th[data-order].dms-ordered-asc .dms-order-icons .fa-sort-asc {
+      display: inline; }
+  .dms-table th[data-order].dms-ordered-desc .dms-order-icons {
+    opacity: 1; }
+    .dms-table th[data-order].dms-ordered-desc .dms-order-icons .fa-sort {
+      display: none; }
+    .dms-table th[data-order].dms-ordered-desc .dms-order-icons .fa-sort-desc {
+      display: inline; }
+
 .dms-table thead:first-child h4 {
   margin-top: 0; }
 

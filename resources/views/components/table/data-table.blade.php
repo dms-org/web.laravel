@@ -10,9 +10,20 @@
         <tr>
             @foreach ($columns as $column)
                 <th data-column-name="{{ $column->getName() }}"
+                    @if($canBeOrdered = $column->hasSingleComponent() && $dataSource->canUseColumnComponentInCriteria($column->getComponentId()))
+                    data-order="{{ $column->getComponentId() }}"
+                    @endif
                     @if($column->isHidden()) class="hidden" @endif
                 >
                     {!! $columnRenderers[$column->getName()]->renderHeader() !!}
+
+                    @if($canBeOrdered)
+                        <span class="dms-order-icons">
+                            <i class="fa fa-sort"></i>
+                            <i class="fa fa-sort-asc"></i>
+                            <i class="fa fa-sort-desc"></i>
+                        </span>
+                    @endif
                 </th>
             @endforeach
             @if($rowActionButtons)
@@ -93,10 +104,10 @@
 
                             <?php
                             $specificRowButtons = array_filter(
-                                    array_diff_key($rowActionButtons, ['details' => true, 'edit' => true, 'remove' => true]),
-                                    function ($action) use ($object) {
-                                        return !$object || $action->isSupported($object);
-                                    }
+                            array_diff_key($rowActionButtons, ['details' => true, 'edit' => true, 'remove' => true]),
+                            function ($action) use ($object) {
+                            return !$object || $action->isSupported($object);
+                            }
                             );
                             ?>
                             @if($specificRowButtons)

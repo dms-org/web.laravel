@@ -25,6 +25,56 @@
 }
 
 .dms-table {
+    th[data-order] {
+        cursor: pointer;
+
+        .dms-order-icons {
+            transition: .2s opacity;
+            opacity: .4;
+            margin-left: 5px;
+
+            i {
+                display: none;
+            }
+
+            i.fa-sort {
+                display: inline;
+            }
+        }
+
+        &:hover .dms-order-icons {
+            opacity: 1;
+        }
+
+        &.dms-ordered-asc {
+            .dms-order-icons {
+                opacity: 1;
+
+                .fa-sort {
+                    display: none;
+                }
+
+                .fa-sort-asc {
+                    display: inline;
+                }
+            }
+        }
+
+        &.dms-ordered-desc {
+            .dms-order-icons {
+                opacity: 1;
+
+                .fa-sort {
+                    display: none;
+                }
+
+                .fa-sort-desc {
+                    display: inline;
+                }
+            }
+        }
+    }
+
     thead:first-child h4 {
         margin-top: 0;
     }

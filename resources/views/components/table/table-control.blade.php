@@ -79,7 +79,7 @@
     <hr/>
 
     <div class="dms-table-container clearfix">
-        <table class="dms-table table"></table>
+        <table class="dms-table table table-hover"></table>
         @include('dms::partials.spinner')
     </div>
 

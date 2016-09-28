@@ -4,7 +4,7 @@
 <?php /** @var \Dms\Web\Laravel\Renderer\Table\IColumnRenderer[] $columnRenderers */ ?>
 <?php /** @var \Dms\Web\Laravel\Renderer\Action\ActionButton[] $rowActionButtons */ ?>
 <?php /** @var bool $allowsReorder */ ?>
-<table class="table dms-table">
+<table class="table table-hover dms-table">
     @if (!$sections || !$sections[0]->hasGroupData())
         <thead>
         <tr>

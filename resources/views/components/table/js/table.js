@@ -100,6 +100,7 @@ Dms.table.initializeCallbacks.push(function (element) {
             }
 
             renderOrderState();
+            loadCurrentPage();
         });
 
         table.on('click', 'th[data-order]', function () {

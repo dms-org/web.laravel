@@ -2738,12 +2738,6 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-    element.find('select[multiple]').multiselect({
-        enableFiltering: true,
-        includeSelectAllOption: true
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
     element.find('input[type="number"][data-max-decimal-places]').each(function () {
         $(this).attr('data-parsley-max-decimal-places', $(this).attr('data-max-decimal-places'));
     });
@@ -2773,6 +2767,12 @@ Dms.form.initializeCallbacks.push(function (element) {
     element.find('input[type=radio]').iCheck({
         radioClass: 'iradio_square-blue',
         increaseArea: '20%'
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+    element.find('select[multiple]').multiselect({
+        enableFiltering: true,
+        includeSelectAllOption: true
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -3059,9 +3059,6 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-
-});
-Dms.form.initializeCallbacks.push(function (element) {
     if (typeof tinymce === 'undefined') {
         return;
     }
@@ -3200,6 +3197,255 @@ Dms.form.initializeCallbacks.push(function (element) {
 
         viewMoreButton.on('click', function () {
             Dms.controls.showContentDialog('Preview', iframeDocument.body.innerHTML, true);
+        });
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+
+});
+Dms.table.initializeCallbacks.push(function (element) {
+    var groupCounter = 0;
+
+    element.find('.dms-table-body-sortable').each(function () {
+        var tableBody = $(this);
+        var table = tableBody.closest('.dms-table');
+        var control = tableBody.closest('.dms-table-control');
+        var reorderRowsUrl = control.attr('data-reorder-row-action-url');
+
+        var performReorder = function (event) {
+            var newIndex = typeof event.newIndex === 'undefined' ? event.oldIndex : event.newIndex;
+
+            var criteria = control.data('dms-table-criteria');
+            var row = $(event.item);
+            var objectId = row.find('.dms-row-action-column').attr('data-object-id');
+            var reorderButtonHandle = row.find('.dms-drag-handle');
+
+            var reorderRequest = Dms.ajax.createRequest({
+                url: reorderRowsUrl,
+                type: 'post',
+                dataType: 'html',
+                data: {
+                    object: objectId,
+                    index: criteria.offset + newIndex + 1
+                }
+            });
+
+            if (reorderButtonHandle.is('button')) {
+                reorderButtonHandle.addClass('ladda-button').attr('data-style', 'expand-right');
+                var ladda = Ladda.create(reorderButtonHandle.get(0));
+                ladda.start();
+
+                reorderRequest.always(ladda.stop);
+            }
+
+            reorderRequest.done(function () {
+                table.triggerHandler('dms-load-table-data');
+            });
+
+            reorderRequest.fail(function (response) {
+                Dms.controls.showErrorDialog({
+                    title: "Could not reorder item",
+                    text: "An unexpected error occurred",
+                    type: "error",
+                    debugInfo: response.responseText
+                });
+            });
+        };
+
+        var sortable = new Sortable(tableBody.get(0), {
+            group: "sortable-group" + groupCounter++,
+            sort: true,  // sorting inside list
+            animation: 150,  // ms, animation speed moving items when sorting, `0` — without animation
+            handle: ".dms-drag-handle",  // Drag handle selector within list items
+            draggable: "tr",  // Specifies which items inside the element should be sortable
+            ghostClass: "sortable-ghost",  // Class name for the drop placeholder
+            chosenClass: "sortable-chosen",  // Class name for the chosen item
+            dataIdAttr: 'data-id',
+
+            onEnd: performReorder
+
+        });
+    });
+});
+Dms.table.initializeCallbacks.push(function (element) {
+
+    element.find('.dms-table-control').each(function () {
+        var control = $(this);
+        var tableContainer = control.find('.dms-table-container');
+        var table = tableContainer.find('table.dms-table');
+        var filterForm = control.find('.dms-table-quick-filter-form');
+        var rowsPerPageSelect = control.find('.dms-table-rows-per-page-form select');
+        var paginationPreviousButton = control.find('.dms-table-pagination .dms-pagination-previous');
+        var paginationNextButton = control.find('.dms-table-pagination .dms-pagination-next');
+        var loadRowsUrl = control.attr('data-load-rows-url');
+        var stringFilterableComponentIds = JSON.parse(control.attr('data-string-filterable-component-ids')) || [];
+
+        var currentPage = 0;
+
+        var criteria = {
+            orderings: [],
+            condition_mode: 'or',
+            conditions: [],
+            offset: 0,
+            max_rows: rowsPerPageSelect.val()
+        };
+
+        var currentAjaxRequest;
+
+        var loadCurrentPage = function () {
+            if (currentAjaxRequest) {
+                currentAjaxRequest.abort();
+            }
+
+            tableContainer.addClass('loading');
+
+            criteria.offset = currentPage * criteria.max_rows;
+
+            currentAjaxRequest = Dms.ajax.createRequest({
+                url: loadRowsUrl,
+                type: 'post',
+                dataType: 'html',
+                data: criteria
+            });
+
+            currentAjaxRequest.done(function (tableData) {
+                table.empty().append($(tableData).children());
+                Dms.table.initialize(table);
+                Dms.form.initialize(table);
+
+                control.data('dms-table-criteria', criteria);
+                control.attr('data-has-loaded-table-data', true);
+
+                if (table.find('tbody tr').length < criteria.max_rows) {
+                    paginationNextButton.addClass('disabled');
+                }
+
+                renderOrderState();
+            });
+
+            currentAjaxRequest.fail(function (response) {
+                if (currentAjaxRequest.statusText === 'abort') {
+                    return;
+                }
+
+                tableContainer.addClass('has-error');
+
+                Dms.controls.showErrorDialog({
+                    title: "Could not load table data",
+                    text: "An unexpected error occurred",
+                    type: "error",
+                    debugInfo: response.responseText
+                });
+            });
+
+            currentAjaxRequest.always(function () {
+                tableContainer.removeClass('loading');
+            });
+        };
+
+        var renderOrderState = function () {
+            var orderByComponent = criteria.orderings.length ? criteria.orderings[0].component : null;
+            var orderDirection = criteria.orderings.length ? criteria.orderings[0].direction : null;
+
+            filterForm.find('[name=component]').val(orderByComponent || '');
+            filterForm.find('[name=direction]').val(orderDirection || 'asc');
+
+            table.find('th[data-order]').removeClass('dms-ordered-asc').removeClass('dms-ordered-desc');
+            table.find('th[data-order="' + orderByComponent + '"]').addClass('dms-ordered-' + orderDirection);
+        };
+
+        filterForm.find('[name=component], [name=direction]').on('change', function () {
+            var orderByComponent = filterForm.find('[name=component]').val();
+
+            if (orderByComponent) {
+                criteria.orderings = [
+                    {
+                        component: orderByComponent,
+                        direction: filterForm.find('[name=direction]').val()
+                    }
+                ];
+            } else {
+                criteria.orderings = [];
+            }
+
+            renderOrderState();
+            loadCurrentPage();
+        });
+
+        table.on('click', 'th[data-order]', function () {
+            criteria.orderings = [
+                {
+                    component: $(this).attr('data-order'),
+                    direction: $(this).hasClass('dms-ordered-asc') ? 'desc' : 'asc'
+                }
+            ];
+
+            renderOrderState();
+            loadCurrentPage();
+        });
+
+        filterForm.find('button').click(function () {
+
+            criteria.conditions = [];
+
+            var filterByString = filterForm.find('[name=filter]').val();
+
+            if (filterByString) {
+                $.each(stringFilterableComponentIds, function (index, componentId) {
+                    criteria.conditions.push({
+                        component: componentId,
+                        operator: 'string-contains-case-insensitive',
+                        value: filterByString
+                    });
+                });
+            }
+
+            loadCurrentPage();
+        });
+
+        filterForm.find('input[name=filter]').on('keyup', function (event) {
+            var enterKey = 13;
+
+            if (event.keyCode === enterKey) {
+                filterForm.find('button').click();
+            }
+        });
+
+        rowsPerPageSelect.on('change', function () {
+            criteria.max_rows = $(this).val();
+
+            loadCurrentPage();
+        });
+
+        paginationPreviousButton.click(function () {
+            currentPage--;
+            paginationNextButton.removeClass('disabled');
+            paginationPreviousButton.toggleClass('disabled', currentPage === 0);
+            loadCurrentPage();
+        });
+
+        paginationNextButton.click(function () {
+            currentPage++;
+            paginationPreviousButton.removeClass('disabled');
+            loadCurrentPage();
+        });
+
+        paginationPreviousButton.addClass('disabled');
+
+        if (table.is(':visible')) {
+            loadCurrentPage();
+        }
+
+        table.on('dms-load-table-data', loadCurrentPage);
+    });
+
+    $('.dms-table-tabs').each(function () {
+        var tabs = $(this);
+
+        tabs.find('.dms-table-tab-show-button').on('click', function () {
+            var linkedTablePane = $($(this).attr('href'));
+
+            linkedTablePane.find('.dms-table-control:not([data-has-loaded-table-data]) .dms-table-container:not(.loading) .dms-table').triggerHandler('dms-load-table-data');
         });
     });
 });
@@ -3635,251 +3881,6 @@ Dms.form.initializeValidationCallbacks.push(function (element) {
     element.find('.dms-form').each(function () {
         var form = $(this);
         var parsley = Dms.form.validation.initialize(form);
-    });
-});
-Dms.table.initializeCallbacks.push(function (element) {
-    var groupCounter = 0;
-
-    element.find('.dms-table-body-sortable').each(function () {
-        var tableBody = $(this);
-        var table = tableBody.closest('.dms-table');
-        var control = tableBody.closest('.dms-table-control');
-        var reorderRowsUrl = control.attr('data-reorder-row-action-url');
-
-        var performReorder = function (event) {
-            var newIndex = typeof event.newIndex === 'undefined' ? event.oldIndex : event.newIndex;
-
-            var criteria = control.data('dms-table-criteria');
-            var row = $(event.item);
-            var objectId = row.find('.dms-row-action-column').attr('data-object-id');
-            var reorderButtonHandle = row.find('.dms-drag-handle');
-
-            var reorderRequest = Dms.ajax.createRequest({
-                url: reorderRowsUrl,
-                type: 'post',
-                dataType: 'html',
-                data: {
-                    object: objectId,
-                    index: criteria.offset + newIndex + 1
-                }
-            });
-
-            if (reorderButtonHandle.is('button')) {
-                reorderButtonHandle.addClass('ladda-button').attr('data-style', 'expand-right');
-                var ladda = Ladda.create(reorderButtonHandle.get(0));
-                ladda.start();
-
-                reorderRequest.always(ladda.stop);
-            }
-
-            reorderRequest.done(function () {
-                table.triggerHandler('dms-load-table-data');
-            });
-
-            reorderRequest.fail(function (response) {
-                Dms.controls.showErrorDialog({
-                    title: "Could not reorder item",
-                    text: "An unexpected error occurred",
-                    type: "error",
-                    debugInfo: response.responseText
-                });
-            });
-        };
-
-        var sortable = new Sortable(tableBody.get(0), {
-            group: "sortable-group" + groupCounter++,
-            sort: true,  // sorting inside list
-            animation: 150,  // ms, animation speed moving items when sorting, `0` — without animation
-            handle: ".dms-drag-handle",  // Drag handle selector within list items
-            draggable: "tr",  // Specifies which items inside the element should be sortable
-            ghostClass: "sortable-ghost",  // Class name for the drop placeholder
-            chosenClass: "sortable-chosen",  // Class name for the chosen item
-            dataIdAttr: 'data-id',
-
-            onEnd: performReorder
-
-        });
-    });
-});
-Dms.table.initializeCallbacks.push(function (element) {
-
-    element.find('.dms-table-control').each(function () {
-        var control = $(this);
-        var tableContainer = control.find('.dms-table-container');
-        var table = tableContainer.find('table.dms-table');
-        var filterForm = control.find('.dms-table-quick-filter-form');
-        var rowsPerPageSelect = control.find('.dms-table-rows-per-page-form select');
-        var paginationPreviousButton = control.find('.dms-table-pagination .dms-pagination-previous');
-        var paginationNextButton = control.find('.dms-table-pagination .dms-pagination-next');
-        var loadRowsUrl = control.attr('data-load-rows-url');
-        var stringFilterableComponentIds = JSON.parse(control.attr('data-string-filterable-component-ids')) || [];
-
-        var currentPage = 0;
-
-        var criteria = {
-            orderings: [],
-            condition_mode: 'or',
-            conditions: [],
-            offset: 0,
-            max_rows: rowsPerPageSelect.val()
-        };
-
-        var currentAjaxRequest;
-
-        var loadCurrentPage = function () {
-            if (currentAjaxRequest) {
-                currentAjaxRequest.abort();
-            }
-
-            tableContainer.addClass('loading');
-
-            criteria.offset = currentPage * criteria.max_rows;
-
-            currentAjaxRequest = Dms.ajax.createRequest({
-                url: loadRowsUrl,
-                type: 'post',
-                dataType: 'html',
-                data: criteria
-            });
-
-            currentAjaxRequest.done(function (tableData) {
-                table.empty().append($(tableData).children());
-                Dms.table.initialize(table);
-                Dms.form.initialize(table);
-
-                control.data('dms-table-criteria', criteria);
-                control.attr('data-has-loaded-table-data', true);
-
-                if (table.find('tbody tr').length < criteria.max_rows) {
-                    paginationNextButton.addClass('disabled');
-                }
-
-                renderOrderState();
-            });
-
-            currentAjaxRequest.fail(function (response) {
-                if (currentAjaxRequest.statusText === 'abort') {
-                    return;
-                }
-
-                tableContainer.addClass('has-error');
-
-                Dms.controls.showErrorDialog({
-                    title: "Could not load table data",
-                    text: "An unexpected error occurred",
-                    type: "error",
-                    debugInfo: response.responseText
-                });
-            });
-
-            currentAjaxRequest.always(function () {
-                tableContainer.removeClass('loading');
-            });
-        };
-
-        var renderOrderState = function () {
-            var orderByComponent = criteria.orderings.length ? criteria.orderings[0].component : null;
-            var orderDirection = criteria.orderings.length ? criteria.orderings[0].direction : null;
-
-            filterForm.find('[name=component]').val(orderByComponent || '');
-            filterForm.find('[name=direction]').val(orderDirection || 'asc');
-
-            table.find('th[data-order]').removeClass('dms-ordered-asc').removeClass('dms-ordered-desc');
-            table.find('th[data-order="' + orderByComponent + '"]').addClass('dms-ordered-' + orderDirection);
-        };
-
-        filterForm.find('[name=component], [name=direction]').on('change', function () {
-            var orderByComponent = filterForm.find('[name=component]').val();
-
-            if (orderByComponent) {
-                criteria.orderings = [
-                    {
-                        component: orderByComponent,
-                        direction: filterForm.find('[name=direction]').val()
-                    }
-                ];
-            } else {
-                criteria.orderings = [];
-            }
-
-            renderOrderState();
-        });
-
-        table.on('click', 'th[data-order]', function () {
-            criteria.orderings = [
-                {
-                    component: $(this).attr('data-order'),
-                    direction: $(this).hasClass('dms-ordered-asc') ? 'desc' : 'asc'
-                }
-            ];
-
-            renderOrderState();
-            loadCurrentPage();
-        });
-
-        filterForm.find('button').click(function () {
-
-            criteria.conditions = [];
-
-            var filterByString = filterForm.find('[name=filter]').val();
-
-            if (filterByString) {
-                $.each(stringFilterableComponentIds, function (index, componentId) {
-                    criteria.conditions.push({
-                        component: componentId,
-                        operator: 'string-contains-case-insensitive',
-                        value: filterByString
-                    });
-                });
-            }
-
-            loadCurrentPage();
-        });
-
-        filterForm.find('input[name=filter]').on('keyup', function (event) {
-            var enterKey = 13;
-
-            if (event.keyCode === enterKey) {
-                filterForm.find('button').click();
-            }
-        });
-
-        rowsPerPageSelect.on('change', function () {
-            criteria.max_rows = $(this).val();
-
-            loadCurrentPage();
-        });
-
-        paginationPreviousButton.click(function () {
-            currentPage--;
-            paginationNextButton.removeClass('disabled');
-            paginationPreviousButton.toggleClass('disabled', currentPage === 0);
-            loadCurrentPage();
-        });
-
-        paginationNextButton.click(function () {
-            currentPage++;
-            paginationPreviousButton.removeClass('disabled');
-            loadCurrentPage();
-        });
-
-        paginationPreviousButton.addClass('disabled');
-
-        if (table.is(':visible')) {
-            loadCurrentPage();
-        }
-
-        table.on('dms-load-table-data', loadCurrentPage);
-    });
-
-    $('.dms-table-tabs').each(function () {
-        var tabs = $(this);
-
-        tabs.find('.dms-table-tab-show-button').on('click', function () {
-            var linkedTablePane = $($(this).attr('href'));
-
-            linkedTablePane.find('.dms-table-control:not([data-has-loaded-table-data]) .dms-table-container:not(.loading) .dms-table').triggerHandler('dms-load-table-data');
-        });
     });
 });
 Dms.widget.initializeCallbacks.push(function () {

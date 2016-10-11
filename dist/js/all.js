@@ -52649,8 +52649,6 @@ Licensed under the BSD-2-Clause License.
 
 }).call(this);
 
-//# sourceMappingURL=vendor.js.map
-
 window.Dms = {
     config: {
         // @see /resources/views/partials/js-config.blade.php
@@ -54366,20 +54364,6 @@ Dms.chart.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-    element.find('input[type=checkbox].single-checkbox').iCheck({
-        checkboxClass: 'icheckbox_square-blue',
-        increaseArea: '20%'
-    });
-
-    element.find('input[type=checkbox]').each(function () {
-        var formGroup = $(this).closest('.form-group');
-
-        $(this).on('ifToggled', function(event){
-            formGroup.trigger('dms-change');
-        });
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
 
     element.find('.list-of-checkboxes').each(function () {
         var listOfCheckboxes = $(this);
@@ -54391,6 +54375,20 @@ Dms.form.initializeCallbacks.push(function (element) {
         var firstCheckbox = listOfCheckboxes.find('input[type=checkbox]').first();
         firstCheckbox.attr('data-parsley-min-elements', listOfCheckboxes.attr('data-min-elements'));
         firstCheckbox.attr('data-parsley-max-elements', listOfCheckboxes.attr('data-max-elements'));
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+    element.find('input[type=checkbox].single-checkbox').iCheck({
+        checkboxClass: 'icheckbox_square-blue',
+        increaseArea: '20%'
+    });
+
+    element.find('input[type=checkbox]').each(function () {
+        var formGroup = $(this).closest('.form-group');
+
+        $(this).on('ifToggled', function(event){
+            formGroup.trigger('dms-change');
+        });
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -55478,42 +55476,6 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-    element.find('input[type="ip-address"]')
-        .attr('type', 'text')
-        .attr('data-parsley-ip-address', '1');
-
-    element.find('input[data-autocomplete]').each(function () {
-        var options = JSON.parse($(this).attr('data-autocomplete'));
-        $(this).removeAttr('data-autocomplete');
-
-        var values = [];
-
-        $.each(options, function (index, value) {
-            values.push({ val: value });
-        });
-
-        var engine = new Bloodhound({
-            local: values,
-            datumTokenizer: function(d) {
-                return Bloodhound.tokenizers.whitespace(d.val);
-            },
-            queryTokenizer: Bloodhound.tokenizers.whitespace
-        });
-
-        engine.initialize();
-
-        $(this).typeahead( {
-            limit: 5,
-            hint: true,
-            highlight: true,
-            minLength: 1
-        }, {
-            source: engine.ttAdapter(),
-            displayKey: 'val'
-        });
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
 
     element.find('table.dms-field-table').each(function () {
         var tableOfFields = $(this);
@@ -55716,6 +55678,42 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
+    element.find('input[type="ip-address"]')
+        .attr('type', 'text')
+        .attr('data-parsley-ip-address', '1');
+
+    element.find('input[data-autocomplete]').each(function () {
+        var options = JSON.parse($(this).attr('data-autocomplete'));
+        $(this).removeAttr('data-autocomplete');
+
+        var values = [];
+
+        $.each(options, function (index, value) {
+            values.push({ val: value });
+        });
+
+        var engine = new Bloodhound({
+            local: values,
+            datumTokenizer: function(d) {
+                return Bloodhound.tokenizers.whitespace(d.val);
+            },
+            queryTokenizer: Bloodhound.tokenizers.whitespace
+        });
+
+        engine.initialize();
+
+        $(this).typeahead( {
+            limit: 5,
+            hint: true,
+            highlight: true,
+            minLength: 1
+        }, {
+            source: engine.ttAdapter(),
+            displayKey: 'val'
+        });
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
 
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -55850,13 +55848,16 @@ Dms.form.initializeCallbacks.push(function (element) {
     element.find('.dms-display-html').each(function () {
         var control = $(this);
         var viewMoreButton = control.find('.dms-view-more-button');
-        var iframe = control.find('iframe').get(0);
-        var iframeDocument = iframe.contentDocument || iframe.contentWindow.document;
+        var iframe = control.find('iframe');
+        var htmlDocument = control.attr('data-value');
 
-        iframeDocument.body.innerHTML = control.attr('data-value');
+        var document = iframe.contents().get(0);
+        document.open();
+        document.write(htmlDocument);
+        document.close();
 
         viewMoreButton.on('click', function () {
-            Dms.controls.showContentDialog('Preview', iframeDocument.body.innerHTML, true);
+            Dms.controls.showContentDialog('Preview', htmlDocument, true);
         });
     });
 });
@@ -56681,7 +56682,5 @@ Dms.table.initializeCallbacks.push(function (element) {
         });
     });
 });
-
-//# sourceMappingURL=app.js.map
 
 //# sourceMappingURL=all.js.map

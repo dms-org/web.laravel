@@ -130,13 +130,16 @@ Dms.form.initializeCallbacks.push(function (element) {
     element.find('.dms-display-html').each(function () {
         var control = $(this);
         var viewMoreButton = control.find('.dms-view-more-button');
-        var iframe = control.find('iframe').get(0);
-        var iframeDocument = iframe.contentDocument || iframe.contentWindow.document;
+        var iframe = control.find('iframe');
+        var htmlDocument = control.attr('data-value');
 
-        iframeDocument.body.innerHTML = control.attr('data-value');
+        var document = iframe.contents().get(0);
+        document.open();
+        document.write(htmlDocument);
+        document.close();
 
         viewMoreButton.on('click', function () {
-            Dms.controls.showContentDialog('Preview', iframeDocument.body.innerHTML, true);
+            Dms.controls.showContentDialog('Preview', htmlDocument, true);
         });
     });
 });

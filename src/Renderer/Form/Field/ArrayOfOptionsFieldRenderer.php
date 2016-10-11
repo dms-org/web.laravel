@@ -83,7 +83,7 @@ class ArrayOfOptionsFieldRenderer extends BladeFieldRenderer
             'dms::components.field.checkbox-group.value',
             [
                 'options'     => $this->getOptionsWithValuesAsKeys($options),
-                'urlCallback' => new DisguisedClosure($urlCallback),
+                'urlCallback' => $urlCallback ? new DisguisedClosure($urlCallback) : null,
             ]
         );
     }

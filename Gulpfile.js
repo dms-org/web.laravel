@@ -73,19 +73,19 @@ elixir(function (mix) {
     mix.sass([
         paths.resources + 'sass/main.scss',
         paths.resources + 'views/**/*.scss'
-    ], paths.distCss + 'app.css', './');
+    ], paths.distCss + 'app.css');
 
     mix.scripts([
         paths.resources + 'js/main.js',
         paths.resources + 'js/services/**/*.js',
         paths.resources + 'views/**/*.js'
-    ], paths.distJs + 'app.js', './');
+    ], paths.distJs + 'app.js');
 
     mix.copy(paths.resources + 'img/', paths.dist + 'img/');
 
     // Bower deps
-    mix.styles(loadBowerFiles('**/*.css'), paths.distCss + 'vendor.css', './');
-    mix.scripts(loadBowerFiles('**/*.js'), paths.distJs + 'vendor.js', './');
+    mix.styles(loadBowerFiles('**/*.css'), paths.distCss + 'vendor.css');
+    mix.scripts(loadBowerFiles('**/*.js'), paths.distJs + 'vendor.js');
     mix.copy(loadBowerFiles(["**/*.woff", "**/*.woff2"]), paths.distFonts);
     mix.copy(paths.bower + 'admin-lte/dist/img/', paths.distImg);
     mix.copy([paths.bower + 'iCheck/skins/square/blue.png', paths.bower + 'iCheck/skins/square/blue@2x.png'], paths.distCss);
@@ -104,12 +104,12 @@ elixir(function (mix) {
         wysiwygScripts.push(paths.bower + 'tinymce/plugins/' + plugins[pluginIndex] + '/plugin.min.js');
     }
     mix.scripts(wysiwygScripts, paths.dist + 'wysiwyg/wysiwyg.js', './');
-    mix.styles([paths.bower + 'tinymce/skins/lightgray/skin.min.css'], paths.dist + 'wysiwyg/wysiwyg.css', './');
+    mix.styles([paths.bower + 'tinymce/skins/lightgray/skin.min.css'], paths.dist + 'wysiwyg/wysiwyg.css');
     mix.copy([paths.bower + 'tinymce/skins/lightgray/'], paths.dist + '/wysiwyg/skins/lightgray/');
     mix.copy([paths.bower + 'tinymce/skins/lightgray/fonts'], paths.dist + '/wysiwyg/fonts/');
     mix.copy([paths.bower + 'tinymce/skins/lightgray/img'], paths.dist + '/wysiwyg/img/');
 
     // Combine
-    mix.styles([paths.distCss + 'vendor.css', paths.distCss + 'app.css'], paths.distCss + 'all.css', './');
-    mix.scripts([paths.distJs + 'vendor.js', paths.distJs + 'app.js'], paths.distJs + 'all.js', './');
+    mix.styles([paths.distCss + 'vendor.css', paths.distCss + 'app.css'], paths.distCss + 'all.css');
+    mix.scripts([paths.distJs + 'vendor.js', paths.distJs + 'app.js'], paths.distJs + 'all.js');
 });

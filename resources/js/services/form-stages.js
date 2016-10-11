@@ -91,6 +91,10 @@ Dms.form.stages.getDependentDataForStage = function (formStage) {
 
             var formGroupFieldName = formGroup.attr('data-field-name');
 
+            if (!formGroupFieldName) {
+                return;
+            }
+
             if (formGroup.closest('.dms-form-stage').attr('data-stage-number') == stageNumber
                 && (fields === '*' || $.inArray(formGroupFieldName, fields) !== -1)) {
                 isDependent = true;

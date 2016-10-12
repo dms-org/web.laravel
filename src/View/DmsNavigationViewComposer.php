@@ -96,7 +96,7 @@ class DmsNavigationViewComposer
     {
         $navigation = [];
 
-        $navigation[] = new NavigationElement('Home', 'dms::index', [], 'tachometer');
+        $navigation[] = new NavigationElement('Dashboard', 'dms::index', [], 'tachometer');
 
         foreach ($this->cms->loadPackages() as $package) {
             $packageNavigation = [];

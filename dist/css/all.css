@@ -15428,6 +15428,9 @@ a.dms-run-action-form {
   40% {
     transform: scale(1); } }
 
+.dms-table-tabs .dms-table-tab-show-button .dms-row-amount {
+  opacity: .4; }
+
 .ui-tooltip.ui-widget {
   display: none !important; }
 

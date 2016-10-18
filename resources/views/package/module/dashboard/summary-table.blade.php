@@ -10,7 +10,10 @@
             <ul class="nav nav-tabs">
                 @foreach($summaryTableViews as $view)
                     <li class="{{ $activeViewName === $view->getName() ? 'active' : '' }}">
-                        <a class="dms-table-tab-show-button" href="#summary-table-table-{{ $view->getName() }}" data-toggle="tab">{{ $view->getLabel() }}</a>
+                        <a class="dms-table-tab-show-button" href="#summary-table-table-{{ $view->getName() }}" data-toggle="tab">
+                            {{ $view->getLabel() }}
+                            <span class="dms-row-amount">({{ $summaryTable->loadAmountOfRowsInView($view->getName()) }})</span>
+                        </a>
                     </li>
                 @endforeach
                 @if($createActionName ?? false)

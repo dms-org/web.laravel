@@ -66,7 +66,7 @@
                     <div class="col-xs-12 text-center dms-file-tree-empty">
                         <span class="dms-run-action-form inline"
                               data-action="{{ $moduleContext->getUrl('action.run', ['empty-trash']) }}"
-                              data-after-run-refresh="1"
+                              data-reload-page-after-submit="1"
                               data-method="post">
                             {!! csrf_field() !!}
                             <button type="submit" class="btn btn-danger">

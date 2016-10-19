@@ -53488,6 +53488,10 @@ Dms.link.goToUrl = function (url) {
     }
 };
 
+Dms.link.reloadCurrentPage = function () {
+    Dms.link.goToUrl(window.location.href);
+};
+
 Dms.global.initializeCallbacks.push(function (element) {
     element.click(function (e) {
         if ($(this).attr('disabled')) {
@@ -55425,12 +55429,6 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-    element.find('input[type=radio]').iCheck({
-        radioClass: 'iradio_square-blue',
-        increaseArea: '20%'
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
     element.find('.dms-select-with-remote-data').each(function () {
         var control = $(this);
         var formStage = control.closest('.dms-form-stage')
@@ -55476,6 +55474,12 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
+    element.find('input[type=radio]').iCheck({
+        radioClass: 'iradio_square-blue',
+        increaseArea: '20%'
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
     element.find('input[type="ip-address"]')
         .attr('type', 'text')
         .attr('data-parsley-ip-address', '1');
@@ -55510,6 +55514,9 @@ Dms.form.initializeCallbacks.push(function (element) {
             displayKey: 'val'
         });
     });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+
 });
 Dms.form.initializeCallbacks.push(function (element) {
 
@@ -55712,9 +55719,6 @@ Dms.form.initializeCallbacks.push(function (element) {
             tableOfFields.find('.btn-add-row').remove();
         }
     });
-});
-Dms.form.initializeCallbacks.push(function (element) {
-
 });
 Dms.form.initializeCallbacks.push(function (element) {
     if (typeof tinymce === 'undefined') {
@@ -56065,6 +56069,7 @@ Dms.form.initializeCallbacks.push(function (element) {
         var submitMethod = form.attr('data-method');
         var submitUrl = form.attr('data-action');
         var reloadFormUrl = form.attr('data-reload-form-url');
+        var shouldReloadPageAfterSubmit = form.attr('data-reload-page-after-submit');
 
         if ($(this).is('a.dms-run-action-form, button.dms-run-action-form')) {
             submitButtons = submitButtons.add(this);
@@ -56103,7 +56108,7 @@ Dms.form.initializeCallbacks.push(function (element) {
                 });
             });
 
-            var formData =  Dms.form.stages.createFormDataFromFields(form.find(':input'));
+            var formData = Dms.form.stages.createFormDataFromFields(form.find(':input'));
             form.find('.form-group').each(function () {
                 var additionalDataToSubmit = $(this).triggerHandler('dms-get-input-data');
 
@@ -56207,18 +56212,21 @@ Dms.form.initializeCallbacks.push(function (element) {
             });
         }
 
-        if ( form.attr('data-after-run-refresh')) {
-            afterRunCallbacks.push(function () {
-                window.location.reload(true);
-            });
-        }
-
         afterRunCallbacks.push(function () {
             form.find('input[type=password]').val('');
         });
 
         afterRunCallbacks.push(function (data) {
-            if (data.redirect || !form.is('.dms-staged-form')) {
+            if (data.redirect) {
+                return;
+            }
+
+            if (shouldReloadPageAfterSubmit) {
+                Dms.link.reloadCurrentPage();
+                return;
+            }
+
+            if (!form.is('.dms-staged-form')) {
                 return;
             }
 

@@ -2,7 +2,7 @@
 
 @foreach($actionButtons as $actionButton)
     @if($actionButton->isPost())
-        <div class="dms-run-action-form inline" data-action="{{ $actionButton->getUrl($objectId) }}" data-method="post">
+        <div class="dms-run-action-form inline" data-action="{{ $actionButton->getUrl($objectId) }}" data-method="post" data-reload-page-after-submit="1">
             {!! csrf_field() !!}
             <button type="submit"
                     class="btn btn-{{ \Dms\Web\Laravel\Util\KeywordTypeIdentifier::getClass($actionButton->getName()) ?? 'default' }}">

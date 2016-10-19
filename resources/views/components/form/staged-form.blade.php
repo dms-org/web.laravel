@@ -7,6 +7,7 @@
 <div class="dms-staged-form-container">
     <div
             data-reload-form-url="{{ $moduleContext->getUrl('action.form', array_merge([$actionName], $renderingContext->getObject() ? [$renderingContext->getObjectId()] : [])) }}"
+            data-reload-page-after-submit="1"
             data-action="{{ $moduleContext->getUrl('action.run', [$actionName]) }}"
             data-method="post"
             data-enctype="multipart/form-data"

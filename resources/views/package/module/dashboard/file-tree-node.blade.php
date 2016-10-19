@@ -58,7 +58,7 @@
                                 <span class="dms-run-action-form inline"
                                       data-action="{{ $moduleContext->getUrl('action.run', ['restore-file', 'file' => $fileId]) }}"
                                       data-after-run-remove-closest="li"
-                                      data-after-run-refresh="1"
+                                      data-reload-page-after-submit="1"
                                       data-method="post">
                                     {!! csrf_field() !!}
                                     <button type="submit" class="btn btn-xs btn-success">

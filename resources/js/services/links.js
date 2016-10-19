@@ -25,6 +25,10 @@ Dms.link.goToUrl = function (url) {
     }
 };
 
+Dms.link.reloadCurrentPage = function () {
+    Dms.link.goToUrl(window.location.href);
+};
+
 Dms.global.initializeCallbacks.push(function (element) {
     element.click(function (e) {
         if ($(this).attr('disabled')) {

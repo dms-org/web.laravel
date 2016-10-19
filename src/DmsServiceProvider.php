@@ -48,6 +48,7 @@ use Dms\Web\Laravel\Http\Middleware\RedirectIfAuthenticated;
 use Dms\Web\Laravel\Http\Middleware\VerifyCsrfToken;
 use Dms\Web\Laravel\Http\ModuleRequestRouter;
 use Dms\Web\Laravel\Install\DmsInstallCommand;
+use Dms\Web\Laravel\Install\DmsUpdateCommand;
 use Dms\Web\Laravel\Ioc\LaravelIocContainer;
 use Dms\Web\Laravel\Language\LaravelLanguageProvider;
 use Dms\Web\Laravel\Persistence\Db\DmsOrm;
@@ -332,7 +333,8 @@ class DmsServiceProvider extends ServiceProvider
             $connection = $this->app->make(Connection::class);
 
             if ($this->isRunningInConsole()) {
-                $connection->getDoctrineConnection()->getDatabasePlatform()->registerDoctrineTypeMapping('enum', 'string');
+                $connection->getDoctrineConnection()->getDatabasePlatform()->registerDoctrineTypeMapping('enum',
+                    'string');
                 $connection->getDoctrineConnection()->getEventManager()->addEventSubscriber(new CustomColumnDefinitionEventSubscriber());
             }
 
@@ -350,6 +352,7 @@ class DmsServiceProvider extends ServiceProvider
     {
         $this->commands([
             DmsInstallCommand::class,
+            DmsUpdateCommand::class,
             AutoGenerateMigrationCommand::class,
             ClearTempFilesCommand::class,
             ScaffoldPersistenceCommand::class,

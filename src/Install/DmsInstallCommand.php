@@ -5,6 +5,7 @@ namespace Dms\Web\Laravel\Install;
 use Dms\Core\Exception\InvalidOperationException;
 use Dms\Core\ICms;
 use Dms\Core\Persistence\Db\Mapping\IOrm;
+use Dms\Web\Laravel\DmsServiceProvider;
 use Illuminate\Console\Command;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Foundation\Console\Kernel;
@@ -78,15 +79,17 @@ class DmsInstallCommand extends Command
         $this->info('Created: ' . app_path('AppOrm.php'));
 
         $filesystem->copy(__DIR__ . '/Stubs/DmsAdminSeeder.php.stub', database_path('seeds/DmsAdminSeeder.php'));
+        require_once database_path('seeds/DmsAdminSeeder.php');
         $this->info('Created: ' . database_path('seeds/DmsAdminSeeder.php'));
         $filesystem->copy(__DIR__ . '/Stubs/DatabaseSeeder.php.stub', database_path('seeds/DatabaseSeeder.php'));
+        require_once database_path('seeds/DatabaseSeeder.php');
         $this->info('Updated: ' . database_path('seeds/DatabaseSeeder.php'));
 
         $filesystem->copy(__DIR__ . '/Stubs/AppServiceProvider.php.stub', app_path('Providers/AppServiceProvider.php'));
         $this->info('Updated: ' . app_path('Providers/AppServiceProvider.php'));
 
-        $console->call('vendor:publish');
-        $this->info('Executed: php artisan vendor:publish');
+        $console->call('vendor:publish', ['provider' => DmsServiceProvider::class]);
+        $this->info('Executed: php artisan vendor:publish --provider="' . DmsServiceProvider::class . '"');
 
         app('config')->set(['dms' => require __DIR__ . '/../../config/dms.php']);
 
@@ -109,6 +112,11 @@ class DmsInstallCommand extends Command
             FILE_APPEND
         );
         $this->info('Added to .gitignore');
+
+        $composerJsonData = json_decode(file_get_contents(base_path('composer.json')), true);
+        $composerJsonData['scripts']['post-update-cmd'][] = 'php artisan dms:update';
+        file_put_contents(base_path('composer.json'), json_encode($composerJsonData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        $this->info('Added php artisan dms:update to post-update hook in composer.json');
 
         $this->info('Done! Good luck with your project.');
     }

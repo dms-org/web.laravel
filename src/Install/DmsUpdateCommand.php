@@ -38,7 +38,7 @@ class DmsUpdateCommand extends Command
      */
     public function fire(Kernel $console)
     {
-        $console->call('vendor:publish', ['provider' => DmsServiceProvider::class, 'tag' => 'public', 'force' => true]);
+        $console->call('vendor:publish', ['--provider' => DmsServiceProvider::class, '--tag' => 'public', '--force' => true]);
         $this->info('Executed: php artisan vendor:publish --provider="' . DmsServiceProvider::class . '" --tag="public" --force');
 
         $this->info('Done!');

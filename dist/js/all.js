@@ -55065,6 +55065,7 @@ Dms.form.initializeCallbacks.push(function (element) {
 
             currentAjaxRequest.done(function (html) {
                 innerModuleForm.html(html);
+                innerModuleForm.find('[data-reload-page-after-submit]').removeAttr('data-reload-page-after-submit');
                 Dms.form.initialize(innerModuleForm);
             });
 
@@ -55429,6 +55430,12 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
+    element.find('input[type=radio]').iCheck({
+        radioClass: 'iradio_square-blue',
+        increaseArea: '20%'
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
     element.find('.dms-select-with-remote-data').each(function () {
         var control = $(this);
         var formStage = control.closest('.dms-form-stage')
@@ -55474,12 +55481,6 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-    element.find('input[type=radio]').iCheck({
-        radioClass: 'iradio_square-blue',
-        increaseArea: '20%'
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
     element.find('input[type="ip-address"]')
         .attr('type', 'text')
         .attr('data-parsley-ip-address', '1');
@@ -55514,9 +55515,6 @@ Dms.form.initializeCallbacks.push(function (element) {
             displayKey: 'val'
         });
     });
-});
-Dms.form.initializeCallbacks.push(function (element) {
-
 });
 Dms.form.initializeCallbacks.push(function (element) {
 
@@ -55719,6 +55717,9 @@ Dms.form.initializeCallbacks.push(function (element) {
             tableOfFields.find('.btn-add-row').remove();
         }
     });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+
 });
 Dms.form.initializeCallbacks.push(function (element) {
     if (typeof tinymce === 'undefined') {

@@ -121,6 +121,7 @@ Dms.form.initializeCallbacks.push(function (element) {
 
             currentAjaxRequest.done(function (html) {
                 innerModuleForm.html(html);
+                innerModuleForm.find('[data-reload-page-after-submit]').removeAttr('data-reload-page-after-submit');
                 Dms.form.initialize(innerModuleForm);
             });
 

@@ -147,7 +147,7 @@ class LocalAdmin extends Admin implements CanResetPassword
      */
     public function sendPasswordResetNotification($token)
     {
-        \Mail::send('dms::auth.email.password', ['token' => $token], function (Message $m) use ($email) {
+        \Mail::send('dms::auth.email.password', ['token' => $token], function (Message $m) {
             $m->subject('Your DMS account password reset');
             $m->to($this->emailAddress->asString(), $this->fullName);
         });

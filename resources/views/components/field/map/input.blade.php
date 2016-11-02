@@ -30,8 +30,8 @@
             @endif
             @if ($inputMode === 'address-with-lat-lng')
                 <input type="hidden" name="{{ $name }}[address]" class="dms-full-address-input" @if($value !== null) value="{{ $value['address'] }}" @endif>
-                    <input type="hidden" name="{{ $name }}[coordinates][lat]" class="dms-lat-input" @if($value !== null) value="{{ $value['coordinates']['lat'] }}" @endif>
-                    <input type="hidden" name="{{ $name }}[coordinates][lng]" class="dms-lng-input" @if($value !== null) value="{{ $value['coordinates']['lng'] }}" @endif>
+                <input type="hidden" name="{{ $name }}[coordinates][lat]" class="dms-lat-input" @if($value !== null) value="{{ $value['coordinates']['lat'] }}" @endif>
+                <input type="hidden" name="{{ $name }}[coordinates][lng]" class="dms-lng-input" @if($value !== null) value="{{ $value['coordinates']['lng'] }}" @endif>
             @endif
         </div>
     </div>

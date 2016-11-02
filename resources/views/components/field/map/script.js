@@ -110,8 +110,17 @@ Dms.form.initializeCallbacks.push(function (element) {
         }
 
         if (latitudeInput.val() || longitudeInput.val()) {
-            forceSetAddress = true;
-            addressPicker.markerDragged();
+            if (inputMode === 'lat-lng') {
+                forceSetAddress = true;
+                addressPicker.markerDragged();
+            }
+
+            if (inputMode === 'address-with-lat-lng') {
+                var location = new google.maps.LatLng(latitudeInput.val(), longitudeInput.val());
+                addressPicker.getGMarker().setPosition(location);
+                addressPicker.getGMap().setCenter(location);
+                addressSearchInput.val(fullAddressInput.val());
+            }
         }
 
         addressSearchInput.change(function () {

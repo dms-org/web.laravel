@@ -91,7 +91,6 @@ return [
     'storage'      => [
         'public-files'  => [
             'dir' => public_path('files/'),
-            'url' => '/files/',
         ],
         'trashed-files' => [
             'dir' => storage_path('trash/'),

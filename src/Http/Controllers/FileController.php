@@ -100,7 +100,9 @@ class FileController extends DmsController
                 ]);
             } else {
                 return \response()
-                    ->download($file->getFullPath(), $file->getClientFileNameWithFallback());
+                    ->download($file->getFullPath(), $file->getClientFileNameWithFallback(), [
+                        'Content-Type' => 'application/octet-stream',
+                    ]);
             }
         } catch (EntityNotFoundException $e) {
             DmsError::abort(404);

@@ -65,7 +65,7 @@ class FilePreviewComponentRenderer implements IColumnComponentRenderer
 
         $name = $value->getClientFileNameWithFallback();
         if ($isImage && $this->isPublicFile($value)) {
-            $url = $this->getPublicUrl($value);
+            $url = asset_file_url($value);
 
             return '<img src="' . e($url) . '" alt="' . e($name) . '" />';
         } else {
@@ -79,13 +79,4 @@ class FilePreviewComponentRenderer implements IColumnComponentRenderer
     {
         return strpos($file->getFullPath(), PathHelper::normalize($this->config->get('dms.storage.public-files.dir'))) === 0;
     }
-
-    protected function getPublicUrl(IFile $file) : string
-    {
-        $publicDirectory    = PathHelper::normalize($this->config->get('dms.storage.public-files.dir'));
-        $publicDirectoryUrl = asset($this->config->get('dms.storage.public-files.url'));
-
-        return rtrim($publicDirectoryUrl, '/') . '/' . ltrim(substr($file->getFullPath(), strlen($publicDirectory)), '/');
-    }
-
 }

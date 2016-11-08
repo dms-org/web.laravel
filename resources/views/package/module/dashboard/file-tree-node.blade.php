@@ -19,12 +19,12 @@
         <div class="row">
             @foreach ($directoryTree->files as $file)
                 <?php $fileId = $dataSource->getObjectId($file) ?>
-                <?php $isImage = @(bool)getimagesize($file->getFullPath()) ?>
+                <?php $isImage = in_array(strtolower($file->getExtension()), ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'svg', ]) ?>
 
                 <div class="col-sm-4 col-md-3 col-lg-2 dms-file-item{{ $isImage ? ' dms-image-item' : '' }}"
                      data-id="{{ $fileId }}"
                      @if ($isPublic)
-                     data-public-url="{{ asset(rtrim(config('dms.storage.public-files.url'), '/') . '/' . ltrim(substr($file->getFullPath(), strlen($rootDirectory)), '/')) }}"
+                     data-public-url="{{ asset_file_url($file) }}"
                     @endif
                 >
                     <div class="panel panel-default">
@@ -37,7 +37,7 @@
                         <div class="panel-body">
                             @if ($isPublic && $isImage)
                                 <div class="dms-image-preview">
-                                    <img src="{{ asset(config('dms.storage.public-files.url') . '/' . substr($file->getFullPath(), strlen($rootDirectory))) }}"/>
+                                    <img src="{{ asset_file_url($file) }}"/>
                                 </div>
                             @else
                                 <p><strong>Size: </strong> {{ \Dms\Web\Laravel\Util\FileSizeFormatter::formatBytes($file->getSize()) }}</p>

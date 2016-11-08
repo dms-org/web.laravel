@@ -107,8 +107,8 @@ class FileFieldRenderer extends BladeFieldRenderer
             $data[] = [
                     'name'        => $file->getClientFileNameWithFallback(),
                     'size'        => $file->exists() ? $file->getSize() : 0,
-                    'previewUrl'  => $tempFile ? route('dms::file.preview', $tempFile->getToken()) : $this->getPublicUrl($file),
-                    'downloadUrl' => $tempFile ? route('dms::file.download', $tempFile->getToken()) : $this->getPublicUrl($file),
+                    'previewUrl'  => $tempFile ? route('dms::file.preview', $tempFile->getToken()) : asset_file_url($file),
+                    'downloadUrl' => $tempFile ? route('dms::file.download', $tempFile->getToken()) : asset_file_url($file),
                 ] + ($imageDimensions ? ['width' => $imageDimensions[0], 'height' => $imageDimensions[1]] : []);
         }
 
@@ -118,14 +118,6 @@ class FileFieldRenderer extends BladeFieldRenderer
     private function isPublicFile(IFile $file)
     {
         return strpos($file->getFullPath(), PathHelper::normalize($this->config->get('dms.storage.public-files.dir'))) === 0;
-    }
-
-    protected function getPublicUrl(IFile $file) : string
-    {
-        $publicDirectory    = PathHelper::normalize($this->config->get('dms.storage.public-files.dir'));
-        $publicDirectoryUrl = asset($this->config->get('dms.storage.public-files.url'));
-
-        return rtrim($publicDirectoryUrl, '/') . '/' . ltrim(substr($file->getFullPath(), strlen($publicDirectory)), '/');
     }
 
     protected function renderFieldValue(FormRenderingContext $renderingContext, IField $field, $value, IFieldType $fieldType) : string

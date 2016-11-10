@@ -88,7 +88,7 @@ class DmsInstallCommand extends Command
         $filesystem->copy(__DIR__ . '/Stubs/AppServiceProvider.php.stub', app_path('Providers/AppServiceProvider.php'));
         $this->info('Updated: ' . app_path('Providers/AppServiceProvider.php'));
 
-        $console->call('vendor:publish', ['provider' => DmsServiceProvider::class]);
+        $console->call('vendor:publish', ['--provider' => DmsServiceProvider::class]);
         $this->info('Executed: php artisan vendor:publish --provider="' . DmsServiceProvider::class . '"');
 
         app('config')->set(['dms' => require __DIR__ . '/../../config/dms.php']);

@@ -95,7 +95,7 @@ class OauthController extends DmsController
 
         \auth()->guard('dms')->login($adminAccount);
 
-        return \redirect()->intended('dms::index');
+        return \redirect()->intended(route('dms::index'));
     }
 
     protected function loadAdminAccount(OauthProvider $oauthProvider, ResourceOwnerInterface $resourceOwner) : OauthAdmin

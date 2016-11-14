@@ -86,7 +86,8 @@ Dms.form.initializeCallbacks.push(function (element) {
         var startInput = rangeElement.find('.dms-start-input');
         var endInput = rangeElement.find('.dms-end-input');
         var claerButton = rangeElement.find('.dms-btn-clear-input');
-        var dateFormat = Dms.utilities.convertPhpDateFormatToMomentFormat(startInput.attr('data-date-format'));
+        var phpDateFormat = startInput.attr('data-date-format');
+        var dateFormat = Dms.utilities.convertPhpDateFormatToMomentFormat(phpDateFormat);
         var mode = rangeElement.attr('data-mode');
 
         var config = {
@@ -102,7 +103,7 @@ Dms.form.initializeCallbacks.push(function (element) {
 
         if (mode === 'date-time') {
             config.timePicker = true;
-            config.timePickerSeconds = true;
+            config.timePickerSeconds = phpDateFormat.indexOf('s') !== -1;
 
             startInput.val(convertFromUtcToLocal(dateFormat, startInput.val()));
             endInput.val(convertFromUtcToLocal(dateFormat, endInput.val()));
@@ -114,7 +115,7 @@ Dms.form.initializeCallbacks.push(function (element) {
 
         if (mode === 'time') {
             config.timePicker = true;
-            config.timePickerSeconds = true;
+            config.timePickerSeconds = phpDateFormat.indexOf('s') !== -1;
         }
         // TODO: timezoned-date-time
 

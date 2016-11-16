@@ -1,7 +1,7 @@
 <textarea
         name="{{ $name }}"
         class="form-control"
-        placeholder="{{ $label }}"
+        placeholder="{{ $placeholder }}"
         @if($required) required @endif
         @if($readonly) readonly @endif
 

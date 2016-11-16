@@ -8,7 +8,7 @@
         <div class="input-group">
             <input type="text"
                    class="dms-address-search form-control"
-                   placeholder="{{ $label }}"
+                   placeholder="{{ $placeholder }}"
                    @if($required ?? false) required @endif
                    @if($readonly ?? false) readonly @endif
             />

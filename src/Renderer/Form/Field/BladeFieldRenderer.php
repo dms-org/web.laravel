@@ -47,6 +47,7 @@ abstract class BladeFieldRenderer extends FieldRenderer
             ->with('field', $field)
             ->with('name', $field->getName())
             ->with('label', $field->getLabel())
+            ->with('placeholder', $fieldType->get('placeholder') ?: $field->getLabel())
             ->with('fieldType', $fieldType)
             ->with($viewParams)
             ->with($extraParams)

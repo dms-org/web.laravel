@@ -11,7 +11,7 @@
         <input
                 type="text"
                 class="form-control dms-select-input"
-                placeholder="{{ $label }}"
+                placeholder="{{ $placeholder }}"
                 @if($required) required @endif
                 @if($readonly) readonly @endif
                 @if($option !== null) value="{{ $option->getLabel() }}" @endif

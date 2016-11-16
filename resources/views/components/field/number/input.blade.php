@@ -2,7 +2,7 @@
         type="number"
         class="form-control"
         name="{{ $name }}"
-        placeholder="{{ $label }}"
+        placeholder="{{ $placeholder }}"
         @if($required) required @endif
         @if($readonly) readonly @endif
         @if($value !== null) value="{{ $value }}" @endif

@@ -4,7 +4,7 @@
                 type="text"
                 class="form-control dms-date-or-time"
                 name="{{ $name }}"
-                placeholder="{{ $label }}"
+                placeholder="{{ $placeholder }}"
                 @if($required) required @endif
                 @if($readonly) readonly @endif
                 @if($value !== null) value="{{ $value }}" @endif

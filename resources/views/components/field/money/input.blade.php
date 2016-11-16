@@ -4,7 +4,7 @@
             type="text"
             class="form-control dms-money-input"
             name="{{ $name }}[amount]"
-            placeholder="{{ $label }}"
+            placeholder="{{ $placeholder }}"
             @if($required) required @endif
             @if($readonly) readonly @endif
             @if($value !== null) value="{{ $value['amount'] }}" @endif

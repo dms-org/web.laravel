@@ -22,6 +22,7 @@ Dms.form.initializeCallbacks.push(function (element) {
             "link",
             "image",
             "charmap",
+            "textcolor",
             "print",
             "preview",
             "anchor",

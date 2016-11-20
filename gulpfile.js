@@ -79,7 +79,7 @@ elixir(function (mix) {
         './bower_components/tinymce/themes/modern/theme.min.js'
     ];
     var plugins = [
-        "advlist", "autolink", "lists", "link", "image", "charmap",
+        "advlist", "autolink", "lists", "link", "image", "charmap", "textcolor",
         "print", "preview", "anchor", "searchreplace", "visualblocks",
         "code", "insertdatetime", "media", "table", "contextmenu", "paste", "imagetools"
     ];

@@ -35,7 +35,7 @@ Dms.form.initializeCallbacks.push(function (element) {
             "paste",
             "imagetools"
         ],
-        toolbar: "undo redo | styleselect | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist | link image",
+        toolbar: "undo redo | styleselect | bold italic | forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist | link image",
         setup: function (editor) {
             editor.on('change', function () {
                 editor.save();

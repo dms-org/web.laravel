@@ -13,7 +13,7 @@
                 <legend>{{ $groupTitle }}</legend>@endif
             @foreach($fields as $label => $field)
                 <div class="form-group clearfix{{ ($field['hidden'] ?? false) ? ' hidden' : '' }}" data-field-name="{{ $field['name'] }}">
-                    @if($withoutLabel ?? false)
+                    @if($field['withoutLabel'] ?? false)
                         <div class="col-sm-12">
                             {!! $field['content'] !!}
                         </div>

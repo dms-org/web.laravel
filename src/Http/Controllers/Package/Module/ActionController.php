@@ -28,11 +28,13 @@ use Dms\Web\Laravel\Action\UnhandleableActionResultException;
 use Dms\Web\Laravel\Error\DmsError;
 use Dms\Web\Laravel\Http\Controllers\DmsController;
 use Dms\Web\Laravel\Http\ModuleContext;
+use Dms\Web\Laravel\Renderer\Action\ActionButton;
 use Dms\Web\Laravel\Renderer\Action\ObjectActionButtonBuilder;
 use Dms\Web\Laravel\Renderer\Form\ActionFormRenderer;
 use Dms\Web\Laravel\Renderer\Form\FormRenderingContext;
 use Dms\Web\Laravel\Renderer\Form\IFieldRendererWithActions;
 use Dms\Web\Laravel\Renderer\Form\IFormRendererWithActions;
+use Dms\Web\Laravel\Util\ActionLabeler;
 use Dms\Web\Laravel\Util\ActionSafetyChecker;
 use Dms\Web\Laravel\Util\StringHumanizer;
 use Illuminate\Http\Exception\HttpResponseException;
@@ -144,9 +146,9 @@ class ActionController extends DmsController
         return view('dms::package.module.action')
             ->with([
                 'assetGroups'       => ['forms'],
-                'pageTitle'         => implode(' :: ', array_merge($moduleContext->getTitles(), [StringHumanizer::title($actionName)])),
+                'pageTitle'         => implode(' :: ', array_merge($moduleContext->getTitles(), [ActionLabeler::getActionButtonLabel($action)])),
                 'breadcrumbs'       => $moduleContext->getBreadcrumbs(),
-                'finalBreadcrumb'   => StringHumanizer::title($actionName),
+                'finalBreadcrumb'   => ActionLabeler::getActionButtonLabel($action),
                 'objectLabel'       => $objectLabel ? str_singular(StringHumanizer::title($module->getName())) . ': ' . $objectLabel : null,
                 'actionButtons'     => $actionButtons,
                 'objectId'          => $objectId,
@@ -252,9 +254,9 @@ class ActionController extends DmsController
         return view('dms::package.module.details')
             ->with([
                 'assetGroups'     => ['forms'],
-                'pageTitle'       => implode(' :: ', array_merge($moduleContext->getTitles(), [StringHumanizer::title($actionName)])),
+                'pageTitle'       => implode(' :: ', array_merge($moduleContext->getTitles(), [ActionLabeler::getActionButtonLabel($action)])),
                 'breadcrumbs'     => $moduleContext->getBreadcrumbs(),
-                'finalBreadcrumb' => StringHumanizer::title($actionName),
+                'finalBreadcrumb' => ActionLabeler::getActionButtonLabel($action),
                 'objectLabel'     => $objectLabel ? str_singular(StringHumanizer::title($module->getName())) . ': ' . $objectLabel : null,
                 'action'          => $action,
                 'actionResult'    => $response,

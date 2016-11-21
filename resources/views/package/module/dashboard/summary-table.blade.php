@@ -30,12 +30,12 @@
                                  data-action="{{ $moduleContext->getUrl('action.run', [$action->getName()]) }}"
                                  data-method="post"
                             >
-                                {{ \Dms\Web\Laravel\Util\StringHumanizer::title($action->getName())  }}
+                                {{ \Dms\Web\Laravel\Util\ActionLabeler::getActionButtonLabel($action)  }}
                             </button>
                         @else
                             <a  class="btn btn-{{ \Dms\Web\Laravel\Util\KeywordTypeIdentifier::getClass($action->getName()) }}"
                                 href="{{ $moduleContext->getUrl('action.form', [$action->getName()]) }}"
-                            >{{ \Dms\Web\Laravel\Util\StringHumanizer::title($action->getName()) }}</a>
+                            >{{ \Dms\Web\Laravel\Util\ActionLabeler::getActionButtonLabel($action) }}</a>
                         @endif
                     </li>
                 @endforeach

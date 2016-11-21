@@ -35,11 +35,11 @@ class ObjectActionButtonBuilder
     /**
      * @param ModuleContext $moduleContext
      * @param ITypedObject  $object
-     * @param string        $excludeActionName
+     * @param string        $currentActionName
      *
      * @return array|ActionButton[]
      */
-    public function buildActionButtons(ModuleContext $moduleContext, ITypedObject $object = null, string $excludeActionName = null) : array
+    public function buildActionButtons(ModuleContext $moduleContext, ITypedObject $object = null, string $currentActionName = null) : array
     {
         /** @var IReadModule $module */
         $module     = $moduleContext->getModule();
@@ -51,10 +51,6 @@ class ObjectActionButtonBuilder
             }
 
             if ($object && !$action->isSupported($object)) {
-                continue;
-            }
-
-            if ($action->getName() === $excludeActionName) {
                 continue;
             }
 
@@ -86,7 +82,8 @@ class ObjectActionButtonBuilder
                 },
                 function (ITypedObject $object) use ($action) {
                     return $action->isSupported($object);
-                }
+                },
+                $action->getName() === $currentActionName
             );
         }
 

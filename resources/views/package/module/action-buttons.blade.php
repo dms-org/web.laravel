@@ -1,7 +1,12 @@
 <?php /** @var \Dms\Web\Laravel\Renderer\Action\ActionButton[] $actionButtons */ ?>
 
 @foreach($actionButtons as $actionButton)
-    @if($actionButton->isPost())
+    @if($actionButton->isDisabled())
+        <a class="btn btn-{{ \Dms\Web\Laravel\Util\KeywordTypeIdentifier::getClass($actionButton->getName()) ?? 'default' }}"
+           href="javascript:void(0)" disabled="disabled">
+            {{ $actionButton->getLabel() }}
+        </a>
+    @elseif($actionButton->isPost())
         <div class="dms-run-action-form inline" data-action="{{ $actionButton->getUrl($objectId) }}" data-method="post" data-reload-page-after-submit="1">
             {!! csrf_field() !!}
             <button type="submit"

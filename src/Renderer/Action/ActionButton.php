@@ -36,6 +36,11 @@ class ActionButton
     private $objectSupportedCallback;
 
     /**
+     * @var bool
+     */
+    private $disabled;
+
+    /**
      * RowActionButton constructor.
      *
      * @param bool          $isPost
@@ -43,14 +48,16 @@ class ActionButton
      * @param string        $label
      * @param callable      $urlCallback
      * @param callable|null $objectSupportedCallback
+     * @param bool          $disabled
      */
-    public function __construct(bool $isPost, string $name, string $label, callable $urlCallback, callable $objectSupportedCallback = null)
+    public function __construct(bool $isPost, string $name, string $label, callable $urlCallback, callable $objectSupportedCallback = null, bool $disabled = false)
     {
         $this->isPost                  = $isPost;
         $this->name                    = $name;
         $this->label                   = $label;
         $this->urlCallback             = $urlCallback;
         $this->objectSupportedCallback = $objectSupportedCallback;
+        $this->disabled                = $disabled;
     }
 
     /**
@@ -105,5 +112,13 @@ class ActionButton
         return $this->objectSupportedCallback
             ? call_user_func($this->objectSupportedCallback, $object)
             : true;
+    }
+
+    /**
+     * @return boolean
+     */
+    public function isDisabled(): bool
+    {
+        return $this->disabled;
     }
 }

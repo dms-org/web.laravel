@@ -44,10 +44,11 @@ class DefaultFormRenderer extends FormRenderer
 
             foreach ($section->getFields() as $field) {
                 $sections[$title][$field->getLabel()] = [
-                    'name'     => $field->getName(),
-                    'content'  => $this->fieldRenderers->findRendererFor($renderingContext, $field)->render($renderingContext, $field),
-                    'hidden'   => $field->getType()->get(FieldType::ATTR_HIDDEN),
-                    'helpText' => $field->getType()->get('help-text'),
+                    'name'         => $field->getName(),
+                    'content'      => $this->fieldRenderers->findRendererFor($renderingContext, $field)->render($renderingContext, $field),
+                    'hidden'       => $field->getType()->get(FieldType::ATTR_HIDDEN),
+                    'helpText'     => $field->getType()->get('help-text'),
+                    'withoutLabel' => (bool)$field->getType()->get('hide-label'),
                 ];
             }
         }
@@ -88,7 +89,7 @@ class DefaultFormRenderer extends FormRenderer
                 ];
             }
         }
-        
+
         return view('dms::components.form.form-fields')
             ->with(['groupedFields' => $sections])
             ->render();

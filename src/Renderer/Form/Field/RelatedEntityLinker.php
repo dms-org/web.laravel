@@ -2,6 +2,7 @@
 
 namespace Dms\Web\Laravel\Renderer\Form\Field;
 
+use Dms\Core\Common\Crud\ICrudModule;
 use Dms\Core\Form\Field\Options\EntityIdOptions;
 use Dms\Core\Form\IFieldOptions;
 use Dms\Web\Laravel\Util\EntityModuleMap;
@@ -31,7 +32,13 @@ class RelatedEntityLinker
 
             $module = $entityModuleMap->loadModuleFor($options->getObjects()->getObjectType());
 
-            if ($module->getDetailsAction()->isAuthorized()) {
+            if ($module instanceof ICrudModule && $module->allowsEdit() && $module->getEditAction()->isAuthorized()) {
+                return function ($id) use ($module) {
+                    return route('dms::package.module.action.form', [$module->getPackageName(), $module->getName(), $module->getEditAction()->getName(), $id]);
+                };
+            }
+
+            if ($module->allowsDetails() && $module->getDetailsAction()->isAuthorized()) {
                 return function ($id) use ($module) {
                     return route('dms::package.module.action.show', [$module->getPackageName(), $module->getName(), $module->getDetailsAction()->getName(), $id]);
                 };

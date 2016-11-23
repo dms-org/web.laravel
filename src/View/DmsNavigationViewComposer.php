@@ -9,6 +9,8 @@ use Dms\Core\Module\IModule;
 use Dms\Core\Package\IDashboard;
 use Dms\Core\Package\IPackage;
 use Dms\Web\Laravel\Auth\LaravelAuthSystem;
+use Dms\Web\Laravel\Util\ModuleLabeler;
+use Dms\Web\Laravel\Util\PackageLabeler;
 use Dms\Web\Laravel\Util\StringHumanizer;
 use Illuminate\Cache\Repository as Cache;
 use Illuminate\View\View;
@@ -112,10 +114,10 @@ class DmsNavigationViewComposer
                 );
             }
 
-            $packageLabel = StringHumanizer::title($package->getName());
+            $packageLabel = PackageLabeler::getPackageTitle($package);
 
             foreach ($package->loadModules() as $module) {
-                $moduleLabel         = StringHumanizer::title($module->getName());
+                $moduleLabel         = ModuleLabeler::getModuleTitle($module);
                 $packageNavigation[] = new NavigationElement(
                     $moduleLabel,
                     'dms::package.module.dashboard',

@@ -8,7 +8,7 @@
         @if ($lessThanOrEqualFields ?? false) data-less-than-or-equal-fields="{{ json_encode($lessThanOrEqualFields) }}" @endif
 >
     @foreach($groupedFields as $groupTitle => $fields)
-        <fieldset class="dms-form-fieldset">
+        <fieldset class="dms-form-fieldset @if(count(array_filter(array_column($fields, 'hidden'))) === count($fields)) hidden @endif">
             @if($groupTitle !== '')
                 <legend>{{ $groupTitle }}</legend>@endif
             @foreach($fields as $label => $field)

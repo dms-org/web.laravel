@@ -1,4 +1,4 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace {namespace};
 
@@ -11,17 +11,6 @@ use {value_object};
  */
 class {name} extends IndependentValueObjectMapper
 {
-    /**
-     * @var string
-     */
-    protected $columnName;
-
-    public function __construct(string $columnName)
-    {
-        $this->columnName = $columnName;
-        parent::__construct();
-    }
-
     /**
      * Defines the entity mapper
      *

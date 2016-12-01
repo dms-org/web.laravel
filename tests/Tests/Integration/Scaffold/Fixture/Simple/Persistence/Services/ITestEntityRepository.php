@@ -1,63 +1,63 @@
 <?php declare(strict_types = 1);
 
-namespace {namespace};
+namespace Dms\Web\Laravel\Tests\Integration\Scaffold\Fixture\Simple\Persistence\Services;
 
 use Dms\Core\Model\ICriteria;
 use Dms\Core\Model\ISpecification;
 use Dms\Core\Persistence\IRepository;
-use {entity};
+use Dms\Web\Laravel\Tests\Integration\Scaffold\Fixture\Simple\Domain\TestEntity;
 
 /**
- * The repository for the {entity} entity.
+ * The repository for the Dms\Web\Laravel\Tests\Integration\Scaffold\Fixture\Simple\Domain\TestEntity entity.
  */
-interface {name} extends IRepository
+interface ITestEntityRepository extends IRepository
 {
     /**
      * {@inheritDoc}
      *
-     * @return {entity_name}[]
+     * @return TestEntity[]
      */
     public function getAll() : array;
 
     /**
      * {@inheritDoc}
      *
-     * @return {entity_name}
+     * @return TestEntity
      */
     public function get($id);
 
     /**
      * {@inheritDoc}
      *
-     * @return {entity_name}[]
+     * @return TestEntity[]
      */
     public function getAllById(array $ids) : array;
 
     /**
      * {@inheritDoc}
      *
-     * @return {entity_name}|null
+     * @return TestEntity|null
      */
     public function tryGet($id);
 
     /**
      * {@inheritDoc}
      *
-     * @return {entity_name}[]
+     * @return TestEntity[]
      */
     public function tryGetAll(array $ids) : array;
 
     /**
      * {@inheritDoc}
      *
-     * @return {entity_name}[]
+     * @return TestEntity[]
      */
     public function matching(ICriteria $criteria) : array;
 
     /**
      * {@inheritDoc}
      *
-     * @return {entity_name}[]
+     * @return TestEntity[]
      */
     public function satisfying(ISpecification $specification) : array;
 }

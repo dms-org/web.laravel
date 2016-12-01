@@ -1,15 +1,15 @@
 <?php declare(strict_types = 1);
 
-namespace {namespace};
+namespace Dms\Web\Laravel\Tests\Integration\Scaffold\Fixture\Simple\Persistence\Infrastructure;
 
 use Dms\Core\Persistence\Db\Mapping\Definition\MapperDefinition;
 use Dms\Core\Persistence\Db\Mapping\EntityMapper;
-use {entity};
+use Dms\Web\Laravel\Tests\Integration\Scaffold\Fixture\Simple\Domain\TestEntity;
 
 /**
- * The {entity} entity mapper.
+ * The Dms\Web\Laravel\Tests\Integration\Scaffold\Fixture\Simple\Domain\TestEntity entity mapper.
  */
-class {name} extends EntityMapper
+class TestEntityMapper extends EntityMapper
 {
     /**
      * Defines the entity mapper
@@ -20,8 +20,8 @@ class {name} extends EntityMapper
      */
     protected function define(MapperDefinition $map)
     {
-        $map->type({entity_name}::class);
-        $map->toTable('{table_name}');
+        $map->type(TestEntity::class);
+        $map->toTable('test_entities');
 
         $map->idToPrimaryKey('id');
 

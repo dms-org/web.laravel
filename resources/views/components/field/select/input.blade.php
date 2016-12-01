@@ -1,4 +1,4 @@
-<?php /** @var \Dms\Core\Form\IFieldOption[] $options */ ?>
+<?php /** @var \Dms\Core\Form\IFieldOptions $options */ ?>
 <select class="form-control"
         name="{{ $name }}"
         @if($required) required @endif
@@ -15,7 +15,7 @@
         <option
                 value="{{ $option->getValue() }}"
                 @if($option->isDisabled()) disabled="disabled" @endif
-                @if (\Dms\Web\Laravel\Renderer\Form\ValueComparer::areLooselyEqual($option->getValue(), $value))selected="selected" @endif
+                @if (\Dms\Web\Laravel\Renderer\Form\ValueComparer::areLooselyEqual($option->getValue(), $value)) selected="selected" @endif
         >{{ $option->getLabel() }}</option>
     @endforeach
 </select>

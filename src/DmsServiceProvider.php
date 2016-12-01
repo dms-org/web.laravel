@@ -62,6 +62,7 @@ use Dms\Web\Laravel\Renderer\Package\PackageRendererCollection;
 use Dms\Web\Laravel\Renderer\Table\ColumnComponentRendererCollection;
 use Dms\Web\Laravel\Renderer\Table\ColumnRendererFactoryCollection;
 use Dms\Web\Laravel\Renderer\Widget\WidgetRendererCollection;
+use Dms\Web\Laravel\Scaffold\ScaffoldCmsCommand;
 use Dms\Web\Laravel\Scaffold\ScaffoldPersistenceCommand;
 use Dms\Web\Laravel\View\DmsNavigationViewComposer;
 use Illuminate\Auth\AuthManager;
@@ -356,6 +357,7 @@ class DmsServiceProvider extends ServiceProvider
             AutoGenerateMigrationCommand::class,
             ClearTempFilesCommand::class,
             ScaffoldPersistenceCommand::class,
+            ScaffoldCmsCommand::class,
         ]);
     }
 

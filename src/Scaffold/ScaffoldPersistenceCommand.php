@@ -4,26 +4,14 @@ namespace Dms\Web\Laravel\Scaffold;
 
 use Dms\Common\Structure\FileSystem\PathHelper;
 use Dms\Core\Exception\InvalidOperationException;
-use Dms\Core\Model\Object\Entity;
-use Dms\Core\Model\Object\ValueObject;
-use Illuminate\Console\AppNamespaceDetectorTrait;
-use Illuminate\Console\Command;
-use Illuminate\Filesystem\Filesystem;
-use Illuminate\Support\Composer;
-use Pinq\Traversable;
-use Symfony\Component\Finder\Finder;
 
 /**
  * The dms:scaffold:persistence command
  *
  * @author Elliot Levin <elliotlevin@hotmail.com>
  */
-class ScaffoldPersistenceCommand extends Command
+class ScaffoldPersistenceCommand extends ScaffoldCommand
 {
-    use AppNamespaceDetectorTrait {
-        getAppNamespace as baseGetAppNamespace;
-    }
-
     /**
      * The console command signature.
      *
@@ -42,29 +30,6 @@ class ScaffoldPersistenceCommand extends Command
      */
     protected $description = 'Scaffolds the persistence layer for a set of entities';
 
-    /**
-     * @var Composer
-     */
-    protected $composer;
-
-    /**
-     * @var Filesystem
-     */
-    protected $filesystem;
-
-    /**
-     * DmsInstallCommand constructor.
-     *
-     * @param Composer   $composer
-     * @param Filesystem $filesystem
-     */
-    public function __construct(Composer $composer, Filesystem $filesystem)
-    {
-        parent::__construct();
-
-        $this->composer   = $composer;
-        $this->filesystem = $filesystem;
-    }
 
     /**
      * Execute the console command.
@@ -73,14 +38,13 @@ class ScaffoldPersistenceCommand extends Command
      */
     public function fire()
     {
-        $this->loadAllApplicationClasses();
         $namespace = ltrim($this->input->getArgument('entity_namespace'), '\\');
 
         $abstractDirectory       = $this->input->getArgument('output_dir_abstract');
         $implementationDirectory = $this->input->getArgument('output_dir_implementation');
         $overwrite               = (bool)$this->input->hasOption('--overwrite');
-        $entities                = $this->getAllEntitiesUnder($namespace);
-        $valueObjects            = $this->getAllValueObjectsUnder($namespace);
+        $entities                = $this->domainStructureLoader->getAllRootEntitiesUnder($namespace);
+        $valueObjects            = $this->domainStructureLoader->getAllRootValueObjectsUnder($namespace);
 
         if (!$valueObjects && !$entities) {
             $this->output->error('No entities found under ' . $namespace . ' namespace');
@@ -101,53 +65,6 @@ class ScaffoldPersistenceCommand extends Command
         $this->output->success('Done!');
     }
 
-    /**
-     * @return void
-     */
-    protected function loadAllApplicationClasses()
-    {
-        foreach (Finder::create()->files()->in(app_path()) as $file) {
-            /** @var \SplFileInfo $file */
-            if (ends_with($file->getFilename(), '.php')) {
-                require_once $file->getRealPath();
-            }
-        }
-    }
-
-    private function getAllEntitiesUnder(string $namespace) : array
-    {
-        return Traversable::from(get_declared_classes())
-            ->where(function (string $class) {
-                return is_subclass_of($class, Entity::class, true);
-            })
-            ->where(function (string $class) use ($namespace) {
-                return starts_with($class, $namespace);
-            })
-            ->asArray();
-    }
-
-    private function getAllValueObjectsUnder(string $namespace) : array
-    {
-        return Traversable::from(get_declared_classes())
-            ->where(function (string $class) {
-                return is_subclass_of($class, ValueObject::class, true);
-            })
-            ->where(function (string $class) use ($namespace) {
-                return starts_with($class, $namespace);
-            })
-            ->asArray();
-    }
-
-    /**
-     * @param string $appDirectory
-     *
-     * @return string
-     */
-    private function getNamespaceFor(string $appDirectory) : string
-    {
-        return trim(str_replace('/', '\\', substr(PathHelper::normalize(base_path($appDirectory)), strlen(PathHelper::normalize(app_path())))), '\\');
-    }
-
     private function generateRepositoryInterface(string $abstractDirectory, string $namespace, string $entity, bool $overwrite)
     {
         $entityName        = (new \ReflectionClass($entity))->getShortName();
@@ -155,7 +72,7 @@ class ScaffoldPersistenceCommand extends Command
         $relativeNamespace = trim(substr($entityNamespace, strlen($namespace)), '\\');
 
         $repositoryName      = 'I' . $entityName . 'Repository';
-        $repositoryNamespace = $this->getAppNamespace() . '\\' . $this->getNamespaceFor($abstractDirectory) . ($relativeNamespace ? '\\' . $relativeNamespace : '');
+        $repositoryNamespace = $this->namespaceResolver->getNamespaceFor($this->getAbsolutePath($abstractDirectory)) . ($relativeNamespace ? '\\' . $relativeNamespace : '');
         $repositoryClass     = $repositoryNamespace . '\\' . $repositoryName;
         $repositoryDirectory = PathHelper::combine($abstractDirectory, $relativeNamespace);
 
@@ -180,7 +97,7 @@ class ScaffoldPersistenceCommand extends Command
         $relativeNamespace = trim(substr($entityNamespace, strlen($namespace)), '\\');
 
         $mapperName      = $entityName . 'Mapper';
-        $mapperNamespace = $this->getAppNamespace() . '\\' . $this->getNamespaceFor($implementationDirectory) . ($relativeNamespace ? '\\' . $relativeNamespace : '');
+        $mapperNamespace = $this->namespaceResolver->getNamespaceFor($this->getAbsolutePath($implementationDirectory)) . ($relativeNamespace ? '\\' . $relativeNamespace : '');
         $mapperDirectory = PathHelper::combine($implementationDirectory, $relativeNamespace);
 
         $php = $this->filesystem->get(__DIR__ . '/Stubs/Persistence/EntityMapper.php.stub');
@@ -209,7 +126,7 @@ class ScaffoldPersistenceCommand extends Command
         $relativeNamespace = trim(substr($entityNamespace, strlen($namespace)), '\\');
 
         $repositoryName      = 'Db' . $entityName . 'Repository';
-        $repositoryNamespace = $this->getAppNamespace() . '\\' . $this->getNamespaceFor($implementationDirectory) . ($relativeNamespace ? '\\' . $relativeNamespace : '');
+        $repositoryNamespace = $this->namespaceResolver->getNamespaceFor($this->getAbsolutePath($implementationDirectory)) . ($relativeNamespace ? '\\' . $relativeNamespace : '');
         $repositoryDirectory = PathHelper::combine($implementationDirectory, $relativeNamespace);
 
         $php = $this->filesystem->get(__DIR__ . '/Stubs/Persistence/RepositoryImplementation.php.stub');
@@ -233,7 +150,7 @@ class ScaffoldPersistenceCommand extends Command
         $relativeNamespace    = trim(substr($valueObjectNamespace, strlen($namespace)), '\\');
 
         $mapperName      = $valueObjectName . 'Mapper';
-        $mapperNamespace = $this->getAppNamespace() . '\\' . $this->getNamespaceFor($implementationDirectory) . ($relativeNamespace ? '\\' . $relativeNamespace : '');
+        $mapperNamespace = $this->namespaceResolver->getNamespaceFor($this->getAbsolutePath($implementationDirectory)) . ($relativeNamespace ? '\\' . $relativeNamespace : '');
         $mapperDirectory = PathHelper::combine($implementationDirectory, $relativeNamespace);
 
         $php = $this->filesystem->get(__DIR__ . '/Stubs/Persistence/ValueObjectMapper.php.stub');
@@ -246,11 +163,6 @@ class ScaffoldPersistenceCommand extends Command
         ]);
 
         $this->createFile(PathHelper::combine($mapperDirectory, $mapperName . '.php'), $php, $overwrite);
-    }
-
-    protected function getAppNamespace() : string
-    {
-        return trim($this->baseGetAppNamespace(), '\\');
     }
 
     protected function createFile(string $filePath, string $code, bool $overwrite)

@@ -1,0 +1,29 @@
+<?php declare(strict_types = 1);
+
+namespace {namespace};
+
+use Dms\Core\Common\Crud\Definition\Form\ValueObjectFieldDefinition;
+use Dms\Core\Common\Crud\Form\ValueObjectField;
+use {value_object_class};
+
+/**
+ * The {value_object_class} value object field.
+ */
+class {class_name} extends ValueObjectField
+{
+    /**
+     * Defines the structure of this value object field.
+     *
+     * @param ValueObjectFieldDefinition $form
+     *
+     * @return void
+     */
+    protected function define(ValueObjectFieldDefinition $form)
+    {
+        $form->bindTo({value_object_class_name});
+
+        $form->section('', [
+            // TODO
+        ]);
+    }
+}

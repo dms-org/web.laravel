@@ -20,7 +20,7 @@ class {class_name} extends ValueObjectField
      */
     protected function define(ValueObjectFieldDefinition $form)
     {
-        $form->bindTo({value_object_class_name});
+        $form->bindTo({value_object_class_name}::class);
 
         $form->section('', [
             // TODO

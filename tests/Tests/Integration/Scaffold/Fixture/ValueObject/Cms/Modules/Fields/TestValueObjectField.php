@@ -20,7 +20,7 @@ class TestValueObjectField extends ValueObjectField
      */
     protected function define(ValueObjectFieldDefinition $form)
     {
-        $form->bindTo(TestValueObject);
+        $form->bindTo(TestValueObject::class);
 
         $form->section('', [
             // TODO

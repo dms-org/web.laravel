@@ -80,7 +80,7 @@ class ScaffoldCmsCommand extends ScaffoldCommand
 
         $moduleName                = snake_case($entityName, '-');
         $moduleClassName           = $entityName . 'Module';
-        $moduleNamespace           = $this->namespaceResolver->getNamespaceFor($moduleDirectory) . ($relativeNamespace ? '\\' . $relativeNamespace : '');
+        $moduleNamespace           = $this->namespaceResolver->getNamespaceFor($this->getAbsolutePath($moduleDirectory)) . ($relativeNamespace ? '\\' . $relativeNamespace : '');
         $moduleDirectory           = PathHelper::combine($moduleDirectory, $relativeNamespace);
         $moduleDataSourceClassName = 'I' . $entityName . 'Repository';
         $moduleDataSourceClass     = $dataSourceNamespace . '\\' . $moduleDataSourceClassName;
@@ -107,7 +107,7 @@ class ScaffoldCmsCommand extends ScaffoldCommand
         $relativeNamespace    = trim(substr($valueObjectNamespace, strlen($rootEntityNamespace)), '\\');
 
         $fieldClassName = $valueObjectName . 'Field';
-        $fieldNamespace = $this->namespaceResolver->getNamespaceFor($fieldDirectory) . ($relativeNamespace ? '\\' . $relativeNamespace : '');
+        $fieldNamespace = $this->namespaceResolver->getNamespaceFor($this->getAbsolutePath($fieldDirectory)) . ($relativeNamespace ? '\\' . $relativeNamespace : '');
         $fieldDirectory = PathHelper::combine($fieldDirectory, $relativeNamespace);
 
         $php = $this->filesystem->get(__DIR__ . '/Stubs/Cms/ValueObjectField.php.stub');
@@ -125,7 +125,7 @@ class ScaffoldCmsCommand extends ScaffoldCommand
     private function generatePackage(string $packageName, string $cmsDirectory, array $modules, bool $overwrite)
     {
         $packageClassName = studly_case($packageName) . 'Package';
-        $packageNamespace = $this->namespaceResolver->getNamespaceFor($cmsDirectory);
+        $packageNamespace = $this->namespaceResolver->getNamespaceFor($this->getAbsolutePath($cmsDirectory));
 
         $php = $this->filesystem->get(__DIR__ . '/Stubs/Cms/Package.php.stub');
 
@@ -135,7 +135,8 @@ class ScaffoldCmsCommand extends ScaffoldCommand
 
         foreach ($modules as $name => $moduleClass) {
             $moduleImports[] = 'use ' . $moduleClass . ';';
-            $moduleMap[]     = $indent . $indent . $indent . '\'' . $name . '\' => ' . basename($moduleClass) . '::class,';
+            $moduleName      = array_last(explode('\\', $moduleClass));
+            $moduleMap[]     = $indent . $indent . $indent . '\'' . $name . '\' => ' . $moduleName . '::class,';
         }
 
         $php = strtr($php, [
@@ -143,7 +144,7 @@ class ScaffoldCmsCommand extends ScaffoldCommand
             '{name}'            => $packageName,
             '{class_name}'      => $packageClassName,
             '{module_imports}'  => implode(PHP_EOL, $moduleImports),
-            '{module_name_map}' => '[' . PHP_EOL . implode(PHP_EOL . $indent, $moduleMap) . PHP_EOL . $indent . $indent . ']',
+            '{module_name_map}' => '[' . PHP_EOL . implode(PHP_EOL, $moduleMap) . PHP_EOL . $indent . $indent . ']',
         ]);
 
         $this->createFile(PathHelper::combine($cmsDirectory, $packageClassName . '.php'), $php, $overwrite);

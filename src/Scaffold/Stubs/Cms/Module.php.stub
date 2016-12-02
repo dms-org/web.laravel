@@ -8,14 +8,18 @@ use Dms\Core\Common\Crud\Definition\CrudModuleDefinition;
 use Dms\Core\Common\Crud\Definition\Form\CrudFormDefinition;
 use Dms\Core\Common\Crud\Definition\Table\SummaryTableDefinition;
 use {data_source_class};
+{imports}
 
 /**
  * The {name} module.
  */
 class {class_name} extends CrudModule
 {
-    public function __construct({data_source_class_name} $dataSource, IAuthSystem $authSystem)
+{properties}
+
+    public function __construct({data_source_class_name} $dataSource, IAuthSystem $authSystem{constructor_params})
     {
+{initializers}
         parent::__construct($dataSource, $authSystem);
     }
 
@@ -33,13 +37,17 @@ class {class_name} extends CrudModule
         ]);
 
         $module->crudForm(function (CrudFormDefinition $form) {
-            // TODO:
+{fields}
         });
 
         $module->removeAction()->deleteFromDataSource();
 
         $module->summaryTable(function (SummaryTableDefinition $table) {
-            // TODO:
+{columns}
+
+            $table->view('all', 'All')
+                ->loadAll()
+                ->asDefault();
         });
     }
 }

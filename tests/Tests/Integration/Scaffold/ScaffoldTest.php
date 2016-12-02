@@ -2,7 +2,7 @@
 
 namespace Dms\Web\Laravel\Tests\Integration\Scaffold;
 
-use Dms\Web\Laravel\Scaffold\NamespaceResolver;
+use Dms\Web\Laravel\Scaffold\NamespaceDirectoryResolver;
 use Dms\Web\Laravel\Tests\Integration\CmsIntegrationTest;
 use Dms\Web\Laravel\Tests\Integration\Fixtures\Demo\DemoFixture;
 use Illuminate\Contracts\Console\Kernel;
@@ -61,28 +61,28 @@ abstract class ScaffoldTest extends CmsIntegrationTest
         }
     }
 
-    protected function mockNamespaceResolver(array $directoryNamespaceMap) : NamespaceResolver
+    protected function mockNamespaceDirectoryResolver(array $namespaceDirectoryMap) : NamespaceDirectoryResolver
     {
-        return new class($directoryNamespaceMap) extends NamespaceResolver
+        return new class($namespaceDirectoryMap) extends NamespaceDirectoryResolver
         {
             /**
              * @var string[]
              */
-            protected $directoryNamespaceMap;
+            protected $namespaceDirectoryMap;
 
             /**
              *  constructor.
              *
-             * @param \string[] $directoryNamespaceMap
+             * @param \string[] $namespaceDirectoryMap
              */
-            public function __construct(array $directoryNamespaceMap)
+            public function __construct(array $namespaceDirectoryMap)
             {
-                $this->directoryNamespaceMap = $directoryNamespaceMap;
+                $this->namespaceDirectoryMap = $namespaceDirectoryMap;
             }
 
-            public function getNamespaceFor(string $directory) : string
+            public function getDirectoryFor(string $namespace) : string
             {
-                return $this->directoryNamespaceMap[$directory];
+                return $this->namespaceDirectoryMap[$namespace];
             }
         };
     }

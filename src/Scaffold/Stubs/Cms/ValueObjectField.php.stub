@@ -4,13 +4,21 @@ namespace {namespace};
 
 use Dms\Core\Common\Crud\Definition\Form\ValueObjectFieldDefinition;
 use Dms\Core\Common\Crud\Form\ValueObjectField;
-use {value_object_class};
+{imports}
 
 /**
  * The {value_object_class} value object field.
  */
 class {class_name} extends ValueObjectField
 {
+{properties}
+
+    public function __construct(string $name, string $label{constructor_params})
+    {
+{initializers}
+        parent::__construct($name, $label);
+    }
+
     /**
      * Defines the structure of this value object field.
      *
@@ -22,8 +30,6 @@ class {class_name} extends ValueObjectField
     {
         $form->bindTo({value_object_class_name}::class);
 
-        $form->section('', [
-            // TODO
-        ]);
+{fields}
     }
 }

@@ -6,6 +6,7 @@ use Dms\Core\Persistence\Db\Mapping\Definition\MapperDefinition;
 use Dms\Core\Persistence\Db\Mapping\EntityMapper;
 use Dms\Web\Laravel\Tests\Integration\Scaffold\Fixture\Simple\Domain\TestEntity;
 
+
 /**
  * The Dms\Web\Laravel\Tests\Integration\Scaffold\Fixture\Simple\Domain\TestEntity entity mapper.
  */
@@ -25,6 +26,14 @@ class TestEntityMapper extends EntityMapper
 
         $map->idToPrimaryKey('id');
 
-        // TODO
+        $map->property(TestEntity::STRING)->to('string')->asVarchar(255);
+
+        $map->property(TestEntity::INT)->to('int')->asInt();
+
+        $map->property(TestEntity::FLOAT)->to('float')->asDecimal(16, 8);
+
+        $map->property(TestEntity::BOOL)->to('bool')->asBool();
+
+
     }
 }

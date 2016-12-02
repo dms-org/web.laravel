@@ -1,4 +1,4 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Util;
 
@@ -38,7 +38,11 @@ class PhpBuilder
      */
     public function append(string $code)
     {
-        $this->code .= $this->indent($code);
+        if ($code && (empty($this->code) || substr($this->code, -strlen(PHP_EOL)) === PHP_EOL)) {
+            $this->code .= $this->indent($code);
+        } else {
+            $this->code .= $code;
+        }
     }
 
     /**

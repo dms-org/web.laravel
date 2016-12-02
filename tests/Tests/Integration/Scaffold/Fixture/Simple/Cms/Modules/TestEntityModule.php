@@ -8,14 +8,19 @@ use Dms\Core\Common\Crud\Definition\CrudModuleDefinition;
 use Dms\Core\Common\Crud\Definition\Form\CrudFormDefinition;
 use Dms\Core\Common\Crud\Definition\Table\SummaryTableDefinition;
 use Dms\Web\Laravel\Tests\Integration\Scaffold\Fixture\Simple\Persistence\Services\ITestEntityRepository;
+use Dms\Web\Laravel\Tests\Integration\Scaffold\Fixture\Simple\Domain\TestEntity;
+use Dms\Common\Structure\Field;
 
 /**
  * The test-entity module.
  */
 class TestEntityModule extends CrudModule
 {
+
+
     public function __construct(ITestEntityRepository $dataSource, IAuthSystem $authSystem)
     {
+
         parent::__construct($dataSource, $authSystem);
     }
 
@@ -33,13 +38,40 @@ class TestEntityModule extends CrudModule
         ]);
 
         $module->crudForm(function (CrudFormDefinition $form) {
-            // TODO:
+            $form->section('Details', [
+                $form->field(
+                    Field::create('string', 'String')->string()->required()
+                )->bindToProperty(TestEntity::STRING),
+                //
+                $form->field(
+                    Field::create('int', 'Int')->int()->required()
+                )->bindToProperty(TestEntity::INT),
+                //
+                $form->field(
+                    Field::create('float', 'Float')->decimal()->required()
+                )->bindToProperty(TestEntity::FLOAT),
+                //
+                $form->field(
+                    Field::create('bool', 'Bool')->bool()
+                )->bindToProperty(TestEntity::BOOL),
+                //
+            ]);
+
         });
 
         $module->removeAction()->deleteFromDataSource();
 
         $module->summaryTable(function (SummaryTableDefinition $table) {
-            // TODO:
+            $table->mapProperty(TestEntity::ID)->to(Field::create('id', 'Id')->int());
+            $table->mapProperty(TestEntity::STRING)->to(Field::create('string', 'String')->string()->required());
+            $table->mapProperty(TestEntity::INT)->to(Field::create('int', 'Int')->int()->required());
+            $table->mapProperty(TestEntity::FLOAT)->to(Field::create('float', 'Float')->decimal()->required());
+            $table->mapProperty(TestEntity::BOOL)->to(Field::create('bool', 'Bool')->bool());
+
+
+            $table->view('all', 'All')
+                ->loadAll()
+                ->asDefault();
         });
     }
 }

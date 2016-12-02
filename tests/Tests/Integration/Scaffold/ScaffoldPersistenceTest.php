@@ -2,7 +2,7 @@
 
 namespace Dms\Web\Laravel\Tests\Integration\Scaffold;
 
-use Dms\Web\Laravel\Scaffold\NamespaceResolver;
+use Dms\Web\Laravel\Scaffold\NamespaceDirectoryResolver;
 use Symfony\Component\Finder\Finder;
 
 
@@ -45,15 +45,16 @@ class ScaffoldPersistenceTest extends ScaffoldTest
             require_once $file->getRealPath();
         }
 
-        $this->app[NamespaceResolver::class] = $this->mockNamespaceResolver([
-            $tempServicesPath       => __NAMESPACE__ . '\\Fixture\\' . $name . '\\Persistence\\Services',
-            $tempInfrastructurePath => __NAMESPACE__ . '\\Fixture\\' . $name . '\\Persistence\\Infrastructure',
+        $this->app[NamespaceDirectoryResolver::class] = $this->mockNamespaceDirectoryResolver([
+            __NAMESPACE__ . '\\Fixture\\' . $name . '\\Domain'                      => $domainPath,
+            __NAMESPACE__ . '\\Fixture\\' . $name . '\\Persistence\\Services'       => $tempServicesPath,
+            __NAMESPACE__ . '\\Fixture\\' . $name . '\\Persistence\\Infrastructure' => $tempInfrastructurePath,
         ]);;
 
         $this->getConsole()->call('dms:scaffold:persistence', [
-            'entity_namespace'          => $entityNamespace,
-            'output_dir_abstract'       => $tempServicesPath,
-            'output_dir_implementation' => $tempInfrastructurePath,
+            'entity_namespace'                => $entityNamespace,
+            'output_abstract_namespace'       => __NAMESPACE__ . '\\Fixture\\' . $name . '\\Persistence\\Services',
+            'output_implementation_namespace' => __NAMESPACE__ . '\\Fixture\\' . $name . '\\Persistence\\Infrastructure',
         ]);
 
         $this->assertDirectoriesEqual($servicesPath, $tempServicesPath);

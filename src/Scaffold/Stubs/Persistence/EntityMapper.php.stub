@@ -5,6 +5,7 @@ namespace {namespace};
 use Dms\Core\Persistence\Db\Mapping\Definition\MapperDefinition;
 use Dms\Core\Persistence\Db\Mapping\EntityMapper;
 use {entity};
+{imports}
 
 /**
  * The {entity} entity mapper.
@@ -25,6 +26,6 @@ class {name} extends EntityMapper
 
         $map->idToPrimaryKey('id');
 
-        // TODO
+{mapping}
     }
 }

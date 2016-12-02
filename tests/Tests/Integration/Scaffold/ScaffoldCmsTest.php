@@ -2,7 +2,7 @@
 
 namespace Dms\Web\Laravel\Tests\Integration\Scaffold;
 
-use Dms\Web\Laravel\Scaffold\NamespaceResolver;
+use Dms\Web\Laravel\Scaffold\NamespaceDirectoryResolver;
 use Symfony\Component\Finder\Finder;
 
 
@@ -43,16 +43,17 @@ class ScaffoldCmsTest extends ScaffoldTest
             require_once $file->getRealPath();
         }
 
-        $this->app[NamespaceResolver::class] = $this->mockNamespaceResolver([
-            $tempCmsPath                     => __NAMESPACE__ . '\\Fixture\\' . $name . '\\Cms',
-            $tempCmsPath . '/Modules'        => __NAMESPACE__ . '\\Fixture\\' . $name . '\\Cms\\Modules',
-            $tempCmsPath . '/Modules/Fields' => __NAMESPACE__ . '\\Fixture\\' . $name . '\\Cms\\Modules\\Fields',
+        $this->app[NamespaceDirectoryResolver::class] = $this->mockNamespaceDirectoryResolver([
+            __NAMESPACE__ . '\\Fixture\\' . $name . '\\Domain'               => $domainPath,
+            __NAMESPACE__ . '\\Fixture\\' . $name . '\\Cms'                  => $tempCmsPath,
+            __NAMESPACE__ . '\\Fixture\\' . $name . '\\Cms\\Modules'         => $tempCmsPath . '/Modules',
+            __NAMESPACE__ . '\\Fixture\\' . $name . '\\Cms\\Modules\\Fields' => $tempCmsPath . '/Modules/Fields',
         ]);;
 
         $this->getConsole()->call('dms:scaffold:cms', [
             'package_name'          => $name,
             'entity_namespace'      => $entityNamespace,
-            'output_dir'            => $tempCmsPath,
+            'output_namespace'      => __NAMESPACE__ . '\\Fixture\\' . $name . '\\Cms',
             'data_source_namespace' => 'Dms\Web\Laravel\Tests\Integration\Scaffold\Fixture\\' . $name . '\Persistence\Services',
         ]);
 

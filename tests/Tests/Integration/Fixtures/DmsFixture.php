@@ -54,9 +54,9 @@ abstract class DmsFixture
         $app['config']->set('database.default', 'testing-stub');
         $app['config']->set('database.default', 'testing-stub');
         $app['config']->set('database.connections.testing-stub', [
-                'driver'   => 'sqlite',
-                'database' => $this->dbStubFile(),
-                'prefix'   => '',
+            'driver'   => 'sqlite',
+            'database' => $this->dbStubFile(),
+            'prefix'   => '',
         ]);
 
         $migrationGenerator = $app->make(LaravelMigrationGenerator::class, ['path' => $migrationsPath]);
@@ -65,16 +65,16 @@ abstract class DmsFixture
             file_put_contents($this->dbStubFile(), '');
 
             $migrationFile = $migrationGenerator->generateMigration(
-                    $app->make(IConnection::class),
-                    $app->make(IOrm::class),
-                    basename(get_class($this)) . '-' . str_random(5)
+                $app->make(IConnection::class),
+                $app->make(IOrm::class),
+                basename(get_class($this)) . '-' . str_random(5)
             );
 
             if ($migrationFile) {
                 $console = $this->getConsole($app);
                 $console->call('migrate', [
-                        '--database' => 'testing-stub',
-                        '--realpath' => $migrationsPath
+                    '--database' => 'testing-stub',
+                    '--realpath' => $migrationsPath,
                 ]);
             }
 
@@ -84,13 +84,15 @@ abstract class DmsFixture
 
     public function setUp(Application $app)
     {
+        $app->setBasePath(realpath(__DIR__ . '/../../../../'));
+
         // Setup default database to use sqlite
         /** @var Application|Container $app */
         $app['config']->set('database.default', 'testing');
         $app['config']->set('database.connections.testing', [
-                'driver'   => 'sqlite',
-                'database' => $this->dbFile(),
-                'prefix'   => '',
+            'driver'   => 'sqlite',
+            'database' => $this->dbFile(),
+            'prefix'   => '',
         ]);
         $app->forgetInstance(IConnection::class);
 
@@ -140,7 +142,7 @@ abstract class DmsFixture
     protected function runSeeder(Application $app, $class)
     {
         $this->getConsole($app)->call('db:seed', [
-                '--class' => $class
+            '--class' => $class,
         ]);
     }
 }

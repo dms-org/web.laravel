@@ -24,7 +24,7 @@ if (!function_exists('asset_file_url')) {
         }
 
         $filePath   = $file->exists() ? realpath($file->getFullPath()) : $file->getFullPath();
-        $publicPath = realpath(public_path());
+        $publicPath = realpath(public_path()) ?: public_path();
 
         if (!starts_with($filePath, $publicPath)) {
             throw \Dms\Core\Exception\InvalidArgumentException::format(

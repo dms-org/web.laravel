@@ -10,6 +10,11 @@ use Dms\Core\Model\Object\ValueObject;
  */
 class TestValueObject extends ValueObject
 {
+    const STRING = 'string';
+    const INT = 'int';
+    const FLOAT = 'float';
+    const BOOL = 'bool';
+
     /**
      * @var string
      */

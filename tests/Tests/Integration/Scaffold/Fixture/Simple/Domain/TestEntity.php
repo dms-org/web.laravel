@@ -11,6 +11,11 @@ use Dms\Core\Model\Object\Entity;
  */
 class TestEntity extends Entity
 {
+    const STRING = 'string';
+    const INT = 'int';
+    const FLOAT = 'float';
+    const BOOL = 'bool';
+
     /**
      * @var string
      */

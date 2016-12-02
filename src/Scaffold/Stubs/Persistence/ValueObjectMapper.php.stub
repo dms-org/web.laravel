@@ -5,6 +5,7 @@ namespace {namespace};
 use Dms\Core\Persistence\Db\Mapping\Definition\MapperDefinition;
 use Dms\Core\Persistence\Db\Mapping\IndependentValueObjectMapper;
 use {value_object};
+{imports}
 
 /**
  * The {value_object} value object mapper.
@@ -22,6 +23,6 @@ class {name} extends IndependentValueObjectMapper
     {
         $map->type({value_object_name}::class);
 
-        // TODO
+{mapping}
     }
 }

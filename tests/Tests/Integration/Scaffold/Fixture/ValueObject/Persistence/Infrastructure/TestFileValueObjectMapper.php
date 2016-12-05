@@ -27,8 +27,16 @@ class TestFileValueObjectMapper extends IndependentValueObjectMapper
         $map->embedded(TestFileValueObject::FILE)
             ->using(new FileMapper('file', 'file_file_name', public_path('app/test_file_value_object')));
 
+        $map->embedded(TestFileValueObject::NULLABLE_FILE)
+            ->withIssetColumn('nullable_file')
+            ->using(new FileMapper('nullable_file', 'nullable_file_file_name', public_path('app/test_file_value_object')));
+
         $map->embedded(TestFileValueObject::IMAGE)
             ->using(new ImageMapper('image', 'image_file_name', public_path('app/test_file_value_object')));
+
+        $map->embedded(TestFileValueObject::NULLABLE_IMAGE)
+            ->withIssetColumn('nullable_image')
+            ->using(new ImageMapper('nullable_image', 'nullable_image_file_name', public_path('app/test_file_value_object')));
 
 
     }

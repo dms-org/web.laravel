@@ -2,11 +2,6 @@
 
 namespace Dms\Web\Laravel\Scaffold\CodeGeneration;
 
-use Dms\Common\Structure\DateTime\Date;
-use Dms\Common\Structure\DateTime\DateTime;
-use Dms\Common\Structure\DateTime\TimeOfDay;
-use Dms\Common\Structure\DateTime\TimezonedDateTime;
-use Dms\Common\Structure\Field;
 use Dms\Common\Structure\FileSystem\File;
 use Dms\Common\Structure\FileSystem\Image;
 use Dms\Common\Structure\FileSystem\Persistence\FileMapper;
@@ -52,7 +47,7 @@ class FilePropertyCodeGenerator extends PropertyCodeGenerator
             $code->getCode()->appendLine('->withIssetColumn(\'' . $columnName . '\')');
         }
 
-        if ($property->getType()->isSubsetOf(Image::type())) {
+        if ($property->getType()->nonNullable()->isSubsetOf(Image::type())) {
             $class = ImageMapper::class;
         } else {
             $class = FileMapper::class;
@@ -85,9 +80,9 @@ class FilePropertyCodeGenerator extends PropertyCodeGenerator
 
         $code->getCode()->indent++;
 
-        if ($property->getType()->isSubsetOf(Image::type())) {
+        if ($property->getType()->nonNullable()->isSubsetOf(Image::type())) {
             $code->getCode()->appendLine('->image()');
-        } else  {
+        } else {
             $code->getCode()->appendLine('->file()');
         }
 

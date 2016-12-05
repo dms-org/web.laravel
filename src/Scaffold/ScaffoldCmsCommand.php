@@ -148,6 +148,10 @@ class ScaffoldCmsCommand extends ScaffoldCommand
         $code->getCode()->indent = $indent;
 
         foreach ($object->getDefinition()->getProperties() as $property) {
+            if ($property->getName() === Entity::ID) {
+                continue;
+            }
+
             $this->getCodeGeneratorFor($object, $property->getName())->generateCmsColumnBindingCode(
                 $code,
                 $object,

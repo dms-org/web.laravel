@@ -25,6 +25,8 @@ class TestValueObjectWithEnumMapper extends IndependentValueObjectMapper
 
         $map->enum(TestValueObjectWithEnum::ENUM)->to('enum')->usingValuesFromConstants();
 
+        $map->enum(TestValueObjectWithEnum::NULLABLE_ENUM)->to('nullable_enum')->usingValuesFromConstants();
+
 
     }
 }

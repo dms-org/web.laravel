@@ -40,11 +40,23 @@ class TestFileValueObjectField extends ValueObjectField
             )->bindToProperty(TestFileValueObject::FILE),
             //
             $form->field(
+                Field::create('nullable_file', 'Nullable File')
+                    ->file()
+                    ->moveToPathWithRandomFileName(public_path('app/test_file_value_object'))
+            )->bindToProperty(TestFileValueObject::NULLABLE_FILE),
+            //
+            $form->field(
                 Field::create('image', 'Image')
                     ->image()
                     ->required()
                     ->moveToPathWithRandomFileName(public_path('app/test_file_value_object'))
             )->bindToProperty(TestFileValueObject::IMAGE),
+            //
+            $form->field(
+                Field::create('nullable_image', 'Nullable Image')
+                    ->image()
+                    ->moveToPathWithRandomFileName(public_path('app/test_file_value_object'))
+            )->bindToProperty(TestFileValueObject::NULLABLE_IMAGE),
             //
         ]);
 

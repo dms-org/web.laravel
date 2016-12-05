@@ -29,14 +29,30 @@ class TestDateTimeValueObjectMapper extends IndependentValueObjectMapper
         $map->embedded(TestDateTimeValueObject::DATE_TIME)
             ->using(new DateTimeMapper('date_time'));
 
+        $map->embedded(TestDateTimeValueObject::NULLABLE_DATE_TIME)
+            ->withIssetColumn('nullable_date_time')
+            ->using(new DateTimeMapper('nullable_date_time'));
+
         $map->embedded(TestDateTimeValueObject::DATE)
             ->using(new DateMapper('date'));
+
+        $map->embedded(TestDateTimeValueObject::NULLABLE_DATE)
+            ->withIssetColumn('nullable_date')
+            ->using(new DateMapper('nullable_date'));
 
         $map->embedded(TestDateTimeValueObject::TIME_OF_DAY)
             ->using(new TimeOfDayMapper('time_of_day'));
 
+        $map->embedded(TestDateTimeValueObject::NULLABLE_TIME_OF_DAY)
+            ->withIssetColumn('nullable_time_of_day')
+            ->using(new TimeOfDayMapper('nullable_time_of_day'));
+
         $map->embedded(TestDateTimeValueObject::TIMEZONED_DATE_TIME)
             ->using(new TimezonedDateTimeMapper('timezoned_date_time_date_time', 'timezoned_date_time_timezone'));
+
+        $map->embedded(TestDateTimeValueObject::NULLABLE_TIMEZONED_DATE_TIME)
+            ->withIssetColumn('nullable_timezoned_date_time_date_time')
+            ->using(new TimezonedDateTimeMapper('nullable_timezoned_date_time_date_time', 'nullable_timezoned_date_time_timezone'));
 
 
     }

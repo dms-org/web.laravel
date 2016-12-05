@@ -42,6 +42,15 @@ class TestValueObjectWithEnumField extends ValueObjectField
                 ])->required()
             )->bindToProperty(TestValueObjectWithEnum::ENUM),
             //
+            $form->field(
+                Field::create('nullable_enum', 'Nullable Enum')->enum(TestEnum::class, [
+                    TestEnum::STRING => 'String',
+                    TestEnum::INT => 'Int',
+                    TestEnum::FLOAT => 'Float',
+                    TestEnum::BOOL => 'Bool',
+                ])
+            )->bindToProperty(TestValueObjectWithEnum::NULLABLE_ENUM),
+            //
         ]);
 
     }

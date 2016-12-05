@@ -3,14 +3,18 @@
 namespace Dms\Web\Laravel\Scaffold;
 
 use Dms\Core\Exception\InvalidArgumentException;
+use Dms\Web\Laravel\Scaffold\CodeGeneration\ColourPropertyCodeGenerator;
 use Dms\Web\Laravel\Scaffold\CodeGeneration\Convention\DefaultCodeConvention;
 use Dms\Web\Laravel\Scaffold\CodeGeneration\DateAndTimePropertyCodeGenerator;
 use Dms\Web\Laravel\Scaffold\CodeGeneration\EnumPropertyCodeGenerator;
 use Dms\Web\Laravel\Scaffold\CodeGeneration\FallbackPropertyCodeGenerator;
 use Dms\Web\Laravel\Scaffold\CodeGeneration\FilePropertyCodeGenerator;
+use Dms\Web\Laravel\Scaffold\CodeGeneration\GeoPropertyCodeGenerator;
+use Dms\Web\Laravel\Scaffold\CodeGeneration\MoneyPropertyCodeGenerator;
 use Dms\Web\Laravel\Scaffold\CodeGeneration\PhpCodeBuilderContext;
 use Dms\Web\Laravel\Scaffold\CodeGeneration\PropertyCodeGenerator;
 use Dms\Web\Laravel\Scaffold\CodeGeneration\ScalarPropertyCodeGenerator;
+use Dms\Web\Laravel\Scaffold\CodeGeneration\WebPropertyCodeGenerator;
 use Dms\Web\Laravel\Scaffold\Domain\DomainObjectStructure;
 use Dms\Web\Laravel\Scaffold\Domain\DomainStructureLoader;
 use Illuminate\Console\Command;
@@ -63,6 +67,10 @@ abstract class ScaffoldCommand extends Command
             new ScalarPropertyCodeGenerator($convention),
             new DateAndTimePropertyCodeGenerator($convention),
             new FilePropertyCodeGenerator($convention),
+            new ColourPropertyCodeGenerator($convention),
+            new GeoPropertyCodeGenerator($convention),
+            new MoneyPropertyCodeGenerator($convention),
+            new WebPropertyCodeGenerator($convention),
             new EnumPropertyCodeGenerator($convention),
             new FallbackPropertyCodeGenerator($convention),
         ];

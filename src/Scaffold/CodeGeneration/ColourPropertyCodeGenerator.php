@@ -2,19 +2,17 @@
 
 namespace Dms\Web\Laravel\Scaffold\CodeGeneration;
 
-use Dms\Common\Structure\DateTime\Date;
-use Dms\Common\Structure\DateTime\DateTime;
-use Dms\Common\Structure\DateTime\TimeOfDay;
-use Dms\Common\Structure\DateTime\TimezonedDateTime;
-use Dms\Core\Model\Object\Enum;
+use Dms\Common\Structure\Colour\Colour;
+use Dms\Common\Structure\Colour\Mapper\ColourMapper;
+use Dms\Common\Structure\Colour\Mapper\TransparentColourMapper;
+use Dms\Common\Structure\Colour\TransparentColour;
 use Dms\Core\Model\Object\FinalizedPropertyDefinition;
-use Dms\Core\Model\Type\ObjectType;
 use Dms\Web\Laravel\Scaffold\Domain\DomainObjectStructure;
 
 /**
  * @author Elliot Levin <elliotlevin@hotmail.com>
  */
-class EnumPropertyCodeGenerator extends PropertyCodeGenerator
+class ColourPropertyCodeGenerator extends PropertyCodeGenerator
 {
     /**
      * @param DomainObjectStructure       $object
@@ -24,9 +22,9 @@ class EnumPropertyCodeGenerator extends PropertyCodeGenerator
      */
     protected function doesSupportProperty(DomainObjectStructure $object, FinalizedPropertyDefinition $property) : bool
     {
-        return $property->getType()->nonNullable()->isSubsetOf(Enum::type());
+        $type = $property->getType()->nonNullable();
+        return $type->isSubsetOf(Colour::type()) || $type->isSubsetOf(TransparentColour::type());
     }
-
 
     /**
      * @param PhpCodeBuilderContext       $code
@@ -42,11 +40,26 @@ class EnumPropertyCodeGenerator extends PropertyCodeGenerator
         string $propertyReference,
         string $columnName
     ) {
-        $php = '$map->enum(' . $propertyReference . ')->to(\'' . $columnName . '\')';
+        $code->getCode()->appendLine('$map->embedded(' . $propertyReference . ')');
 
-        $php .= '->usingValuesFromConstants()';
+        $code->getCode()->indent++;
 
-        $code->getCode()->append($php);
+        if ($property->getType()->isNullable()) {
+            $code->getCode()->appendLine('->withIssetColumn(\'' . $columnName . '\')');
+        }
+
+        if ($property->getType()->nonNullable()->isSubsetOf(Colour::type())) {
+            $class  = ColourMapper::class;
+            $method = 'asHexString';
+        } else {
+            $class  = TransparentColourMapper::class;
+            $method = 'asRgbaString';;
+        }
+
+        $code->addNamespaceImport($class);
+        $code->getCode()->append('->using(' . basename($class) . '::' . $method . '(\'' . $columnName . '\'))');
+
+        $code->getCode()->indent--;
     }
 
     /**
@@ -67,23 +80,11 @@ class EnumPropertyCodeGenerator extends PropertyCodeGenerator
     ) {
         $code->getCode()->append('Field::create(\'' . $fieldName . '\', \'' . $fieldLabel . '\')');
 
-        /** @var ObjectType $objectType */
-        $objectType = $property->getType()->nonNullable();
-        /** @var string|Enum $enumClass */
-        $enumClass = $objectType->getClass();
-        $code->addNamespaceImport($enumClass);
-
-        $code->getCode()->appendLine('->enum(' . basename($enumClass) . '::class, [');
-
-        $code->getCode()->indent++;
-
-        foreach ($enumClass::getOptions() as $constant => $option) {
-            $label = $this->codeConvention->getCmsFieldLabel((string)$option);
-            $code->getCode()->appendLine(basename($enumClass) . '::' . $constant . ' => ' . var_export($label, true) . ',');
+        if ($property->getType()->nonNullable()->isSubsetOf(Colour::type())) {
+            $code->getCode()->append('->colour()');
+        } else {
+            $code->getCode()->append('->colourWithTransparency()');
         }
-
-        $code->getCode()->indent--;
-        $code->getCode()->append('])');
 
         if (!$property->getType()->isNullable()) {
             $code->getCode()->append('->required()');

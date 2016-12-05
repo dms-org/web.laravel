@@ -38,7 +38,7 @@ class FallbackPropertyCodeGenerator extends PropertyCodeGenerator
         string $propertyReference,
         string $columnName
     ) {
-        $code->getCode()->appendLine('/* TODO: ' . $propertyReference . ' */');
+        $code->getCode()->append('/* TODO: ' . $propertyReference . ' */');
     }
 
     /**
@@ -57,6 +57,6 @@ class FallbackPropertyCodeGenerator extends PropertyCodeGenerator
         string $fieldName,
         string $fieldLabel
     ) {
-        $code->getCode()->appendLine('/* TODO: ' . $propertyReference . '*/');
+        $code->getCode()->append('/* TODO: ' . $propertyReference . ' */');
     }
 }

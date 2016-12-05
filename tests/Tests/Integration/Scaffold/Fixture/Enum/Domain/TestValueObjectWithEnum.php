@@ -11,14 +11,17 @@ use Dms\Core\Model\Object\ValueObject;
 class TestValueObjectWithEnum extends ValueObject
 {
     const ENUM = 'enum';
-    const INT = 'int';
-    const FLOAT = 'float';
-    const BOOL = 'bool';
+    const NULLABLE_ENUM = 'nullableEnum';
 
     /**
      * @var TestEnum
      */
     public $enum;
+
+    /**
+     * @var TestEnum
+     */
+    public $nullableEnum;
 
     /**
      * Defines the structure of this class.
@@ -28,5 +31,7 @@ class TestValueObjectWithEnum extends ValueObject
     protected function define(ClassDefinition $class)
     {
         $class->property($this->enum)->asObject(TestEnum::class);
+
+        $class->property($this->nullableEnum)->nullable()->asObject(TestEnum::class);
     }
 }

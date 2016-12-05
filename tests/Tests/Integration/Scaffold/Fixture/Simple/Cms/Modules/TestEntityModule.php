@@ -62,7 +62,6 @@ class TestEntityModule extends CrudModule
         $module->removeAction()->deleteFromDataSource();
 
         $module->summaryTable(function (SummaryTableDefinition $table) {
-            $table->mapProperty(TestEntity::ID)->to(Field::create('id', 'Id')->int());
             $table->mapProperty(TestEntity::STRING)->to(Field::create('string', 'String')->string()->required());
             $table->mapProperty(TestEntity::INT)->to(Field::create('int', 'Int')->int()->required());
             $table->mapProperty(TestEntity::FLOAT)->to(Field::create('float', 'Float')->decimal()->required());

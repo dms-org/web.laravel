@@ -39,6 +39,8 @@ class TestRelatedEntityModule extends CrudModule
     {
         $module->name('test-related-entity');
 
+        $module->labelObjects()->fromProperty(/* FIXME: */ TestRelatedEntity::ID);
+
         $module->metadata([
             'icon' => ''
         ]);

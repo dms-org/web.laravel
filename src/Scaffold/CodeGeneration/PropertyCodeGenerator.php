@@ -192,15 +192,7 @@ abstract class PropertyCodeGenerator
      */
     protected function getPropertyReference(DomainObjectStructure $object, string $propertyName) : string
     {
-        $constants = $object->getReflection()->getConstants();
-
-        $constantName = array_search($propertyName, $constants, true);
-
-        if ($constantName !== false) {
-            return $object->getReflection()->getShortName() . '::' . $constantName;
-        }
-
-        return '\'' . $propertyName . '\'';
+        return $object->getPropertyReference($propertyName);
     }
 
     /**

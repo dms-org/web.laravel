@@ -33,6 +33,8 @@ class TestEntityModule extends CrudModule
     {
         $module->name('test-entity');
 
+        $module->labelObjects()->fromProperty(TestEntity::STRING);
+
         $module->metadata([
             'icon' => ''
         ]);

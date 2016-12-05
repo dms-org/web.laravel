@@ -32,6 +32,8 @@ class {class_name} extends CrudModule
     {
         $module->name('{name}');
 
+        {label_code}
+
         $module->metadata([
             'icon' => ''
         ]);

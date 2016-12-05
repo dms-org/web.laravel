@@ -208,4 +208,22 @@ class DomainObjectStructure
 
         return false;
     }
+
+    /**
+     * @param string $propertyName
+     *
+     * @return string
+     */
+    public function getPropertyReference(string $propertyName) : string
+    {
+        $constants = $this->getReflection()->getConstants();
+
+        $constantName = array_search($propertyName, $constants, true);
+
+        if ($constantName !== false) {
+            return $this->getReflection()->getShortName() . '::' . $constantName;
+        }
+
+        return '\'' . $propertyName . '\'';
+    }
 }

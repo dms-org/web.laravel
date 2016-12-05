@@ -5,6 +5,7 @@ namespace Dms\Web\Laravel\Scaffold;
 use Dms\Common\Structure\FileSystem\PathHelper;
 use Dms\Core\Exception\InvalidOperationException;
 use Dms\Core\Model\Object\Entity;
+use Dms\Core\Model\Type\Builder\Type;
 use Dms\Web\Laravel\Scaffold\CodeGeneration\PhpCodeBuilderContext;
 use Dms\Web\Laravel\Scaffold\Domain\DomainObjectStructure;
 
@@ -41,9 +42,9 @@ class ScaffoldCmsCommand extends ScaffoldCommand
      */
     public function fire()
     {
-        $packageName         = $this->input->getArgument('package_name');
+        $packageName = $this->input->getArgument('package_name');
 
-        $domain       = $this->domainStructureLoader->loadDomainStructure($this->input->getArgument('entity_namespace'));
+        $domain  = $this->domainStructureLoader->loadDomainStructure($this->input->getArgument('entity_namespace'));
         $context = new ScaffoldCmsContext(
             $this->input->getArgument('entity_namespace'),
             $domain,
@@ -51,9 +52,9 @@ class ScaffoldCmsCommand extends ScaffoldCommand
             $this->input->getArgument('output_namespace')
         );
 
-        $overwrite                 = (bool)$this->input->hasOption('--overwrite');
-        $entities                  = $domain->getRootEntities();
-        $valueObjects              = $domain->getRootValueObjects();
+        $overwrite    = (bool)$this->input->hasOption('--overwrite');
+        $entities     = $domain->getRootEntities();
+        $valueObjects = $domain->getRootValueObjects();
 
         if (!$valueObjects && !$entities) {
             $this->output->error('No entities found under ' . $context->getRootEntityNamespace() . ' namespace');
@@ -94,6 +95,8 @@ class ScaffoldCmsCommand extends ScaffoldCommand
         $fieldCodeContext  = $this->generateFieldBindingsCode($context, $entity, 3);
         $columnCodeContext = $this->generateColumnBindingsCode($context, $entity, 3);
 
+        $fieldCodeContext->addNamespaceImport($entity->getDefinition()->getClassName());
+
         $php = $this->buildCodeFile(
             __DIR__ . '/Stubs/Cms/Module.php.stub',
             $fieldCodeContext,
@@ -103,6 +106,7 @@ class ScaffoldCmsCommand extends ScaffoldCommand
                 '{class_name}'             => $moduleClassName,
                 '{data_source_class}'      => $moduleDataSourceClass,
                 '{data_source_class_name}' => $moduleDataSourceClassName,
+                '{label_code}'             => $this->generateLabelEntityCode($entity),
                 '{fields}'                 => $fieldCodeContext->getCode()->getCode(),
                 '{columns}'                => $columnCodeContext->getCode()->getCode(),
             ]
@@ -111,6 +115,28 @@ class ScaffoldCmsCommand extends ScaffoldCommand
         $this->createFile(PathHelper::combine($moduleDirectory, $moduleClassName . '.php'), $php, $overwrite);
 
         return [$moduleName, $moduleNamespace . '\\' . $moduleClassName];
+    }
+
+    protected function generateLabelEntityCode(DomainObjectStructure $object) : string
+    {
+        $labelProperty = null;
+
+        foreach ($object->getDefinition()->getProperties() as $property) {
+            if ($property->getType()->nonNullable()->isSubsetOf(Type::string())) {
+                $labelProperty = $property;
+                break;
+            }
+        }
+
+        $code = '$module->labelObjects()';
+
+        if ($labelProperty) {
+            $code .= '->fromProperty(' . $object->getPropertyReference($property->getName()) . ');';
+        } else {
+            $code .= '->fromProperty(/* FIXME: */ ' . $object->getReflection()->getShortName() . '::ID);';
+        }
+
+        return $code;
     }
 
     protected function generateFieldBindingsCode(ScaffoldCmsContext $context, DomainObjectStructure $object, int $indent) : PhpCodeBuilderContext
@@ -170,7 +196,7 @@ class ScaffoldCmsCommand extends ScaffoldCommand
 
     private function generateValueObjectField(DomainObjectStructure $valueObject, ScaffoldCmsContext $context, bool $overwrite)
     {
-        $valueObjectName      = $valueObject->getReflection()->getShortName();
+        $valueObjectName   = $valueObject->getReflection()->getShortName();
         $relativeNamespace = $context->getRelativeObjectNamespace($valueObject);
 
         $fieldClassName = $valueObjectName . 'Field';

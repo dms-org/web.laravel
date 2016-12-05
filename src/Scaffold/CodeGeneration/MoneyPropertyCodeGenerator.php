@@ -2,15 +2,13 @@
 
 namespace Dms\Web\Laravel\Scaffold\CodeGeneration;
 
-use Dms\Common\Structure\Geo\Country;
-use Dms\Common\Structure\Geo\LatLng;
-use Dms\Common\Structure\Geo\StreetAddress;
-use Dms\Common\Structure\Geo\StreetAddressWithLatLng;
 use Dms\Common\Structure\Money\Currency;
 use Dms\Common\Structure\Money\Money;
 use Dms\Common\Structure\Money\Persistence\MoneyMapper;
 use Dms\Core\Model\Object\FinalizedPropertyDefinition;
 use Dms\Web\Laravel\Scaffold\Domain\DomainObjectStructure;
+use Dms\Web\Laravel\Scaffold\ScaffoldCmsContext;
+use Dms\Web\Laravel\Scaffold\ScaffoldPersistenceContext;
 
 /**
  * @author Elliot Levin <elliotlevin@hotmail.com>
@@ -31,6 +29,7 @@ class MoneyPropertyCodeGenerator extends PropertyCodeGenerator
 
 
     /**
+     * @param ScaffoldPersistenceContext  $context
      * @param PhpCodeBuilderContext       $code
      * @param DomainObjectStructure       $object
      * @param FinalizedPropertyDefinition $property
@@ -38,6 +37,7 @@ class MoneyPropertyCodeGenerator extends PropertyCodeGenerator
      * @param string                      $columnName
      */
     protected function doGeneratePersistenceMappingCode(
+        ScaffoldPersistenceContext $context,
         PhpCodeBuilderContext $code,
         DomainObjectStructure $object,
         FinalizedPropertyDefinition $property,
@@ -73,6 +73,7 @@ class MoneyPropertyCodeGenerator extends PropertyCodeGenerator
     }
 
     /**
+     * @param ScaffoldCmsContext          $context
      * @param PhpCodeBuilderContext       $code
      * @param DomainObjectStructure       $object
      * @param FinalizedPropertyDefinition $property
@@ -81,6 +82,7 @@ class MoneyPropertyCodeGenerator extends PropertyCodeGenerator
      * @param string                      $fieldLabel
      */
     protected function doGenerateCmsFieldCode(
+        ScaffoldCmsContext $context,
         PhpCodeBuilderContext $code,
         DomainObjectStructure $object,
         FinalizedPropertyDefinition $property,

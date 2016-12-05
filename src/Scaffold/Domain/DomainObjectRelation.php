@@ -45,6 +45,29 @@ class DomainObjectRelation
         $this->relatedObject = $relatedObject;
     }
 
+    /**
+     * @return DomainObjectRelationMode
+     */
+    public function getMode(): DomainObjectRelationMode
+    {
+        return $this->mode;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isToOne() : bool
+    {
+        return $this->mode->is(DomainObjectRelationMode::TO_ONE);
+    }
+
+    /**
+     * @return bool
+     */
+    public function isToMany() : bool
+    {
+        return $this->mode->is(DomainObjectRelationMode::TO_MANY);
+    }
 
     /**
      * @return FinalizedPropertyDefinition

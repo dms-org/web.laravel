@@ -42,19 +42,22 @@ class ScaffoldCmsCommand extends ScaffoldCommand
     public function fire()
     {
         $packageName         = $this->input->getArgument('package_name');
-        $namespace           = ltrim($this->input->getArgument('entity_namespace'), '\\');
-        $dataSourceNamespace = $this->input->getArgument('data_source_namespace');
 
-        $cmsNamespace              = $this->input->getArgument('output_namespace');
-        $moduleNamespace           = $cmsNamespace . '\\Modules';
-        $valueObjectFieldNamespace = $cmsNamespace . '\\Modules\\Fields';
+        $domain       = $this->domainStructureLoader->loadDomainStructure($this->input->getArgument('entity_namespace'));
+        $context = new ScaffoldCmsContext(
+            $this->input->getArgument('entity_namespace'),
+            $domain,
+            $this->input->getArgument('data_source_namespace'),
+            $this->input->getArgument('output_namespace')
+        );
+
         $overwrite                 = (bool)$this->input->hasOption('--overwrite');
-        $domain                    = $this->domainStructureLoader->loadDomainStructure($namespace);
         $entities                  = $domain->getRootEntities();
         $valueObjects              = $domain->getRootValueObjects();
 
         if (!$valueObjects && !$entities) {
-            $this->output->error('No entities found under ' . $namespace . ' namespace');
+            $this->output->error('No entities found under ' . $context->getRootEntityNamespace() . ' namespace');
+
 
             return;
         }
@@ -62,35 +65,34 @@ class ScaffoldCmsCommand extends ScaffoldCommand
         $modules = [];
 
         foreach ($entities as $entity) {
-            list($moduleName, $moduleClass) = $this->generateModule($entity, $namespace, $moduleNamespace, $dataSourceNamespace, $overwrite);
+            list($moduleName, $moduleClass) = $this->generateModule($entity, $context, $overwrite);
 
             $modules[$moduleName] = $moduleClass;
         }
 
         foreach ($valueObjects as $valueObject) {
-            $this->generateValueObjectField($valueObject, $namespace, $valueObjectFieldNamespace, $overwrite);
+            $this->generateValueObjectField($valueObject, $context, $overwrite);
         }
 
-        $this->generatePackage($packageName, $cmsNamespace, $modules, $overwrite);
+        $this->generatePackage($packageName, $context, $modules, $overwrite);
 
         $this->output->success('Done!');
     }
 
-    private function generateModule(DomainObjectStructure $entity, string $rootEntityNamespace, string $moduleNamespace, string $dataSourceNamespace, bool $overwrite)
+    private function generateModule(DomainObjectStructure $entity, ScaffoldCmsContext $context, bool $overwrite)
     {
         $entityName        = $entity->getReflection()->getShortName();
-        $entityNamespace   = $entity->getReflection()->getNamespaceName();
-        $relativeNamespace = trim(substr($entityNamespace, strlen($rootEntityNamespace)), '\\');
+        $relativeNamespace = $context->getRelativeObjectNamespace($entity);
 
         $moduleName                = snake_case($entityName, '-');
         $moduleClassName           = $entityName . 'Module';
-        $moduleNamespace           = $moduleNamespace . ($relativeNamespace ? '\\' . $relativeNamespace : '');
+        $moduleNamespace           = $context->getModuleNamespace() . ($relativeNamespace ? '\\' . $relativeNamespace : '');
         $moduleDirectory           = $this->namespaceResolver->getDirectoryFor($moduleNamespace);
         $moduleDataSourceClassName = 'I' . $entityName . 'Repository';
-        $moduleDataSourceClass     = $dataSourceNamespace . '\\' . $moduleDataSourceClassName;
+        $moduleDataSourceClass     = $context->getDataSourceNamespace() . '\\' . $moduleDataSourceClassName;
 
-        $fieldCodeContext  = $this->generateFieldBindingsCode($entity, 3);
-        $columnCodeContext = $this->generateColumnBindingsCode($entity, 3);
+        $fieldCodeContext  = $this->generateFieldBindingsCode($context, $entity, 3);
+        $columnCodeContext = $this->generateColumnBindingsCode($context, $entity, 3);
 
         $php = $this->buildCodeFile(
             __DIR__ . '/Stubs/Cms/Module.php.stub',
@@ -111,7 +113,7 @@ class ScaffoldCmsCommand extends ScaffoldCommand
         return [$moduleName, $moduleNamespace . '\\' . $moduleClassName];
     }
 
-    protected function generateFieldBindingsCode(DomainObjectStructure $object, int $indent) : PhpCodeBuilderContext
+    protected function generateFieldBindingsCode(ScaffoldCmsContext $context, DomainObjectStructure $object, int $indent) : PhpCodeBuilderContext
     {
         $code = new PhpCodeBuilderContext();
 
@@ -126,6 +128,7 @@ class ScaffoldCmsCommand extends ScaffoldCommand
             }
 
             $this->getCodeGeneratorFor($object, $property->getName())->generateCmsFieldBindingCode(
+                $context,
                 $code,
                 $object,
                 $property->getName()
@@ -141,7 +144,7 @@ class ScaffoldCmsCommand extends ScaffoldCommand
         return $code;
     }
 
-    protected function generateColumnBindingsCode(DomainObjectStructure $object, int $indent) : PhpCodeBuilderContext
+    protected function generateColumnBindingsCode(ScaffoldCmsContext $context, DomainObjectStructure $object, int $indent) : PhpCodeBuilderContext
     {
         $code = new PhpCodeBuilderContext();
 
@@ -153,6 +156,7 @@ class ScaffoldCmsCommand extends ScaffoldCommand
             }
 
             $this->getCodeGeneratorFor($object, $property->getName())->generateCmsColumnBindingCode(
+                $context,
                 $code,
                 $object,
                 $property->getName()
@@ -164,17 +168,16 @@ class ScaffoldCmsCommand extends ScaffoldCommand
         return $code;
     }
 
-    private function generateValueObjectField(DomainObjectStructure $valueObject, string $rootEntityNamespace, string $fieldNamespace, bool $overwrite)
+    private function generateValueObjectField(DomainObjectStructure $valueObject, ScaffoldCmsContext $context, bool $overwrite)
     {
         $valueObjectName      = $valueObject->getReflection()->getShortName();
-        $valueObjectNamespace = $valueObject->getReflection()->getNamespaceName();
-        $relativeNamespace    = trim(substr($valueObjectNamespace, strlen($rootEntityNamespace)), '\\');
+        $relativeNamespace = $context->getRelativeObjectNamespace($valueObject);
 
         $fieldClassName = $valueObjectName . 'Field';
-        $fieldNamespace = $fieldNamespace . ($relativeNamespace ? '\\' . $relativeNamespace : '');
+        $fieldNamespace = $context->getValueObjectFieldNamespace() . ($relativeNamespace ? '\\' . $relativeNamespace : '');
         $fieldDirectory = $this->namespaceResolver->getDirectoryFor($fieldNamespace);
 
-        $fieldCodeContext = $this->generateFieldBindingsCode($valueObject, 2);
+        $fieldCodeContext = $this->generateFieldBindingsCode($context, $valueObject, 2);
 
         $php = $this->buildCodeFile(
             __DIR__ . '/Stubs/Cms/ValueObjectField.php.stub',
@@ -191,10 +194,10 @@ class ScaffoldCmsCommand extends ScaffoldCommand
         $this->createFile(PathHelper::combine($fieldDirectory, $fieldClassName . '.php'), $php, $overwrite);
     }
 
-    private function generatePackage(string $packageName, string $cmsNamespace, array $modules, bool $overwrite)
+    private function generatePackage(string $packageName, ScaffoldCmsContext $context, array $modules, bool $overwrite)
     {
         $packageClassName = studly_case($packageName) . 'Package';
-        $packageDirectory = $this->namespaceResolver->getDirectoryFor($cmsNamespace);
+        $packageDirectory = $this->namespaceResolver->getDirectoryFor($context->getOutputNamespace());
 
         $php = $this->filesystem->get(__DIR__ . '/Stubs/Cms/Package.php.stub');
 
@@ -209,7 +212,7 @@ class ScaffoldCmsCommand extends ScaffoldCommand
         }
 
         $php = strtr($php, [
-            '{namespace}'       => $cmsNamespace,
+            '{namespace}'       => $context->getOutputNamespace(),
             '{name}'            => $packageName,
             '{class_name}'      => $packageClassName,
             '{module_imports}'  => implode(PHP_EOL, $moduleImports),

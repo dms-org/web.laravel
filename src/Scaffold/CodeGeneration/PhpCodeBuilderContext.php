@@ -69,9 +69,17 @@ class PhpCodeBuilderContext
     /**
      * @param string $class
      * @param string $name
+     *
+     * @return string
      */
-    public function addConstructorParameter(string $class, string $name)
+    public function addConstructorParameter(string $class, string $name) : string
     {
+        if (isset($this->constructorParameters[$class])) {
+            return $this->constructorParameters[$class];
+        }
+
         $this->constructorParameters[$class] = $name;
+
+        return $name;
     }
 }

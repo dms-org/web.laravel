@@ -8,6 +8,8 @@ use Dms\Common\Structure\Colour\Mapper\TransparentColourMapper;
 use Dms\Common\Structure\Colour\TransparentColour;
 use Dms\Core\Model\Object\FinalizedPropertyDefinition;
 use Dms\Web\Laravel\Scaffold\Domain\DomainObjectStructure;
+use Dms\Web\Laravel\Scaffold\ScaffoldCmsContext;
+use Dms\Web\Laravel\Scaffold\ScaffoldPersistenceContext;
 
 /**
  * @author Elliot Levin <elliotlevin@hotmail.com>
@@ -27,6 +29,7 @@ class ColourPropertyCodeGenerator extends PropertyCodeGenerator
     }
 
     /**
+     * @param ScaffoldPersistenceContext  $context
      * @param PhpCodeBuilderContext       $code
      * @param DomainObjectStructure       $object
      * @param FinalizedPropertyDefinition $property
@@ -34,6 +37,7 @@ class ColourPropertyCodeGenerator extends PropertyCodeGenerator
      * @param string                      $columnName
      */
     protected function doGeneratePersistenceMappingCode(
+        ScaffoldPersistenceContext $context,
         PhpCodeBuilderContext $code,
         DomainObjectStructure $object,
         FinalizedPropertyDefinition $property,
@@ -63,6 +67,7 @@ class ColourPropertyCodeGenerator extends PropertyCodeGenerator
     }
 
     /**
+     * @param ScaffoldCmsContext          $context
      * @param PhpCodeBuilderContext       $code
      * @param DomainObjectStructure       $object
      * @param FinalizedPropertyDefinition $property
@@ -71,6 +76,7 @@ class ColourPropertyCodeGenerator extends PropertyCodeGenerator
      * @param string                      $fieldLabel
      */
     protected function doGenerateCmsFieldCode(
+        ScaffoldCmsContext $context,
         PhpCodeBuilderContext $code,
         DomainObjectStructure $object,
         FinalizedPropertyDefinition $property,

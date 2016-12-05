@@ -41,43 +41,46 @@ class ScaffoldPersistenceCommand extends ScaffoldCommand
      */
     public function fire()
     {
-        $namespace = ltrim($this->input->getArgument('entity_namespace'), '\\');
+        $domain       = $this->domainStructureLoader->loadDomainStructure($this->input->getArgument('entity_namespace'));
 
-        $abstractNamespace       = $this->input->getArgument('output_abstract_namespace');
-        $implementationNamespace = $this->input->getArgument('output_implementation_namespace');
-        $overwrite               = (bool)$this->input->hasOption('--overwrite');
-        $domain                  = $this->domainStructureLoader->loadDomainStructure($namespace);
-        $entities                = $domain->getRootEntities();
-        $valueObjects            = $domain->getRootValueObjects();
+        $context = new ScaffoldPersistenceContext(
+            $this->input->getArgument('entity_namespace'),
+            $domain,
+            $this->input->getArgument('output_abstract_namespace'),
+            $this->input->getArgument('output_implementation_namespace')
+        );
+
+        $overwrite    = (bool)$this->input->hasOption('--overwrite');
+        $entities     = $domain->getRootEntities();
+        $valueObjects = $domain->getRootValueObjects();
 
         if (!$valueObjects && !$entities) {
-            $this->output->error('No entities found under ' . $namespace . ' namespace');
+            $this->output->error('No entities found under ' . $context->getRootEntityNamespace() . ' namespace');
 
             return;
         }
 
         foreach ($entities as $entity) {
-            list($repositoryClass, $repositoryShortClassName) = $this->generateRepositoryInterface($abstractNamespace, $namespace, $entity, $overwrite);
-            $this->generateEntityMapper($implementationNamespace, $namespace, $entity, $overwrite);
-            $this->generateRepositoryImplementation($implementationNamespace, $namespace, $entity, $repositoryClass, $repositoryShortClassName, $overwrite);
+            list($repositoryClass, $repositoryShortClassName) = $this->generateRepositoryInterface($context, $entity, $overwrite);
+            $this->generateEntityMapper($context, $entity, $overwrite);
+            $this->generateRepositoryImplementation($context, $entity, $repositoryClass, $repositoryShortClassName, $overwrite);
         }
 
         foreach ($valueObjects as $valueObject) {
-            $this->generateValueObjectMapper($implementationNamespace, $namespace, $valueObject, $overwrite);
+            $this->generateValueObjectMapper($context, $valueObject, $overwrite);
         }
 
         $this->output->success('Done!');
     }
 
-    private function generateRepositoryInterface(string $abstractNamespace, string $namespace, DomainObjectStructure $entity, bool $overwrite)
+    private function generateRepositoryInterface(ScaffoldPersistenceContext $context, DomainObjectStructure $entity, bool $overwrite)
     {
         $entityName        = $entity->getReflection()->getShortName();
-        $entityNamespace   = $entity->getReflection()->getNamespaceName();
-        $relativeNamespace = trim(substr($entityNamespace, strlen($namespace)), '\\');
+        $relativeNamespace = $context->getRelativeObjectNamespace($entity);
 
         $repositoryName      = 'I' . $entityName . 'Repository';
-        $repositoryNamespace = $abstractNamespace . ($relativeNamespace ? '\\' . $relativeNamespace : '');
-        $repositoryDirectory = $this->namespaceResolver->getDirectoryFor($abstractNamespace);
+        $repositoryNamespace = $context->getOutputAbstractNamespace() . ($relativeNamespace ? '\\' . $relativeNamespace : '');
+        $repositoryDirectory = $this->namespaceResolver->getDirectoryFor($context->getOutputAbstractNamespace());
         $repositoryClass     = $repositoryNamespace . '\\' . $repositoryName;
 
         $php = $this->filesystem->get(__DIR__ . '/Stubs/Persistence/RepositoryInterface.php.stub');
@@ -94,17 +97,16 @@ class ScaffoldPersistenceCommand extends ScaffoldCommand
         return [$repositoryClass, $repositoryName];
     }
 
-    private function generateEntityMapper(string $implementationNamespace, string $namespace, DomainObjectStructure $entity, bool $overwrite)
+    private function generateEntityMapper(ScaffoldPersistenceContext $context, DomainObjectStructure $entity, bool $overwrite)
     {
         $entityName        = $entity->getReflection()->getShortName();
-        $entityNamespace   = $entity->getReflection()->getNamespaceName();
-        $relativeNamespace = trim(substr($entityNamespace, strlen($namespace)), '\\');
+        $relativeNamespace = $context->getRelativeObjectNamespace($entity);
 
         $mapperName      = $entityName . 'Mapper';
-        $mapperNamespace = $implementationNamespace . ($relativeNamespace ? '\\' . $relativeNamespace : '');
+        $mapperNamespace = $context->getOutputImplementationNamespace() . ($relativeNamespace ? '\\' . $relativeNamespace : '');
         $mapperDirectory = $this->namespaceResolver->getDirectoryFor($mapperNamespace);
 
-        $mappingCodeContext = $this->generatePropertyBindingCode($entity, 2);
+        $mappingCodeContext = $this->generatePropertyBindingCode($context, $entity, 2);
 
         $php = $this->buildCodeFile(
             __DIR__ . '/Stubs/Persistence/EntityMapper.php.stub',
@@ -122,7 +124,7 @@ class ScaffoldPersistenceCommand extends ScaffoldCommand
         $this->createFile(PathHelper::combine($mapperDirectory, $mapperName . '.php'), $php, $overwrite);
     }
 
-    protected function generatePropertyBindingCode(DomainObjectStructure $object, int $indent) : PhpCodeBuilderContext
+    protected function generatePropertyBindingCode(ScaffoldPersistenceContext $context, DomainObjectStructure $object, int $indent) : PhpCodeBuilderContext
     {
         $code = new PhpCodeBuilderContext();
 
@@ -134,32 +136,31 @@ class ScaffoldPersistenceCommand extends ScaffoldCommand
             }
 
             $this->getCodeGeneratorFor($object, $property->getName())->generatePersistenceMappingCode(
+                $context,
                 $code,
                 $object,
                 $property->getName()
             );
 
             $code->getCode()->appendLine(';');
-            $code->getCode()->appendLine('');
+            $code->getCode()->appendLine();
         }
 
         return $code;
     }
 
     private function generateRepositoryImplementation(
-        string $implementationNamespace,
-        string $namespace,
+        ScaffoldPersistenceContext $context,
         DomainObjectStructure $entity,
         string $interfaceClass,
         string $interfaceName,
         bool $overwrite
     ) {
         $entityName        = $entity->getReflection()->getShortName();
-        $entityNamespace   = $entity->getReflection()->getNamespaceName();
-        $relativeNamespace = trim(substr($entityNamespace, strlen($namespace)), '\\');
+        $relativeNamespace = $context->getRelativeObjectNamespace($entity);
 
         $repositoryName      = 'Db' . $entityName . 'Repository';
-        $repositoryNamespace = $implementationNamespace . ($relativeNamespace ? '\\' . $relativeNamespace : '');
+        $repositoryNamespace = $context->getOutputImplementationNamespace() . ($relativeNamespace ? '\\' . $relativeNamespace : '');
         $repositoryDirectory = $this->namespaceResolver->getDirectoryFor($repositoryNamespace);
 
         $php = $this->filesystem->get(__DIR__ . '/Stubs/Persistence/RepositoryImplementation.php.stub');
@@ -176,20 +177,25 @@ class ScaffoldPersistenceCommand extends ScaffoldCommand
         $this->createFile(PathHelper::combine($repositoryDirectory, $repositoryName . '.php'), $php, $overwrite);
     }
 
-    private function generateValueObjectMapper(string $implementationNamespace, string $namespace, DomainObjectStructure $valueObject, bool $overwrite)
+    private function generateValueObjectMapper(ScaffoldPersistenceContext $context, DomainObjectStructure $valueObject, bool $overwrite)
     {
-        $valueObjectName      = $valueObject->getReflection()->getShortName();
-        $valueObjectNamespace = $valueObject->getReflection()->getNamespaceName();
-        $relativeNamespace    = trim(substr($valueObjectNamespace, strlen($namespace)), '\\');
+        $valueObjectName   = $valueObject->getReflection()->getShortName();
+        $relativeNamespace = $context->getRelativeObjectNamespace($valueObject);
 
         $mapperName      = $valueObjectName . 'Mapper';
-        $mapperNamespace = $implementationNamespace . ($relativeNamespace ? '\\' . $relativeNamespace : '');
+        $mapperNamespace = $context->getOutputImplementationNamespace() . ($relativeNamespace ? '\\' . $relativeNamespace : '');
         $mapperDirectory = $this->namespaceResolver->getDirectoryFor($mapperNamespace);
 
-        $mappingCodeContext = $this->generatePropertyBindingCode($valueObject, 2);
+        $mappingCodeContext = $this->generatePropertyBindingCode($context, $valueObject, 2);
+
+        if ($valueObject->hasEntityRelations()) {
+            $stubFile = __DIR__ . '/Stubs/Persistence/ValueObjectMapper.php.stub';
+        } else {
+            $stubFile = __DIR__ . '/Stubs/Persistence/IndependentValueObjectMapper.php.stub';
+        }
 
         $php = $this->buildCodeFile(
-            __DIR__ . '/Stubs/Persistence/ValueObjectMapper.php.stub',
+            $stubFile,
             $mappingCodeContext,
             [
                 '{namespace}'         => $mapperNamespace,

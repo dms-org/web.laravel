@@ -22,15 +22,23 @@ class NamespaceDirectoryResolver
         $psr0Rules = require base_path('vendor/composer/autoload_namespaces.php');
 
         foreach ($psr4Rules as $ruleNamespace => list($directory)) {
+            $ruleNamespace = rtrim($ruleNamespace, '\\');
             if (starts_with($namespace, $ruleNamespace)) {
-                return PathHelper::combine($directory, substr($namespace, strlen($ruleNamespace)));
+                $path = PathHelper::combine($directory, substr($namespace, strlen($ruleNamespace)));
+                break;
             }
         }
 
         foreach ($psr0Rules as $ruleNamespace => list($directory)) {
+            $ruleNamespace = rtrim($ruleNamespace, '\\');
             if (starts_with($namespace, $ruleNamespace)) {
-                return PathHelper::combine($directory, $namespace);
+                $path = PathHelper::combine($directory, $namespace);
+                break;
             }
+        }
+
+        if (isset($path)) {
+            return rtrim($path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
         }
 
         throw InvalidArgumentException::format('No directory could be found for namespace \'%s\'', $namespace);

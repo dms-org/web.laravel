@@ -38,6 +38,6 @@ class HelperTest extends CmsIntegrationTest
 
     public function testNonExistentFileInCorrectPathUrl()
     {
-        $this->assertSame(asset('non-existent'), asset_file_url(new File(realpath(public_path()) .  DIRECTORY_SEPARATOR . 'non-existent')));
+        $this->assertSame(asset('non-existent'), asset_file_url(new File(public_path() .  DIRECTORY_SEPARATOR . 'non-existent')));
     }
 }

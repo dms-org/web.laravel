@@ -194,4 +194,18 @@ class DomainObjectStructure
     {
         return new \ReflectionClass($this->getDefinition()->getClassName());
     }
+
+    /**
+     * @return bool
+     */
+    public function hasEntityRelations() : bool
+    {
+        foreach ($this->relations as $relation) {
+            if ($relation->getRelatedObject()->isEntity() || $relation->getRelatedObject()->hasEntityRelations()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }

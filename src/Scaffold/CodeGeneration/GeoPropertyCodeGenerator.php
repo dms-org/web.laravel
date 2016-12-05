@@ -2,11 +2,6 @@
 
 namespace Dms\Web\Laravel\Scaffold\CodeGeneration;
 
-use Dms\Common\Structure\DateTime\Date;
-use Dms\Common\Structure\DateTime\DateTime;
-use Dms\Common\Structure\DateTime\Persistence\TimezonedDateTimeMapper;
-use Dms\Common\Structure\DateTime\TimeOfDay;
-use Dms\Common\Structure\DateTime\TimezonedDateTime;
 use Dms\Common\Structure\Geo\Country;
 use Dms\Common\Structure\Geo\LatLng;
 use Dms\Common\Structure\Geo\Persistence\LatLngMapper;
@@ -16,6 +11,8 @@ use Dms\Common\Structure\Geo\StreetAddress;
 use Dms\Common\Structure\Geo\StreetAddressWithLatLng;
 use Dms\Core\Model\Object\FinalizedPropertyDefinition;
 use Dms\Web\Laravel\Scaffold\Domain\DomainObjectStructure;
+use Dms\Web\Laravel\Scaffold\ScaffoldCmsContext;
+use Dms\Web\Laravel\Scaffold\ScaffoldPersistenceContext;
 
 /**
  * @author Elliot Levin <elliotlevin@hotmail.com>
@@ -39,6 +36,7 @@ class GeoPropertyCodeGenerator extends PropertyCodeGenerator
 
 
     /**
+     * @param ScaffoldPersistenceContext  $context
      * @param PhpCodeBuilderContext       $code
      * @param DomainObjectStructure       $object
      * @param FinalizedPropertyDefinition $property
@@ -46,6 +44,7 @@ class GeoPropertyCodeGenerator extends PropertyCodeGenerator
      * @param string                      $columnName
      */
     protected function doGeneratePersistenceMappingCode(
+        ScaffoldPersistenceContext $context,
         PhpCodeBuilderContext $code,
         DomainObjectStructure $object,
         FinalizedPropertyDefinition $property,
@@ -96,6 +95,7 @@ class GeoPropertyCodeGenerator extends PropertyCodeGenerator
     }
 
     /**
+     * @param ScaffoldCmsContext          $context
      * @param PhpCodeBuilderContext       $code
      * @param DomainObjectStructure       $object
      * @param FinalizedPropertyDefinition $property
@@ -104,6 +104,7 @@ class GeoPropertyCodeGenerator extends PropertyCodeGenerator
      * @param string                      $fieldLabel
      */
     protected function doGenerateCmsFieldCode(
+        ScaffoldCmsContext $context,
         PhpCodeBuilderContext $code,
         DomainObjectStructure $object,
         FinalizedPropertyDefinition $property,

@@ -13,6 +13,10 @@ use Dms\Web\Laravel\Scaffold\CodeGeneration\GeoPropertyCodeGenerator;
 use Dms\Web\Laravel\Scaffold\CodeGeneration\MoneyPropertyCodeGenerator;
 use Dms\Web\Laravel\Scaffold\CodeGeneration\PhpCodeBuilderContext;
 use Dms\Web\Laravel\Scaffold\CodeGeneration\PropertyCodeGenerator;
+use Dms\Web\Laravel\Scaffold\CodeGeneration\Relation\CustomValueObjectCollectionPropertyCodeGenerator;
+use Dms\Web\Laravel\Scaffold\CodeGeneration\Relation\CustomValueObjectPropertyCodeGenerator;
+use Dms\Web\Laravel\Scaffold\CodeGeneration\Relation\EntityCollectionPropertyCodeGenerator;
+use Dms\Web\Laravel\Scaffold\CodeGeneration\Relation\EntityPropertyCodeGenerator;
 use Dms\Web\Laravel\Scaffold\CodeGeneration\ScalarPropertyCodeGenerator;
 use Dms\Web\Laravel\Scaffold\CodeGeneration\WebPropertyCodeGenerator;
 use Dms\Web\Laravel\Scaffold\Domain\DomainObjectStructure;
@@ -72,6 +76,10 @@ abstract class ScaffoldCommand extends Command
             new MoneyPropertyCodeGenerator($convention),
             new WebPropertyCodeGenerator($convention),
             new EnumPropertyCodeGenerator($convention),
+            new CustomValueObjectPropertyCodeGenerator($convention),
+            new CustomValueObjectCollectionPropertyCodeGenerator($convention),
+            new EntityPropertyCodeGenerator($convention),
+            new EntityCollectionPropertyCodeGenerator($convention),
             new FallbackPropertyCodeGenerator($convention),
         ];
     }
@@ -128,14 +136,14 @@ abstract class ScaffoldCommand extends Command
         foreach ($code->getConstructorParameters() as $classType => $name) {
             $indent = '    ';
 
-            $property = $indent . '/**';
-            $property .= $indent . '* @var ' . basename($classType);
-            $property .= $indent . '*/';
-            $property .= $indent . 'protected $' . $name;
+            $property = $indent . '/**' . PHP_EOL;
+            $property .= $indent . ' * @var ' . basename($classType) . PHP_EOL;
+            $property .= $indent . ' */' . PHP_EOL;
+            $property .= $indent . 'protected $' . $name . ';' . PHP_EOL;
 
             $properties[]            = $property;
             $constructorParameters[] = $classType . ' $' . $name;
-            $initializers[]          = $indent . $indent . '$this->' . $name . ' = $' . $name;
+            $initializers[]          = $indent . $indent . '$this->' . $name . ' = $' . $name . ';';
         }
 
         $php = strtr($php,

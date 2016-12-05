@@ -2,6 +2,8 @@
 
 namespace Dms\Web\Laravel\Tests\Integration\Scaffold\Domain;
 
+use Dms\Web\Laravel\Scaffold\Domain\DomainObjectRelation;
+use Dms\Web\Laravel\Scaffold\Domain\DomainObjectRelationMode;
 use Dms\Web\Laravel\Scaffold\Domain\DomainObjectStructure;
 use Dms\Web\Laravel\Scaffold\Domain\DomainStructure;
 use Dms\Web\Laravel\Scaffold\Domain\DomainStructureLoader;
@@ -50,6 +52,7 @@ class DomainStructureLoaderTest extends CmsIntegrationTest
                     new DomainObjectStructure(TestWebValueObject::definition()),
                 ]),
             ],
+            $this->toRelationFixture(),
         ];
 
         return $fixtures;
@@ -67,5 +70,38 @@ class DomainStructureLoaderTest extends CmsIntegrationTest
             $expected,
             $loader->loadDomainStructure($domainNamespace)
         );
+    }
+
+    /**
+     * @return array
+     */
+    private function toRelationFixture():array
+    {
+        $testEntity = new DomainObjectStructure(\Dms\Web\Laravel\Tests\Integration\Scaffold\Fixture\ToOneRelation\Domain\TestEntity::definition());
+        $testRelatedEntity = new DomainObjectStructure(\Dms\Web\Laravel\Tests\Integration\Scaffold\Fixture\ToOneRelation\Domain\TestRelatedEntity::definition());
+
+        $relation = new DomainObjectRelation(
+            DomainObjectRelationMode::toOne(),
+            $testEntity->getDefinition()->getProperty('related'),
+            $testRelatedEntity
+        );
+        $inverse = new DomainObjectRelation(
+            DomainObjectRelationMode::toOne(),
+            $testRelatedEntity->getDefinition()->getProperty('parent'),
+            $testEntity
+        );
+
+
+        $relation->setInverseRelation($inverse);
+        $testEntity->addRelation($relation);
+        $testRelatedEntity->addRelation($inverse);
+
+        return [
+            'domain_namespace' => 'Dms\\Web\\Laravel\\Tests\\Integration\\Scaffold\\Fixture\\ToOneRelation\\Domain',
+            'expected_domain'  => new DomainStructure([
+                $testEntity,
+                $testRelatedEntity,
+            ]),
+        ];
     }
 }

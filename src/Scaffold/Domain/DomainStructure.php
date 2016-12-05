@@ -83,4 +83,21 @@ class DomainStructure
             })
             ->asArray();
     }
+
+    /**
+     * @param string $class
+     *
+     * @return DomainObjectStructure
+     * @throws InvalidArgumentException
+     */
+    public function getObject(string $class) : DomainObjectStructure
+    {
+        foreach ($this->objects as $object) {
+            if ($object->getDefinition()->getClassName() === $class) {
+                return $object;
+            }
+        }
+
+        throw InvalidArgumentException::format('Class not found: %s', $class);
+    }
 }

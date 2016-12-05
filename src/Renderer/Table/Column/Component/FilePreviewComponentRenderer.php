@@ -4,6 +4,7 @@ namespace Dms\Web\Laravel\Renderer\Table\Column\Component;
 
 use Dms\Common\Structure\FileSystem\Form\FileUploadType;
 use Dms\Common\Structure\FileSystem\Form\ImageUploadType;
+use Dms\Common\Structure\FileSystem\Image;
 use Dms\Common\Structure\FileSystem\PathHelper;
 use Dms\Core\Exception\InvalidArgumentException;
 use Dms\Core\File\IFile;
@@ -61,7 +62,7 @@ class FilePreviewComponentRenderer implements IColumnComponentRenderer
     public function render(IColumnComponent $component, $value) : string
     {
         /** @var IFile $value */
-        $isImage = @getimagesize($value->getFullPath()) !== false;
+        $isImage = $value instanceof Image;
 
         $name = $value->getClientFileNameWithFallback();
         if ($isImage && $this->isPublicFile($value)) {
@@ -69,7 +70,7 @@ class FilePreviewComponentRenderer implements IColumnComponentRenderer
 
             return '<img src="' . e($url) . '" alt="' . e($name) . '" />';
         } else {
-            $url = asset('vendor/dms/img/file/icon/' . strtolower($value->getExtension()) . '.png');
+            $url = asset('vendor/dms/img/file/icon/' . strtolower(array_last(explode('.', $name))) . '.png');
 
             return '<img class="dms-file-icon" src="' . e($url) . '" alt="' . e($name) . '" />';
         }
@@ -77,6 +78,6 @@ class FilePreviewComponentRenderer implements IColumnComponentRenderer
 
     private function isPublicFile(IFile $file)
     {
-        return strpos($file->getFullPath(), PathHelper::normalize($this->config->get('dms.storage.public-files.dir'))) === 0;
+        return strpos($file->getFullPath(), PathHelper::normalize(public_path())) === 0;
     }
 }

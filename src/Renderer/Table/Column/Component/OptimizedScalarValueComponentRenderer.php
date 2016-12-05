@@ -12,6 +12,7 @@ use Dms\Core\Form\Field\Type\FloatType;
 use Dms\Core\Form\Field\Type\IntType;
 use Dms\Core\Form\Field\Type\StringType;
 use Dms\Core\Model\Criteria\Condition\ConditionOperator;
+use Dms\Core\Model\Type\Builder\Type;
 use Dms\Core\Table\IColumnComponent;
 use Dms\Core\Util\Debug;
 use Dms\Web\Laravel\Renderer\Table\IColumnComponentRenderer;
@@ -36,7 +37,7 @@ class OptimizedScalarValueComponentRenderer implements IColumnComponentRenderer
     {
         $fieldType     = $component->getType()->getOperator(ConditionOperator::EQUALS)->getField()->getType();
 
-        return $fieldType instanceof StringType
+        return get_class($fieldType) === StringType::class
         || $fieldType instanceof DomainSpecificStringType
         || $fieldType instanceof IntType
         || $fieldType instanceof FloatType

@@ -71,7 +71,7 @@ class CustomValueObjectCollectionPropertyCodeGenerator extends PropertyCodeGener
             $mapperClass       = $mapperNamespace . '\\' . $valueObject->getReflection()->getShortName() . 'Mapper';
 
             $code->addNamespaceImport($mapperClass);
-            $code->getCode()->append('->using(new ' . basename($mapperClass) . '())');
+            $code->getCode()->append('->using(new ' . $this->getShortClassName($mapperClass) . '())');
         }
 
         $code->getCode()->indent--;
@@ -112,7 +112,7 @@ class CustomValueObjectCollectionPropertyCodeGenerator extends PropertyCodeGener
 
         $code->getCode()->indent++;
 
-        $code->getCode()->appendLine('new ' . basename($fieldClass) . '(\'' . $fieldName . '\', \'' . $fieldLabel . '\')');
+        $code->getCode()->appendLine('new ' . $this->getShortClassName($fieldClass) . '(\'' . $fieldName . '\', \'' . $fieldLabel . '\')');
 
         $code->getCode()->indent--;
 

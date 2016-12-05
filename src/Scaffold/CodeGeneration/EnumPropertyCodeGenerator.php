@@ -75,13 +75,13 @@ class EnumPropertyCodeGenerator extends PropertyCodeGenerator
         $enumClass = $objectType->getClass();
         $code->addNamespaceImport($enumClass);
 
-        $code->getCode()->appendLine('->enum(' . basename($enumClass) . '::class, [');
+        $code->getCode()->appendLine('->enum(' . $this->getShortClassName($enumClass) . '::class, [');
 
         $code->getCode()->indent++;
 
         foreach ($enumClass::getOptions() as $constant => $option) {
             $label = $this->codeConvention->getCmsFieldLabel((string)$option);
-            $code->getCode()->appendLine(basename($enumClass) . '::' . $constant . ' => ' . var_export($label, true) . ',');
+            $code->getCode()->appendLine($this->getShortClassName($enumClass) . '::' . $constant . ' => ' . var_export($label, true) . ',');
         }
 
         $code->getCode()->indent--;

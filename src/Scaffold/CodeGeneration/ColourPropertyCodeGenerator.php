@@ -61,7 +61,7 @@ class ColourPropertyCodeGenerator extends PropertyCodeGenerator
         }
 
         $code->addNamespaceImport($class);
-        $code->getCode()->append('->using(' . basename($class) . '::' . $method . '(\'' . $columnName . '\'))');
+        $code->getCode()->append('->using(' . $this->getShortClassName($class) . '::' . $method . '(\'' . $columnName . '\'))');
 
         $code->getCode()->indent--;
     }

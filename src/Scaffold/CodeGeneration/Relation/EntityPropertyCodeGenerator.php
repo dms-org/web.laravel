@@ -133,7 +133,7 @@ class EntityPropertyCodeGenerator extends PropertyCodeGenerator
 
         $code->addNamespaceImport($dataSourceInterface);
         $code->addNamespaceImport($entity->getDefinition()->getClassName());
-        $dataSourcePropertyName = $code->addConstructorParameter(basename($dataSourceInterface), $dataSourcePropertyName);
+        $dataSourcePropertyName = $code->addConstructorParameter($this->getShortClassName($dataSourceInterface), $dataSourcePropertyName);
 
         $code->getCode()->appendLine('Field::create(\'' . $fieldName . '\', \'' . $fieldLabel . '\')');
         $code->getCode()->indent++;

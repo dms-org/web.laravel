@@ -59,7 +59,7 @@ class FilePropertyCodeGenerator extends PropertyCodeGenerator
 
         $code->addNamespaceImport($class);
         $basePath = $this->getStorageDirectoryCode($object);
-        $code->getCode()->append('->using(new ' . basename($class) . '(\'' . $columnName . '\', \'' . $columnName . '_file_name\', ' . $basePath . '))');
+        $code->getCode()->append('->using(new ' . $this->getShortClassName($class) . '(\'' . $columnName . '\', \'' . $columnName . '_file_name\', ' . $basePath . '))');
 
         $code->getCode()->indent--;
     }

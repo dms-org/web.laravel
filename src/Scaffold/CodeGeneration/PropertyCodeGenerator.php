@@ -202,4 +202,14 @@ abstract class PropertyCodeGenerator
 
         return '\'' . $propertyName . '\'';
     }
+
+    /**
+     * @param string $class
+     *
+     * @return string
+     */
+    protected function getShortClassName(string $class) : string
+    {
+        return (new \ReflectionClass($class))->getShortName();
+    }
 }

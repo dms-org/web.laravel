@@ -89,7 +89,7 @@ class GeoPropertyCodeGenerator extends PropertyCodeGenerator
         }
 
         $code->addNamespaceImport($class);
-        $code->getCode()->append('->using(new ' . basename($class) . '(' . implode(', ', $columns) . '))');
+        $code->getCode()->append('->using(new ' . $this->getShortClassName($class) . '(' . implode(', ', $columns) . '))');
 
         $code->getCode()->indent--;
     }

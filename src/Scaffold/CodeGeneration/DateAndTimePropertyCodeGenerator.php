@@ -71,7 +71,7 @@ class DateAndTimePropertyCodeGenerator extends PropertyCodeGenerator
                 $code->getCode()->appendLine('->withIssetColumn(\'' . $columnName . '_date_time\')');
             }
 
-            $code->getCode()->append('->using(new ' . basename($class) . '(\'' . $columnName . '_date_time\', \'' . $columnName . '_timezone\'))');
+            $code->getCode()->append('->using(new ' . $this->getShortClassName($class) . '(\'' . $columnName . '_date_time\', \'' . $columnName . '_timezone\'))');
 
             $code->getCode()->indent--;
             return;
@@ -85,7 +85,7 @@ class DateAndTimePropertyCodeGenerator extends PropertyCodeGenerator
             $code->getCode()->appendLine('->withIssetColumn(\'' . $columnName . '\')');
         }
 
-        $code->getCode()->append('->using(new ' . basename($class) . '(\'' . $columnName . '\'))');
+        $code->getCode()->append('->using(new ' . $this->getShortClassName($class) . '(\'' . $columnName . '\'))');
 
         $code->getCode()->indent--;
     }

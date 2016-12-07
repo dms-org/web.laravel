@@ -14,11 +14,14 @@
 >
     <li class="list-group-item hidden field-list-template clearfix dms-no-validation dms-form-no-submit">
         <div class="row">
-            <div class="col-xs-10 col-md-11 field-list-input">
+            <div class="col-xs-8 col-md-10 field-list-input">
                 {!! htmlspecialchars($fieldRenderer->render($renderingContext, $elementField->withName($name . '[::index::]')->withInitialValue(null))) !!}
             </div>
-            <div class="col-xs-2 col-md-1 field-list-button-container">
-                <button class="btn btn-danger btn-block btn-remove-field" tabindex="-1"><span class="fa fa-times"></span></button>
+            <div class="col-xs-4 col-md-2 field-list-button-container">
+                <div class="pull-right">
+                    <button class="btn btn-danger dms-remove-field-button" tabindex="-1"><span class="fa fa-times"></span></button>
+                    <button class="btn btn-success dms-reorder-field-button" tabindex="-1"><span class="fa fa-arrows"></span></button>
+                </div>
             </div>
         </div>
     </li>
@@ -28,15 +31,18 @@
         @foreach ($processedValue as $valueElement)
             <li class="list-group-item field-list-item clearfix">
                 <div class="row">
-                    <div class="col-xs-10 col-md-11 field-list-input">
+                    <div class="col-xs-8 col-md-10 field-list-input">
                         {!! $fieldRenderer->render($renderingContext, $elementField->withName($name . '[' . $i . ']')->withInitialValue($valueElement)) !!}
                     </div>
-                    <div class="col-xs-2 col-md-1 field-list-button-container">
-                        <button class="btn btn-danger btn-block btn-remove-field" tabindex="-1"><span class="fa fa-times"></span></button>
+                    <div class="col-xs-4 col-md-2 field-list-button-container">
+                        <div class="pull-right">
+                            <button class="btn btn-danger dms-remove-field-button" tabindex="-1"><span class="fa fa-times"></span></button>
+                            <button class="btn btn-success dms-reorder-field-button" tabindex="-1"><span class="fa fa-arrows"></span></button>
+                        </div>
                     </div>
                 </div>
             </li>
-                <?php $i++ ?>
+            <?php $i++ ?>
         @endforeach
     @endif
 

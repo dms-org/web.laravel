@@ -53838,20 +53838,25 @@ Dms.utilities.convertPhpDateFormatToMomentFormat = function (format) {
     return newFormat;
 };
 
-Dms.utilities.scrollToView = function (element) {
+Dms.utilities.isInView = function (element) {
     var topOfElement = element.offset().top;
-    if (!element.is(":visible")) {
-        element.css({"visibility": "hidden"}).show();
+    if (!element.is(':visible')) {
+        element.css({'visibility': 'hidden'}).show();
         topOfElement = element.offset().top;
-        element.css({"visibility": "", "display": ""});
+        element.css({'visibility': '', 'display': ''});
     }
     var bottomOfElement = topOfElement + element.outerHeight();
 
     var topOfScreen = $(window).scrollTop();
     var bottomOfScreen = topOfScreen + window.innerHeight;
 
-    if (!(topOfScreen < topOfElement && bottomOfScreen > bottomOfElement)) {
+    return topOfScreen < topOfElement && bottomOfScreen > bottomOfElement;
+};
+
+Dms.utilities.scrollToView = function (element) {
+    if (!Dms.utilities.isInView(element)) {
         // Not in view so scroll to it
+        var topOfElement = element.offset().top;
         $('html,body').animate({scrollTop: topOfElement - window.innerHeight / 3}, 500);
     }
 };
@@ -53880,9 +53885,9 @@ Dms.utilities.throttleCallback = function (fn, threshhold, scope) {
 
 Dms.utilities.debounceCallback = function (func, wait, immediate) {
     var timeout;
-    return function() {
+    return function () {
         var context = this, args = arguments;
-        var later = function() {
+        var later = function () {
             timeout = null;
             if (!immediate) func.apply(context, args);
         };
@@ -55132,6 +55137,7 @@ Dms.form.initializeCallbacks.push(function (element) {
         var formGroup = listOfFields.closest('.form-group');
         var templateField = listOfFields.children('.field-list-template');
         var addButton = listOfFields.children('.field-list-add').find('.btn-add-field');
+        var guid = Dms.utilities.idGenerator();
         var isInvalidating = false;
 
         var minFields = listOfFields.attr('data-min-elements');
@@ -55151,7 +55157,7 @@ Dms.form.initializeCallbacks.push(function (element) {
             var amountOfInputs = getAmountOfInputs();
 
             addButton.prop('disabled', amountOfInputs >= maxFields);
-            listOfFields.find('.btn-remove-field').prop('disabled', amountOfInputs <= minFields);
+            listOfFields.find('.dms-remove-field-button').prop('disabled', amountOfInputs <= minFields);
 
             while (amountOfInputs < minFields) {
                 addNewField();
@@ -55159,6 +55165,10 @@ Dms.form.initializeCallbacks.push(function (element) {
             }
 
             isInvalidating = false;
+        };
+
+        var reindexFields = function () {
+            // TODO
         };
 
         var addNewField = function () {
@@ -55187,14 +55197,14 @@ Dms.form.initializeCallbacks.push(function (element) {
             invalidateControl();
         };
 
-        listOfFields.on('click', '.btn-remove-field', function () {
+        listOfFields.on('click', '.dms-remove-field-button', function () {
             var field = $(this).closest('.field-list-item');
             field.remove();
             formGroup.trigger('dms-change');
             form.triggerHandler('dms-form-updated');
 
             invalidateControl();
-            // TODO: reindex
+            reindexFields();
         });
 
         addButton.on('click', addNewField);
@@ -55204,9 +55214,27 @@ Dms.form.initializeCallbacks.push(function (element) {
         var requiresAnExactAmountOfFields = typeof minFields !== 'undefined' && minFields === maxFields;
         if (requiresAnExactAmountOfFields && getAmountOfInputs() == minFields) {
             addButton.closest('.field-list-add').remove();
-            listOfFields.find('.btn-remove-field').closest('.field-list-button-container').remove();
+            listOfFields.find('.dms-remove-field-button').closest('.field-list-button-container').remove();
             listOfFields.find('.field-list-input').removeClass('col-xs-10 col-md-11').addClass('col-xs-12');
         }
+
+        // Sorting
+        var sortable = new Sortable(listOfFields.get(0), {
+            group: "sortable-field-list-" + guid,
+            sort: true,  // sorting inside list
+            animation: 150,  // ms, animation speed moving items when sorting, `0` — without animation
+            handle: ".dms-reorder-field-button",  // Drag handle selector within list items
+            draggable: ".list-group-item",  // Specifies which items inside the element should be sortable
+            ghostClass: "sortable-ghost",  // Class name for the drop placeholder
+            chosenClass: "sortable-chosen",  // Class name for the chosen item
+            dataIdAttr: 'data-id',
+            onEnd: function (event) {
+                reindexFields();
+            }
+        });
+
+        $(document).on('dragstart', '', function(event) { event.preventDefault(); });
+
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -55528,9 +55556,6 @@ Dms.form.initializeCallbacks.push(function (element) {
 });
 Dms.form.initializeCallbacks.push(function (element) {
 
-});
-Dms.form.initializeCallbacks.push(function (element) {
-
     element.find('table.dms-field-table').each(function () {
         var tableOfFields = $(this);
         var form = tableOfFields.closest('.dms-staged-form');
@@ -55730,6 +55755,9 @@ Dms.form.initializeCallbacks.push(function (element) {
             tableOfFields.find('.btn-add-row').remove();
         }
     });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+
 });
 Dms.form.initializeCallbacks.push(function (element) {
     if (typeof tinymce === 'undefined') {
@@ -56190,6 +56218,7 @@ Dms.form.initializeCallbacks.push(function (element) {
                     case 422: // Unprocessable Entity (validation failure)
                         var validation = JSON.parse(xhr.responseText);
                         Dms.form.validation.displayMessages(form, validation.messages.fields, validation.messages.constraints);
+                        Dms.utilities.scrollToView(form.find('.help-block-error:not(:empty)').first());
                         break;
 
                     default:

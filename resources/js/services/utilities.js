@@ -88,20 +88,25 @@ Dms.utilities.convertPhpDateFormatToMomentFormat = function (format) {
     return newFormat;
 };
 
-Dms.utilities.scrollToView = function (element) {
+Dms.utilities.isInView = function (element) {
     var topOfElement = element.offset().top;
-    if (!element.is(":visible")) {
-        element.css({"visibility": "hidden"}).show();
+    if (!element.is(':visible')) {
+        element.css({'visibility': 'hidden'}).show();
         topOfElement = element.offset().top;
-        element.css({"visibility": "", "display": ""});
+        element.css({'visibility': '', 'display': ''});
     }
     var bottomOfElement = topOfElement + element.outerHeight();
 
     var topOfScreen = $(window).scrollTop();
     var bottomOfScreen = topOfScreen + window.innerHeight;
 
-    if (!(topOfScreen < topOfElement && bottomOfScreen > bottomOfElement)) {
+    return topOfScreen < topOfElement && bottomOfScreen > bottomOfElement;
+};
+
+Dms.utilities.scrollToView = function (element) {
+    if (!Dms.utilities.isInView(element)) {
         // Not in view so scroll to it
+        var topOfElement = element.offset().top;
         $('html,body').animate({scrollTop: topOfElement - window.innerHeight / 3}, 500);
     }
 };
@@ -130,9 +135,9 @@ Dms.utilities.throttleCallback = function (fn, threshhold, scope) {
 
 Dms.utilities.debounceCallback = function (func, wait, immediate) {
     var timeout;
-    return function() {
+    return function () {
         var context = this, args = arguments;
-        var later = function() {
+        var later = function () {
             timeout = null;
             if (!immediate) func.apply(context, args);
         };

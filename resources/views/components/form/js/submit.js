@@ -118,6 +118,7 @@ Dms.form.initializeCallbacks.push(function (element) {
                     case 422: // Unprocessable Entity (validation failure)
                         var validation = JSON.parse(xhr.responseText);
                         Dms.form.validation.displayMessages(form, validation.messages.fields, validation.messages.constraints);
+                        Dms.utilities.scrollToView(form.find('.help-block-error:not(:empty)').first());
                         break;
 
                     default:

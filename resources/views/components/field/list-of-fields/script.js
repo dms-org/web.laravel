@@ -102,7 +102,5 @@ Dms.form.initializeCallbacks.push(function (element) {
             }
         });
 
-        $(document).on('dragstart', '', function(event) { event.preventDefault(); });
-
     });
 });

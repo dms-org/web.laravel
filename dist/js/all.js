@@ -54373,20 +54373,6 @@ Dms.chart.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-    element.find('input[type=checkbox].single-checkbox').iCheck({
-        checkboxClass: 'icheckbox_square-blue',
-        increaseArea: '20%'
-    });
-
-    element.find('input[type=checkbox]').each(function () {
-        var formGroup = $(this).closest('.form-group');
-
-        $(this).on('ifToggled', function(event){
-            formGroup.trigger('dms-change');
-        });
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
 
     element.find('.list-of-checkboxes').each(function () {
         var listOfCheckboxes = $(this);
@@ -54398,6 +54384,20 @@ Dms.form.initializeCallbacks.push(function (element) {
         var firstCheckbox = listOfCheckboxes.find('input[type=checkbox]').first();
         firstCheckbox.attr('data-parsley-min-elements', listOfCheckboxes.attr('data-min-elements'));
         firstCheckbox.attr('data-parsley-max-elements', listOfCheckboxes.attr('data-max-elements'));
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+    element.find('input[type=checkbox].single-checkbox').iCheck({
+        checkboxClass: 'icheckbox_square-blue',
+        increaseArea: '20%'
+    });
+
+    element.find('input[type=checkbox]').each(function () {
+        var formGroup = $(this).closest('.form-group');
+
+        $(this).on('ifToggled', function(event){
+            formGroup.trigger('dms-change');
+        });
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -55232,8 +55232,6 @@ Dms.form.initializeCallbacks.push(function (element) {
                 reindexFields();
             }
         });
-
-        $(document).on('dragstart', '', function(event) { event.preventDefault(); });
 
     });
 });

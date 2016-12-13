@@ -44,11 +44,11 @@ class TestEntityModule extends CrudModule
         $module->crudForm(function (CrudFormDefinition $form) {
             $form->section('Details', [
                 $form->field(
-                    new TestValueObjectField('value_object', 'Value Object')
+                    (new TestValueObjectField('value_object', 'Value Object'))->required()
                 )->bindToProperty(TestEntity::VALUE_OBJECT),
                 //
                 $form->field(
-                    (new TestValueObjectField('nullable_value_object', 'Nullable Value Object'))->required()
+                    new TestValueObjectField('nullable_value_object', 'Nullable Value Object')
                 )->bindToProperty(TestEntity::NULLABLE_VALUE_OBJECT),
                 //
                 $form->field(
@@ -64,8 +64,8 @@ class TestEntityModule extends CrudModule
         $module->removeAction()->deleteFromDataSource();
 
         $module->summaryTable(function (SummaryTableDefinition $table) {
-            $table->mapProperty(TestEntity::VALUE_OBJECT)->to(new TestValueObjectField('value_object', 'Value Object'));
-            $table->mapProperty(TestEntity::NULLABLE_VALUE_OBJECT)->to((new TestValueObjectField('nullable_value_object', 'Nullable Value Object'))->required());
+            $table->mapProperty(TestEntity::VALUE_OBJECT)->to((new TestValueObjectField('value_object', 'Value Object'))->required());
+            $table->mapProperty(TestEntity::NULLABLE_VALUE_OBJECT)->to(new TestValueObjectField('nullable_value_object', 'Nullable Value Object'));
             $table->mapProperty(TestEntity::VALUE_OBJECT_COLLECTION)->to(Field::create('value_object_collection', 'Value Object Collection')->arrayOfField(
                 new TestValueObjectField('value_object_collection', 'Value Object Collection')
             )->mapToCollection(TestValueObject::collectionType()));

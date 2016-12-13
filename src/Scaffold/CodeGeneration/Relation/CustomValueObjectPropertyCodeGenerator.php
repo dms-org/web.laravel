@@ -92,7 +92,7 @@ class CustomValueObjectPropertyCodeGenerator extends PropertyCodeGenerator
         string $fieldName,
         string $fieldLabel
     ) {
-        $isRequired = $property->getType()->isNullable();
+        $isRequired = !$property->getType()->isNullable();
 
         /** @var ObjectType $type */
         $type        = $property->getType()->nonNullable();

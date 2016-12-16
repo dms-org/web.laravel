@@ -19,53 +19,35 @@ use Dms\Web\Laravel\Scaffold\ScaffoldPersistenceContext;
 /**
  * @author Elliot Levin <elliotlevin@hotmail.com>
  */
-class DateAndTimePropertyCodeGenerator extends PropertyCodeGenerator
+class DateAndTimePropertyCodeGenerator extends CommonValueObjectPropertyCodeGenerator
 {
     /**
-     * @param DomainObjectStructure       $object
-     * @param FinalizedPropertyDefinition $property
-     *
-     * @return bool
+     * @return string[]
      */
-    protected function doesSupportProperty(DomainObjectStructure $object, FinalizedPropertyDefinition $property) : bool
+    protected function getSupportedValueObjectClasses() : array
     {
-        return $property->getType()->nonNullable()->isSubsetOf(DateOrTimeObject::type());
+        return [DateOrTimeObject::class];
     }
 
-
-    /**
-     * @param ScaffoldPersistenceContext  $context
-     * @param PhpCodeBuilderContext       $code
-     * @param DomainObjectStructure       $object
-     * @param FinalizedPropertyDefinition $property
-     * @param string                      $propertyReference
-     * @param string                      $columnName
-     */
-    protected function doGeneratePersistenceMappingCode(
+    protected function doGeneratePersistenceMappingObjectMapperCode(
         ScaffoldPersistenceContext $context,
         PhpCodeBuilderContext $code,
         DomainObjectStructure $object,
         FinalizedPropertyDefinition $property,
-        string $propertyReference,
+        bool $isCollection,
+        string $objectClass,
         string $columnName
     ) {
-        $code->getCode()->appendLine('$map->embedded(' . $propertyReference . ')');
-
-        $type = $property->getType()->nonNullable();
-
-        if ($type->isSubsetOf(DateTime::type())) {
+        if ($objectClass === DateTime::class) {
             $class = DateTimeMapper::class;
-        } elseif ($type->isSubsetOf(Date::type())) {
+        } elseif ($objectClass === Date::class) {
             $class = DateMapper::class;
-        } elseif ($type->isSubsetOf(TimeOfDay::type())) {
+        } elseif ($objectClass === TimeOfDay::class) {
             $class = TimeOfDayMapper::class;
-        } elseif ($type->isSubsetOf(TimezonedDateTime::type())) {
+        } elseif ($objectClass === TimezonedDateTime::class) {
             $class = TimezonedDateTimeMapper::class;
 
-
             $code->addNamespaceImport($class);
-
-            $code->getCode()->indent++;
 
             if ($property->getType()->isNullable()) {
                 $code->getCode()->appendLine('->withIssetColumn(\'' . $columnName . '_date_time\')');
@@ -73,58 +55,34 @@ class DateAndTimePropertyCodeGenerator extends PropertyCodeGenerator
 
             $code->getCode()->append('->using(new ' . $this->getShortClassName($class) . '(\'' . $columnName . '_date_time\', \'' . $columnName . '_timezone\'))');
 
-            $code->getCode()->indent--;
             return;
         }
 
         $code->addNamespaceImport($class);
-
-        $code->getCode()->indent++;
 
         if ($property->getType()->isNullable()) {
             $code->getCode()->appendLine('->withIssetColumn(\'' . $columnName . '\')');
         }
 
         $code->getCode()->append('->using(new ' . $this->getShortClassName($class) . '(\'' . $columnName . '\'))');
-
-        $code->getCode()->indent--;
     }
 
-    /**
-     * @param ScaffoldCmsContext          $context
-     * @param PhpCodeBuilderContext       $code
-     * @param DomainObjectStructure       $object
-     * @param FinalizedPropertyDefinition $property
-     * @param string                      $propertyReference
-     * @param string                      $fieldName
-     * @param string                      $fieldLabel
-     */
-    protected function doGenerateCmsFieldCode(
+    protected function doGenerateCmsObjectFieldCode(
         ScaffoldCmsContext $context,
         PhpCodeBuilderContext $code,
         DomainObjectStructure $object,
         FinalizedPropertyDefinition $property,
-        string $propertyReference,
-        string $fieldName,
-        string $fieldLabel
+        bool $isCollection,
+        string $objectClass
     ) {
-        $code->getCode()->append('Field::create(\'' . $fieldName . '\', \'' . $fieldLabel . '\')');
-
-
-        $type = $property->getType()->nonNullable();
-
-        if ($type->isSubsetOf(DateTime::type())) {
+        if ($objectClass === DateTime::class) {
             $code->getCode()->append('->dateTime()');
-        } elseif ($type->isSubsetOf(Date::type())) {
+        } elseif ($objectClass === Date::class) {
             $code->getCode()->append('->date()');
-        } elseif ($type->isSubsetOf(TimeOfDay::type())) {
+        } elseif ($objectClass === TimeOfDay::class) {
             $code->getCode()->append('->time()');
-        } elseif ($type->isSubsetOf(TimezonedDateTime::type())) {
+        } elseif ($objectClass === TimezonedDateTime::class) {
             $code->getCode()->append('->dateTimeWithTimezone()');
-        }
-
-        if (!$property->getType()->isNullable()) {
-            $code->getCode()->append('->required()');
         }
     }
 }

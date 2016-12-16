@@ -14,76 +14,54 @@ use Dms\Web\Laravel\Scaffold\ScaffoldPersistenceContext;
 /**
  * @author Elliot Levin <elliotlevin@hotmail.com>
  */
-class FilePropertyCodeGenerator extends PropertyCodeGenerator
+class FilePropertyCodeGenerator extends CommonValueObjectPropertyCodeGenerator
 {
     /**
-     * @param DomainObjectStructure       $object
-     * @param FinalizedPropertyDefinition $property
-     *
-     * @return bool
+     * @return string[]
      */
-    protected function doesSupportProperty(DomainObjectStructure $object, FinalizedPropertyDefinition $property) : bool
+    protected function getSupportedValueObjectClasses() : array
     {
-        return $property->getType()->nonNullable()->isSubsetOf(File::type());
+        return [File::class];
     }
 
-    /**
-     * @param ScaffoldPersistenceContext  $context
-     * @param PhpCodeBuilderContext       $code
-     * @param DomainObjectStructure       $object
-     * @param FinalizedPropertyDefinition $property
-     * @param string                      $propertyReference
-     * @param string                      $columnName
-     */
-    protected function doGeneratePersistenceMappingCode(
+    protected function doGeneratePersistenceMappingObjectMapperCode(
         ScaffoldPersistenceContext $context,
         PhpCodeBuilderContext $code,
         DomainObjectStructure $object,
         FinalizedPropertyDefinition $property,
-        string $propertyReference,
+        bool $isCollection,
+        string $objectClass,
         string $columnName
     ) {
-        $code->getCode()->appendLine('$map->embedded(' . $propertyReference . ')');
-
-        $code->getCode()->indent++;
-
-        if ($property->getType()->isNullable()) {
-            $code->getCode()->appendLine('->withIssetColumn(\'' . $columnName . '\')');
-        }
-
         if ($property->getType()->nonNullable()->isSubsetOf(Image::type())) {
             $class = ImageMapper::class;
         } else {
             $class = FileMapper::class;
         }
 
+        if (!$isCollection && $property->getType()->isNullable()) {
+            $code->getCode()->appendLine('->withIssetColumn(\'' . $columnName . '\')');
+        }
+
         $code->addNamespaceImport($class);
         $basePath = $this->getStorageDirectoryCode($object);
         $code->getCode()->append('->using(new ' . $this->getShortClassName($class) . '(\'' . $columnName . '\', \'' . $columnName . '_file_name\', ' . $basePath . '))');
-
-        $code->getCode()->indent--;
     }
 
-    /**
-     * @param ScaffoldCmsContext          $context
-     * @param PhpCodeBuilderContext       $code
-     * @param DomainObjectStructure       $object
-     * @param FinalizedPropertyDefinition $property
-     * @param string                      $propertyReference
-     * @param string                      $fieldName
-     * @param string                      $fieldLabel
-     */
-    protected function doGenerateCmsFieldCode(
+    protected function appendsRequiredMethodCall() : bool
+    {
+        return true;
+    }
+
+    protected function doGenerateCmsObjectFieldCode(
         ScaffoldCmsContext $context,
         PhpCodeBuilderContext $code,
         DomainObjectStructure $object,
         FinalizedPropertyDefinition $property,
-        string $propertyReference,
-        string $fieldName,
-        string $fieldLabel
+        bool $isCollection,
+        string $objectClass
     ) {
-        $code->getCode()->appendLine('Field::create(\'' . $fieldName . '\', \'' . $fieldLabel . '\')');
-
+        $code->getCode()->appendLine();
         $code->getCode()->indent++;
 
         if ($property->getType()->nonNullable()->isSubsetOf(Image::type())) {
@@ -99,6 +77,7 @@ class FilePropertyCodeGenerator extends PropertyCodeGenerator
         $code->getCode()->append('->moveToPathWithRandomFileName(' . $this->getStorageDirectoryCode($object) . ')');
 
         $code->getCode()->indent--;
+
     }
 
     protected function getStorageDirectoryCode(DomainObjectStructure $object) : string

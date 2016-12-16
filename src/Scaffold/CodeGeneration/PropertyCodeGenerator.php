@@ -202,6 +202,6 @@ abstract class PropertyCodeGenerator
      */
     protected function getShortClassName(string $class) : string
     {
-        return (new \ReflectionClass($class))->getShortName();
+        return array_last(explode('\\', $class));
     }
 }

@@ -14,45 +14,30 @@ use Dms\Web\Laravel\Scaffold\ScaffoldPersistenceContext;
 /**
  * @author Elliot Levin <elliotlevin@hotmail.com>
  */
-class ColourPropertyCodeGenerator extends PropertyCodeGenerator
+class ColourPropertyCodeGenerator extends CommonValueObjectPropertyCodeGenerator
 {
     /**
-     * @param DomainObjectStructure       $object
-     * @param FinalizedPropertyDefinition $property
-     *
-     * @return bool
+     * @return string[]
      */
-    protected function doesSupportProperty(DomainObjectStructure $object, FinalizedPropertyDefinition $property) : bool
+    protected function getSupportedValueObjectClasses() : array
     {
-        $type = $property->getType()->nonNullable();
-        return $type->isSubsetOf(Colour::type()) || $type->isSubsetOf(TransparentColour::type());
+        return [Colour::class, TransparentColour::class];
     }
 
-    /**
-     * @param ScaffoldPersistenceContext  $context
-     * @param PhpCodeBuilderContext       $code
-     * @param DomainObjectStructure       $object
-     * @param FinalizedPropertyDefinition $property
-     * @param string                      $propertyReference
-     * @param string                      $columnName
-     */
-    protected function doGeneratePersistenceMappingCode(
+    protected function doGeneratePersistenceMappingObjectMapperCode(
         ScaffoldPersistenceContext $context,
         PhpCodeBuilderContext $code,
         DomainObjectStructure $object,
         FinalizedPropertyDefinition $property,
-        string $propertyReference,
+        bool $isCollection,
+        string $objectClass,
         string $columnName
     ) {
-        $code->getCode()->appendLine('$map->embedded(' . $propertyReference . ')');
-
-        $code->getCode()->indent++;
-
-        if ($property->getType()->isNullable()) {
+        if (!$isCollection && $property->getType()->isNullable()) {
             $code->getCode()->appendLine('->withIssetColumn(\'' . $columnName . '\')');
         }
 
-        if ($property->getType()->nonNullable()->isSubsetOf(Colour::type())) {
+        if ($objectClass === Colour::class) {
             $class  = ColourMapper::class;
             $method = 'asHexString';
         } else {
@@ -63,37 +48,20 @@ class ColourPropertyCodeGenerator extends PropertyCodeGenerator
         $code->addNamespaceImport($class);
         $code->getCode()->append('->using(' . $this->getShortClassName($class) . '::' . $method . '(\'' . $columnName . '\'))');
 
-        $code->getCode()->indent--;
     }
 
-    /**
-     * @param ScaffoldCmsContext          $context
-     * @param PhpCodeBuilderContext       $code
-     * @param DomainObjectStructure       $object
-     * @param FinalizedPropertyDefinition $property
-     * @param string                      $propertyReference
-     * @param string                      $fieldName
-     * @param string                      $fieldLabel
-     */
-    protected function doGenerateCmsFieldCode(
+    protected function doGenerateCmsObjectFieldCode(
         ScaffoldCmsContext $context,
         PhpCodeBuilderContext $code,
         DomainObjectStructure $object,
         FinalizedPropertyDefinition $property,
-        string $propertyReference,
-        string $fieldName,
-        string $fieldLabel
+        bool $isCollection,
+        string $objectClass
     ) {
-        $code->getCode()->append('Field::create(\'' . $fieldName . '\', \'' . $fieldLabel . '\')');
-
-        if ($property->getType()->nonNullable()->isSubsetOf(Colour::type())) {
+        if ($objectClass === Colour::class) {
             $code->getCode()->append('->colour()');
         } else {
             $code->getCode()->append('->colourWithTransparency()');
-        }
-
-        if (!$property->getType()->isNullable()) {
-            $code->getCode()->append('->required()');
         }
     }
 }

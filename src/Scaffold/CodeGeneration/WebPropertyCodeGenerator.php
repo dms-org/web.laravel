@@ -18,101 +18,61 @@ use Dms\Web\Laravel\Scaffold\ScaffoldPersistenceContext;
 /**
  * @author Elliot Levin <elliotlevin@hotmail.com>
  */
-class WebPropertyCodeGenerator extends PropertyCodeGenerator
+class WebPropertyCodeGenerator extends CommonValueObjectPropertyCodeGenerator
 {
     /**
-     * @param DomainObjectStructure       $object
-     * @param FinalizedPropertyDefinition $property
-     *
-     * @return bool
+     * @return string[]
      */
-    protected function doesSupportProperty(DomainObjectStructure $object, FinalizedPropertyDefinition $property) : bool
+    protected function getSupportedValueObjectClasses() : array
     {
-        $type = $property->getType()->nonNullable();
-        return $type->isSubsetOf(EmailAddress::type())
-        || $type->isSubsetOf(Html::type())
-        || $type->isSubsetOf(IpAddress::type())
-        || $type->isSubsetOf(Url::type());
+        return [Html::class, EmailAddress::class, IpAddress::class, Url::class];
     }
 
-
-    /**
-     * @param ScaffoldPersistenceContext  $context
-     * @param PhpCodeBuilderContext       $code
-     * @param DomainObjectStructure       $object
-     * @param FinalizedPropertyDefinition $property
-     * @param string                      $propertyReference
-     * @param string                      $columnName
-     */
-    protected function doGeneratePersistenceMappingCode(
+    protected function doGeneratePersistenceMappingObjectMapperCode(
         ScaffoldPersistenceContext $context,
         PhpCodeBuilderContext $code,
         DomainObjectStructure $object,
         FinalizedPropertyDefinition $property,
-        string $propertyReference,
+        bool $isCollection,
+        string $objectClass,
         string $columnName
     ) {
-        $code->getCode()->appendLine('$map->embedded(' . $propertyReference . ')');
-
-        $type = $property->getType()->nonNullable();
-
-        if ($type->isSubsetOf(EmailAddress::type())) {
+        if ($objectClass === EmailAddress::class) {
             $class = EmailAddressMapper::class;
-        } elseif ($type->isSubsetOf(Html::type())) {
+        } elseif ($objectClass === Html::class) {
             $class = HtmlMapper::class;
-        } elseif ($type->isSubsetOf(IpAddress::type())) {
+        } elseif ($objectClass === IpAddress::class) {
             $class = IpAddressMapper::class;
-        } elseif ($type->isSubsetOf(Url::type())) {
+        } elseif ($objectClass === Url::class) {
             $class = UrlMapper::class;
         }
 
         $code->addNamespaceImport($class);
 
-        $code->getCode()->indent++;
-
-        if ($property->getType()->isNullable()) {
+        if (!$isCollection && $property->getType()->isNullable()) {
             $code->getCode()->appendLine('->withIssetColumn(\'' . $columnName . '\')');
         }
 
         $code->getCode()->append('->using(new ' . $this->getShortClassName($class) . '(\'' . $columnName . '\'))');
 
-        $code->getCode()->indent--;
     }
 
-    /**
-     * @param ScaffoldCmsContext          $context
-     * @param PhpCodeBuilderContext       $code
-     * @param DomainObjectStructure       $object
-     * @param FinalizedPropertyDefinition $property
-     * @param string                      $propertyReference
-     * @param string                      $fieldName
-     * @param string                      $fieldLabel
-     */
-    protected function doGenerateCmsFieldCode(
+    protected function doGenerateCmsObjectFieldCode(
         ScaffoldCmsContext $context,
         PhpCodeBuilderContext $code,
         DomainObjectStructure $object,
         FinalizedPropertyDefinition $property,
-        string $propertyReference,
-        string $fieldName,
-        string $fieldLabel
+        bool $isCollection,
+        string $objectClass
     ) {
-        $code->getCode()->append('Field::create(\'' . $fieldName . '\', \'' . $fieldLabel . '\')');
-
-        $type = $property->getType()->nonNullable();
-
-        if ($type->isSubsetOf(EmailAddress::type())) {
+        if ($objectClass === EmailAddress::class) {
             $code->getCode()->append('->email()');
-        } elseif ($type->isSubsetOf(Html::type())) {
+        } elseif ($objectClass === Html::class) {
             $code->getCode()->append('->html()');
-        } elseif ($type->isSubsetOf(IpAddress::type())) {
+        } elseif ($objectClass === IpAddress::class) {
             $code->getCode()->append('->ipAddress()');
-        } elseif ($type->isSubsetOf(Url::type())) {
+        } elseif ($objectClass === Url::class) {
             $code->getCode()->append('->url()');
-        }
-
-        if (!$property->getType()->isNullable()) {
-            $code->getCode()->append('->required()');
         }
     }
 }

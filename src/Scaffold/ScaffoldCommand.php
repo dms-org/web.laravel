@@ -5,6 +5,8 @@ namespace Dms\Web\Laravel\Scaffold;
 use Dms\Core\Exception\InvalidArgumentException;
 use Dms\Web\Laravel\Scaffold\CodeGeneration\ColourPropertyCodeGenerator;
 use Dms\Web\Laravel\Scaffold\CodeGeneration\Convention\DefaultCodeConvention;
+use Dms\Web\Laravel\Scaffold\CodeGeneration\CountryPropertyCodeGenerator;
+use Dms\Web\Laravel\Scaffold\CodeGeneration\CurrencyPropertyCodeGenerator;
 use Dms\Web\Laravel\Scaffold\CodeGeneration\DateAndTimePropertyCodeGenerator;
 use Dms\Web\Laravel\Scaffold\CodeGeneration\EnumPropertyCodeGenerator;
 use Dms\Web\Laravel\Scaffold\CodeGeneration\FallbackPropertyCodeGenerator;
@@ -73,7 +75,9 @@ abstract class ScaffoldCommand extends Command
             new FilePropertyCodeGenerator($convention),
             new ColourPropertyCodeGenerator($convention),
             new GeoPropertyCodeGenerator($convention),
+            new CountryPropertyCodeGenerator($convention),
             new MoneyPropertyCodeGenerator($convention),
+            new CurrencyPropertyCodeGenerator($convention),
             new WebPropertyCodeGenerator($convention),
             new EnumPropertyCodeGenerator($convention),
             new CustomValueObjectPropertyCodeGenerator($convention),

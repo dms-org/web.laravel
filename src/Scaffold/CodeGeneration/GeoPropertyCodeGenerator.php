@@ -2,7 +2,6 @@
 
 namespace Dms\Web\Laravel\Scaffold\CodeGeneration;
 
-use Dms\Common\Structure\Geo\Country;
 use Dms\Common\Structure\Geo\LatLng;
 use Dms\Common\Structure\Geo\Persistence\LatLngMapper;
 use Dms\Common\Structure\Geo\Persistence\StreetAddressMapper;
@@ -17,63 +16,32 @@ use Dms\Web\Laravel\Scaffold\ScaffoldPersistenceContext;
 /**
  * @author Elliot Levin <elliotlevin@hotmail.com>
  */
-class GeoPropertyCodeGenerator extends PropertyCodeGenerator
+class GeoPropertyCodeGenerator extends CommonValueObjectPropertyCodeGenerator
 {
     /**
-     * @param DomainObjectStructure       $object
-     * @param FinalizedPropertyDefinition $property
-     *
-     * @return bool
+     * @return string[]
      */
-    protected function doesSupportProperty(DomainObjectStructure $object, FinalizedPropertyDefinition $property) : bool
+    protected function getSupportedValueObjectClasses() : array
     {
-        $type = $property->getType()->nonNullable();
-        return $type->isSubsetOf(Country::type())
-        || $type->isSubsetOf(LatLng::type())
-        || $type->isSubsetOf(StreetAddress::type())
-        || $type->isSubsetOf(StreetAddressWithLatLng::type());
+        return [LatLng::class, StreetAddress::class, StreetAddressWithLatLng::class];
     }
 
-
-    /**
-     * @param ScaffoldPersistenceContext  $context
-     * @param PhpCodeBuilderContext       $code
-     * @param DomainObjectStructure       $object
-     * @param FinalizedPropertyDefinition $property
-     * @param string                      $propertyReference
-     * @param string                      $columnName
-     */
-    protected function doGeneratePersistenceMappingCode(
+    protected function doGeneratePersistenceMappingObjectMapperCode(
         ScaffoldPersistenceContext $context,
         PhpCodeBuilderContext $code,
         DomainObjectStructure $object,
         FinalizedPropertyDefinition $property,
-        string $propertyReference,
+        bool $isCollection,
+        string $objectClass,
         string $columnName
     ) {
-        $type = $property->getType()->nonNullable();
-
-        if ($type->isSubsetOf(Country::type())) {
-            $code->getCode()->append('$map->enum(' . $propertyReference . ')->to(\'' . $columnName . '\')');
-
-            if ($property->getType()->isNullable()) {
-                $code->getCode()->append('->nullable()');
-            }
-
-            $code->getCode()->append('->asVarchar(2)');
-
-            return;
-        }
-
-        $code->getCode()->appendLine('$map->embedded(' . $propertyReference . ')');
-
-        if ($type->isSubsetOf(LatLng::type())) {
+        if ($objectClass === LatLng::class) {
             $class   = LatLngMapper::class;
             $columns = [$columnName . '_lat', $columnName . '_lng'];
-        } elseif ($type->isSubsetOf(StreetAddress::type())) {
+        } elseif ($objectClass === StreetAddress::class) {
             $class   = StreetAddressMapper::class;
             $columns = [$columnName];
-        } elseif ($type->isSubsetOf(StreetAddressWithLatLng::type())) {
+        } elseif ($objectClass === StreetAddressWithLatLng::class) {
             $class   = StreetAddressWithLatLngMapper::class;
             $columns = [$columnName . '_address', $columnName . '_lat', $columnName . '_lng'];
         }
@@ -82,55 +50,28 @@ class GeoPropertyCodeGenerator extends PropertyCodeGenerator
             $columns[$key] = '\'' . $column . '\'';
         }
 
-        $code->getCode()->indent++;
-
-        if ($property->getType()->isNullable()) {
+        if (!$isCollection && $property->getType()->isNullable()) {
             $code->getCode()->appendLine('->withIssetColumn(' . reset($columns) . ')');
         }
 
         $code->addNamespaceImport($class);
         $code->getCode()->append('->using(new ' . $this->getShortClassName($class) . '(' . implode(', ', $columns) . '))');
-
-        $code->getCode()->indent--;
     }
 
-    /**
-     * @param ScaffoldCmsContext          $context
-     * @param PhpCodeBuilderContext       $code
-     * @param DomainObjectStructure       $object
-     * @param FinalizedPropertyDefinition $property
-     * @param string                      $propertyReference
-     * @param string                      $fieldName
-     * @param string                      $fieldLabel
-     */
-    protected function doGenerateCmsFieldCode(
+    protected function doGenerateCmsObjectFieldCode(
         ScaffoldCmsContext $context,
         PhpCodeBuilderContext $code,
         DomainObjectStructure $object,
         FinalizedPropertyDefinition $property,
-        string $propertyReference,
-        string $fieldName,
-        string $fieldLabel
+        bool $isCollection,
+        string $objectClass
     ) {
-        $code->getCode()->append('Field::create(\'' . $fieldName . '\', \'' . $fieldLabel . '\')');
-
-        $type = $property->getType()->nonNullable();
-
-        if ($type->isSubsetOf(Country::type())) {
-            $code->addNamespaceImport(Country::class);
-            $code->getCode()->append('->enum(Country::class, Country::getShortNameMap())');
-        } else {
-            if ($type->isSubsetOf(LatLng::type())) {
-                $code->getCode()->append('->latLng()');
-            } elseif ($type->isSubsetOf(StreetAddress::type())) {
-                $code->getCode()->append('->streetAddress()');
-            } elseif ($type->isSubsetOf(StreetAddressWithLatLng::type())) {
-                $code->getCode()->append('->streetAddressWithLatLng()');
-            }
-        }
-
-        if (!$property->getType()->isNullable()) {
-            $code->getCode()->append('->required()');
+        if ($objectClass === LatLng::class) {
+            $code->getCode()->append('->latLng()');
+        } elseif ($objectClass === StreetAddress::class) {
+            $code->getCode()->append('->streetAddress()');
+        } elseif ($objectClass === StreetAddressWithLatLng::class) {
+            $code->getCode()->append('->streetAddressWithLatLng()');
         }
     }
 }

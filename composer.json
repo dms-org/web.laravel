@@ -28,7 +28,6 @@
         "dms/common.structure": "^0.1",
         "dms/package.analytics": "^0.1",
         "laravel/framework": "5.3.*",
-        "monii/container-interop-laravel": "^1.0",
         "marcj/topsort": "^1.0",
         "cache/cache": "^0.1.0",
         "league/oauth2-google": "^1.0"

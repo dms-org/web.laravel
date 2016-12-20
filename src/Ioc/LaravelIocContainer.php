@@ -6,14 +6,13 @@ use Dms\Core\Exception\InvalidArgumentException;
 use Dms\Core\Ioc\IIocContainer;
 use Dms\Core\Util\Debug;
 use Illuminate\Container\Container;
-use Monii\Interop\Container\Laravel\LaravelContainer;
 
 /**
  * The laravel ioc container.
  *
  * @author Elliot Levin <elliotlevin@hotmail.com>
  */
-class LaravelIocContainer extends LaravelContainer implements IIocContainer
+class LaravelIocContainer implements IIocContainer
 {
     /**
      * @var Container
@@ -21,11 +20,15 @@ class LaravelIocContainer extends LaravelContainer implements IIocContainer
     private $container;
 
     /**
+     * @var array
+     */
+    private $cacheForHas = [];
+
+    /**
      * @param Container $container
      */
     public function __construct(Container $container)
     {
-        parent::__construct($container);
         $this->container = $container;
     }
 
@@ -126,6 +129,60 @@ class LaravelIocContainer extends LaravelContainer implements IIocContainer
                 'Invalid scope supplied to %s: expecting one of (%s), \'%s\' given',
                 $method, Debug::formatValues($validScopes), $scope
             );
+        }
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function get($id)
+    {
+        return $this->container->make($id);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function has($id)
+    {
+        if ($this->hasIsCached($id)) {
+            return $this->hasFromCache($id);
+        }
+
+        $has = $this->container->bound($id) || $this->isInstantiable($id);
+
+        $this->cacheHas($id, $has);
+
+        return $has;
+    }
+
+    private function hasIsCached($id)
+    {
+        return array_key_exists($id, $this->cacheForHas);
+    }
+
+    private function hasFromCache($id)
+    {
+        return $this->cacheForHas[$id];
+    }
+
+    private function cacheHas($id, $has)
+    {
+        $this->cacheForHas[$id] = $has;
+    }
+
+    private function isInstantiable($id)
+    {
+        if (class_exists($id)) {
+            return true;
+        }
+
+        try {
+            $reflectionClass = new \ReflectionClass($id);
+
+            return $reflectionClass->isInstantiable();
+        } catch (\ReflectionException $e) {
+            return false;
         }
     }
 }

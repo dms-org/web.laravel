@@ -100,10 +100,17 @@ class LaravelIocContainer implements IIocContainer
      */
     public function bindForCallback(string $abstract, $concrete, callable $callback)
     {
-        $hasOriginal = $this->container->bound($abstract);
+        $hasOriginal      = $this->container->bound($abstract);
+        $originalInstance = false;
 
         if ($hasOriginal) {
             $binding = $this->container->getBindings()[$abstract] ?? null;
+
+            $hasInstance = $binding && $binding['shared'] && $this->container->resolved($abstract);
+
+            if ($hasInstance) {
+                $originalInstance = $this->container->make($abstract);
+            }
         }
 
         $this->container->instance($abstract, $concrete);
@@ -116,6 +123,10 @@ class LaravelIocContainer implements IIocContainer
 
             if ($hasOriginal && $binding) {
                 $this->container->bind($abstract, $binding['concrete'], $binding['shared']);
+
+                if ($originalInstance) {
+                    $this->container->instance($abstract, $originalInstance);
+                }
             }
         }
     }

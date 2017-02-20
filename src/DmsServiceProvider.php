@@ -288,7 +288,7 @@ class DmsServiceProvider extends ServiceProvider
 
     private function registerHttpRoutes()
     {
-        if (!method_exists($this->app, 'routesAreCaches') || !$this->app->routesAreCached()) {
+        if (!method_exists($this->app, 'routesAreCached') || !$this->app->routesAreCached()) {
             require __DIR__ . '/Http/routes.php';
         }
     }

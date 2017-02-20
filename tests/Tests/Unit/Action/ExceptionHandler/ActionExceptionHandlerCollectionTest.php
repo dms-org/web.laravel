@@ -35,12 +35,12 @@ class ActionExceptionHandlerCollectionTest extends UnitTest
     {
         $this->assertInstanceOf(
             InvalidFormSubmissionExceptionHandler::class,
-            $this->collection->findHandlerFor($this->mockModuleContext(), $this->mockAction(), $this->getMockWithoutInvokingTheOriginalConstructor(InvalidFormSubmissionException::class))
+            $this->collection->findHandlerFor($this->mockModuleContext(), $this->mockAction(), $this->createMock(InvalidFormSubmissionException::class))
         );
 
         $this->assertInstanceOf(
             AdminForbiddenExceptionHandler::class,
-            $this->collection->findHandlerFor($this->mockModuleContext(), $this->mockAction(), $this->getMockWithoutInvokingTheOriginalConstructor(AdminForbiddenException::class))
+            $this->collection->findHandlerFor($this->mockModuleContext(), $this->mockAction(), $this->createMock(AdminForbiddenException::class))
         );
     }
 
@@ -53,7 +53,7 @@ class ActionExceptionHandlerCollectionTest extends UnitTest
 
     protected function mockModuleContext() : ModuleContext
     {
-        return $this->getMockWithoutInvokingTheOriginalConstructor(ModuleContext::class);
+        return $this->createMock(ModuleContext::class);
     }
 
     protected function mockAction() : IAction

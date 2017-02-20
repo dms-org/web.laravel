@@ -102,7 +102,7 @@ class AdminUserModuleTest extends CrudModuleTest
 
     protected function mockPasswordResetService() : IPasswordResetService
     {
-        $passwordResetService = $this->getMock(IPasswordResetService::class);
+        $passwordResetService = $this->getMockForAbstractClass(IPasswordResetService::class);
         $passwordResetService->method('resetUserPassword')
             ->willReturnCallback(function () {
                 $this->hasPasswordResetServiceBeenCalled = true;
@@ -113,16 +113,16 @@ class AdminUserModuleTest extends CrudModuleTest
 
     protected function mockPasswordHasherFactory() : IPasswordHasherFactory
     {
-        $hasherFactory = $this->getMock(IPasswordHasherFactory::class);
+        $hasherFactory = $this->getMockForAbstractClass(IPasswordHasherFactory::class);
         $hasherFactory->method('buildDefault')
             ->willReturnCallback(function () {
 
-                $hasher = $this->getMock(IPasswordHasher::class);
+                $hasher = $this->getMockForAbstractClass(IPasswordHasher::class);
                 $hasher->method('hash')
                     ->willReturnCallback(function () {
                         $this->hasHasherBeenCalled = true;
 
-                        return $this->getMockWithoutInvokingTheOriginalConstructor(HashedPassword::class);
+                        return $this->createMock(HashedPassword::class);
                     });
 
                 return $hasher;

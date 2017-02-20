@@ -24,11 +24,10 @@ class LaravelLanguageProvider implements ILanguageProvider
     /**
      * LaravelLanguageProvider constructor.
      *
-     * @param TranslatorInterface $laravelTranslator
      */
-    public function __construct(TranslatorInterface $laravelTranslator)
+    public function __construct()
     {
-        $this->laravelTranslator = $laravelTranslator;
+        $this->laravelTranslator = app('translator');
     }
 
     /**

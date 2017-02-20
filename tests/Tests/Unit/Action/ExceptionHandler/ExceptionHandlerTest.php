@@ -74,6 +74,6 @@ abstract class ExceptionHandlerTest extends UnitTest
 
     protected function mockModuleContext() : ModuleContext
     {
-        return $this->getMockWithoutInvokingTheOriginalConstructor(ModuleContext::class);
+        return $this->createMock(ModuleContext::class);
     }
 }

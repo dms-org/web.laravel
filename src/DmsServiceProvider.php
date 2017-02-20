@@ -124,7 +124,6 @@ class DmsServiceProvider extends ServiceProvider
 
         if ($this->isRunningInConsole()) {
             $this->registerCommands();
-            $this->registerSchedule();
             $this->publishAssets();
             $this->publishConfig();
         }
@@ -137,6 +136,10 @@ class DmsServiceProvider extends ServiceProvider
     {
         $this->loadViews();
         $this->loadTranslations();
+
+        if ($this->isRunningInConsole()) {
+            $this->loadSchedule();
+        }
 
         try {
             // Here we resolve the cms instance to ensure that it loads the instance
@@ -307,9 +310,9 @@ class DmsServiceProvider extends ServiceProvider
             SubstituteBindings::class,
         ]);
 
-        $router->middleware('dms.auth', Authenticate::class);
-        $router->middleware('dms.guest', RedirectIfAuthenticated::class);
-        $router->middleware('dms.throttle', ThrottleRequests::class);
+        $router->aliasMiddleware('dms.auth', Authenticate::class);
+        $router->aliasMiddleware('dms.guest', RedirectIfAuthenticated::class);
+        $router->aliasMiddleware('dms.throttle', ThrottleRequests::class);
     }
 
     private function loadViews()
@@ -361,7 +364,7 @@ class DmsServiceProvider extends ServiceProvider
         ]);
     }
 
-    private function registerSchedule()
+    private function loadSchedule()
     {
         /** @var Schedule $schedule */
         $schedule = $this->app[Schedule::class];

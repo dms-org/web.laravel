@@ -11,6 +11,8 @@ use Dms\Web\Laravel\Auth\Password\HashedPassword;
 use Dms\Web\Laravel\DmsServiceProvider;
 use Dms\Web\Laravel\Tests\Integration\Fixtures\DmsFixture;
 use Illuminate\Routing\RouteCollection;
+use Laravel\BrowserKitTesting\Concerns\InteractsWithSession;
+use Laravel\BrowserKitTesting\Concerns\MakesHttpRequests;
 use Orchestra\Testbench\TestCase;
 
 /**
@@ -18,6 +20,8 @@ use Orchestra\Testbench\TestCase;
  */
 abstract class CmsIntegrationTest extends TestCase
 {
+    use MakesHttpRequests, InteractsWithSession;
+
     /**
      * @var DmsFixture
      */

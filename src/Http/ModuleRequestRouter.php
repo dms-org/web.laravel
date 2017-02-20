@@ -10,6 +10,7 @@ use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Events\RouteMatched;
 use Illuminate\Routing\Route;
+use Illuminate\Routing\RouteGroup;
 use Illuminate\Routing\Router;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -228,12 +229,12 @@ class ModuleRequestRouter
             foreach ($this->router->getRoutes()->getRoutes() as $route) {
                 /** @var Route $route */
                 $newRoute = clone $route;
-                if ($newRoute->getUri() === '/') {
+                if ($newRoute->uri() === '/') {
                     $newRoute->setUri($currentGroup['prefix']);
                 } else {
-                    $newRoute->setUri($currentGroup['prefix'] . '/' . rtrim($newRoute->getUri(), '/'));
+                    $newRoute->setUri($currentGroup['prefix'] . '/' . rtrim($newRoute->uri(), '/'));
                 }
-                $newRoute->setAction(Router::mergeGroup($newRoute->getAction(), $currentGroup));
+                $newRoute->setAction(RouteGroup::merge($newRoute->getAction(), $currentGroup));
                 $router->getRoutes()->add($newRoute);
             }
         });

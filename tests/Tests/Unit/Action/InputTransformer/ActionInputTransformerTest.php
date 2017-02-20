@@ -38,7 +38,7 @@ abstract class ActionInputTransformerTest extends UnitTest
     {
         $this->assertEquals(
             $output,
-            $this->transformer->transform($this->getMockWithoutInvokingTheOriginalConstructor(ModuleContext::class), $action, $input)
+            $this->transformer->transform($this->createMock(ModuleContext::class), $action, $input)
         );
     }
 }

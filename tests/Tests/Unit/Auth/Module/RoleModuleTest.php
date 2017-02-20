@@ -78,7 +78,7 @@ class RoleModuleTest extends CrudModuleTest
 
     protected function mockCms() : ICms
     {
-        $mock = $this->getMock(ICms::class);
+        $mock = $this->getMockForAbstractClass(ICms::class);
         $mock->method('loadPermissions')
             ->willReturn([
                 Permission::named('a'),

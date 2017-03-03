@@ -3,7 +3,7 @@ Dms.form.initializeCallbacks.push(function (element) {
         return;
     }
 
-    var wysiwygElements = element.find('textarea.dms-wysiwyg');
+    var wysiwygElements = element.find('textarea.dms-wysiwyg, textarea.dms-wysiwyg-light');
 
     wysiwygElements.each(function () {
         if (!$(this).attr('id')) {
@@ -12,6 +12,24 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 
     tinymce.baseURL = '/vendor/dms/wysiwyg/';
+
+    var setupTinyMce = function (editor) {
+        editor.on('change', function () {
+            editor.save();
+        });
+
+        editor.on('keyup cut paste change', function (e) {
+            $(tinymce.activeEditor.getElement()).closest('.form-group').trigger('dms-change');
+        });
+    };
+
+    var filePickerCallback = function (callback, value, meta) {
+        var wysiwygElement = $(tinymce.activeEditor.getElement()).closest('.dms-wysiwyg-container');
+        showFilePickerDialog(meta.filetype, wysiwygElement, function (fileUrl) {
+            callback(fileUrl);
+        });
+    };
+
     tinymce.init({
         selector: 'textarea.dms-wysiwyg',
         tooltip: '',
@@ -37,22 +55,27 @@ Dms.form.initializeCallbacks.push(function (element) {
             "imagetools"
         ],
         toolbar: "undo redo | styleselect | bold italic | forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist | link image",
-        setup: function (editor) {
-            editor.on('change', function () {
-                editor.save();
-            });
-            editor.on('keyup cut paste change', function (e) {
-                $(tinymce.activeEditor.getElement()).closest('.form-group').trigger('dms-change');
-            });
-        },
+        setup: setupTinyMce,
         relative_urls: false,
         remove_script_host: true,
-        file_picker_callback: function (callback, value, meta) {
-            var wysiwygElement = $(tinymce.activeEditor.getElement()).closest('.dms-wysiwyg-container');
-            showFilePickerDialog(meta.filetype, wysiwygElement, function (fileUrl) {
-                callback(fileUrl);
-            });
-        }
+        file_picker_callback: filePickerCallback
+    });
+
+    tinymce.init({
+        selector: 'textarea.dms-wysiwyg-light',
+        tooltip: '',
+        toolbar: 'undo redo | bold italic | link',
+        menubar: false,
+        statusbar: false,
+        plugins: [
+            "autolink",
+            "link",
+            "textcolor"
+        ],
+        setup: setupTinyMce,
+        relative_urls: false,
+        remove_script_host: true,
+        file_picker_callback: filePickerCallback
     });
 
     wysiwygElements.filter(function () {

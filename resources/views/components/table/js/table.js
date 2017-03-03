@@ -122,11 +122,13 @@ Dms.table.initializeCallbacks.push(function (element) {
             var filterByString = filterForm.find('[name=filter]').val();
 
             if (filterByString) {
-                $.each(stringFilterableComponentIds, function (index, componentId) {
-                    criteria.conditions.push({
-                        component: componentId,
-                        operator: 'string-contains-case-insensitive',
-                        value: filterByString
+                $.each(filterByString.split(' '), function (stringIndex, filterByPart) {
+                    $.each(stringFilterableComponentIds, function (index, componentId) {
+                        criteria.conditions.push({
+                            component: componentId,
+                            operator: 'string-contains-case-insensitive',
+                            value: filterByString
+                        });
                     });
                 });
             }

@@ -3,7 +3,7 @@
 >
 <textarea
         name="{{ $name }}"
-        class="dms-wysiwyg"
+        class="{{ $lightMode ? 'dms-wysiwyg-light' : 'dms-wysiwyg' }}"
         placeholder="{{ $placeholder }}"
         @if($required) required @endif
         @if($readonly) readonly @endif

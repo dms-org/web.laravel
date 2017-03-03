@@ -99,6 +99,7 @@ Dms.form.initializeCallbacks.push(function (element) {
             dataIdAttr: 'data-id',
             onEnd: function (event) {
                 reindexFields();
+                formGroup.trigger('dms-change');
             }
         });
 

@@ -41,7 +41,9 @@ class WysiwygFieldRenderer extends BladeFieldRenderer
                 StringType::ATTR_MIN_LENGTH   => 'minLength',
                 StringType::ATTR_MAX_LENGTH   => 'maxLength',
             ],
-            []
+            [
+                'lightMode' => $fieldType->get('light-mode')
+            ]
         );
     }
 

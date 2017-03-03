@@ -17,7 +17,7 @@ use Dms\Web\Laravel\Http\Controllers\DmsController;
 use Dms\Web\Laravel\Http\ModuleContext;
 use Dms\Web\Laravel\Renderer\Table\TableRenderer;
 use Dms\Web\Laravel\Util\StringHumanizer;
-use Illuminate\Http\Exception\HttpResponseException;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
 
 /**

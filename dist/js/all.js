@@ -54373,20 +54373,6 @@ Dms.chart.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-
-    element.find('.list-of-checkboxes').each(function () {
-        var listOfCheckboxes = $(this);
-        listOfCheckboxes.find('input[type=checkbox]').iCheck({
-            checkboxClass: 'icheckbox_square-blue',
-            increaseArea: '20%'
-        });
-
-        var firstCheckbox = listOfCheckboxes.find('input[type=checkbox]').first();
-        firstCheckbox.attr('data-parsley-min-elements', listOfCheckboxes.attr('data-min-elements'));
-        firstCheckbox.attr('data-parsley-max-elements', listOfCheckboxes.attr('data-max-elements'));
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
     element.find('input[type=checkbox].single-checkbox').iCheck({
         checkboxClass: 'icheckbox_square-blue',
         increaseArea: '20%'
@@ -54414,6 +54400,20 @@ Dms.form.initializeCallbacks.push(function (element) {
         }
 
         $(this).addClass('minicolors').minicolors(config);
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+
+    element.find('.list-of-checkboxes').each(function () {
+        var listOfCheckboxes = $(this);
+        listOfCheckboxes.find('input[type=checkbox]').iCheck({
+            checkboxClass: 'icheckbox_square-blue',
+            increaseArea: '20%'
+        });
+
+        var firstCheckbox = listOfCheckboxes.find('input[type=checkbox]').first();
+        firstCheckbox.attr('data-parsley-min-elements', listOfCheckboxes.attr('data-min-elements'));
+        firstCheckbox.attr('data-parsley-max-elements', listOfCheckboxes.attr('data-max-elements'));
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -54594,6 +54594,478 @@ Dms.form.initializeCallbacks.push(function (element) {
 
         startDisplay.text(convertFromUtcToLocal(dateFormat, startDisplay.text()));
         endDisplay.text(convertFromUtcToLocal(dateFormat, endDisplay.text()));
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+    element.find('.dms-inner-module, .dms-display-inner-module').each(function () {
+        var innerModule = $(this);
+
+        if (innerModule.data('dms-has-initialized-form')) {
+            return;
+        } else {
+            innerModule.data('dms-has-initialized-form', true);
+        }
+
+        var fieldName = innerModule.attr('data-name');
+        var formGroup = innerModule.closest('.form-group');
+        var rootUrl = innerModule.attr('data-root-url');
+        var isDisplayOnly = innerModule.attr('data-display-only');
+        var reloadStateUrl = rootUrl + '/state';
+        var innerModuleFormContainer = innerModule.find('.dms-inner-module-form-container');
+        var innerModuleForm = innerModuleFormContainer.find('.dms-inner-module-form');
+        var formStage = innerModule.closest('.dms-form-stage');
+        var stagedForm = innerModule.closest('.dms-staged-form');
+        var currentValue = JSON.parse(innerModule.attr('data-value') || '[]');
+
+        if (innerModule.attr('data-readonly')) {
+            innerModule.find(':input').attr('readonly', 'readonly');
+        }
+
+        var fieldDataPrefix = '__field_action_data';
+        var interceptor;
+
+        Dms.ajax.interceptors.push(interceptor = {
+            accepts: function (options) {
+                return options.url.indexOf(rootUrl) === 0 && options.url !== reloadStateUrl;
+            },
+            before: function (options) {
+                var formData;
+
+                if (isDisplayOnly) {
+                    formData = Dms.ajax.createFormData();
+                    formData.append('__initial_dependent_data', '1')
+                } else {
+                    formData = Dms.form.stages.getDependentDataForStage(formStage);
+                }
+
+
+                formData.append(fieldDataPrefix + '[current_state]', JSON.stringify(currentValue));
+                formData.append(fieldDataPrefix + '[request][url]', options.url.substring(rootUrl.length));
+                formData.append(fieldDataPrefix + '[request][method]', options.__emulatedType || options.type || 'get');
+
+                var parametersPrefix = fieldDataPrefix + '[request][parameters]';
+                $.each(Dms.ajax.parseData(options.data), function (name, entries) {
+                    $.each(entries, function (index, entry) {
+                        formData.append(Dms.utilities.combineFieldNames(parametersPrefix, name), entry.value, entry.filename);
+                    });
+                });
+
+                options.__originalDataType = options.dataType;
+                options.dataType = 'json';
+                if ((options.type || 'get').toLowerCase() === 'get') {
+                    options.data = formData.toQueryString();
+                } else {
+                    options.processData = false;
+                    options.contentType = false;
+                    options.data = formData;
+                }
+            },
+            after: function (options, response, data) {
+                if (data) {
+                    currentValue = data['new_state'];
+
+                    return Dms.ajax.convertResponse(options.__originalDataType, data.response);
+                } else {
+                    data = JSON.parse(response.responseText);
+                    currentValue = data['new_state'];
+
+                    response.responseText = data.response;
+                    console.log(response.responseText);
+                }
+            }
+        });
+
+        var originalResponseHandler = Dms.action.responseHandler;
+        Dms.action.responseHandler = function (httpStatusCode, actionUrl, response) {
+            if (actionUrl.indexOf(rootUrl) !== 0 || httpStatusCode >= 400) {
+                originalResponseHandler(httpStatusCode, actionUrl, response);
+                return;
+            }
+
+            if (response.redirect) {
+                var redirectUrl = response.redirect;
+                delete response.redirect;
+
+                if (!Dms.utilities.areUrlsEqual(redirectUrl, rootUrl)) {
+                    loadModulePage(redirectUrl);
+                }
+            }
+
+            originalResponseHandler(httpStatusCode, actionUrl, response);
+
+            innerModule.find('.dms-table-control .dms-table').triggerHandler('dms-load-table-data');
+            innerModuleForm.empty();
+            formGroup.trigger('dms-change');
+        };
+
+        var rootActionUrl = rootUrl + '/action/';
+        var currentAjaxRequest;
+
+        var loadModulePage = function (url) {
+            innerModuleFormContainer.addClass('loading');
+            Dms.utilities.scrollToView(innerModuleFormContainer);
+
+            if (currentAjaxRequest) {
+                currentAjaxRequest.abort();
+            }
+
+            currentAjaxRequest = Dms.ajax.createRequest({
+                url: url,
+                type: 'post',
+                __emulatedType: 'get',
+                dataType: 'html',
+                data: {'__content_only': 1}
+            });
+
+            currentAjaxRequest.done(function (html) {
+                innerModuleForm.html(html);
+                innerModuleForm.find('[data-reload-page-after-submit]').removeAttr('data-reload-page-after-submit');
+                Dms.form.initialize(innerModuleForm);
+            });
+
+            currentAjaxRequest.fail(function (response) {
+                if (currentAjaxRequest.statusText === 'abort') {
+                    return;
+                }
+
+                Dms.controls.showErrorDialog({
+                    title: "Could not load form",
+                    text: "An unexpected error occurred",
+                    type: "error",
+                    debugInfo: response.responseText
+                });
+            });
+
+            currentAjaxRequest.always(function () {
+                innerModuleFormContainer.removeClass('loading');
+                currentAjaxRequest = null;
+            });
+        };
+
+        innerModule.on('click', 'a[href^="' + rootActionUrl + '"]', function (e) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            var link = $(this);
+
+            loadModulePage(link.attr('href'));
+        });
+
+        innerModule.closest('.form-group').on('dms-get-input-data', function () {
+            var fieldData = {};
+            fieldData[fieldName] = currentValue;
+            return fieldData;
+        });
+
+        stagedForm.on('dms-before-submit', function () {
+            innerModuleForm.empty();
+        });
+
+        var hasReset = false;
+        var resetAjaxInterception = function () {
+            if (hasReset) {
+                return;
+            } else {
+                hasReset = true;
+            }
+            
+            Dms.ajax.interceptors.splice(Dms.ajax.interceptors.indexOf(interceptor), 1);
+            Dms.action.responseHandler = originalResponseHandler;
+        };
+
+        formStage.on('dms-stage-reload', resetAjaxInterception);
+        stagedForm.on('dms-post-submit-success', resetAjaxInterception);
+        innerModule.closest('.dms-page-content').on('dms-page-unloading', resetAjaxInterception);
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+    element.find('.dms-inner-form').each(function () {
+        var innerForm = $(this);
+
+        if (innerForm.attr('data-readonly')) {
+            innerForm.find(':input').attr('readonly', 'readonly');
+        }
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+
+    element.find('ul.dms-field-list').each(function () {
+        var listOfFields = $(this);
+        var form = listOfFields.closest('.dms-staged-form');
+        var formGroup = listOfFields.closest('.form-group');
+        var templateField = listOfFields.children('.field-list-template');
+        var addButton = listOfFields.children('.field-list-add').find('.btn-add-field');
+        var guid = Dms.utilities.idGenerator();
+        var isInvalidating = false;
+
+        var minFields = listOfFields.attr('data-min-elements');
+        var maxFields = listOfFields.attr('data-max-elements');
+
+        var getAmountOfInputs = function () {
+            return listOfFields.children('.field-list-item').length;
+        };
+
+        var invalidateControl = function () {
+            if (isInvalidating) {
+                return;
+            }
+
+            isInvalidating = true;
+
+            var amountOfInputs = getAmountOfInputs();
+
+            addButton.prop('disabled', amountOfInputs >= maxFields);
+            listOfFields.find('.dms-remove-field-button').prop('disabled', amountOfInputs <= minFields);
+
+            while (amountOfInputs < minFields) {
+                addNewField();
+                amountOfInputs++;
+            }
+
+            isInvalidating = false;
+        };
+
+        var reindexFields = function () {
+            // TODO
+        };
+
+        var addNewField = function () {
+            var newField = templateField.clone()
+                .removeClass('field-list-template')
+                .removeClass('hidden')
+                .removeClass('dms-form-no-submit')
+                .addClass('field-list-item');
+
+            var fieldInputElement = newField.find('.field-list-input');
+            fieldInputElement.html(fieldInputElement.text());
+
+            var currentIndex = getAmountOfInputs();
+
+            $.each(['name', 'data-name', 'data-field-name'], function (index, attr) {
+                fieldInputElement.find('[' + attr + '*="::index::"]').each(function () {
+                    $(this).attr(attr, $(this).attr(attr).replace('::index::', currentIndex));
+                });
+            });
+
+            addButton.closest('.field-list-add').before(newField);
+
+            Dms.form.initialize(fieldInputElement);
+            form.triggerHandler('dms-form-updated');
+
+            invalidateControl();
+        };
+
+        listOfFields.on('click', '.dms-remove-field-button', function () {
+            var field = $(this).closest('.field-list-item');
+            field.remove();
+            formGroup.trigger('dms-change');
+            form.triggerHandler('dms-form-updated');
+
+            invalidateControl();
+            reindexFields();
+        });
+
+        addButton.on('click', addNewField);
+
+        invalidateControl();
+
+        var requiresAnExactAmountOfFields = typeof minFields !== 'undefined' && minFields === maxFields;
+        if (requiresAnExactAmountOfFields && getAmountOfInputs() == minFields) {
+            addButton.closest('.field-list-add').remove();
+            listOfFields.find('.dms-remove-field-button').closest('.field-list-button-container').remove();
+            listOfFields.find('.field-list-input').removeClass('col-xs-10 col-md-11').addClass('col-xs-12');
+        }
+
+        // Sorting
+        var sortable = new Sortable(listOfFields.get(0), {
+            group: "sortable-field-list-" + guid,
+            sort: true,  // sorting inside list
+            animation: 150,  // ms, animation speed moving items when sorting, `0` — without animation
+            handle: ".dms-reorder-field-button",  // Drag handle selector within list items
+            draggable: ".list-group-item",  // Specifies which items inside the element should be sortable
+            ghostClass: "sortable-ghost",  // Class name for the drop placeholder
+            chosenClass: "sortable-chosen",  // Class name for the chosen item
+            dataIdAttr: 'data-id',
+            onEnd: function (event) {
+                reindexFields();
+                formGroup.trigger('dms-change');
+            }
+        });
+
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+
+    var disableZoomScrollingUntilHoveredFor = function (milliseconds, googleMap) {
+        googleMap.set('scrollwheel', false);
+        var timeout;
+        $(googleMap.getDiv()).hover(function () {
+                timeout = setTimeout(function () {
+                    googleMap.set('scrollwheel', true);
+                }, milliseconds);
+            },
+            function () {
+                clearTimeout(timeout);
+                googleMap.set('scrollwheel', false);
+            });
+    };
+
+    element.find('.dms-map-input').each(function () {
+        var mapInput = $(this);
+
+        var inputMode = mapInput.attr('data-input-mode');
+        var latitudeInput = mapInput.find('input.dms-lat-input');
+        var longitudeInput = mapInput.find('input.dms-lng-input');
+        var currentLocationButton = mapInput.find('.dms-current-location');
+        var fullAddressInput = mapInput.find('input.dms-full-address-input');
+        var addressSearchInput = mapInput.find('input.dms-address-search');
+        var mapCanvas = mapInput.find('.dms-map-picker');
+        var forceSetAddress = false;
+
+        var addressPicker = new AddressPicker({
+            regionBias: 'AUS',
+            map: {
+                id: mapCanvas.get(0),
+                zoom: 12,
+                center: new google.maps.LatLng(
+                    latitudeInput.val() || mapInput.attr('data-default-latitude') || -26.4390917,
+                    longitudeInput.val() || mapInput.attr('data-default-longitude') || 133.281323), // Default to australia
+                mapTypeId: google.maps.MapTypeId.ROADMAP,
+                draggable: !(mapCanvas.attr('data-no-touch-drag') && Dms.utilities.isTouchDevice())
+            },
+            marker: {
+                draggable: true,
+                visible: true
+            },
+            reverseGeocoding: true,
+            autocompleteService: {
+                autocompleteService: {
+                    types: ['(cities)', '(regions)', 'geocode', 'establishment']
+                }
+            }
+        });
+        mapCanvas.data('map-api', addressPicker.getGMap());
+
+        addressSearchInput.typeahead(null, {
+            displayKey: 'description',
+            source: addressPicker.ttAdapter()
+        });
+
+        addressSearchInput.bind("typeahead:selected", addressPicker.updateMap);
+        addressSearchInput.bind("typeahead:cursorchanged", addressPicker.updateMap);
+        addressPicker.bindDefaultTypeaheadEvent(addressSearchInput);
+
+        $(addressPicker).on('addresspicker:selected', function (event, result) {
+            if (!forceSetAddress && addressSearchInput.val() === '') {
+                addressSearchInput.typeahead('val', '');
+                latitudeInput.val('');
+                longitudeInput.val('');
+                fullAddressInput.val('');
+                return;
+            }
+
+            forceSetAddress = false;
+
+            if (addressSearchInput.is('[data-map-zoom]')) {
+                addressPicker.getGMap().setCenter(new google.maps.LatLng(result.lat(), result.lng()));
+                addressPicker.getGMap().setZoom(parseInt(addressSearchInput.attr('data-map-zoom'), 10));
+            }
+            latitudeInput.val(result.lat());
+            longitudeInput.val(result.lng());
+            var address = result.address();
+
+            if (result.placeResult.name && address.indexOf(result.placeResult.name) === -1) {
+                address = result.placeResult.name + ', ' + address;
+            }
+
+            addressSearchInput.val(address);
+            fullAddressInput.val(address);
+        });
+
+        google.maps.event.addListener(addressPicker.getGMarker(), "dragend", function (event) {
+            forceSetAddress = true;
+        });
+
+        var triggerReverseGeocode = function () {
+            forceSetAddress = true;
+            addressPicker.markerDragged();
+            addressPicker.getGMap().setZoom(12);
+        };
+
+        if (navigator.geolocation) {
+            currentLocationButton.click(function () {
+                navigator.geolocation.getCurrentPosition(function (position) {
+                    var location = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+                    addressPicker.getGMarker().setPosition(location);
+                    addressPicker.getGMap().setCenter(location);
+                    triggerReverseGeocode();
+                });
+            });
+        } else {
+            currentLocationButton.prop('disabled', true);
+        }
+
+        if (latitudeInput.val() || longitudeInput.val()) {
+            if (inputMode === 'lat-lng') {
+                forceSetAddress = true;
+                addressPicker.markerDragged();
+            }
+
+            if (inputMode === 'address-with-lat-lng') {
+                var location = new google.maps.LatLng(latitudeInput.val(), longitudeInput.val());
+                addressPicker.getGMarker().setPosition(location);
+                addressPicker.getGMap().setCenter(location);
+                addressSearchInput.val(fullAddressInput.val());
+            }
+        }
+
+        addressSearchInput.change(function () {
+            addressPicker.markerDragged();
+        });
+
+        disableZoomScrollingUntilHoveredFor(1000, addressPicker.getGMap());
+
+        google.maps.event.addListenerOnce(addressPicker.getGMap(), 'idle', function(){
+            if (fullAddressInput.val()) {
+                addressSearchInput.typeahead('val', fullAddressInput.val());
+            }
+        });
+
+        if (inputMode === 'address' && fullAddressInput.val()) {
+            var geocoder = new google.maps.Geocoder();
+            geocoder.geocode({'address': fullAddressInput.val()}, function (results, status) {
+                if (status == google.maps.GeocoderStatus.OK) {
+                    addressPicker.getGMap().setCenter(results[0].geometry.location);
+                    addressPicker.getGMarker().setPosition(results[0].geometry.location);
+                }
+            });
+        }
+    });
+
+    $('.dms-display-map').each(function () {
+        var mapCanvas = $(this);
+
+        var location = new google.maps.LatLng(mapCanvas.attr('data-latitude'), mapCanvas.attr('data-longitude'));
+        var map = new google.maps.Map(mapCanvas.get(0), {
+            center: location,
+            zoom: parseInt(mapCanvas.attr('data-zoom'), 10) || 14,
+            scrollwheel: false
+        });
+
+        disableZoomScrollingUntilHoveredFor(1000, map);
+
+        mapCanvas.data('map-api', map);
+
+        var marker = new google.maps.Marker({
+            position: location,
+            map: map,
+            title: mapCanvas.attr('data-title')
+        });
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+    element.find('select[multiple]').multiselect({
+        enableFiltering: true,
+        includeSelectAllOption: true
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -54940,471 +55412,6 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-    element.find('.dms-inner-form').each(function () {
-        var innerForm = $(this);
-
-        if (innerForm.attr('data-readonly')) {
-            innerForm.find(':input').attr('readonly', 'readonly');
-        }
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
-    element.find('.dms-inner-module, .dms-display-inner-module').each(function () {
-        var innerModule = $(this);
-
-        if (innerModule.data('dms-has-initialized-form')) {
-            return;
-        } else {
-            innerModule.data('dms-has-initialized-form', true);
-        }
-
-        var fieldName = innerModule.attr('data-name');
-        var formGroup = innerModule.closest('.form-group');
-        var rootUrl = innerModule.attr('data-root-url');
-        var isDisplayOnly = innerModule.attr('data-display-only');
-        var reloadStateUrl = rootUrl + '/state';
-        var innerModuleFormContainer = innerModule.find('.dms-inner-module-form-container');
-        var innerModuleForm = innerModuleFormContainer.find('.dms-inner-module-form');
-        var formStage = innerModule.closest('.dms-form-stage');
-        var stagedForm = innerModule.closest('.dms-staged-form');
-        var currentValue = JSON.parse(innerModule.attr('data-value') || '[]');
-
-        if (innerModule.attr('data-readonly')) {
-            innerModule.find(':input').attr('readonly', 'readonly');
-        }
-
-        var fieldDataPrefix = '__field_action_data';
-        var interceptor;
-
-        Dms.ajax.interceptors.push(interceptor = {
-            accepts: function (options) {
-                return options.url.indexOf(rootUrl) === 0 && options.url !== reloadStateUrl;
-            },
-            before: function (options) {
-                var formData;
-
-                if (isDisplayOnly) {
-                    formData = Dms.ajax.createFormData();
-                    formData.append('__initial_dependent_data', '1')
-                } else {
-                    formData = Dms.form.stages.getDependentDataForStage(formStage);
-                }
-
-
-                formData.append(fieldDataPrefix + '[current_state]', JSON.stringify(currentValue));
-                formData.append(fieldDataPrefix + '[request][url]', options.url.substring(rootUrl.length));
-                formData.append(fieldDataPrefix + '[request][method]', options.__emulatedType || options.type || 'get');
-
-                var parametersPrefix = fieldDataPrefix + '[request][parameters]';
-                $.each(Dms.ajax.parseData(options.data), function (name, entries) {
-                    $.each(entries, function (index, entry) {
-                        formData.append(Dms.utilities.combineFieldNames(parametersPrefix, name), entry.value, entry.filename);
-                    });
-                });
-
-                options.__originalDataType = options.dataType;
-                options.dataType = 'json';
-                if ((options.type || 'get').toLowerCase() === 'get') {
-                    options.data = formData.toQueryString();
-                } else {
-                    options.processData = false;
-                    options.contentType = false;
-                    options.data = formData;
-                }
-            },
-            after: function (options, response, data) {
-                if (data) {
-                    currentValue = data['new_state'];
-
-                    return Dms.ajax.convertResponse(options.__originalDataType, data.response);
-                } else {
-                    data = JSON.parse(response.responseText);
-                    currentValue = data['new_state'];
-
-                    response.responseText = data.response;
-                    console.log(response.responseText);
-                }
-            }
-        });
-
-        var originalResponseHandler = Dms.action.responseHandler;
-        Dms.action.responseHandler = function (httpStatusCode, actionUrl, response) {
-            if (actionUrl.indexOf(rootUrl) !== 0 || httpStatusCode >= 400) {
-                originalResponseHandler(httpStatusCode, actionUrl, response);
-                return;
-            }
-
-            if (response.redirect) {
-                var redirectUrl = response.redirect;
-                delete response.redirect;
-
-                if (!Dms.utilities.areUrlsEqual(redirectUrl, rootUrl)) {
-                    loadModulePage(redirectUrl);
-                }
-            }
-
-            originalResponseHandler(httpStatusCode, actionUrl, response);
-
-            innerModule.find('.dms-table-control .dms-table').triggerHandler('dms-load-table-data');
-            innerModuleForm.empty();
-            formGroup.trigger('dms-change');
-        };
-
-        var rootActionUrl = rootUrl + '/action/';
-        var currentAjaxRequest;
-
-        var loadModulePage = function (url) {
-            innerModuleFormContainer.addClass('loading');
-            Dms.utilities.scrollToView(innerModuleFormContainer);
-
-            if (currentAjaxRequest) {
-                currentAjaxRequest.abort();
-            }
-
-            currentAjaxRequest = Dms.ajax.createRequest({
-                url: url,
-                type: 'post',
-                __emulatedType: 'get',
-                dataType: 'html',
-                data: {'__content_only': 1}
-            });
-
-            currentAjaxRequest.done(function (html) {
-                innerModuleForm.html(html);
-                innerModuleForm.find('[data-reload-page-after-submit]').removeAttr('data-reload-page-after-submit');
-                Dms.form.initialize(innerModuleForm);
-            });
-
-            currentAjaxRequest.fail(function (response) {
-                if (currentAjaxRequest.statusText === 'abort') {
-                    return;
-                }
-
-                Dms.controls.showErrorDialog({
-                    title: "Could not load form",
-                    text: "An unexpected error occurred",
-                    type: "error",
-                    debugInfo: response.responseText
-                });
-            });
-
-            currentAjaxRequest.always(function () {
-                innerModuleFormContainer.removeClass('loading');
-                currentAjaxRequest = null;
-            });
-        };
-
-        innerModule.on('click', 'a[href^="' + rootActionUrl + '"]', function (e) {
-            e.preventDefault();
-            e.stopImmediatePropagation();
-            var link = $(this);
-
-            loadModulePage(link.attr('href'));
-        });
-
-        innerModule.closest('.form-group').on('dms-get-input-data', function () {
-            var fieldData = {};
-            fieldData[fieldName] = currentValue;
-            return fieldData;
-        });
-
-        stagedForm.on('dms-before-submit', function () {
-            innerModuleForm.empty();
-        });
-
-        var hasReset = false;
-        var resetAjaxInterception = function () {
-            if (hasReset) {
-                return;
-            } else {
-                hasReset = true;
-            }
-            
-            Dms.ajax.interceptors.splice(Dms.ajax.interceptors.indexOf(interceptor), 1);
-            Dms.action.responseHandler = originalResponseHandler;
-        };
-
-        formStage.on('dms-stage-reload', resetAjaxInterception);
-        stagedForm.on('dms-post-submit-success', resetAjaxInterception);
-        innerModule.closest('.dms-page-content').on('dms-page-unloading', resetAjaxInterception);
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
-
-    element.find('ul.dms-field-list').each(function () {
-        var listOfFields = $(this);
-        var form = listOfFields.closest('.dms-staged-form');
-        var formGroup = listOfFields.closest('.form-group');
-        var templateField = listOfFields.children('.field-list-template');
-        var addButton = listOfFields.children('.field-list-add').find('.btn-add-field');
-        var guid = Dms.utilities.idGenerator();
-        var isInvalidating = false;
-
-        var minFields = listOfFields.attr('data-min-elements');
-        var maxFields = listOfFields.attr('data-max-elements');
-
-        var getAmountOfInputs = function () {
-            return listOfFields.children('.field-list-item').length;
-        };
-
-        var invalidateControl = function () {
-            if (isInvalidating) {
-                return;
-            }
-
-            isInvalidating = true;
-
-            var amountOfInputs = getAmountOfInputs();
-
-            addButton.prop('disabled', amountOfInputs >= maxFields);
-            listOfFields.find('.dms-remove-field-button').prop('disabled', amountOfInputs <= minFields);
-
-            while (amountOfInputs < minFields) {
-                addNewField();
-                amountOfInputs++;
-            }
-
-            isInvalidating = false;
-        };
-
-        var reindexFields = function () {
-            // TODO
-        };
-
-        var addNewField = function () {
-            var newField = templateField.clone()
-                .removeClass('field-list-template')
-                .removeClass('hidden')
-                .removeClass('dms-form-no-submit')
-                .addClass('field-list-item');
-
-            var fieldInputElement = newField.find('.field-list-input');
-            fieldInputElement.html(fieldInputElement.text());
-
-            var currentIndex = getAmountOfInputs();
-
-            $.each(['name', 'data-name', 'data-field-name'], function (index, attr) {
-                fieldInputElement.find('[' + attr + '*="::index::"]').each(function () {
-                    $(this).attr(attr, $(this).attr(attr).replace('::index::', currentIndex));
-                });
-            });
-
-            addButton.closest('.field-list-add').before(newField);
-
-            Dms.form.initialize(fieldInputElement);
-            form.triggerHandler('dms-form-updated');
-
-            invalidateControl();
-        };
-
-        listOfFields.on('click', '.dms-remove-field-button', function () {
-            var field = $(this).closest('.field-list-item');
-            field.remove();
-            formGroup.trigger('dms-change');
-            form.triggerHandler('dms-form-updated');
-
-            invalidateControl();
-            reindexFields();
-        });
-
-        addButton.on('click', addNewField);
-
-        invalidateControl();
-
-        var requiresAnExactAmountOfFields = typeof minFields !== 'undefined' && minFields === maxFields;
-        if (requiresAnExactAmountOfFields && getAmountOfInputs() == minFields) {
-            addButton.closest('.field-list-add').remove();
-            listOfFields.find('.dms-remove-field-button').closest('.field-list-button-container').remove();
-            listOfFields.find('.field-list-input').removeClass('col-xs-10 col-md-11').addClass('col-xs-12');
-        }
-
-        // Sorting
-        var sortable = new Sortable(listOfFields.get(0), {
-            group: "sortable-field-list-" + guid,
-            sort: true,  // sorting inside list
-            animation: 150,  // ms, animation speed moving items when sorting, `0` — without animation
-            handle: ".dms-reorder-field-button",  // Drag handle selector within list items
-            draggable: ".list-group-item",  // Specifies which items inside the element should be sortable
-            ghostClass: "sortable-ghost",  // Class name for the drop placeholder
-            chosenClass: "sortable-chosen",  // Class name for the chosen item
-            dataIdAttr: 'data-id',
-            onEnd: function (event) {
-                reindexFields();
-            }
-        });
-
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
-
-    var disableZoomScrollingUntilHoveredFor = function (milliseconds, googleMap) {
-        googleMap.set('scrollwheel', false);
-        var timeout;
-        $(googleMap.getDiv()).hover(function () {
-                timeout = setTimeout(function () {
-                    googleMap.set('scrollwheel', true);
-                }, milliseconds);
-            },
-            function () {
-                clearTimeout(timeout);
-                googleMap.set('scrollwheel', false);
-            });
-    };
-
-    element.find('.dms-map-input').each(function () {
-        var mapInput = $(this);
-
-        var inputMode = mapInput.attr('data-input-mode');
-        var latitudeInput = mapInput.find('input.dms-lat-input');
-        var longitudeInput = mapInput.find('input.dms-lng-input');
-        var currentLocationButton = mapInput.find('.dms-current-location');
-        var fullAddressInput = mapInput.find('input.dms-full-address-input');
-        var addressSearchInput = mapInput.find('input.dms-address-search');
-        var mapCanvas = mapInput.find('.dms-map-picker');
-        var forceSetAddress = false;
-
-        var addressPicker = new AddressPicker({
-            regionBias: 'AUS',
-            map: {
-                id: mapCanvas.get(0),
-                zoom: 12,
-                center: new google.maps.LatLng(
-                    latitudeInput.val() || mapInput.attr('data-default-latitude') || -26.4390917,
-                    longitudeInput.val() || mapInput.attr('data-default-longitude') || 133.281323), // Default to australia
-                mapTypeId: google.maps.MapTypeId.ROADMAP,
-                draggable: !(mapCanvas.attr('data-no-touch-drag') && Dms.utilities.isTouchDevice())
-            },
-            marker: {
-                draggable: true,
-                visible: true
-            },
-            reverseGeocoding: true,
-            autocompleteService: {
-                autocompleteService: {
-                    types: ['(cities)', '(regions)', 'geocode', 'establishment']
-                }
-            }
-        });
-        mapCanvas.data('map-api', addressPicker.getGMap());
-
-        addressSearchInput.typeahead(null, {
-            displayKey: 'description',
-            source: addressPicker.ttAdapter()
-        });
-
-        addressSearchInput.bind("typeahead:selected", addressPicker.updateMap);
-        addressSearchInput.bind("typeahead:cursorchanged", addressPicker.updateMap);
-        addressPicker.bindDefaultTypeaheadEvent(addressSearchInput);
-
-        $(addressPicker).on('addresspicker:selected', function (event, result) {
-            if (!forceSetAddress && addressSearchInput.val() === '') {
-                addressSearchInput.typeahead('val', '');
-                latitudeInput.val('');
-                longitudeInput.val('');
-                fullAddressInput.val('');
-                return;
-            }
-
-            forceSetAddress = false;
-
-            if (addressSearchInput.is('[data-map-zoom]')) {
-                addressPicker.getGMap().setCenter(new google.maps.LatLng(result.lat(), result.lng()));
-                addressPicker.getGMap().setZoom(parseInt(addressSearchInput.attr('data-map-zoom'), 10));
-            }
-            latitudeInput.val(result.lat());
-            longitudeInput.val(result.lng());
-            var address = result.address();
-
-            if (result.placeResult.name && address.indexOf(result.placeResult.name) === -1) {
-                address = result.placeResult.name + ', ' + address;
-            }
-
-            addressSearchInput.val(address);
-            fullAddressInput.val(address);
-        });
-
-        google.maps.event.addListener(addressPicker.getGMarker(), "dragend", function (event) {
-            forceSetAddress = true;
-        });
-
-        var triggerReverseGeocode = function () {
-            forceSetAddress = true;
-            addressPicker.markerDragged();
-            addressPicker.getGMap().setZoom(12);
-        };
-
-        if (navigator.geolocation) {
-            currentLocationButton.click(function () {
-                navigator.geolocation.getCurrentPosition(function (position) {
-                    var location = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
-                    addressPicker.getGMarker().setPosition(location);
-                    addressPicker.getGMap().setCenter(location);
-                    triggerReverseGeocode();
-                });
-            });
-        } else {
-            currentLocationButton.prop('disabled', true);
-        }
-
-        if (latitudeInput.val() || longitudeInput.val()) {
-            if (inputMode === 'lat-lng') {
-                forceSetAddress = true;
-                addressPicker.markerDragged();
-            }
-
-            if (inputMode === 'address-with-lat-lng') {
-                var location = new google.maps.LatLng(latitudeInput.val(), longitudeInput.val());
-                addressPicker.getGMarker().setPosition(location);
-                addressPicker.getGMap().setCenter(location);
-                addressSearchInput.val(fullAddressInput.val());
-            }
-        }
-
-        addressSearchInput.change(function () {
-            addressPicker.markerDragged();
-        });
-
-        disableZoomScrollingUntilHoveredFor(1000, addressPicker.getGMap());
-
-        google.maps.event.addListenerOnce(addressPicker.getGMap(), 'idle', function(){
-            if (fullAddressInput.val()) {
-                addressSearchInput.typeahead('val', fullAddressInput.val());
-            }
-        });
-
-        if (inputMode === 'address' && fullAddressInput.val()) {
-            var geocoder = new google.maps.Geocoder();
-            geocoder.geocode({'address': fullAddressInput.val()}, function (results, status) {
-                if (status == google.maps.GeocoderStatus.OK) {
-                    addressPicker.getGMap().setCenter(results[0].geometry.location);
-                    addressPicker.getGMarker().setPosition(results[0].geometry.location);
-                }
-            });
-        }
-    });
-
-    $('.dms-display-map').each(function () {
-        var mapCanvas = $(this);
-
-        var location = new google.maps.LatLng(mapCanvas.attr('data-latitude'), mapCanvas.attr('data-longitude'));
-        var map = new google.maps.Map(mapCanvas.get(0), {
-            center: location,
-            zoom: parseInt(mapCanvas.attr('data-zoom'), 10) || 14,
-            scrollwheel: false
-        });
-
-        disableZoomScrollingUntilHoveredFor(1000, map);
-
-        mapCanvas.data('map-api', map);
-
-        var marker = new google.maps.Marker({
-            position: location,
-            map: map,
-            title: mapCanvas.attr('data-title')
-        });
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
     element.find('.dms-money-input-group').each(function () {
         var inputGroup = $(this);
         var moneyInput = inputGroup.find('.dms-money-input');
@@ -55431,12 +55438,6 @@ Dms.form.initializeCallbacks.push(function (element) {
 
         moneyInput.on('change input', updateShouldSubmitData);
         updateShouldSubmitData();
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
-    element.find('select[multiple]').multiselect({
-        enableFiltering: true,
-        includeSelectAllOption: true
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -55513,42 +55514,6 @@ Dms.form.initializeCallbacks.push(function (element) {
         }).on('typeahead:selected', function (event, data) {
             hiddenInput.val(data.val);
             formGroup.trigger('dms-change');
-        });
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
-    element.find('input[type="ip-address"]')
-        .attr('type', 'text')
-        .attr('data-parsley-ip-address', '1');
-
-    element.find('input[data-autocomplete]').each(function () {
-        var options = JSON.parse($(this).attr('data-autocomplete'));
-        $(this).removeAttr('data-autocomplete');
-
-        var values = [];
-
-        $.each(options, function (index, value) {
-            values.push({ val: value });
-        });
-
-        var engine = new Bloodhound({
-            local: values,
-            datumTokenizer: function(d) {
-                return Bloodhound.tokenizers.whitespace(d.val);
-            },
-            queryTokenizer: Bloodhound.tokenizers.whitespace
-        });
-
-        engine.initialize();
-
-        $(this).typeahead( {
-            limit: 5,
-            hint: true,
-            highlight: true,
-            minLength: 1
-        }, {
-            source: engine.ttAdapter(),
-            displayKey: 'val'
         });
     });
 });
@@ -55755,6 +55720,42 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
+    element.find('input[type="ip-address"]')
+        .attr('type', 'text')
+        .attr('data-parsley-ip-address', '1');
+
+    element.find('input[data-autocomplete]').each(function () {
+        var options = JSON.parse($(this).attr('data-autocomplete'));
+        $(this).removeAttr('data-autocomplete');
+
+        var values = [];
+
+        $.each(options, function (index, value) {
+            values.push({ val: value });
+        });
+
+        var engine = new Bloodhound({
+            local: values,
+            datumTokenizer: function(d) {
+                return Bloodhound.tokenizers.whitespace(d.val);
+            },
+            queryTokenizer: Bloodhound.tokenizers.whitespace
+        });
+
+        engine.initialize();
+
+        $(this).typeahead( {
+            limit: 5,
+            hint: true,
+            highlight: true,
+            minLength: 1
+        }, {
+            source: engine.ttAdapter(),
+            displayKey: 'val'
+        });
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
 
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -55762,7 +55763,7 @@ Dms.form.initializeCallbacks.push(function (element) {
         return;
     }
 
-    var wysiwygElements = element.find('textarea.dms-wysiwyg');
+    var wysiwygElements = element.find('textarea.dms-wysiwyg, textarea.dms-wysiwyg-light');
 
     wysiwygElements.each(function () {
         if (!$(this).attr('id')) {
@@ -55771,6 +55772,24 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 
     tinymce.baseURL = '/vendor/dms/wysiwyg/';
+
+    var setupTinyMce = function (editor) {
+        editor.on('change', function () {
+            editor.save();
+        });
+
+        editor.on('keyup cut paste change', function (e) {
+            $(tinymce.activeEditor.getElement()).closest('.form-group').trigger('dms-change');
+        });
+    };
+
+    var filePickerCallback = function (callback, value, meta) {
+        var wysiwygElement = $(tinymce.activeEditor.getElement()).closest('.dms-wysiwyg-container');
+        showFilePickerDialog(meta.filetype, wysiwygElement, function (fileUrl) {
+            callback(fileUrl);
+        });
+    };
+
     tinymce.init({
         selector: 'textarea.dms-wysiwyg',
         tooltip: '',
@@ -55796,22 +55815,27 @@ Dms.form.initializeCallbacks.push(function (element) {
             "imagetools"
         ],
         toolbar: "undo redo | styleselect | bold italic | forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist | link image",
-        setup: function (editor) {
-            editor.on('change', function () {
-                editor.save();
-            });
-            editor.on('keyup cut paste change', function (e) {
-                $(tinymce.activeEditor.getElement()).closest('.form-group').trigger('dms-change');
-            });
-        },
+        setup: setupTinyMce,
         relative_urls: false,
         remove_script_host: true,
-        file_picker_callback: function (callback, value, meta) {
-            var wysiwygElement = $(tinymce.activeEditor.getElement()).closest('.dms-wysiwyg-container');
-            showFilePickerDialog(meta.filetype, wysiwygElement, function (fileUrl) {
-                callback(fileUrl);
-            });
-        }
+        file_picker_callback: filePickerCallback
+    });
+
+    tinymce.init({
+        selector: 'textarea.dms-wysiwyg-light',
+        tooltip: '',
+        toolbar: 'undo redo | bold italic | link',
+        menubar: false,
+        statusbar: false,
+        plugins: [
+            "autolink",
+            "link",
+            "textcolor"
+        ],
+        setup: setupTinyMce,
+        relative_urls: false,
+        remove_script_host: true,
+        file_picker_callback: filePickerCallback
     });
 
     wysiwygElements.filter(function () {
@@ -56530,11 +56554,13 @@ Dms.table.initializeCallbacks.push(function (element) {
             var filterByString = filterForm.find('[name=filter]').val();
 
             if (filterByString) {
-                $.each(stringFilterableComponentIds, function (index, componentId) {
-                    criteria.conditions.push({
-                        component: componentId,
-                        operator: 'string-contains-case-insensitive',
-                        value: filterByString
+                $.each(filterByString.split(' '), function (stringIndex, filterByPart) {
+                    $.each(stringFilterableComponentIds, function (index, componentId) {
+                        criteria.conditions.push({
+                            component: componentId,
+                            operator: 'string-contains-case-insensitive',
+                            value: filterByString
+                        });
                     });
                 });
             }

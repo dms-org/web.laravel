@@ -1,7 +1,8 @@
 <?php declare(strict_types = 1);
 
 namespace Dms\Web\Laravel\Error;
-use Illuminate\Http\Exception\HttpResponseException;
+
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 /**
  * The dms error pages.

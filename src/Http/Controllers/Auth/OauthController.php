@@ -13,7 +13,7 @@ use Dms\Web\Laravel\Auth\Oauth\OauthProviderCollection;
 use Dms\Web\Laravel\Auth\OauthAdmin;
 use Dms\Web\Laravel\Auth\Role;
 use Dms\Web\Laravel\Http\Controllers\DmsController;
-use Illuminate\Http\Exception\HttpResponseException;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
 use League\OAuth2\Client\Provider\ResourceOwnerInterface;
 

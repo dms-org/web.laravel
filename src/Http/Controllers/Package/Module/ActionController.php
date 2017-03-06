@@ -37,7 +37,7 @@ use Dms\Web\Laravel\Renderer\Form\IFormRendererWithActions;
 use Dms\Web\Laravel\Util\ActionLabeler;
 use Dms\Web\Laravel\Util\ActionSafetyChecker;
 use Dms\Web\Laravel\Util\StringHumanizer;
-use Illuminate\Http\Exception\HttpResponseException;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
 
 /**

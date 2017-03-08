@@ -12,7 +12,6 @@ use Dms\Core\Persistence\DbRepository;
 use Dms\Core\Persistence\IRepository;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\UserProvider as UserProviderInterface;
-use Illuminate\Foundation\Auth\User;
 use Illuminate\Hashing\BcryptHasher;
 
 /**
@@ -82,7 +81,7 @@ class GenericDmsUserProvider implements UserProviderInterface
      *
      * @return Authenticatable
      */
-    protected function wrapUser($entity) : Authenticatable
+    protected function wrapUser($entity): Authenticatable
     {
         return call_user_func($this->wrapperCallback, $entity);
     }
@@ -176,7 +175,9 @@ class GenericDmsUserProvider implements UserProviderInterface
         $criteria = $this->repository->criteria();
 
         foreach ($credentials as $column => $value) {
-            if (strpos($column, 'email') !== false) {
+            if (strpos($column, 'api_token') !== false) {
+                $criteria->where('apiToken', '=', $value);
+            } elseif (strpos($column, 'email') !== false) {
                 $criteria->where($column, '=', new EmailAddress($value));
             } elseif (strpos($column, 'password') === false) {
                 $criteria->where($column, '=', $value);
@@ -194,10 +195,10 @@ class GenericDmsUserProvider implements UserProviderInterface
      *
      * @return bool
      */
-    public function validateCredentials(Authenticatable $user, array $credentials) : bool
+    public function validateCredentials(Authenticatable $user, array $credentials): bool
     {
         $user = $this->unwrapUser($user);
-        
+
         $user = $this->validateUser($user);
 
         /** @var BcryptHasher $app */

@@ -90,7 +90,7 @@ class ScaffoldCmsCommand extends ScaffoldCommand
         $moduleNamespace           = $context->getModuleNamespace() . ($relativeNamespace ? '\\' . $relativeNamespace : '');
         $moduleDirectory           = $this->namespaceResolver->getDirectoryFor($moduleNamespace);
         $moduleDataSourceClassName = 'I' . $entityName . 'Repository';
-        $moduleDataSourceClass     = $context->getDataSourceNamespace() . '\\' . $moduleDataSourceClassName;
+        $moduleDataSourceClass     = $context->getDataSourceNamespace() . ($relativeNamespace ? '\\' . $relativeNamespace : '') . '\\' . $moduleDataSourceClassName;
 
         $fieldCodeContext  = $this->generateFieldBindingsCode($context, $entity, 3);
         $columnCodeContext = $this->generateColumnBindingsCode($context, $entity, 3);

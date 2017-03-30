@@ -80,7 +80,7 @@ class ScaffoldPersistenceCommand extends ScaffoldCommand
 
         $repositoryName      = 'I' . $entityName . 'Repository';
         $repositoryNamespace = $context->getOutputAbstractNamespace() . ($relativeNamespace ? '\\' . $relativeNamespace : '');
-        $repositoryDirectory = $this->namespaceResolver->getDirectoryFor($context->getOutputAbstractNamespace());
+        $repositoryDirectory = $this->namespaceResolver->getDirectoryFor($repositoryNamespace);
         $repositoryClass     = $repositoryNamespace . '\\' . $repositoryName;
 
         $php = $this->filesystem->get(__DIR__ . '/Stubs/Persistence/RepositoryInterface.php.stub');

@@ -4,6 +4,7 @@ namespace Dms\Web\Laravel\Http\Controllers\Package\Module;
 
 use Dms\Core\Common\Crud\Action\Object\IObjectAction;
 use Dms\Core\Common\Crud\IReadModule;
+use Dms\Core\Form\Builder\Form;
 use Dms\Core\Form\Field\Type\ArrayOfType;
 use Dms\Core\Form\Field\Type\InnerFormType;
 use Dms\Core\Form\Field\Type\ObjectIdType;
@@ -360,8 +361,12 @@ class ActionController extends DmsController
                 return $field;
             } elseif ($fieldType instanceof InnerFormType) {
                 $form = $fieldType->getForm();
-            } elseif ($fieldType instanceof ArrayOfType && $key === count($parts) - 2) {
-                return $fieldType->getElementField()->withName(end($parts));
+            } elseif ($fieldType instanceof ArrayOfType) {
+                $nextPart = $parts[$key + 1];
+
+                $form = Form::create()->section('', [
+                    $fieldType->getElementField()->withName($nextPart)
+                ])->build();
             } else {
                 return null;
             }

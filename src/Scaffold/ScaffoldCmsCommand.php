@@ -1,4 +1,4 @@
-<?php declare(strict_types = 1);
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Scaffold;
 
@@ -24,8 +24,9 @@ class ScaffoldCmsCommand extends ScaffoldCommand
     protected $signature = 'dms:scaffold:cms {package_name : the name of the package in \'this-format\'}
                             {entity_namespace=App\\Domain\\Entities : The namespace of the entities}
                             {data_source_namespace=App\\Domain\\Services\\Persistence : The namespace of the repositories interfaces}
-                            {output_namespace=App\\Cms : The namespace to place cms packages and module }
-                            {--overwrite : Whether to overwrite existing files}';
+                            {output_namespace=App\\Cms : The namespace to place cms packages and module}
+                            {--overwrite : Whether to overwrite existing files}
+                            {--filter= : A filter pattern to restrict which entities are scaffolded e.g App\\Domain\\Entities\\Specific\\*}';
 
     /**
      * The console command description.
@@ -52,9 +53,14 @@ class ScaffoldCmsCommand extends ScaffoldCommand
             $this->input->getArgument('output_namespace')
         );
 
-        $overwrite    = (bool)$this->input->hasOption('--overwrite');
+        $overwrite    = $this->input->hasOption('overwrite') && (bool)$this->input->getOption('overwrite');
         $entities     = $domain->getRootEntities();
         $valueObjects = $domain->getRootValueObjects();
+
+        if ($this->input->hasOption('filter') && $this->input->getOption('filter')) {
+            $entities     = $this->filterDomainObjects($entities, $this->input->getOption('filter'));
+            $valueObjects = $this->filterDomainObjects($valueObjects, $this->input->getOption('filter'));
+        }
 
         if (!$valueObjects && !$entities) {
             $this->output->error('No entities found under ' . $context->getRootEntityNamespace() . ' namespace');
@@ -117,7 +123,7 @@ class ScaffoldCmsCommand extends ScaffoldCommand
         return [$moduleName, $moduleNamespace . '\\' . $moduleClassName];
     }
 
-    protected function generateLabelEntityCode(DomainObjectStructure $object) : string
+    protected function generateLabelEntityCode(DomainObjectStructure $object): string
     {
         $labelProperty = null;
 
@@ -139,7 +145,7 @@ class ScaffoldCmsCommand extends ScaffoldCommand
         return $code;
     }
 
-    protected function generateFieldBindingsCode(ScaffoldCmsContext $context, DomainObjectStructure $object, int $indent) : PhpCodeBuilderContext
+    protected function generateFieldBindingsCode(ScaffoldCmsContext $context, DomainObjectStructure $object, int $indent): PhpCodeBuilderContext
     {
         $code = new PhpCodeBuilderContext();
 
@@ -170,7 +176,7 @@ class ScaffoldCmsCommand extends ScaffoldCommand
         return $code;
     }
 
-    protected function generateColumnBindingsCode(ScaffoldCmsContext $context, DomainObjectStructure $object, int $indent) : PhpCodeBuilderContext
+    protected function generateColumnBindingsCode(ScaffoldCmsContext $context, DomainObjectStructure $object, int $indent): PhpCodeBuilderContext
     {
         $code = new PhpCodeBuilderContext();
 

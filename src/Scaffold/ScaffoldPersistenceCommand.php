@@ -24,7 +24,8 @@ class ScaffoldPersistenceCommand extends ScaffoldCommand
                             {entity_namespace=App\\Domain\\Entities : The namespace of the entities}
                             {output_abstract_namespace=App\\Domain\\Services\\Persistence : The path to place the repository interfaces.}
                             {output_implementation_namespace=App\\Infrastructure\\Persistence : The path to place the repository and mapper implementations.}
-                            {--overwrite : Whether to overwrite existing files}';
+                            {--overwrite : Whether to overwrite existing files}
+                            {--filter= : A filter pattern to restrict which entities are scaffolded e.g App\\Domain\\Entities\\Specific\\*}';
 
     /**
      * The console command description.
@@ -50,9 +51,14 @@ class ScaffoldPersistenceCommand extends ScaffoldCommand
             $this->input->getArgument('output_implementation_namespace')
         );
 
-        $overwrite    = (bool)$this->input->hasOption('--overwrite');
+        $overwrite    = $this->input->hasOption('overwrite') && (bool)$this->input->getOption('overwrite');
         $entities     = $domain->getRootEntities();
         $valueObjects = $domain->getRootValueObjects();
+
+        if ($this->input->hasOption('filter') && $this->input->getOption('filter')) {
+            $entities     = $this->filterDomainObjects($entities, $this->input->getOption('filter'));
+            $valueObjects = $this->filterDomainObjects($valueObjects, $this->input->getOption('filter'));
+        }
 
         if (!$valueObjects && !$entities) {
             $this->output->error('No entities found under ' . $context->getRootEntityNamespace() . ' namespace');

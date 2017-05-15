@@ -60,4 +60,49 @@ class ScaffoldPersistenceTest extends ScaffoldTest
         $this->assertDirectoriesEqual($servicesPath, $tempServicesPath);
         $this->assertDirectoriesEqual($infrastructurePath, $tempInfrastructurePath);
     }
+    public function filterOptionTestCases()
+    {
+        return [
+            ['*', true],
+            [__NAMESPACE__ . '\\Fixture\\Simple\\Domain\\TestEntity', true],
+            ['\\' . __NAMESPACE__ . '\\Fixture\\Simple\\Domain\\TestEntity', true],
+            [__NAMESPACE__ . '\\Fixture\\Simple\\Domain\\*', true],
+            [__NAMESPACE__ . '\\Fixture\\Simple\\*', true],
+            [__NAMESPACE__ . '\\Fixture\\Simple\\Domain\\Test*', true],
+            [__NAMESPACE__ . '\\Fixture\\Simple\\Domain\\*Entity', true],
+            [__NAMESPACE__ . '\\Fixture\\Simple\\Domain\\AnotherEntity', false],
+            [__NAMESPACE__ . '\\Fixture\\Simple\\Domain\\AnotherEntity', false],
+            ['Abc', false],
+            ['Abc\\*', false],
+        ];
+    }
+
+    /**
+     * @dataProvider filterOptionTestCases
+     */
+    public function testFilterOption(string $filter, $shouldExist)
+    {
+        $tempCmsPath = __DIR__ . '/temp/' . str_random();
+
+        $this->app[NamespaceDirectoryResolver::class] = $this->mockNamespaceDirectoryResolver([
+            __NAMESPACE__ . '\\Fixture\\Simple\\Domain'               => __DIR__ . '/Fixture/Simple/Domain',
+            __NAMESPACE__ . '\\Fixture\\Simple\\Cms'                  => $tempCmsPath,
+            __NAMESPACE__ . '\\Fixture\\Simple\\Cms\\Modules'         => $tempCmsPath . '/Modules',
+            __NAMESPACE__ . '\\Fixture\\Simple\\Cms\\Modules\\Fields' => $tempCmsPath . '/Modules/Fields',
+        ]);
+
+        $this->getConsole()->call('dms:scaffold:cms', [
+            'package_name'          => 'simple',
+            'entity_namespace'      => __NAMESPACE__ . '\\Fixture\\Simple\\Domain',
+            'output_namespace'      => __NAMESPACE__ . '\\Fixture\\Simple\\Cms',
+            'data_source_namespace' => 'Dms\Web\Laravel\Tests\Integration\Scaffold\Fixture\Simple\Persistence\Services',
+            '--filter'              => $filter,
+        ]);
+
+        if ($shouldExist) {
+            $this->assertFileExists($tempCmsPath . '/Modules/TestEntityModule.php');
+        } else {
+            $this->assertFileNotExists($tempCmsPath . '/Modules/TestEntityModule.php');
+        }
+    }
 }

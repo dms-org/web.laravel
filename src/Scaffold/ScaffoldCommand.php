@@ -1,4 +1,4 @@
-<?php declare(strict_types = 1);
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Scaffold;
 
@@ -88,6 +88,21 @@ abstract class ScaffoldCommand extends Command
         ];
     }
 
+    /**
+     * @param DomainObjectStructure[] $objects
+     * @param string                  $filter
+     *
+     * @return DomainObjectStructure[]
+     */
+    protected function filterDomainObjects(array $objects, string $filter): array
+    {
+        $filter = trim($filter, ' \\');
+
+        return array_filter($objects, function (DomainObjectStructure $object) use ($filter) {
+            return str_is($filter, $object->getReflection()->getName());
+        });
+    }
+
     protected function createFile(string $filePath, string $code, bool $overwrite)
     {
         $this->filesystem->makeDirectory(dirname($filePath), 0755, true, true);
@@ -106,7 +121,7 @@ abstract class ScaffoldCommand extends Command
      * @return PropertyCodeGenerator
      * @throws InvalidArgumentException
      */
-    protected function getCodeGeneratorFor(DomainObjectStructure $object, string $propertyName) : PropertyCodeGenerator
+    protected function getCodeGeneratorFor(DomainObjectStructure $object, string $propertyName): PropertyCodeGenerator
     {
         foreach ($this->propertyCodeGenerators as $codeGenerator) {
             if ($codeGenerator->supports($object, $propertyName)) {

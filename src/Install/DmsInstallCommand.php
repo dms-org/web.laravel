@@ -63,39 +63,117 @@ class DmsInstallCommand extends Command
             throw InvalidOperationException::format('Cannot install: database is required, please verify config');
         }
 
+        $this->cleanDefaultModelsAndEntities($filesystem);
+
+        $this->disableMySqlStrictMode($filesystem);
+
+        $this->scaffoldAppCms($filesystem);
+
+        $this->scaffoldAppOrm($filesystem);
+
+        $this->scaffoldDatabaseSeeders($filesystem);
+
+        $this->scaffoldAppServiceProvider($filesystem);
+
+        $this->publishAssets($console);
+
+        $this->dumpComposerAutoloader();
+
+        $this->setUpInitialDatabase($console);
+
+        $this->addPathsToGitIgnore();
+
+        $this->addDmsUpdateCommandToComposerJsonHook();
+
+        $this->info('Done! Good luck with your project.');
+    }
+
+    /**
+     * @param Filesystem $filesystem
+     */
+    protected function cleanDefaultModelsAndEntities(Filesystem $filesystem)
+    {
         $filesystem->delete(app_path('User.php'));
         $this->info('Deleted: ' . app_path('User.php'));
         $filesystem->cleanDirectory(database_path('migrations/'));
         $this->info('Deleted: ' . database_path('migrations/') . '*');
+    }
 
+    /**
+     * @param Filesystem $filesystem
+     */
+    protected function disableMySqlStrictMode(Filesystem $filesystem)
+    {
+        $filesystem->put(config_path('database.php'), preg_replace('/([\'"]strict[\'"]\s*=>\s*)true/', '$1false', file_get_contents(config_path('database.php'))));
+        $this->info('Disabled MySQL strict mode');
+    }
+
+    /**
+     * @param Filesystem $filesystem
+     */
+    protected function scaffoldAppCms(Filesystem $filesystem)
+    {
         $filesystem->copy(__DIR__ . '/Stubs/AppCms.php.stub', app_path('AppCms.php'));
         require_once app_path('AppCms.php');
         app()->singleton(ICms::class, \App\AppCms::class);
         $this->info('Created: ' . app_path('AppCms.php'));
+    }
 
+    /**
+     * @param Filesystem $filesystem
+     */
+    protected function scaffoldAppOrm(Filesystem $filesystem)
+    {
         $filesystem->copy(__DIR__ . '/Stubs/AppOrm.php.stub', app_path('AppOrm.php'));
         require_once app_path('AppOrm.php');
         app()->singleton(IOrm::class, \App\AppOrm::class);
         $this->info('Created: ' . app_path('AppOrm.php'));
+    }
 
+    /**
+     * @param Filesystem $filesystem
+     */
+    protected function scaffoldDatabaseSeeders(Filesystem $filesystem)
+    {
         $filesystem->copy(__DIR__ . '/Stubs/DmsAdminSeeder.php.stub', database_path('seeds/DmsAdminSeeder.php'));
         require_once database_path('seeds/DmsAdminSeeder.php');
         $this->info('Created: ' . database_path('seeds/DmsAdminSeeder.php'));
         $filesystem->copy(__DIR__ . '/Stubs/DatabaseSeeder.php.stub', database_path('seeds/DatabaseSeeder.php'));
         require_once database_path('seeds/DatabaseSeeder.php');
         $this->info('Updated: ' . database_path('seeds/DatabaseSeeder.php'));
+    }
 
+    /**
+     * @param Filesystem $filesystem
+     */
+    protected function scaffoldAppServiceProvider(Filesystem $filesystem)
+    {
         $filesystem->copy(__DIR__ . '/Stubs/AppServiceProvider.php.stub', app_path('Providers/AppServiceProvider.php'));
         $this->info('Updated: ' . app_path('Providers/AppServiceProvider.php'));
+    }
 
+    /**
+     * @param Kernel $console
+     */
+    protected function publishAssets(Kernel $console)
+    {
         $console->call('vendor:publish', ['--provider' => DmsServiceProvider::class]);
         $this->info('Executed: php artisan vendor:publish --provider="' . DmsServiceProvider::class . '"');
 
         app('config')->set(['dms' => require __DIR__ . '/../../config/dms.php']);
+    }
 
+    protected function dumpComposerAutoloader()
+    {
         $this->composer->dumpAutoloads();
         $this->info('Executed: composer dump-autoload');
+    }
 
+    /**
+     * @param Kernel $console
+     */
+    protected function setUpInitialDatabase(Kernel $console)
+    {
         $console->call('dms:make:migration', ['name' => 'initial_db']);
         $this->info('Executed: php artisan dms:make:migration initial_db');
 
@@ -104,7 +182,10 @@ class DmsInstallCommand extends Command
 
         $console->call('db:seed');
         $this->info('Executed: php artisan db:seed');
+    }
 
+    protected function addPathsToGitIgnore()
+    {
         file_put_contents(
             app_path('../.gitignore'),
             '/storage/dms/' . PHP_EOL
@@ -112,12 +193,13 @@ class DmsInstallCommand extends Command
             FILE_APPEND
         );
         $this->info('Added to .gitignore');
+    }
 
-        $composerJsonData = json_decode(file_get_contents(base_path('composer.json')), true);
+    protected function addDmsUpdateCommandToComposerJsonHook()
+    {
+        $composerJsonData                                 = json_decode(file_get_contents(base_path('composer.json')), true);
         $composerJsonData['scripts']['post-update-cmd'][] = 'php artisan dms:update';
         file_put_contents(base_path('composer.json'), json_encode($composerJsonData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
         $this->info('Added php artisan dms:update to post-update hook in composer.json');
-
-        $this->info('Done! Good luck with your project.');
     }
 }

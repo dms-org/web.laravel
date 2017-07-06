@@ -89,6 +89,8 @@ class DmsInstallCommand extends Command
 
         $this->addDmsUpdateCommandToComposerJsonHook();
 
+        $this->createDefaultDirectories();
+
         $this->info('Done! Good luck with your project.');
     }
 
@@ -222,5 +224,13 @@ class DmsInstallCommand extends Command
         $composerJsonData['scripts']['post-update-cmd'][] = 'php artisan dms:update';
         file_put_contents(base_path('composer.json'), json_encode($composerJsonData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
         $this->info('Added php artisan dms:update to post-update hook in composer.json');
+    }
+
+    protected function createDefaultDirectories()
+    {
+        @mkdir(app_path('Domain/Entities'));
+        $this->info('Created the app/Domain/Entities directory');
+        @mkdir(app_path('Domain/Services'));
+        $this->info('Created the app/Domain/Services directory');
     }
 }

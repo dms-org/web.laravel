@@ -63,9 +63,13 @@ class DmsInstallCommand extends Command
             throw InvalidOperationException::format('Cannot install: database is required, please verify config');
         }
 
-        $this->cleanDefaultModelsAndEntities($filesystem);
-
         $this->disableMySqlStrictMode($filesystem);
+
+        if (!$this->ensureMySqlInnoDbLargePrefixIsEnabled()) {
+            return;
+        }
+
+        $this->cleanDefaultModelsAndEntities($filesystem);
 
         $this->scaffoldAppCms($filesystem);
 
@@ -88,6 +92,22 @@ class DmsInstallCommand extends Command
         $this->info('Done! Good luck with your project.');
     }
 
+    protected function ensureMySqlInnoDbLargePrefixIsEnabled() : bool
+    {
+        if (env('DB_CONNECTION') !== 'mysql') {
+            return true;
+        }
+
+        $hasLargePrefixEnabled = \DB::select('SELECT @@innodb_large_prefix AS flag')[0]->flag;
+
+        if (!$hasLargePrefixEnabled) {
+            $this->warn('Please enable innodb_large_prefix. See here https://dev.mysql.com/doc/refman/5.7/en/innodb-parameters.html#sysvar_innodb_large_prefix');
+            return false;
+        }
+
+        return true;
+    }
+
     /**
      * @param Filesystem $filesystem
      */
@@ -105,6 +125,7 @@ class DmsInstallCommand extends Command
     protected function disableMySqlStrictMode(Filesystem $filesystem)
     {
         $filesystem->put(config_path('database.php'), preg_replace('/([\'"]strict[\'"]\s*=>\s*)true/', '$1false', file_get_contents(config_path('database.php'))));
+        app('config')->set('database.mysql.strict', false);
         $this->info('Disabled MySQL strict mode');
     }
 

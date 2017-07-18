@@ -22,7 +22,7 @@ class NamespaceDirectoryResolverTest extends CmsIntegrationTest
     {
         $resolver = new NamespaceDirectoryResolver();
         $this->assertSame(__DIR__ . DIRECTORY_SEPARATOR, $resolver->getDirectoryFor(__NAMESPACE__));
-        $this->assertSame(realpath(__DIR__ . '/../../../../vendor/dms/core/src') . DIRECTORY_SEPARATOR, $resolver->getDirectoryFor('Dms\\Core'));
+        $this->assertSame(realpath(__DIR__ . '/../../../../vendor/dms-org/core/src') . DIRECTORY_SEPARATOR, $resolver->getDirectoryFor('Dms\\Core'));
         $this->assertSame(realpath(__DIR__ . '/../../../../src') . DIRECTORY_SEPARATOR, $resolver->getDirectoryFor('Dms\\Web\\Laravel'));
         $this->assertSame(realpath(__DIR__ . '/../../../../src/Scaffold') . DIRECTORY_SEPARATOR, $resolver->getDirectoryFor('Dms\\Web\\Laravel\\Scaffold'));
         $this->assertSame(realpath(__DIR__ . '/../../../../src') . DIRECTORY_SEPARATOR . 'Another' . DIRECTORY_SEPARATOR, $resolver->getDirectoryFor('Dms\\Web\\Laravel\\Another'));

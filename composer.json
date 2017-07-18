@@ -31,7 +31,7 @@
     "autoload-dev": {
         "psr-4": {
             "Dms\\Web\\Laravel\\Tests\\": "./tests/Tests/",
-            "Dms\\Core\\Tests\\": "./vendor/dms/core/tests/Tests/"
+            "Dms\\Core\\Tests\\": "./vendor/dms-org/core/tests/Tests/"
         }
     },
     "require-dev": {

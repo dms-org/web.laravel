@@ -7,6 +7,7 @@ use Dms\Core\Module\IAction;
 use Dms\Web\Laravel\Action\IActionResultHandler;
 use Dms\Web\Laravel\Http\ModuleContext;
 use Dms\Web\Laravel\Tests\Unit\UnitTest;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * @author Elliot Levin <elliotlevin@hotmail.com>
@@ -72,6 +73,14 @@ abstract class ResultHandlerTest extends UnitTest
 
     protected function assertResponsesMatch($expected, $actual)
     {
+        if ($expected instanceof Response) {
+            $expected->headers->remove('date');
+        }
+
+        if ($actual instanceof Response) {
+            $actual->headers->remove('date');
+        }
+
         $this->assertEquals($expected, $actual);
     }
 

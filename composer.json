@@ -1,6 +1,7 @@
 {
-    "name": "dms/web.laravel",
+    "name": "dms-org/web.laravel",
     "description": "The integration package with the laravel framework",
+    "license": "MIT",
     "authors": [
         {
             "name": "Elliot Levin",
@@ -8,12 +9,6 @@
         }
     ],
     "minimum-stability": "stable",
-    "repositories": [
-        {
-            "type": "composer",
-            "url": "https://api.package.studio/meta/composer"
-        }
-    ],
     "autoload": {
         "psr-4": {
             "Dms\\Web\\Laravel\\": "./src/"
@@ -24,9 +19,9 @@
     },
     "require": {
         "php": ">=7.0.0",
-        "dms/core": "^0.1",
-        "dms/common.structure": "^0.1",
-        "dms/package.analytics": "^0.1",
+        "dms-org/core": "^0.8",
+        "dms-org/common.structure": "^0.8",
+        "dms-org/package.analytics": "^0.8",
         "laravel/framework": "5.4.*",
         "marcj/topsort": "^1.0",
         "cache/cache": "^0.1.0",
@@ -40,8 +35,8 @@
         }
     },
     "require-dev": {
-        "dms/common.testing": "dev-master",
+        "dms-org/common.testing": "dev-master",
         "orchestra/testbench": "~3.0",
-        "dms/package.content": "^0.1.9"
+        "dms-org/package.content": "^0.8"
     }
 }

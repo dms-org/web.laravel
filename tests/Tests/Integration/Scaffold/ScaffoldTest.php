@@ -1,4 +1,4 @@
-<?php declare(strict_types = 1);
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Tests\Integration\Scaffold;
 
@@ -24,12 +24,12 @@ abstract class ScaffoldTest extends CmsIntegrationTest
     /**
      * @return Kernel
      */
-    public function getConsole() : Kernel
+    public function getConsole(): Kernel
     {
         return $this->app->make(Kernel::class);
     }
 
-    protected function assertDirectoriesEqual(string $expected, string $actual)
+    protected function assertDirectoriesEqual(string $expected, string $actual, bool $normalizeLineReturns = true)
     {
         if (!is_dir($expected) && !is_dir($actual)) {
             return;
@@ -54,14 +54,19 @@ abstract class ScaffoldTest extends CmsIntegrationTest
         $this->assertEquals($expectedFiles, $actualFiles);
 
         foreach ($expectedFiles as $expectedFile) {
-            $this->assertFileEquals(
-                $expected . '/' . $expectedFile,
-                $actual . '/' . $expectedFile
-            );
+            $expectedContents = file_get_contents($expected . '/' . $expectedFile);
+            $actualContents   = file_get_contents($actual . '/' . $expectedFile);
+
+            if ($normalizeLineReturns) {
+                $expectedContents = strtr($expectedContents, ["\r\n" => "\n"]);
+                $actualContents   = strtr($actualContents, ["\r\n" => "\n"]);
+            }
+
+            $this->assertEquals($expectedContents, $actualContents);
         }
     }
 
-    protected function mockNamespaceDirectoryResolver(array $namespaceDirectoryMap) : NamespaceDirectoryResolver
+    protected function mockNamespaceDirectoryResolver(array $namespaceDirectoryMap): NamespaceDirectoryResolver
     {
         return new class($namespaceDirectoryMap) extends NamespaceDirectoryResolver
         {
@@ -80,7 +85,7 @@ abstract class ScaffoldTest extends CmsIntegrationTest
                 $this->namespaceDirectoryMap = $namespaceDirectoryMap;
             }
 
-            public function getDirectoryFor(string $namespace) : string
+            public function getDirectoryFor(string $namespace): string
             {
                 return $this->namespaceDirectoryMap[$namespace];
             }

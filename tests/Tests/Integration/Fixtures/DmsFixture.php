@@ -7,6 +7,8 @@ use Dms\Core\Persistence\Db\Mapping\IOrm;
 use Dms\Web\Laravel\Persistence\Db\Migration\LaravelMigrationGenerator;
 use Illuminate\Container\Container;
 use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Database\Migrations\MigrationCreator;
+use Illuminate\Filesystem\Filesystem;
 
 /**
  * @author Elliot Levin <elliotlevin@hotmail.com>
@@ -46,8 +48,9 @@ abstract class DmsFixture
             mkdir($migrationsPath, 0777, true);
         }
 
+        $migrationsPath = realpath($migrationsPath);
         file_put_contents($this->dbFile(), '');
-        foreach (glob($this->migrationsPath() . '*.*') as $migrationFile) {
+        foreach (glob($this->migrationsPath() . '/*.*') as $migrationFile) {
             unlink($migrationFile);
         }
 
@@ -59,7 +62,11 @@ abstract class DmsFixture
             'prefix'   => '',
         ]);
 
-        $migrationGenerator = $app->make(LaravelMigrationGenerator::class, ['path' => $migrationsPath]);
+        $migrationGenerator = new LaravelMigrationGenerator(
+            app(MigrationCreator::class),
+            app(Filesystem::class),
+            $migrationsPath
+        );
 
         if (!@file_get_contents($this->dbStubFile())) {
             file_put_contents($this->dbStubFile(), '');
@@ -67,7 +74,7 @@ abstract class DmsFixture
             $migrationFile = $migrationGenerator->generateMigration(
                 $app->make(IConnection::class),
                 $app->make(IOrm::class),
-                basename(get_class($this)) . '-' . str_random(5)
+                basename(str_replace('\\', '-', get_class($this))) . '-' . str_random(5)
             );
 
             if ($migrationFile) {
@@ -103,7 +110,7 @@ abstract class DmsFixture
      */
     protected function migrationsPath()
     {
-        return __DIR__ . '/../temp/migrations/';
+        return base_path('migrations');
     }
 
     /**
@@ -111,7 +118,7 @@ abstract class DmsFixture
      */
     protected function dbStubFile()
     {
-        return __DIR__ . '/../temp/db.stub.sqlite';
+        return  __DIR__ . '/../temp/db.stub.sqlite';
     }
 
     /**

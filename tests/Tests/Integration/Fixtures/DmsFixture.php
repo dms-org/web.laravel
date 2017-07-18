@@ -74,7 +74,6 @@ abstract class DmsFixture
                 $console = $this->getConsole($app);
                 $console->call('migrate', [
                     '--database' => 'testing-stub',
-                    '--realpath' => $migrationsPath,
                 ]);
             }
 

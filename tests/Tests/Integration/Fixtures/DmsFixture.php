@@ -42,6 +42,11 @@ abstract class DmsFixture
      */
     public function setUpBeforeClass(Application $app)
     {
+        $stubFileDirectory = dirname($this->dbStubFile());
+        if (!is_dir($stubFileDirectory)) {
+            mkdir($stubFileDirectory, 0777, true);
+        }
+
         /** @var LaravelMigrationGenerator $migrationGenerator */
         $migrationsPath = $this->migrationsPath();
         if (!is_dir($migrationsPath)) {

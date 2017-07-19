@@ -51,6 +51,9 @@ abstract class ScaffoldTest extends CmsIntegrationTest
             return substr($file->getRealPath(), strlen(realpath($actual)));
         }, $actualFiles);
 
+        sort($expectedFiles, SORT_STRING);
+        sort($actualFiles, SORT_STRING);
+
         $this->assertEquals($expectedFiles, $actualFiles);
 
         foreach ($expectedFiles as $expectedFile) {

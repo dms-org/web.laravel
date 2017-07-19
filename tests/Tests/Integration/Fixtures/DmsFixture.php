@@ -8,6 +8,7 @@ use Dms\Web\Laravel\Persistence\Db\Migration\LaravelMigrationGenerator;
 use Illuminate\Container\Container;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Database\Migrations\MigrationCreator;
+use Illuminate\Database\Migrations\Migrator;
 use Illuminate\Filesystem\Filesystem;
 
 /**
@@ -60,7 +61,6 @@ abstract class DmsFixture
         }
 
         $app['config']->set('database.default', 'testing-stub');
-        $app['config']->set('database.default', 'testing-stub');
         $app['config']->set('database.connections.testing-stub', [
             'driver'   => 'sqlite',
             'database' => $this->dbStubFile(),
@@ -72,6 +72,10 @@ abstract class DmsFixture
             app(Filesystem::class),
             $migrationsPath
         );
+
+        app()->resolving(Migrator::class, function (Migrator $migrator) {
+            $migrator->path($this->migrationsPath());
+        });
 
         if (!@file_get_contents($this->dbStubFile())) {
             file_put_contents($this->dbStubFile(), '');
@@ -115,7 +119,7 @@ abstract class DmsFixture
      */
     protected function migrationsPath()
     {
-        return base_path('migrations');
+        return __DIR__ . '/../temp/migrations';
     }
 
     /**

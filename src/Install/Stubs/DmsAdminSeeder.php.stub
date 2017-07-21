@@ -7,9 +7,7 @@ use Dms\Web\Laravel\Auth\LocalAdmin;
 use Illuminate\Database\Seeder;
 
 /**
- * The dms user seeder
- *
- * @author Elliot Levin <elliotlevin@hotmail.com>
+ * The DMS admin account seeder
  */
 class DmsAdminSeeder extends Seeder
 {

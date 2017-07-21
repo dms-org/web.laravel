@@ -8,8 +8,6 @@ use Dms\Web\Laravel\Persistence\Db\DmsOrm;
 
 /**
  * The application's orm.
- *
- * @author Elliot Levin <elliotlevin@hotmail.com>
  */
 class AppOrm extends Orm
 {

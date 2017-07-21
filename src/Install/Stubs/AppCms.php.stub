@@ -10,8 +10,6 @@ use Dms\Package\Analytics\AnalyticsPackage;
 
 /**
  * The application's cms.
- *
- * @author Elliot Levin <elliotlevin@hotmail.com>
  */
 class AppCms extends Cms
 {

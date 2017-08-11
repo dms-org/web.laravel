@@ -75,6 +75,7 @@ use Illuminate\Database\MySqlConnection;
 use Illuminate\Foundation\Application;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Routing\Middleware\ThrottleRequests;
+use Illuminate\Routing\Route;
 use Illuminate\Routing\Router;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\ServiceProvider;
@@ -90,6 +91,8 @@ use Psr\Cache\CacheItemPoolInterface;
  */
 class DmsServiceProvider extends ServiceProvider
 {
+
+
     /**
      * Register the service provider.
      *
@@ -115,6 +118,7 @@ class DmsServiceProvider extends ServiceProvider
         $this->registerModuleServices();
         $this->registerModules();
         $this->registerHttpRoutes();
+        $this->registerRouteBindings();
         $this->registerMiddleware();
         $this->registerDbConnection();
         $this->registerUtils();
@@ -294,6 +298,19 @@ class DmsServiceProvider extends ServiceProvider
         if (!method_exists($this->app, 'routesAreCached') || !$this->app->routesAreCached()) {
             require __DIR__ . '/Http/routes.php';
         }
+    }
+
+    private function registerRouteBindings()
+    {
+        /** @var \Illuminate\Routing\Router $router */
+        $router = app('router');
+
+        $router->bind('module', function ($value, Route $route) {
+            /** @var ModuleRequestRouter $moduleRequestRouter */
+            $moduleRequestRouter = $this->app->make(ModuleRequestRouter::class);
+
+            return $moduleRequestRouter->bindModuleContextFromRoute($route);
+        });
     }
 
     private function registerMiddleware()

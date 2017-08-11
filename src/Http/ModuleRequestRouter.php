@@ -238,28 +238,29 @@ class ModuleRequestRouter
                 $router->getRoutes()->add($newRoute);
             }
         });
+    }
 
-        $router->bind('module', function ($value, Route $route) {
-            /** @var ICms $cms */
-            $cms = app(ICms::class);
+    public function bindModuleContextFromRoute(Route $route)
+    {
+        /** @var ICms $cms */
+        $cms = app(ICms::class);
 
-            $packageName = $route->parameter('package');
-            $moduleName  = $route->parameter('module');
-            $route->forgetParameter('package');
+        $packageName = $route->parameter('package');
+        $moduleName  = $route->parameter('module');
+        $route->forgetParameter('package');
 
-            if (!$cms->hasPackage($packageName)) {
-                DmsError::abort(404);
-            }
+        if (!$cms->hasPackage($packageName)) {
+            DmsError::abort(404);
+        }
 
-            $package = $cms->loadPackage($packageName);
+        $package = $cms->loadPackage($packageName);
 
-            if (!$package->hasModule($moduleName)) {
-                DmsError::abort(404);
-            }
+        if (!$package->hasModule($moduleName)) {
+            DmsError::abort(404);
+        }
 
-            return $this->getRootContext($packageName, $moduleName, function () use ($package, $moduleName) {
-                return $package->loadModule($moduleName);
-            });
+        return $this->getRootContext($packageName, $moduleName, function () use ($package, $moduleName) {
+            return $package->loadModule($moduleName);
         });
     }
 }

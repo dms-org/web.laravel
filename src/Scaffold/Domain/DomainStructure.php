@@ -1,4 +1,4 @@
-<?php declare(strict_types = 1);
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Scaffold\Domain;
 
@@ -31,7 +31,7 @@ class DomainStructure
     /**
      * @return DomainObjectStructure[]
      */
-    public function getObjects() : array
+    public function getObjects(): array
     {
         return $this->objects;
     }
@@ -39,7 +39,7 @@ class DomainStructure
     /**
      * @return DomainObjectStructure[]
      */
-    public function getEntities() : array
+    public function getEntities(): array
     {
         return Traversable::from($this->objects)
             ->where(function (DomainObjectStructure $structure) {
@@ -51,7 +51,7 @@ class DomainStructure
     /**
      * @return DomainObjectStructure[]
      */
-    public function getValueObjects() : array
+    public function getValueObjects(): array
     {
         return Traversable::from($this->objects)
             ->where(function (DomainObjectStructure $structure) {
@@ -63,7 +63,7 @@ class DomainStructure
     /**
      * @return DomainObjectStructure[]
      */
-    public function getRootEntities() : array
+    public function getRootEntities(): array
     {
         return Traversable::from($this->objects)
             ->where(function (DomainObjectStructure $structure) {
@@ -75,7 +75,7 @@ class DomainStructure
     /**
      * @return DomainObjectStructure[]
      */
-    public function getRootValueObjects() : array
+    public function getRootValueObjects(): array
     {
         return Traversable::from($this->objects)
             ->where(function (DomainObjectStructure $structure) {
@@ -90,7 +90,7 @@ class DomainStructure
      * @return DomainObjectStructure
      * @throws InvalidArgumentException
      */
-    public function getObject(string $class) : DomainObjectStructure
+    public function getObject(string $class): DomainObjectStructure
     {
         foreach ($this->objects as $object) {
             if ($object->getDefinition()->getClassName() === $class) {
@@ -99,5 +99,20 @@ class DomainStructure
         }
 
         throw InvalidArgumentException::format('Class not found: %s', $class);
+    }
+
+    /**
+     * @param string $class
+     *
+     * @return bool
+     */
+    public function hasObject(string $class): bool
+    {
+        try {
+            $this->getObject($class);
+            return true;
+        } catch (InvalidArgumentException $e) {
+            return false;
+        }
     }
 }

@@ -5,6 +5,7 @@ namespace Dms\Web\Laravel\Scaffold\CodeGeneration;
 use Dms\Core\Model\Object\FinalizedPropertyDefinition;
 use Dms\Core\Model\Type\CollectionType;
 use Dms\Web\Laravel\Scaffold\Domain\DomainObjectStructure;
+use Dms\Web\Laravel\Scaffold\Domain\DomainStructure;
 use Dms\Web\Laravel\Scaffold\ScaffoldCmsContext;
 use Dms\Web\Laravel\Scaffold\ScaffoldPersistenceContext;
 
@@ -14,12 +15,13 @@ use Dms\Web\Laravel\Scaffold\ScaffoldPersistenceContext;
 abstract class CommonValueObjectPropertyCodeGenerator extends PropertyCodeGenerator
 {
     /**
+     * @param DomainStructure             $domain
      * @param DomainObjectStructure       $object
      * @param FinalizedPropertyDefinition $property
      *
      * @return bool
      */
-    protected function doesSupportProperty(DomainObjectStructure $object, FinalizedPropertyDefinition $property) : bool
+    protected function doesSupportProperty(DomainStructure $domain, DomainObjectStructure $object, FinalizedPropertyDefinition $property) : bool
     {
         $type = $property->getType()->nonNullable();
 

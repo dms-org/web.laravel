@@ -8,6 +8,7 @@ use Dms\Core\Model\Type\ObjectType;
 use Dms\Web\Laravel\Scaffold\CodeGeneration\PhpCodeBuilderContext;
 use Dms\Web\Laravel\Scaffold\CodeGeneration\PropertyCodeGenerator;
 use Dms\Web\Laravel\Scaffold\Domain\DomainObjectStructure;
+use Dms\Web\Laravel\Scaffold\Domain\DomainStructure;
 use Dms\Web\Laravel\Scaffold\ScaffoldCmsContext;
 use Dms\Web\Laravel\Scaffold\ScaffoldPersistenceContext;
 
@@ -17,14 +18,16 @@ use Dms\Web\Laravel\Scaffold\ScaffoldPersistenceContext;
 class CustomValueObjectPropertyCodeGenerator extends PropertyCodeGenerator
 {
     /**
+     * @param DomainStructure             $domain
      * @param DomainObjectStructure       $object
      * @param FinalizedPropertyDefinition $property
      *
      * @return bool
      */
-    protected function doesSupportProperty(DomainObjectStructure $object, FinalizedPropertyDefinition $property) : bool
+    protected function doesSupportProperty(DomainStructure $domain, DomainObjectStructure $object, FinalizedPropertyDefinition $property) : bool
     {
-        return $property->getType()->nonNullable()->isSubsetOf(ValueObject::type());
+        return $property->getType()->nonNullable()->isSubsetOf(ValueObject::type())
+            && $domain->hasObject($property->getType()->nonNullable()->asTypeString());
     }
 
     /**

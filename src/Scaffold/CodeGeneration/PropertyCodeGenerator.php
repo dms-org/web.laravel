@@ -7,6 +7,7 @@ use Dms\Core\Exception\InvalidArgumentException;
 use Dms\Core\Model\Object\FinalizedPropertyDefinition;
 use Dms\Web\Laravel\Scaffold\CodeGeneration\Convention\CodeConvention;
 use Dms\Web\Laravel\Scaffold\Domain\DomainObjectStructure;
+use Dms\Web\Laravel\Scaffold\Domain\DomainStructure;
 use Dms\Web\Laravel\Scaffold\ScaffoldCmsContext;
 use Dms\Web\Laravel\Scaffold\ScaffoldPersistenceContext;
 
@@ -33,23 +34,25 @@ abstract class PropertyCodeGenerator
     }
 
     /**
+     * @param DomainStructure       $domain
      * @param DomainObjectStructure $object
      * @param string                $propertyName
      *
      * @return bool
      */
-    final public function supports(DomainObjectStructure $object, string $propertyName) : bool
+    final public function supports(DomainStructure $domain, DomainObjectStructure $object, string $propertyName) : bool
     {
-        return $this->doesSupportProperty($object, $object->getDefinition()->getProperty($propertyName));
+        return $this->doesSupportProperty($domain, $object, $object->getDefinition()->getProperty($propertyName));
     }
 
     /**
+     * @param DomainStructure             $domain
      * @param DomainObjectStructure       $object
      * @param FinalizedPropertyDefinition $property
      *
      * @return bool
      */
-    abstract protected function doesSupportProperty(DomainObjectStructure $object, FinalizedPropertyDefinition $property) : bool;
+    abstract protected function doesSupportProperty(DomainStructure $domain, DomainObjectStructure $object, FinalizedPropertyDefinition $property) : bool;
 
     /**
      * @param ScaffoldPersistenceContext $context
@@ -61,7 +64,7 @@ abstract class PropertyCodeGenerator
      */
     final public function generatePersistenceMappingCode(ScaffoldPersistenceContext $context, PhpCodeBuilderContext $code, DomainObjectStructure $object, string $propertyName)
     {
-        if (!$this->supports($object, $propertyName)) {
+        if (!$this->supports($context->getDomainStructure(), $object, $propertyName)) {
             throw InvalidArgumentException::format('Invalid property supplied to %s', __METHOD__);
         }
 
@@ -102,7 +105,7 @@ abstract class PropertyCodeGenerator
      */
     final public function generateCmsFieldBindingCode(ScaffoldCmsContext $context, PhpCodeBuilderContext $code, DomainObjectStructure $object, string $propertyName)
     {
-        if (!$this->supports($object, $propertyName)) {
+        if (!$this->supports($context->getDomainStructure(), $object, $propertyName)) {
             throw InvalidArgumentException::format('Invalid property supplied to %s', __METHOD__);
         }
 
@@ -126,7 +129,7 @@ abstract class PropertyCodeGenerator
      */
     final public function generateCmsColumnBindingCode(ScaffoldCmsContext $context, PhpCodeBuilderContext $code, DomainObjectStructure $object, string $propertyName)
     {
-        if (!$this->supports($object, $propertyName)) {
+        if (!$this->supports($context->getDomainStructure(), $object, $propertyName)) {
             throw InvalidArgumentException::format('Invalid property supplied to %s', __METHOD__);
         }
 
@@ -147,7 +150,7 @@ abstract class PropertyCodeGenerator
      */
     final public function generateCmsFieldCode(ScaffoldCmsContext $context, PhpCodeBuilderContext $code, DomainObjectStructure $object, string $propertyName)
     {
-        if (!$this->supports($object, $propertyName)) {
+        if (!$this->supports($context->getDomainStructure(), $object, $propertyName)) {
             throw InvalidArgumentException::format('Invalid property supplied to %s', __METHOD__);
         }
 

@@ -22,6 +22,7 @@ use Dms\Web\Laravel\Scaffold\CodeGeneration\Relation\EntityPropertyCodeGenerator
 use Dms\Web\Laravel\Scaffold\CodeGeneration\ScalarPropertyCodeGenerator;
 use Dms\Web\Laravel\Scaffold\CodeGeneration\WebPropertyCodeGenerator;
 use Dms\Web\Laravel\Scaffold\Domain\DomainObjectStructure;
+use Dms\Web\Laravel\Scaffold\Domain\DomainStructure;
 use Dms\Web\Laravel\Scaffold\Domain\DomainStructureLoader;
 use Illuminate\Console\Command;
 use Illuminate\Filesystem\Filesystem;
@@ -115,16 +116,17 @@ abstract class ScaffoldCommand extends Command
     }
 
     /**
+     * @param DomainStructure       $domain
      * @param DomainObjectStructure $object
      * @param string                $propertyName
      *
      * @return PropertyCodeGenerator
      * @throws InvalidArgumentException
      */
-    protected function getCodeGeneratorFor(DomainObjectStructure $object, string $propertyName): PropertyCodeGenerator
+    protected function getCodeGeneratorFor(DomainStructure $domain, DomainObjectStructure $object, string $propertyName): PropertyCodeGenerator
     {
         foreach ($this->propertyCodeGenerators as $codeGenerator) {
-            if ($codeGenerator->supports($object, $propertyName)) {
+            if ($codeGenerator->supports($domain, $object, $propertyName)) {
                 return $codeGenerator;
             }
         }

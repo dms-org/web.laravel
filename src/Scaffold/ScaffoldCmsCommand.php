@@ -159,7 +159,7 @@ class ScaffoldCmsCommand extends ScaffoldCommand
                 continue;
             }
 
-            $this->getCodeGeneratorFor($object, $property->getName())->generateCmsFieldBindingCode(
+            $this->getCodeGeneratorFor($context->getDomainStructure(), $object, $property->getName())->generateCmsFieldBindingCode(
                 $context,
                 $code,
                 $object,
@@ -187,7 +187,7 @@ class ScaffoldCmsCommand extends ScaffoldCommand
                 continue;
             }
 
-            $this->getCodeGeneratorFor($object, $property->getName())->generateCmsColumnBindingCode(
+            $this->getCodeGeneratorFor($context->getDomainStructure(), $object, $property->getName())->generateCmsColumnBindingCode(
                 $context,
                 $code,
                 $object,

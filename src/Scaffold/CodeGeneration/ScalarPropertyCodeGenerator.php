@@ -6,6 +6,7 @@ use Dms\Core\Model\Object\FinalizedPropertyDefinition;
 use Dms\Core\Model\Type\Builder\Type;
 use Dms\Core\Model\Type\ScalarType;
 use Dms\Web\Laravel\Scaffold\Domain\DomainObjectStructure;
+use Dms\Web\Laravel\Scaffold\Domain\DomainStructure;
 use Dms\Web\Laravel\Scaffold\ScaffoldCmsContext;
 use Dms\Web\Laravel\Scaffold\ScaffoldPersistenceContext;
 
@@ -15,12 +16,13 @@ use Dms\Web\Laravel\Scaffold\ScaffoldPersistenceContext;
 class ScalarPropertyCodeGenerator extends PropertyCodeGenerator
 {
     /**
+     * @param DomainStructure             $domain
      * @param DomainObjectStructure       $object
      * @param FinalizedPropertyDefinition $property
      *
      * @return bool
      */
-    protected function doesSupportProperty(DomainObjectStructure $object, FinalizedPropertyDefinition $property) : bool
+    protected function doesSupportProperty(DomainStructure $domain, DomainObjectStructure $object, FinalizedPropertyDefinition $property) : bool
     {
         return $property->getType()->nonNullable() instanceof ScalarType;
     }

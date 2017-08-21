@@ -141,7 +141,7 @@ class ScaffoldPersistenceCommand extends ScaffoldCommand
                 continue;
             }
 
-            $this->getCodeGeneratorFor($object, $property->getName())->generatePersistenceMappingCode(
+            $this->getCodeGeneratorFor($context->getDomainStructure(), $object, $property->getName())->generatePersistenceMappingCode(
                 $context,
                 $code,
                 $object,

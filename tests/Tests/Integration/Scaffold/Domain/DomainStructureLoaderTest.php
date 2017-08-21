@@ -11,6 +11,7 @@ use Dms\Web\Laravel\Tests\Integration\CmsIntegrationTest;
 use Dms\Web\Laravel\Tests\Integration\Fixtures\Demo\DemoFixture;
 use Dms\Web\Laravel\Tests\Integration\Scaffold\Fixture\Simple\Domain\TestEntity;
 use Dms\Web\Laravel\Tests\Integration\Scaffold\Fixture\ValueObject\Domain\TestColourValueObject;
+use Dms\Web\Laravel\Tests\Integration\Scaffold\Fixture\ValueObject\Domain\TestDateTimeRangeValueObject;
 use Dms\Web\Laravel\Tests\Integration\Scaffold\Fixture\ValueObject\Domain\TestDateTimeValueObject;
 use Dms\Web\Laravel\Tests\Integration\Scaffold\Fixture\ValueObject\Domain\TestFileValueObject;
 use Dms\Web\Laravel\Tests\Integration\Scaffold\Fixture\ValueObject\Domain\TestGeoValueObject;
@@ -45,6 +46,7 @@ class DomainStructureLoaderTest extends CmsIntegrationTest
                 'expected_domain'  => new DomainStructure([
                     new DomainObjectStructure(TestValueObject::definition()),
                     new DomainObjectStructure(TestDateTimeValueObject::definition()),
+                    new DomainObjectStructure(TestDateTimeRangeValueObject::definition()),
                     new DomainObjectStructure(TestFileValueObject::definition()),
                     new DomainObjectStructure(TestColourValueObject::definition()),
                     new DomainObjectStructure(TestGeoValueObject::definition()),

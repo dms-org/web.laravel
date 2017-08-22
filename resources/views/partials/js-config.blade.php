@@ -15,6 +15,7 @@
             downloadFile: function (token) {
                 return {!! json_encode(route('dms::file.download', ['__token__'])) !!}.replace('__token__', token);
             }
-        }
+        },
+        serverTimezone: {!! json_encode(date_default_timezone_get()) !!}
     };
 </script>

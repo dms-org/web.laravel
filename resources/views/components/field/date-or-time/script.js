@@ -1,15 +1,16 @@
 Dms.form.initializeCallbacks.push(function (element) {
-    var convertFromUtcToLocal = function (dateFormat, value) {
+
+    var convertFromServerToLocalTimezone = function (dateFormat, value) {
         if (value) {
-            return moment.utc(value, dateFormat).local().format(dateFormat);
+            return moment.tz(value, dateFormat, Dms.config.serverTimezone).local().format(dateFormat);
         } else {
             return '';
         }
     };
 
-    var convertFromLocalToUtc = function (dateFormat, value) {
+    var convertFromLocalToServerTimezone = function (dateFormat, value) {
         if (value) {
-            return moment(value, dateFormat).utc().format(dateFormat);
+            return moment(value, dateFormat).tz(Dms.config.serverTimezone).format(dateFormat);
         } else {
             return '';
         }
@@ -21,7 +22,7 @@ Dms.form.initializeCallbacks.push(function (element) {
         originalInput.data('dms-input-name', inputName);
 
         stagedForm.find('input[type=hidden][name="' + inputName + '"]').remove();
-        stagedForm.append($('<input type="hidden" />').attr('name', inputName).val(convertFromLocalToUtc(dateFormat, originalInput.val())));
+        stagedForm.append($('<input type="hidden" />').attr('name', inputName).val(convertFromLocalToServerTimezone(dateFormat, originalInput.val())));
     };
 
     element.find('input.dms-date-or-time').each(function () {
@@ -48,7 +49,7 @@ Dms.form.initializeCallbacks.push(function (element) {
             config.timePicker = true;
             config.timePickerSeconds = phpDateFormat.indexOf('s') !== -1;
 
-            inputElement.val(convertFromUtcToLocal(dateFormat, inputElement.val()));
+            inputElement.val(convertFromServerToLocalTimezone(dateFormat, inputElement.val()));
             stagedForm.on('dms-before-submit', function () {
                 submitUtcDateTimeViaHiddenInput(stagedForm, dateFormat, inputElement);
             });
@@ -105,8 +106,8 @@ Dms.form.initializeCallbacks.push(function (element) {
             config.timePicker = true;
             config.timePickerSeconds = phpDateFormat.indexOf('s') !== -1;
 
-            startInput.val(convertFromUtcToLocal(dateFormat, startInput.val()));
-            endInput.val(convertFromUtcToLocal(dateFormat, endInput.val()));
+            startInput.val(convertFromServerToLocalTimezone(dateFormat, startInput.val()));
+            endInput.val(convertFromServerToLocalTimezone(dateFormat, endInput.val()));
             stagedForm.on('dms-before-submit', function () {
                 submitUtcDateTimeViaHiddenInput(stagedForm, dateFormat, startInput);
                 submitUtcDateTimeViaHiddenInput(stagedForm, dateFormat, endInput);
@@ -165,7 +166,7 @@ Dms.form.initializeCallbacks.push(function (element) {
         var dateTimeDisplay = $(this);
         var dateFormat = Dms.utilities.convertPhpDateFormatToMomentFormat(dateTimeDisplay.attr('data-date-format'));
 
-        dateTimeDisplay.text(convertFromUtcToLocal(dateFormat, dateTimeDisplay.text()));
+        dateTimeDisplay.text(convertFromServerToLocalTimezone(dateFormat, dateTimeDisplay.text()));
     });
 
     $('.dms-date-or-time-range-display[data-mode="date-time"]').each(function () {
@@ -174,7 +175,7 @@ Dms.form.initializeCallbacks.push(function (element) {
         var endDisplay = dateTimeDisplay.find('.dms-end-display');
         var dateFormat = Dms.utilities.convertPhpDateFormatToMomentFormat(dateTimeDisplay.attr('data-date-format'));
 
-        startDisplay.text(convertFromUtcToLocal(dateFormat, startDisplay.text()));
-        endDisplay.text(convertFromUtcToLocal(dateFormat, endDisplay.text()));
+        startDisplay.text(convertFromServerToLocalTimezone(dateFormat, startDisplay.text()));
+        endDisplay.text(convertFromServerToLocalTimezone(dateFormat, endDisplay.text()));
     });
 });

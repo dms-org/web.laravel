@@ -54373,20 +54373,6 @@ Dms.chart.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-    element.find('input[type=checkbox].single-checkbox').iCheck({
-        checkboxClass: 'icheckbox_square-blue',
-        increaseArea: '20%'
-    });
-
-    element.find('input[type=checkbox]').each(function () {
-        var formGroup = $(this).closest('.form-group');
-
-        $(this).on('ifToggled', function(event){
-            formGroup.trigger('dms-change');
-        });
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
     element.find('input.dms-colour-input').each(function () {
         var config = {
             theme: 'bootstrap'
@@ -54403,31 +54389,32 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
+    element.find('input[type=checkbox].single-checkbox').iCheck({
+        checkboxClass: 'icheckbox_square-blue',
+        increaseArea: '20%'
+    });
 
-    element.find('.list-of-checkboxes').each(function () {
-        var listOfCheckboxes = $(this);
-        listOfCheckboxes.find('input[type=checkbox]').iCheck({
-            checkboxClass: 'icheckbox_square-blue',
-            increaseArea: '20%'
+    element.find('input[type=checkbox]').each(function () {
+        var formGroup = $(this).closest('.form-group');
+
+        $(this).on('ifToggled', function(event){
+            formGroup.trigger('dms-change');
         });
-
-        var firstCheckbox = listOfCheckboxes.find('input[type=checkbox]').first();
-        firstCheckbox.attr('data-parsley-min-elements', listOfCheckboxes.attr('data-min-elements'));
-        firstCheckbox.attr('data-parsley-max-elements', listOfCheckboxes.attr('data-max-elements'));
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-    var convertFromUtcToLocal = function (dateFormat, value) {
+
+    var convertFromServerToLocalTimezone = function (dateFormat, value) {
         if (value) {
-            return moment.utc(value, dateFormat).local().format(dateFormat);
+            return moment.tz(value, dateFormat, Dms.config.serverTimezone).local().format(dateFormat);
         } else {
             return '';
         }
     };
 
-    var convertFromLocalToUtc = function (dateFormat, value) {
+    var convertFromLocalToServerTimezone = function (dateFormat, value) {
         if (value) {
-            return moment(value, dateFormat).utc().format(dateFormat);
+            return moment(value, dateFormat).tz(Dms.config.serverTimezone).format(dateFormat);
         } else {
             return '';
         }
@@ -54439,7 +54426,7 @@ Dms.form.initializeCallbacks.push(function (element) {
         originalInput.data('dms-input-name', inputName);
 
         stagedForm.find('input[type=hidden][name="' + inputName + '"]').remove();
-        stagedForm.append($('<input type="hidden" />').attr('name', inputName).val(convertFromLocalToUtc(dateFormat, originalInput.val())));
+        stagedForm.append($('<input type="hidden" />').attr('name', inputName).val(convertFromLocalToServerTimezone(dateFormat, originalInput.val())));
     };
 
     element.find('input.dms-date-or-time').each(function () {
@@ -54466,7 +54453,7 @@ Dms.form.initializeCallbacks.push(function (element) {
             config.timePicker = true;
             config.timePickerSeconds = phpDateFormat.indexOf('s') !== -1;
 
-            inputElement.val(convertFromUtcToLocal(dateFormat, inputElement.val()));
+            inputElement.val(convertFromServerToLocalTimezone(dateFormat, inputElement.val()));
             stagedForm.on('dms-before-submit', function () {
                 submitUtcDateTimeViaHiddenInput(stagedForm, dateFormat, inputElement);
             });
@@ -54523,8 +54510,8 @@ Dms.form.initializeCallbacks.push(function (element) {
             config.timePicker = true;
             config.timePickerSeconds = phpDateFormat.indexOf('s') !== -1;
 
-            startInput.val(convertFromUtcToLocal(dateFormat, startInput.val()));
-            endInput.val(convertFromUtcToLocal(dateFormat, endInput.val()));
+            startInput.val(convertFromServerToLocalTimezone(dateFormat, startInput.val()));
+            endInput.val(convertFromServerToLocalTimezone(dateFormat, endInput.val()));
             stagedForm.on('dms-before-submit', function () {
                 submitUtcDateTimeViaHiddenInput(stagedForm, dateFormat, startInput);
                 submitUtcDateTimeViaHiddenInput(stagedForm, dateFormat, endInput);
@@ -54583,7 +54570,7 @@ Dms.form.initializeCallbacks.push(function (element) {
         var dateTimeDisplay = $(this);
         var dateFormat = Dms.utilities.convertPhpDateFormatToMomentFormat(dateTimeDisplay.attr('data-date-format'));
 
-        dateTimeDisplay.text(convertFromUtcToLocal(dateFormat, dateTimeDisplay.text()));
+        dateTimeDisplay.text(convertFromServerToLocalTimezone(dateFormat, dateTimeDisplay.text()));
     });
 
     $('.dms-date-or-time-range-display[data-mode="date-time"]').each(function () {
@@ -54592,8 +54579,22 @@ Dms.form.initializeCallbacks.push(function (element) {
         var endDisplay = dateTimeDisplay.find('.dms-end-display');
         var dateFormat = Dms.utilities.convertPhpDateFormatToMomentFormat(dateTimeDisplay.attr('data-date-format'));
 
-        startDisplay.text(convertFromUtcToLocal(dateFormat, startDisplay.text()));
-        endDisplay.text(convertFromUtcToLocal(dateFormat, endDisplay.text()));
+        startDisplay.text(convertFromServerToLocalTimezone(dateFormat, startDisplay.text()));
+        endDisplay.text(convertFromServerToLocalTimezone(dateFormat, endDisplay.text()));
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+
+    element.find('.list-of-checkboxes').each(function () {
+        var listOfCheckboxes = $(this);
+        listOfCheckboxes.find('input[type=checkbox]').iCheck({
+            checkboxClass: 'icheckbox_square-blue',
+            increaseArea: '20%'
+        });
+
+        var firstCheckbox = listOfCheckboxes.find('input[type=checkbox]').first();
+        firstCheckbox.attr('data-parsley-min-elements', listOfCheckboxes.attr('data-min-elements'));
+        firstCheckbox.attr('data-parsley-max-elements', listOfCheckboxes.attr('data-max-elements'));
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -54778,15 +54779,6 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-    element.find('.dms-inner-form').each(function () {
-        var innerForm = $(this);
-
-        if (innerForm.attr('data-readonly')) {
-            innerForm.find(':input').attr('readonly', 'readonly');
-        }
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
 
     element.find('ul.dms-field-list').each(function () {
         var listOfFields = $(this);
@@ -54891,181 +54883,6 @@ Dms.form.initializeCallbacks.push(function (element) {
             }
         });
 
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
-
-    var disableZoomScrollingUntilHoveredFor = function (milliseconds, googleMap) {
-        googleMap.set('scrollwheel', false);
-        var timeout;
-        $(googleMap.getDiv()).hover(function () {
-                timeout = setTimeout(function () {
-                    googleMap.set('scrollwheel', true);
-                }, milliseconds);
-            },
-            function () {
-                clearTimeout(timeout);
-                googleMap.set('scrollwheel', false);
-            });
-    };
-
-    element.find('.dms-map-input').each(function () {
-        var mapInput = $(this);
-
-        var inputMode = mapInput.attr('data-input-mode');
-        var latitudeInput = mapInput.find('input.dms-lat-input');
-        var longitudeInput = mapInput.find('input.dms-lng-input');
-        var currentLocationButton = mapInput.find('.dms-current-location');
-        var fullAddressInput = mapInput.find('input.dms-full-address-input');
-        var addressSearchInput = mapInput.find('input.dms-address-search');
-        var mapCanvas = mapInput.find('.dms-map-picker');
-        var forceSetAddress = false;
-
-        var addressPicker = new AddressPicker({
-            regionBias: 'AUS',
-            map: {
-                id: mapCanvas.get(0),
-                zoom: 12,
-                center: new google.maps.LatLng(
-                    latitudeInput.val() || mapInput.attr('data-default-latitude') || -26.4390917,
-                    longitudeInput.val() || mapInput.attr('data-default-longitude') || 133.281323), // Default to australia
-                mapTypeId: google.maps.MapTypeId.ROADMAP,
-                draggable: !(mapCanvas.attr('data-no-touch-drag') && Dms.utilities.isTouchDevice())
-            },
-            marker: {
-                draggable: true,
-                visible: true
-            },
-            reverseGeocoding: true,
-            autocompleteService: {
-                autocompleteService: {
-                    types: ['(cities)', '(regions)', 'geocode', 'establishment']
-                }
-            }
-        });
-        mapCanvas.data('map-api', addressPicker.getGMap());
-
-        addressSearchInput.typeahead(null, {
-            displayKey: 'description',
-            source: addressPicker.ttAdapter()
-        });
-
-        addressSearchInput.bind("typeahead:selected", addressPicker.updateMap);
-        addressSearchInput.bind("typeahead:cursorchanged", addressPicker.updateMap);
-        addressPicker.bindDefaultTypeaheadEvent(addressSearchInput);
-
-        $(addressPicker).on('addresspicker:selected', function (event, result) {
-            if (!forceSetAddress && addressSearchInput.val() === '') {
-                addressSearchInput.typeahead('val', '');
-                latitudeInput.val('');
-                longitudeInput.val('');
-                fullAddressInput.val('');
-                return;
-            }
-
-            forceSetAddress = false;
-
-            if (addressSearchInput.is('[data-map-zoom]')) {
-                addressPicker.getGMap().setCenter(new google.maps.LatLng(result.lat(), result.lng()));
-                addressPicker.getGMap().setZoom(parseInt(addressSearchInput.attr('data-map-zoom'), 10));
-            }
-            latitudeInput.val(result.lat());
-            longitudeInput.val(result.lng());
-            var address = result.address();
-
-            if (result.placeResult.name && address.indexOf(result.placeResult.name) === -1) {
-                address = result.placeResult.name + ', ' + address;
-            }
-
-            addressSearchInput.val(address);
-            fullAddressInput.val(address);
-        });
-
-        google.maps.event.addListener(addressPicker.getGMarker(), "dragend", function (event) {
-            forceSetAddress = true;
-        });
-
-        var triggerReverseGeocode = function () {
-            forceSetAddress = true;
-            addressPicker.markerDragged();
-            addressPicker.getGMap().setZoom(12);
-        };
-
-        if (navigator.geolocation) {
-            currentLocationButton.click(function () {
-                navigator.geolocation.getCurrentPosition(function (position) {
-                    var location = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
-                    addressPicker.getGMarker().setPosition(location);
-                    addressPicker.getGMap().setCenter(location);
-                    triggerReverseGeocode();
-                });
-            });
-        } else {
-            currentLocationButton.prop('disabled', true);
-        }
-
-        if (latitudeInput.val() || longitudeInput.val()) {
-            if (inputMode === 'lat-lng') {
-                forceSetAddress = true;
-                addressPicker.markerDragged();
-            }
-
-            if (inputMode === 'address-with-lat-lng') {
-                var location = new google.maps.LatLng(latitudeInput.val(), longitudeInput.val());
-                addressPicker.getGMarker().setPosition(location);
-                addressPicker.getGMap().setCenter(location);
-                addressSearchInput.val(fullAddressInput.val());
-            }
-        }
-
-        addressSearchInput.change(function () {
-            addressPicker.markerDragged();
-        });
-
-        disableZoomScrollingUntilHoveredFor(1000, addressPicker.getGMap());
-
-        google.maps.event.addListenerOnce(addressPicker.getGMap(), 'idle', function(){
-            if (fullAddressInput.val()) {
-                addressSearchInput.typeahead('val', fullAddressInput.val());
-            }
-        });
-
-        if (inputMode === 'address' && fullAddressInput.val()) {
-            var geocoder = new google.maps.Geocoder();
-            geocoder.geocode({'address': fullAddressInput.val()}, function (results, status) {
-                if (status == google.maps.GeocoderStatus.OK) {
-                    addressPicker.getGMap().setCenter(results[0].geometry.location);
-                    addressPicker.getGMarker().setPosition(results[0].geometry.location);
-                }
-            });
-        }
-    });
-
-    $('.dms-display-map').each(function () {
-        var mapCanvas = $(this);
-
-        var location = new google.maps.LatLng(mapCanvas.attr('data-latitude'), mapCanvas.attr('data-longitude'));
-        var map = new google.maps.Map(mapCanvas.get(0), {
-            center: location,
-            zoom: parseInt(mapCanvas.attr('data-zoom'), 10) || 14,
-            scrollwheel: false
-        });
-
-        disableZoomScrollingUntilHoveredFor(1000, map);
-
-        mapCanvas.data('map-api', map);
-
-        var marker = new google.maps.Marker({
-            position: location,
-            map: map,
-            title: mapCanvas.attr('data-title')
-        });
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
-    element.find('select[multiple]').multiselect({
-        enableFiltering: true,
-        includeSelectAllOption: true
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -55412,6 +55229,175 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
+
+    var disableZoomScrollingUntilHoveredFor = function (milliseconds, googleMap) {
+        googleMap.set('scrollwheel', false);
+        var timeout;
+        $(googleMap.getDiv()).hover(function () {
+                timeout = setTimeout(function () {
+                    googleMap.set('scrollwheel', true);
+                }, milliseconds);
+            },
+            function () {
+                clearTimeout(timeout);
+                googleMap.set('scrollwheel', false);
+            });
+    };
+
+    element.find('.dms-map-input').each(function () {
+        var mapInput = $(this);
+
+        var inputMode = mapInput.attr('data-input-mode');
+        var latitudeInput = mapInput.find('input.dms-lat-input');
+        var longitudeInput = mapInput.find('input.dms-lng-input');
+        var currentLocationButton = mapInput.find('.dms-current-location');
+        var fullAddressInput = mapInput.find('input.dms-full-address-input');
+        var addressSearchInput = mapInput.find('input.dms-address-search');
+        var mapCanvas = mapInput.find('.dms-map-picker');
+        var forceSetAddress = false;
+
+        var addressPicker = new AddressPicker({
+            regionBias: 'AUS',
+            map: {
+                id: mapCanvas.get(0),
+                zoom: 12,
+                center: new google.maps.LatLng(
+                    latitudeInput.val() || mapInput.attr('data-default-latitude') || -26.4390917,
+                    longitudeInput.val() || mapInput.attr('data-default-longitude') || 133.281323), // Default to australia
+                mapTypeId: google.maps.MapTypeId.ROADMAP,
+                draggable: !(mapCanvas.attr('data-no-touch-drag') && Dms.utilities.isTouchDevice())
+            },
+            marker: {
+                draggable: true,
+                visible: true
+            },
+            reverseGeocoding: true,
+            autocompleteService: {
+                autocompleteService: {
+                    types: ['(cities)', '(regions)', 'geocode', 'establishment']
+                }
+            }
+        });
+        mapCanvas.data('map-api', addressPicker.getGMap());
+
+        addressSearchInput.typeahead(null, {
+            displayKey: 'description',
+            source: addressPicker.ttAdapter()
+        });
+
+        addressSearchInput.bind("typeahead:selected", addressPicker.updateMap);
+        addressSearchInput.bind("typeahead:cursorchanged", addressPicker.updateMap);
+        addressPicker.bindDefaultTypeaheadEvent(addressSearchInput);
+
+        $(addressPicker).on('addresspicker:selected', function (event, result) {
+            if (!forceSetAddress && addressSearchInput.val() === '') {
+                addressSearchInput.typeahead('val', '');
+                latitudeInput.val('');
+                longitudeInput.val('');
+                fullAddressInput.val('');
+                return;
+            }
+
+            forceSetAddress = false;
+
+            if (addressSearchInput.is('[data-map-zoom]')) {
+                addressPicker.getGMap().setCenter(new google.maps.LatLng(result.lat(), result.lng()));
+                addressPicker.getGMap().setZoom(parseInt(addressSearchInput.attr('data-map-zoom'), 10));
+            }
+            latitudeInput.val(result.lat());
+            longitudeInput.val(result.lng());
+            var address = result.address();
+
+            if (result.placeResult.name && address.indexOf(result.placeResult.name) === -1) {
+                address = result.placeResult.name + ', ' + address;
+            }
+
+            addressSearchInput.val(address);
+            fullAddressInput.val(address);
+        });
+
+        google.maps.event.addListener(addressPicker.getGMarker(), "dragend", function (event) {
+            forceSetAddress = true;
+        });
+
+        var triggerReverseGeocode = function () {
+            forceSetAddress = true;
+            addressPicker.markerDragged();
+            addressPicker.getGMap().setZoom(12);
+        };
+
+        if (navigator.geolocation) {
+            currentLocationButton.click(function () {
+                navigator.geolocation.getCurrentPosition(function (position) {
+                    var location = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+                    addressPicker.getGMarker().setPosition(location);
+                    addressPicker.getGMap().setCenter(location);
+                    triggerReverseGeocode();
+                });
+            });
+        } else {
+            currentLocationButton.prop('disabled', true);
+        }
+
+        if (latitudeInput.val() || longitudeInput.val()) {
+            if (inputMode === 'lat-lng') {
+                forceSetAddress = true;
+                addressPicker.markerDragged();
+            }
+
+            if (inputMode === 'address-with-lat-lng') {
+                var location = new google.maps.LatLng(latitudeInput.val(), longitudeInput.val());
+                addressPicker.getGMarker().setPosition(location);
+                addressPicker.getGMap().setCenter(location);
+                addressSearchInput.val(fullAddressInput.val());
+            }
+        }
+
+        addressSearchInput.change(function () {
+            addressPicker.markerDragged();
+        });
+
+        disableZoomScrollingUntilHoveredFor(1000, addressPicker.getGMap());
+
+        google.maps.event.addListenerOnce(addressPicker.getGMap(), 'idle', function(){
+            if (fullAddressInput.val()) {
+                addressSearchInput.typeahead('val', fullAddressInput.val());
+            }
+        });
+
+        if (inputMode === 'address' && fullAddressInput.val()) {
+            var geocoder = new google.maps.Geocoder();
+            geocoder.geocode({'address': fullAddressInput.val()}, function (results, status) {
+                if (status == google.maps.GeocoderStatus.OK) {
+                    addressPicker.getGMap().setCenter(results[0].geometry.location);
+                    addressPicker.getGMarker().setPosition(results[0].geometry.location);
+                }
+            });
+        }
+    });
+
+    $('.dms-display-map').each(function () {
+        var mapCanvas = $(this);
+
+        var location = new google.maps.LatLng(mapCanvas.attr('data-latitude'), mapCanvas.attr('data-longitude'));
+        var map = new google.maps.Map(mapCanvas.get(0), {
+            center: location,
+            zoom: parseInt(mapCanvas.attr('data-zoom'), 10) || 14,
+            scrollwheel: false
+        });
+
+        disableZoomScrollingUntilHoveredFor(1000, map);
+
+        mapCanvas.data('map-api', map);
+
+        var marker = new google.maps.Marker({
+            position: location,
+            map: map,
+            title: mapCanvas.attr('data-title')
+        });
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
     element.find('.dms-money-input-group').each(function () {
         var inputGroup = $(this);
         var moneyInput = inputGroup.find('.dms-money-input');
@@ -55441,6 +55427,15 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
+    element.find('.dms-inner-form').each(function () {
+        var innerForm = $(this);
+
+        if (innerForm.attr('data-readonly')) {
+            innerForm.find(':input').attr('readonly', 'readonly');
+        }
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
     element.find('input[type="number"][data-max-decimal-places]').each(function () {
         $(this).attr('data-parsley-max-decimal-places', $(this).attr('data-max-decimal-places'));
     });
@@ -55467,9 +55462,9 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-    element.find('input[type=radio]').iCheck({
-        radioClass: 'iradio_square-blue',
-        increaseArea: '20%'
+    element.find('select[multiple]').multiselect({
+        enableFiltering: true,
+        includeSelectAllOption: true
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -55514,6 +55509,220 @@ Dms.form.initializeCallbacks.push(function (element) {
         }).on('typeahead:selected', function (event, data) {
             hiddenInput.val(data.val);
             formGroup.trigger('dms-change');
+        });
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+    element.find('input[type="ip-address"]')
+        .attr('type', 'text')
+        .attr('data-parsley-ip-address', '1');
+
+    element.find('input[data-autocomplete]').each(function () {
+        var options = JSON.parse($(this).attr('data-autocomplete'));
+        $(this).removeAttr('data-autocomplete');
+
+        var values = [];
+
+        $.each(options, function (index, value) {
+            values.push({ val: value });
+        });
+
+        var engine = new Bloodhound({
+            local: values,
+            datumTokenizer: function(d) {
+                return Bloodhound.tokenizers.whitespace(d.val);
+            },
+            queryTokenizer: Bloodhound.tokenizers.whitespace
+        });
+
+        engine.initialize();
+
+        $(this).typeahead( {
+            limit: 5,
+            hint: true,
+            highlight: true,
+            minLength: 1
+        }, {
+            source: engine.ttAdapter(),
+            displayKey: 'val'
+        });
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+    element.find('input[type=radio]').iCheck({
+        radioClass: 'iradio_square-blue',
+        increaseArea: '20%'
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+
+});
+Dms.form.initializeCallbacks.push(function (element) {
+    if (typeof tinymce === 'undefined') {
+        return;
+    }
+
+    var wysiwygElements = element.find('textarea.dms-wysiwyg, textarea.dms-wysiwyg-light');
+
+    wysiwygElements.each(function () {
+        if (!$(this).attr('id')) {
+            $(this).attr('id', Dms.utilities.idGenerator());
+        }
+    });
+
+    tinymce.baseURL = '/vendor/dms/wysiwyg/';
+
+    var setupTinyMce = function (editor) {
+        editor.on('change', function () {
+            editor.save();
+        });
+
+        editor.on('keyup cut paste change', function (e) {
+            $(tinymce.activeEditor.getElement()).closest('.form-group').trigger('dms-change');
+        });
+    };
+
+    var filePickerCallback = function (callback, value, meta) {
+        var wysiwygElement = $(tinymce.activeEditor.getElement()).closest('.dms-wysiwyg-container');
+        showFilePickerDialog(meta.filetype, wysiwygElement, function (fileUrl) {
+            callback(fileUrl);
+        });
+    };
+
+    tinymce.init({
+        selector: 'textarea.dms-wysiwyg',
+        tooltip: '',
+        plugins: [
+            "advlist",
+            "autolink",
+            "lists",
+            "link",
+            "image",
+            "charmap",
+            "textcolor",
+            "print",
+            "preview",
+            "anchor",
+            "searchreplace",
+            "visualblocks",
+            "code",
+            "insertdatetime",
+            "media",
+            "table",
+            "contextmenu",
+            "paste",
+            "imagetools"
+        ],
+        toolbar: "undo redo | styleselect | bold italic | forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist | link image",
+        setup: setupTinyMce,
+        relative_urls: false,
+        remove_script_host: true,
+        file_picker_callback: filePickerCallback
+    });
+
+    tinymce.init({
+        selector: 'textarea.dms-wysiwyg-light',
+        tooltip: '',
+        toolbar: 'undo redo | bold italic | link',
+        menubar: false,
+        statusbar: false,
+        plugins: [
+            "autolink",
+            "link",
+            "textcolor"
+        ],
+        setup: setupTinyMce,
+        relative_urls: false,
+        remove_script_host: true,
+        file_picker_callback: filePickerCallback
+    });
+
+    wysiwygElements.filter(function () {
+        return $(this).closest('.mce-tinymce').length === 0;
+    }).each(function () {
+        tinymce.EditorManager.execCommand('mceAddEditor', true, $(this).attr('id'));
+    });
+
+    wysiwygElements.closest('.dms-staged-form').on('dms-post-submit-success', function () {
+        $(this).find('textarea.dms-wysiwyg').each(function () {
+            tinymce.remove('#' + $(this).attr('id'));
+        });
+    });
+
+    var showFilePickerDialog = function (mode, wysiwygElement, callback) {
+        var loadFilePickerUrl = wysiwygElement.attr('data-load-file-picker-url');
+        var filePickerDialog = wysiwygElement.find('.dms-file-picker-dialog');
+        var filePickerContainer = filePickerDialog.find('.dms-file-picker-container');
+        var filePicker = filePickerContainer.find('.dms-file-picker');
+
+        filePickerDialog.appendTo('body').modal('show');
+        filePickerDialog.on('hidden.bs.modal', function () {
+            filePickerDialog.appendTo(wysiwygElement);
+        });
+
+        var request = Dms.ajax.createRequest({
+            url: loadFilePickerUrl,
+            type: 'get',
+            dataType: 'html',
+            data: {'__content_only': '1'}
+        });
+
+        filePickerContainer.addClass('loading');
+
+        request.done(function (html) {
+            filePicker.html(html);
+            Dms.table.initialize(filePicker);
+            Dms.form.initialize(filePicker);
+
+            var updateFilePickerButtons = function () {
+                filePicker.find('.dms-trashed-files-btn-container').hide();
+                var selectFileButton = $('<button class="btn btn-success btn-xs"><i class="fa fa-check"></i></button>');
+
+                filePicker.find('.dms-file-action-buttons').each(function () {
+                    var fileItemButtons = $(this);
+
+                    var specificFileSelectButton = selectFileButton.clone();
+                    fileItemButtons.empty();
+                    fileItemButtons.append(specificFileSelectButton);
+
+                    specificFileSelectButton.on('click', function () {
+                        callback(fileItemButtons.closest('.dms-file-item').attr('data-public-url'));
+                        filePickerDialog.modal('hide');
+                    });
+                });
+
+                if (mode === 'image') {
+                    filePicker.find('.btn-images-only').click().focus();
+                }
+            };
+
+            filePicker.find('.dms-file-tree').on('dms-file-tree-updated', updateFilePickerButtons);
+            updateFilePickerButtons();
+        });
+
+        request.always(function () {
+            filePickerContainer.removeClass('loading');
+        });
+
+        filePickerDialog.on('hide.bs.modal', function () {
+            filePicker.empty();
+        });
+    };
+
+
+    element.find('.dms-display-html').each(function () {
+        var control = $(this);
+        var viewMoreButton = control.find('.dms-view-more-button');
+        var iframe = control.find('iframe');
+        var htmlDocument = control.attr('data-value');
+
+        var document = iframe.contents().get(0);
+        document.open();
+        document.write(htmlDocument);
+        document.close();
+
+        viewMoreButton.on('click', function () {
+            Dms.controls.showContentDialog('Preview', htmlDocument, true);
         });
     });
 });
@@ -55717,214 +55926,6 @@ Dms.form.initializeCallbacks.push(function (element) {
             tableOfFields.find('.btn-remove-row').remove();
             tableOfFields.find('.btn-add-row').remove();
         }
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
-    element.find('input[type="ip-address"]')
-        .attr('type', 'text')
-        .attr('data-parsley-ip-address', '1');
-
-    element.find('input[data-autocomplete]').each(function () {
-        var options = JSON.parse($(this).attr('data-autocomplete'));
-        $(this).removeAttr('data-autocomplete');
-
-        var values = [];
-
-        $.each(options, function (index, value) {
-            values.push({ val: value });
-        });
-
-        var engine = new Bloodhound({
-            local: values,
-            datumTokenizer: function(d) {
-                return Bloodhound.tokenizers.whitespace(d.val);
-            },
-            queryTokenizer: Bloodhound.tokenizers.whitespace
-        });
-
-        engine.initialize();
-
-        $(this).typeahead( {
-            limit: 5,
-            hint: true,
-            highlight: true,
-            minLength: 1
-        }, {
-            source: engine.ttAdapter(),
-            displayKey: 'val'
-        });
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
-
-});
-Dms.form.initializeCallbacks.push(function (element) {
-    if (typeof tinymce === 'undefined') {
-        return;
-    }
-
-    var wysiwygElements = element.find('textarea.dms-wysiwyg, textarea.dms-wysiwyg-light');
-
-    wysiwygElements.each(function () {
-        if (!$(this).attr('id')) {
-            $(this).attr('id', Dms.utilities.idGenerator());
-        }
-    });
-
-    tinymce.baseURL = '/vendor/dms/wysiwyg/';
-
-    var setupTinyMce = function (editor) {
-        editor.on('change', function () {
-            editor.save();
-        });
-
-        editor.on('keyup cut paste change', function (e) {
-            $(tinymce.activeEditor.getElement()).closest('.form-group').trigger('dms-change');
-        });
-    };
-
-    var filePickerCallback = function (callback, value, meta) {
-        var wysiwygElement = $(tinymce.activeEditor.getElement()).closest('.dms-wysiwyg-container');
-        showFilePickerDialog(meta.filetype, wysiwygElement, function (fileUrl) {
-            callback(fileUrl);
-        });
-    };
-
-    tinymce.init({
-        selector: 'textarea.dms-wysiwyg',
-        tooltip: '',
-        plugins: [
-            "advlist",
-            "autolink",
-            "lists",
-            "link",
-            "image",
-            "charmap",
-            "textcolor",
-            "print",
-            "preview",
-            "anchor",
-            "searchreplace",
-            "visualblocks",
-            "code",
-            "insertdatetime",
-            "media",
-            "table",
-            "contextmenu",
-            "paste",
-            "imagetools"
-        ],
-        toolbar: "undo redo | styleselect | bold italic | forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist | link image",
-        setup: setupTinyMce,
-        relative_urls: false,
-        remove_script_host: true,
-        file_picker_callback: filePickerCallback
-    });
-
-    tinymce.init({
-        selector: 'textarea.dms-wysiwyg-light',
-        tooltip: '',
-        toolbar: 'undo redo | bold italic | link',
-        menubar: false,
-        statusbar: false,
-        plugins: [
-            "autolink",
-            "link",
-            "textcolor"
-        ],
-        setup: setupTinyMce,
-        relative_urls: false,
-        remove_script_host: true,
-        file_picker_callback: filePickerCallback
-    });
-
-    wysiwygElements.filter(function () {
-        return $(this).closest('.mce-tinymce').length === 0;
-    }).each(function () {
-        tinymce.EditorManager.execCommand('mceAddEditor', true, $(this).attr('id'));
-    });
-
-    wysiwygElements.closest('.dms-staged-form').on('dms-post-submit-success', function () {
-        $(this).find('textarea.dms-wysiwyg').each(function () {
-            tinymce.remove('#' + $(this).attr('id'));
-        });
-    });
-
-    var showFilePickerDialog = function (mode, wysiwygElement, callback) {
-        var loadFilePickerUrl = wysiwygElement.attr('data-load-file-picker-url');
-        var filePickerDialog = wysiwygElement.find('.dms-file-picker-dialog');
-        var filePickerContainer = filePickerDialog.find('.dms-file-picker-container');
-        var filePicker = filePickerContainer.find('.dms-file-picker');
-
-        filePickerDialog.appendTo('body').modal('show');
-        filePickerDialog.on('hidden.bs.modal', function () {
-            filePickerDialog.appendTo(wysiwygElement);
-        });
-
-        var request = Dms.ajax.createRequest({
-            url: loadFilePickerUrl,
-            type: 'get',
-            dataType: 'html',
-            data: {'__content_only': '1'}
-        });
-
-        filePickerContainer.addClass('loading');
-
-        request.done(function (html) {
-            filePicker.html(html);
-            Dms.table.initialize(filePicker);
-            Dms.form.initialize(filePicker);
-
-            var updateFilePickerButtons = function () {
-                filePicker.find('.dms-trashed-files-btn-container').hide();
-                var selectFileButton = $('<button class="btn btn-success btn-xs"><i class="fa fa-check"></i></button>');
-
-                filePicker.find('.dms-file-action-buttons').each(function () {
-                    var fileItemButtons = $(this);
-
-                    var specificFileSelectButton = selectFileButton.clone();
-                    fileItemButtons.empty();
-                    fileItemButtons.append(specificFileSelectButton);
-
-                    specificFileSelectButton.on('click', function () {
-                        callback(fileItemButtons.closest('.dms-file-item').attr('data-public-url'));
-                        filePickerDialog.modal('hide');
-                    });
-                });
-
-                if (mode === 'image') {
-                    filePicker.find('.btn-images-only').click().focus();
-                }
-            };
-
-            filePicker.find('.dms-file-tree').on('dms-file-tree-updated', updateFilePickerButtons);
-            updateFilePickerButtons();
-        });
-
-        request.always(function () {
-            filePickerContainer.removeClass('loading');
-        });
-
-        filePickerDialog.on('hide.bs.modal', function () {
-            filePicker.empty();
-        });
-    };
-
-
-    element.find('.dms-display-html').each(function () {
-        var control = $(this);
-        var viewMoreButton = control.find('.dms-view-more-button');
-        var iframe = control.find('iframe');
-        var htmlDocument = control.attr('data-value');
-
-        var document = iframe.contents().get(0);
-        document.open();
-        document.write(htmlDocument);
-        document.close();
-
-        viewMoreButton.on('click', function () {
-            Dms.controls.showContentDialog('Preview', htmlDocument, true);
-        });
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -56366,6 +56367,37 @@ Dms.form.initializeValidationCallbacks.push(function (element) {
         var parsley = Dms.form.validation.initialize(form);
     });
 });
+Dms.widget.initializeCallbacks.push(function () {
+    $('.dms-widget-unparameterized-action, .dms-widget-parameterized-action').each(function () {
+        var widget = $(this);
+        var button = widget.find('button');
+
+        if (button.is('.btn-danger')) {
+            var isConfirmed = false;
+
+            button.click(function () {
+                if (isConfirmed) {
+                    isConfirmed = false;
+                    return;
+                }
+
+                swal({
+                    title: "Are you sure?",
+                    text: "This will execute the '" + widget.attr('data-action-label') + "' action",
+                    type: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#DD6B55",
+                    confirmButtonText: "Yes proceed!"
+                }, function () {
+                    isConfirmed = true;
+                    $(this).click();
+                });
+
+                return false;
+            });
+        }
+    });
+});
 Dms.table.initializeCallbacks.push(function (element) {
     var groupCounter = 0;
 
@@ -56612,37 +56644,6 @@ Dms.table.initializeCallbacks.push(function (element) {
 
             linkedTablePane.find('.dms-table-control:not([data-has-loaded-table-data]) .dms-table-container:not(.loading) .dms-table').triggerHandler('dms-load-table-data');
         });
-    });
-});
-Dms.widget.initializeCallbacks.push(function () {
-    $('.dms-widget-unparameterized-action, .dms-widget-parameterized-action').each(function () {
-        var widget = $(this);
-        var button = widget.find('button');
-
-        if (button.is('.btn-danger')) {
-            var isConfirmed = false;
-
-            button.click(function () {
-                if (isConfirmed) {
-                    isConfirmed = false;
-                    return;
-                }
-
-                swal({
-                    title: "Are you sure?",
-                    text: "This will execute the '" + widget.attr('data-action-label') + "' action",
-                    type: "warning",
-                    showCancelButton: true,
-                    confirmButtonColor: "#DD6B55",
-                    confirmButtonText: "Yes proceed!"
-                }, function () {
-                    isConfirmed = true;
-                    $(this).click();
-                });
-
-                return false;
-            });
-        }
     });
 });
 Dms.table.initializeCallbacks.push(function (element) {

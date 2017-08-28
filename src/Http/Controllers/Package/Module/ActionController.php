@@ -274,7 +274,7 @@ class ActionController extends DmsController
         int $stageNumber,
         string $fieldRendererAction = null
     ) {
-        return $this->runFormRendererActionWithObject($request, $moduleContext, $actionName, $stageNumber, $fieldRendererAction, $objectId);
+        return $this->runFormRendererAction($request, $moduleContext, $actionName, $stageNumber, $fieldRendererAction, $objectId);
     }
 
     public function runFormRendererAction(

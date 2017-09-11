@@ -95,11 +95,6 @@ class ModuleRequestRouter
             )->name('table.view.show');
 
             $router->post(
-                '/table/{table}/{view}/reorder',
-                'Package\Module\TableController@reorderRow'
-            )->name('table.view.reorder');
-
-            $router->post(
                 '/table/{table}/{view}/load',
                 'Package\Module\TableController@loadTableRows'
             )->name('table.view.load');

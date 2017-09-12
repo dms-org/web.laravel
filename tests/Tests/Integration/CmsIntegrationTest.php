@@ -20,8 +20,6 @@ use Orchestra\Testbench\TestCase;
  */
 abstract class CmsIntegrationTest extends TestCase
 {
-    use MakesHttpRequests, InteractsWithSession;
-
     /**
      * @var DmsFixture
      */

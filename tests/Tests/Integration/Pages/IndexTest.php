@@ -17,17 +17,17 @@ class IndexTest extends CmsIntegrationTest
 
     public function testUnauthenticatedIndexRedirectsToLoginPage()
     {
-        $this->route('GET', 'dms::index');
+        $response = $this->call('GET', route('dms::index'));
 
-        $this->assertRedirectedToRoute('dms::auth.login');
+        $response->assertRedirect(route('dms::auth.login'));
     }
 
     public function testAuthenticatedIndexPageShowsDashboard()
     {
         $this->actingAsUser();
 
-        $this->route('GET', 'dms::index');
+        $response = $this->call('GET', route('dms::index'));
 
-        $this->see('Dashboard');
+        $response->assertSee('Dashboard');
     }
 }

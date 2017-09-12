@@ -17,47 +17,47 @@ class LoginTest extends CmsIntegrationTest
     
     public function testLoginPageShowsForm()
     {
-        $this->route('GET', 'dms::auth.login');
+        $response = $this->call('GET', route('dms::auth.login'));
 
-        $this->assertResponseOk();
+        $response->assertStatus(200);
     }
 
     public function testInvalidLoginAttempt()
     {
-        $this->route('GET', 'dms::auth.login');
-        $this->route('POST', 'dms::auth.login');
+        $this->call('GET', route('dms::auth.login'));
+        $response = $this->call('POST', route('dms::auth.login'));
 
-        $this->assertRedirectedToRoute('dms::auth.login');
-        $this->assertSessionHasErrors(['username', 'password']);
+        $response->assertRedirect(route('dms::auth.login'));
+        $response->assertSessionHasErrors(['username', 'password']);
     }
 
     public function testBeingLoggedAndGoingToLoginPageRedirectsToIndex()
     {
         $this->actingAsUser();
 
-        $this->route('GET', 'dms::auth.login');
-        $this->assertRedirectedToRoute('dms::index');
+        $response = $this->call('GET', route('dms::auth.login'));
+        $response->assertRedirect(route('dms::index'));
     }
 
     public function testInvalidCredentials()
     {
-        $this->route('GET', 'dms::auth.login');
-        $this->route('POST', 'dms::auth.login', [], [
+        $this->call('GET', route('dms::auth.login'));
+        $response = $this->call('POST', route('dms::auth.login'), [
                 'username' => 'test',
                 'password' => 'test',
         ]);
 
-        $this->assertRedirectedToRoute('dms::auth.login');
-        $this->assertSessionHasErrors(['username' => trans('dms::auth.failed')]);
+        $response->assertRedirect(route('dms::auth.login'));
+        $response->assertSessionHasErrors(['username' => trans('dms::auth.failed')]);
     }
 
     public function testValidCredentialsLogsIn()
     {
-        $this->route('POST', 'dms::auth.login', [], [
+        $response = $this->call('POST', route('dms::auth.login'), [
                 'username' => 'admin',
                 'password' => 'admin',
         ]);
 
-        $this->assertRedirectedToRoute('dms::index');
+        $response->assertRedirect(route('dms::index'));
     }
 }

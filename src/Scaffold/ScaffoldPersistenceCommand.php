@@ -40,7 +40,7 @@ class ScaffoldPersistenceCommand extends ScaffoldCommand
      *
      * @throws InvalidOperationException
      */
-    public function fire()
+    public function handle()
     {
         $domain       = $this->domainStructureLoader->loadDomainStructure($this->input->getArgument('entity_namespace'));
 

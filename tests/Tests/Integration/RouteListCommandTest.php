@@ -18,5 +18,6 @@ class RouteListCommandTest extends CmsIntegrationTest
     public function testRouteList()
     {
         $this->app[Kernel::class]->call('route:list');
+        $this->assertTrue(true);
     }
 }

@@ -41,7 +41,7 @@ class ScaffoldCmsCommand extends ScaffoldCommand
      *
      * @throws InvalidOperationException
      */
-    public function fire()
+    public function handle()
     {
         $packageName = $this->input->getArgument('package_name');
 

@@ -19,14 +19,14 @@
     },
     "require": {
         "php": ">=7.0.0",
-        "dms-org/core": "^0.8",
-        "dms-org/common.structure": "^0.8",
-        "dms-org/package.analytics": "^0.8",
-        "laravel/framework": "5.4.*",
-        "marcj/topsort": "^1.0",
+        "dms-org/core": "^0.8.0",
+        "dms-org/common.structure": "^0.8.0",
+        "dms-org/package.analytics": "^0.8.0",
+        "laravel/framework": "^5.5.0",
+        "marcj/topsort": "^1.0.0",
         "cache/cache": "^0.1.0",
-        "league/oauth2-google": "^2.0",
-        "laravel/browser-kit-testing": "^1.0"
+        "league/oauth2-google": "^2.0.0",
+        "laravel/browser-kit-testing": "^2.0.0"
     },
     "autoload-dev": {
         "psr-4": {
@@ -36,7 +36,7 @@
     },
     "require-dev": {
         "dms-org/common.testing": "dev-master",
-        "orchestra/testbench": "~3.0",
-        "dms-org/package.content": "^0.8"
+        "dms-org/package.content": "0.8.0",
+        "orchestra/testbench": "3.5.0"
     }
 }

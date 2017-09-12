@@ -57,7 +57,7 @@ class DmsInstallCommand extends Command
      *
      * @throws InvalidOperationException
      */
-    public function fire(Filesystem $filesystem, Kernel $console)
+    public function handle(Filesystem $filesystem, Kernel $console)
     {
         if (!\DB::connection()->getDatabaseName()) {
             throw InvalidOperationException::format('Cannot install: database is required, please verify config');

@@ -53,7 +53,7 @@ class AutoGenerateMigrationCommand extends BaseCommand
      * @param IConnection               $connection
      * @param IOrm                      $orm
      */
-    public function fire(
+    public function handle(
         LaravelMigrationGenerator $autoMigrationGenerator,
         IConnection $connection,
         IOrm $orm

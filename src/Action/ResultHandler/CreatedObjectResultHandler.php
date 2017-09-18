@@ -1,4 +1,4 @@
-<?php declare(strict_types = 1);
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Action\ResultHandler;
 
@@ -36,7 +36,7 @@ class CreatedObjectResultHandler extends ActionResultHandler
      *
      * @return bool
      */
-    protected function canHandleResult(ModuleContext $moduleContext, IAction $action, $result) : bool
+    protected function canHandleResult(ModuleContext $moduleContext, IAction $action, $result): bool
     {
         return $moduleContext->getModule() instanceof IReadModule && $action instanceof CreateAction;
     }
@@ -57,14 +57,15 @@ class CreatedObjectResultHandler extends ActionResultHandler
         $label         = $module->getLabelFor($result);
         $type          = str_singular(StringHumanizer::humanize($module->getName()));
 
+        $isSubmodule   = $moduleContext->isSubmodule();
         $canEditObject = $module instanceof ICrudModule && $module->allowsEdit() && $module->getEditAction()->isAuthorized();
         $canViewObject = $module->allowsDetails() && $module->getDetailsAction()->isAuthorized();
 
         $objectId = $module->getDataSource()->getObjectId($result);
 
-        if ($canEditObject) {
+        if ($canEditObject && !$isSubmodule) {
             $redirectUrl = $moduleContext->getUrl('action.form', [ICrudModule::EDIT_ACTION, $objectId]);
-        } elseif ($canViewObject) {
+        } elseif ($canViewObject && !$isSubmodule) {
             $redirectUrl = $moduleContext->getUrl('action.show', [ICrudModule::DETAILS_ACTION, $objectId]);
         } else {
             $redirectUrl = $moduleContext->getUrl('dashboard');

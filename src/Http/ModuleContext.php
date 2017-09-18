@@ -50,6 +50,11 @@ class ModuleContext
     protected $module;
 
     /**
+     * @var bool
+     */
+    protected $isSubmodule;
+
+    /**
      * ModuleContext constructor.
      *
      * @param Router           $moduleRouter
@@ -58,13 +63,14 @@ class ModuleContext
      * @param \string[]        $breadcrumbs
      * @param IModule|callable $moduleLoaderCallback
      */
-    public function __construct(Router $moduleRouter, string $rootUrl, array $titles, array $breadcrumbs, $moduleLoaderCallback)
+    public function __construct(Router $moduleRouter, string $rootUrl, array $titles, array $breadcrumbs, $moduleLoaderCallback, bool $isSubmodule = false)
     {
         $this->moduleRouter = $moduleRouter;
         $this->urlGenerator = new UrlGenerator($moduleRouter->getRoutes(), request());
         $this->rootUrl      = $rootUrl;
         $this->titles       = $titles;
         $this->breadcrumbs  = $breadcrumbs;
+        $this->isSubmodule = $isSubmodule;
 
         if ($moduleLoaderCallback instanceof IModule) {
             $this->module = $moduleLoaderCallback;
@@ -157,6 +163,14 @@ class ModuleContext
     }
 
     /**
+     * @return bool
+     */
+    public function isSubmodule(): bool
+    {
+        return $this->isSubmodule;
+    }
+
+    /**
      * @param string $title
      * @param string $breadcrumbUrl
      * @param string $breadcrumbName
@@ -170,7 +184,8 @@ class ModuleContext
             $this->rootUrl,
             array_merge($this->titles, [$title]),
             $this->breadcrumbs + [$breadcrumbUrl => $breadcrumbName ?? $title],
-            $this->module ?? $this->moduleLoaderCallback
+            $this->module ?? $this->moduleLoaderCallback,
+            $this->isSubmodule
         );
     }
 
@@ -187,7 +202,8 @@ class ModuleContext
             strpos($moduleRootPath, ':') !== false ? $moduleRootPath : $this->combineUrlPaths($this->rootUrl, $moduleRootPath),
             $this->titles,
             $this->breadcrumbs,
-            $module->withoutRequiredPermissions()
+            $module->withoutRequiredPermissions(),
+            true
         );
     }
 

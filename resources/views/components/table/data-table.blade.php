@@ -124,6 +124,7 @@
                                                     @if($action->isPost())
                                                         <a class="dms-run-action-form inline"
                                                            data-action="{{ $action->getUrl($objectId) }}"
+                                                           data-reload-page-after-submit="1"
                                                            data-method="post">
                                                             {{ $action->getLabel() }}
                                                         </a>

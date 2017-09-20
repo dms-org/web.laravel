@@ -36,7 +36,7 @@ class DmsUpdateCommand extends Command
      *
      * @throws InvalidOperationException
      */
-    public function fire(Kernel $console)
+    public function handle(Kernel $console)
     {
         $console->call('vendor:publish', ['--provider' => DmsServiceProvider::class, '--tag' => 'public', '--force' => true]);
         $this->info('Executed: php artisan vendor:publish --provider="' . DmsServiceProvider::class . '" --tag="public" --force');

@@ -75,6 +75,7 @@ class ArrayOfOptionsFieldRenderer extends BladeFieldRenderer
         /** @var ArrayOfType $fieldType */
         $elementField = $this->makeElementField($fieldType);
 
+        /** @var IFieldOptions $options */
         $options     = $elementField->getType()->get(ArrayOfType::ATTR_OPTIONS);
         $urlCallback = RelatedEntityLinker::getUrlCallbackFor($options);
 
@@ -82,7 +83,7 @@ class ArrayOfOptionsFieldRenderer extends BladeFieldRenderer
             $field, $value,
             'dms::components.field.checkbox-group.value',
             [
-                'options'     => $this->getOptionsWithValuesAsKeys($options),
+                'options'     => $options->tryGetOptionsForValues((array)$value),
                 'urlCallback' => $urlCallback ? new DisguisedClosure($urlCallback) : null,
             ]
         );

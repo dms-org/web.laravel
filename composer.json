@@ -19,7 +19,7 @@
     },
     "require": {
         "php": ">=7.0.0",
-        "dms-org/core": "^0.8.0",
+        "dms-org/core": "^0.8.2",
         "dms-org/common.structure": "^0.8.0",
         "dms-org/package.analytics": "^0.8.0",
         "laravel/framework": "^5.5.0",

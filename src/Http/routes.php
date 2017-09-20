@@ -45,5 +45,5 @@ $router->group(['prefix' => 'dms', 'middleware' => 'dms.web', 'as' => 'dms::', '
             $moduleRouter->registerOnMainRouter($router);
         });
 
-        $router->any('{catch_all}', 'ErrorController@notFound')->where('catch_all', '(.*)');
+        $router->fallback('ErrorController@notFound')->where('catch_all', '(.*)');
     });

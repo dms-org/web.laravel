@@ -182,13 +182,8 @@ class FormRenderingContext
     {
         $moduleContext = $this->moduleContext;
         if ($this->objectId) {
-            /** @var ICrudModule|IReadModule $currentModule */
-            $currentModule = $moduleContext->getModule();
-
             $url = $moduleContext->getUrl('action.form.object.stage.field.action', [
-                $currentModule instanceof ICrudModule && $currentModule->getEditAction()
-                    ? $currentModule->getEditAction()->getName()
-                    : $this->getAction()->getName(),
+                $this->getAction()->getName(),
                 $this->getObjectId(),
                 $this->getCurrentStageNumber(),
                 $field->getName(),

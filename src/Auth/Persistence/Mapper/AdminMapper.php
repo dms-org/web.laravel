@@ -5,6 +5,7 @@ namespace Dms\Web\Laravel\Auth\Persistence\Mapper;
 use Dms\Common\Structure\Web\Persistence\EmailAddressMapper;
 use Dms\Core\Persistence\Db\Mapping\Definition\MapperDefinition;
 use Dms\Core\Persistence\Db\Mapping\EntityMapper;
+use Dms\Library\Metadata\Infrastructure\Persistence\MetadataMapper;
 use Dms\Web\Laravel\Auth\Admin;
 use Dms\Web\Laravel\Auth\LocalAdmin;
 use Dms\Web\Laravel\Auth\OauthAdmin;
@@ -91,5 +92,7 @@ class AdminMapper extends EntityMapper
                 ->to('oauth_account_id')
                 ->asVarchar(255);
         });
+
+        MetadataMapper::mapMetadataToJsonColumn($map, 'metadata');
     }
 }

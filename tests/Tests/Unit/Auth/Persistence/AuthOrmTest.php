@@ -92,6 +92,7 @@ class AuthOrmTest extends DbIntegrationTest
                     'remember_token'       => null,
                     'oauth_provider_name'  => null,
                     'oauth_account_id'     => null,
+                    'metadata'             => '[]',
                 ],
             ],
         ]);
@@ -127,6 +128,7 @@ class AuthOrmTest extends DbIntegrationTest
                     'remember_token'       => null,
                     'oauth_provider_name'  => 'google',
                     'oauth_account_id'     => 'account-id',
+                    'metadata'             => '[]',
                 ],
             ],
         ]);
@@ -154,6 +156,7 @@ class AuthOrmTest extends DbIntegrationTest
                     'remember_token'       => null,
                     'oauth_provider_name'  => null,
                     'oauth_account_id'     => null,
+                    'metadata'             => '[]',
                 ],
             ],
         ]);
@@ -276,6 +279,7 @@ class AuthOrmTest extends DbIntegrationTest
                     'remember_token'       => null,
                     'oauth_provider_name'  => null,
                     'oauth_account_id'     => null,
+                    'metadata'             => '[]',
                 ],
             ],
             'roles'           => [
@@ -307,6 +311,7 @@ class AuthOrmTest extends DbIntegrationTest
                     'remember_token'       => null,
                     'oauth_provider_name'  => null,
                     'oauth_account_id'     => null,
+                    'metadata'             => '[]',
                 ],
             ],
             'roles'           => [

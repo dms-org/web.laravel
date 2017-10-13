@@ -26,7 +26,8 @@
         "marcj/topsort": "^1.0.0",
         "cache/cache": "^0.1.0",
         "league/oauth2-google": "^2.0.0",
-        "laravel/browser-kit-testing": "^2.0.0"
+        "laravel/browser-kit-testing": "^2.0.0",
+        "dms-org/library.metadata": "^0.8.0"
     },
     "autoload-dev": {
         "psr-4": {

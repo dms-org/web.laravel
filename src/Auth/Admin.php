@@ -1,4 +1,4 @@
-<?php declare(strict_types = 1);
+<?php declare(strict_types=1);
 
 namespace Dms\Web\Laravel\Auth;
 
@@ -9,6 +9,9 @@ use Dms\Core\Exception\InvalidOperationException;
 use Dms\Core\Model\EntityIdCollection;
 use Dms\Core\Model\Object\ClassDefinition;
 use Dms\Core\Model\Object\Entity;
+use Dms\Library\Metadata\Domain\IHasMetadata;
+use Dms\Library\Metadata\Domain\MetadataTrait;
+use Dms\Library\Metadata\Domain\ObjectMetadata;
 use Dms\Web\Laravel\Auth\Persistence\Mapper\AdminMapper;
 use Illuminate\Contracts\Auth\Authenticatable;
 
@@ -17,8 +20,10 @@ use Illuminate\Contracts\Auth\Authenticatable;
  *
  * @author Elliot Levin <elliotlevin@hotmail.com>
  */
-abstract class Admin extends Entity implements IAdmin, Authenticatable
+abstract class Admin extends Entity implements IAdmin, Authenticatable, IHasMetadata
 {
+    use MetadataTrait;
+
     const FULL_NAME = 'fullName';
     const EMAIL_ADDRESS = 'emailAddress';
     const USERNAME = 'username';
@@ -82,6 +87,7 @@ abstract class Admin extends Entity implements IAdmin, Authenticatable
         $this->isSuperUser  = $isSuperUser;
         $this->isBanned     = $isBanned;
         $this->roleIds      = $roleIds ?: new EntityIdCollection();
+        $this->metadata     = new ObjectMetadata();
 
         InvalidArgumentException::verify(strlen($this->username) > 0, 'Username cannot be empty');
     }
@@ -104,12 +110,14 @@ abstract class Admin extends Entity implements IAdmin, Authenticatable
         $class->property($this->isBanned)->asBool();
 
         $class->property($this->roleIds)->asType(EntityIdCollection::type());
+
+        $this->defineMetadata($class);
     }
 
     /**
      * @return string
      */
-    public function getFullName() : string
+    public function getFullName(): string
     {
         return $this->fullName;
     }
@@ -117,7 +125,7 @@ abstract class Admin extends Entity implements IAdmin, Authenticatable
     /**
      * @return EmailAddress
      */
-    public function getEmailAddressObject() : EmailAddress
+    public function getEmailAddressObject(): EmailAddress
     {
         return $this->emailAddress;
     }
@@ -125,7 +133,7 @@ abstract class Admin extends Entity implements IAdmin, Authenticatable
     /**
      * @return string
      */
-    public function getEmailAddress() : string
+    public function getEmailAddress(): string
     {
         return $this->emailAddress->asString();
     }
@@ -133,7 +141,7 @@ abstract class Admin extends Entity implements IAdmin, Authenticatable
     /**
      * @return string
      */
-    public function getUsername() : string
+    public function getUsername(): string
     {
         return $this->username;
     }
@@ -165,7 +173,7 @@ abstract class Admin extends Entity implements IAdmin, Authenticatable
     /**
      * @return boolean
      */
-    public function isSuperUser() : bool
+    public function isSuperUser(): bool
     {
         return $this->isSuperUser;
     }
@@ -173,7 +181,7 @@ abstract class Admin extends Entity implements IAdmin, Authenticatable
     /**
      * @return boolean
      */
-    public function isBanned() : bool
+    public function isBanned(): bool
     {
         return $this->isBanned;
     }
@@ -181,7 +189,7 @@ abstract class Admin extends Entity implements IAdmin, Authenticatable
     /**
      * @return EntityIdCollection
      */
-    public function getRoleIds() : EntityIdCollection
+    public function getRoleIds(): EntityIdCollection
     {
         return $this->roleIds;
     }
@@ -216,7 +224,7 @@ abstract class Admin extends Entity implements IAdmin, Authenticatable
      *
      * @return string
      */
-    public function getAuthIdentifierName() : string
+    public function getAuthIdentifierName(): string
     {
         return AdminMapper::AUTH_IDENTIFIER_COLUMN;
     }

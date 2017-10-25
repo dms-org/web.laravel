@@ -88,9 +88,9 @@ class LaravelAuthSystem extends AuthSystem
      */
     protected function loadByCredentials(string $username, string $password) : IAdmin
     {
-        /** @var IAdmin $user */
         $users = $this->userRepository->matching(
             $this->userRepository->criteria()
+                ->whereInstanceOf(LocalAdmin::class)
                 ->where(Admin::USERNAME, '=', $username)
         );
 
@@ -98,6 +98,7 @@ class LaravelAuthSystem extends AuthSystem
             throw InvalidCredentialsException::defaultMessage($username);
         }
 
+        /** @var LocalAdmin $user */
         $user           = $users[0];
         $passwordHasher = $this->passwordHasherFactory->buildFor($user->getPassword());
 

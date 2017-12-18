@@ -26,7 +26,6 @@
         "marcj/topsort": "^1.0.0",
         "cache/cache": "^0.1.0",
         "league/oauth2-google": "^2.0.0",
-        "laravel/browser-kit-testing": "^2.0.0",
         "dms-org/library.metadata": "^0.8.0"
     },
     "autoload-dev": {
@@ -36,6 +35,7 @@
         }
     },
     "require-dev": {
+        "laravel/browser-kit-testing": "^2.0.0",
         "dms-org/common.testing": "dev-master",
         "dms-org/package.content": "0.8.0",
         "orchestra/testbench": "3.5.0"

@@ -136,7 +136,7 @@ class DomainObjectStructure
             }
         }
 
-        throw InvalidArgumentException::format('Invalid property name: property does not map to a relation');
+        throw InvalidArgumentException::format('Invalid property name ' . $propertyName .': property does not map to a relation');
     }
 
     /**

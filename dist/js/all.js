@@ -13983,25 +13983,25 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 //# sourceMappingURL=parsley.js.map
 
 /**
- * Bootstrap Multiselect (https://github.com/davidstutz/bootstrap-multiselect)
- * 
+ * Bootstrap Multiselect (http://davidstutz.de/bootstrap-multiselect/)
+ *
  * Apache License, Version 2.0:
- * Copyright (c) 2012 - 2015 David Stutz
- * 
+ * Copyright (c) 2012 - 2018 David Stutz
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a
  * copy of the License at http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations
  * under the License.
- * 
+ *
  * BSD 3-Clause License:
- * Copyright (c) 2012 - 2015 David Stutz
+ * Copyright (c) 2012 - 2018 David Stutz
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *    - Redistributions of source code must retain the above copyright notice,
@@ -14012,7 +14012,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
  *    - Neither the name of David Stutz nor the names of its contributors may be
  *      used to endorse or promote products derived from this software without
  *      specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
  * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -14025,12 +14025,23 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-!function ($) {
+(function (root, factory) {
+    // check to see if 'knockout' AMD module is specified if using requirejs
+    if (typeof define === 'function' && define.amd &&
+        typeof require === 'function' && typeof require.specified === 'function' && require.specified('knockout')) {
+
+        // AMD. Register as an anonymous module.
+        define(['jquery', 'knockout'], factory);
+    } else {
+        // Browser globals
+        factory(root.jQuery, root.ko);
+    }
+})(this, function ($, ko) {
     "use strict";// jshint ;_;
 
     if (typeof ko !== 'undefined' && ko.bindingHandlers && !ko.bindingHandlers.multiselect) {
         ko.bindingHandlers.multiselect = {
-            after: ['options', 'value', 'selectedOptions'],
+            after: ['options', 'value', 'selectedOptions', 'enable', 'disable'],
 
             init: function(element, valueAccessor, allBindings, viewModel, bindingContext) {
                 var $element = $(element);
@@ -14091,6 +14102,43 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
                     }
                 }
 
+                var setEnabled = function (enable) {
+                    setTimeout(function () {
+                        if (enable)
+                            $element.multiselect('enable');
+                        else
+                            $element.multiselect('disable');
+                    });
+                };
+
+                if (allBindings.has('enable')) {
+                    var enable = allBindings.get('enable');
+                    if (ko.isObservable(enable)) {
+                        ko.computed({
+                            read: function () {
+                                setEnabled(enable());
+                            },
+                            disposeWhenNodeIsRemoved: element
+                        }).extend({ rateLimit: 100, notifyWhenChangesStop: true });
+                    } else {
+                        setEnabled(enable);
+                    }
+                }
+
+                if (allBindings.has('disable')) {
+                    var disable = allBindings.get('disable');
+                    if (ko.isObservable(disable)) {
+                        ko.computed({
+                            read: function () {
+                                setEnabled(!disable());
+                            },
+                            disposeWhenNodeIsRemoved: element
+                        }).extend({ rateLimit: 100, notifyWhenChangesStop: true });
+                    } else {
+                        setEnabled(!disable);
+                    }
+                }
+
                 ko.utils.domNodeDisposal.addDisposeCallback(element, function() {
                     $element.multiselect('destroy');
                 });
@@ -14122,45 +14170,55 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
     function Multiselect(select, options) {
 
         this.$select = $(select);
-        
+        this.options = this.mergeOptions($.extend({}, options, this.$select.data()));
+
         // Placeholder via data attributes
         if (this.$select.attr("data-placeholder")) {
-            options.nonSelectedText = this.$select.data("placeholder");
+            this.options.nonSelectedText = this.$select.data("placeholder");
         }
-        
-        this.options = this.mergeOptions($.extend({}, options, this.$select.data()));
 
         // Initialization.
         // We have to clone to create a new reference.
         this.originalOptions = this.$select.clone()[0].options;
         this.query = '';
         this.searchTimeout = null;
-        this.lastToggledInput = null
+        this.lastToggledInput = null;
 
         this.options.multiple = this.$select.attr('multiple') === "multiple";
         this.options.onChange = $.proxy(this.options.onChange, this);
+        this.options.onSelectAll = $.proxy(this.options.onSelectAll, this);
+        this.options.onDeselectAll = $.proxy(this.options.onDeselectAll, this);
         this.options.onDropdownShow = $.proxy(this.options.onDropdownShow, this);
         this.options.onDropdownHide = $.proxy(this.options.onDropdownHide, this);
         this.options.onDropdownShown = $.proxy(this.options.onDropdownShown, this);
         this.options.onDropdownHidden = $.proxy(this.options.onDropdownHidden, this);
-        
+        this.options.onInitialized = $.proxy(this.options.onInitialized, this);
+        this.options.onFiltering = $.proxy(this.options.onFiltering, this);
+
         // Build select all if enabled.
         this.buildContainer();
         this.buildButton();
         this.buildDropdown();
+        this.buildReset();
         this.buildSelectAll();
         this.buildDropdownOptions();
         this.buildFilter();
 
         this.updateButtonText();
-        this.updateSelectAll();
+        this.updateSelectAll(true);
 
+        if (this.options.enableClickableOptGroups && this.options.multiple) {
+            this.updateOptGroups();
+        }
+
+        this.options.wasDisabled = this.$select.prop('disabled');
         if (this.options.disableIfEmpty && $('option', this.$select).length <= 0) {
             this.disable();
         }
-        
-        this.$select.hide().after(this.$container);
-    };
+
+        this.$select.wrap('<span class="multiselect-native-select" />').after(this.$container);
+        this.options.onInitialized(this.$select, this.$container);
+    }
 
     Multiselect.prototype = {
 
@@ -14169,19 +14227,24 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
              * Default text function will either print 'None selected' in case no
              * option is selected or a list of the selected options up to a length
              * of 3 selected options.
-             * 
+             *
              * @param {jQuery} options
              * @param {jQuery} select
              * @returns {String}
              */
             buttonText: function(options, select) {
-                if (options.length === 0) {
+                if (this.disabledText.length > 0
+                        && (select.prop('disabled') || (options.length == 0 && this.disableIfEmpty)))  {
+
+                    return this.disabledText;
+                }
+                else if (options.length === 0) {
                     return this.nonSelectedText;
                 }
-                else if (this.allSelectedText 
-                            && options.length === $('option', $(select)).length 
-                            && $('option', $(select)).length !== 1 
-                            && this.multiple) {
+                else if (this.allSelectedText
+                        && options.length === $('option', $(select)).length
+                        && $('option', $(select)).length !== 1
+                        && this.multiple) {
 
                     if (this.selectAllNumber) {
                         return this.allSelectedText + ' (' + options.length + ')';
@@ -14190,24 +14253,24 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
                         return this.allSelectedText;
                     }
                 }
-                else if (options.length > this.numberDisplayed) {
+                else if (this.numberDisplayed != 0 && options.length > this.numberDisplayed) {
                     return options.length + ' ' + this.nSelectedText;
                 }
                 else {
                     var selected = '';
                     var delimiter = this.delimiterText;
-                    
+
                     options.each(function() {
                         var label = ($(this).attr('label') !== undefined) ? $(this).attr('label') : $(this).text();
                         selected += label + delimiter;
                     });
-                    
-                    return selected.substr(0, selected.length - 2);
+
+                    return selected.substr(0, selected.length - this.delimiterText.length);
                 }
             },
             /**
              * Updates the title of the button similar to the buttonText function.
-             * 
+             *
              * @param {jQuery} options
              * @param {jQuery} select
              * @returns {@exp;selected@call;substr}
@@ -14219,13 +14282,16 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
                 else {
                     var selected = '';
                     var delimiter = this.delimiterText;
-                    
+
                     options.each(function () {
                         var label = ($(this).attr('label') !== undefined) ? $(this).attr('label') : $(this).text();
                         selected += label + delimiter;
                     });
-                    return selected.substr(0, selected.length - 2);
+                    return selected.substr(0, selected.length - this.delimiterText.length);
                 }
+            },
+            checkboxName: function(option) {
+                return false; // no checkbox name
             },
             /**
              * Create a label.
@@ -14237,10 +14303,19 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
                 return $(element).attr('label') || $(element).text();
             },
             /**
+             * Create a class.
+             *
+             * @param {jQuery} element
+             * @returns {String}
+             */
+            optionClass: function(element) {
+                return $(element).attr('class') || '';
+            },
+            /**
              * Triggered on change of the multiselect.
-             * 
+             *
              * Not triggered when selecting/deselecting options manually.
-             * 
+             *
              * @param {jQuery} option
              * @param {Boolean} checked
              */
@@ -14265,25 +14340,48 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
             },
             /**
              * Triggered after the dropdown is shown.
-             * 
+             *
              * @param {jQuery} event
              */
             onDropdownShown: function(event) {
-                
+
             },
             /**
              * Triggered after the dropdown is hidden.
-             * 
+             *
              * @param {jQuery} event
              */
             onDropdownHidden: function(event) {
-                
+
             },
             /**
              * Triggered on select all.
              */
             onSelectAll: function() {
-                
+
+            },
+            /**
+             * Triggered on deselect all.
+             */
+            onDeselectAll: function() {
+
+            },
+            /**
+             * Triggered after initializing.
+             *
+             * @param {jQuery} $select
+             * @param {jQuery} $container
+             */
+            onInitialized: function($select, $container) {
+
+            },
+            /**
+             * Triggered on filtering.
+             *
+             * @param {jQuery} $filter
+             */
+            onFiltering: function($filter) {
+
             },
             enableHTML: false,
             buttonClass: 'btn btn-default',
@@ -14291,20 +14389,24 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
             buttonWidth: 'auto',
             buttonContainer: '<div class="btn-group" />',
             dropRight: false,
+            dropUp: false,
             selectedClass: 'active',
             // Maximum height of the dropdown menu.
             // If maximum height is exceeded a scrollbar will be displayed.
             maxHeight: false,
-            checkboxName: false,
             includeSelectAllOption: false,
             includeSelectAllIfMoreThan: 0,
             selectAllText: ' Select all',
             selectAllValue: 'multiselect-all',
             selectAllName: false,
             selectAllNumber: true,
+            selectAllJustVisible: true,
             enableFiltering: false,
             enableCaseInsensitiveFiltering: false,
+            enableFullValueFiltering: false,
             enableClickableOptGroups: false,
+            enableCollapsibleOptGroups: false,
+            collapseOptGroupsByDefault: false,
             filterPlaceholder: 'Search',
             // possible options: 'text', 'value', 'both'
             filterBehavior: 'text',
@@ -14315,15 +14417,20 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
             allSelectedText: 'All selected',
             numberDisplayed: 3,
             disableIfEmpty: false,
+            disabledText: '',
             delimiterText: ', ',
+            includeResetOption: false,
+            includeResetDivider: false,
+            resetText: 'Reset',
             templates: {
                 button: '<button type="button" class="multiselect dropdown-toggle" data-toggle="dropdown"><span class="multiselect-selected-text"></span> <b class="caret"></b></button>',
                 ul: '<ul class="multiselect-container dropdown-menu"></ul>',
-                filter: '<li class="multiselect-item filter"><div class="input-group"><span class="input-group-addon"><i class="glyphicon glyphicon-search"></i></span><input class="form-control multiselect-search" type="text"></div></li>',
+                filter: '<li class="multiselect-item multiselect-filter"><div class="input-group"><span class="input-group-addon"><i class="glyphicon glyphicon-search"></i></span><input class="form-control multiselect-search" type="text" /></div></li>',
                 filterClearBtn: '<span class="input-group-btn"><button class="btn btn-default multiselect-clear-filter" type="button"><i class="glyphicon glyphicon-remove-circle"></i></button></span>',
                 li: '<li><a tabindex="0"><label></label></a></li>',
                 divider: '<li class="multiselect-item divider"></li>',
-                liGroup: '<li class="multiselect-item multiselect-group"><label></label></li>'
+                liGroup: '<li class="multiselect-item multiselect-group"><label></label></li>',
+                resetButton: '<li class="multiselect-reset text-center"><div class="input-group"><a class="btn btn-default btn-block"></a></div></li>'
             }
         },
 
@@ -14359,7 +14466,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
             // Manually add button width if set.
             if (this.options.buttonWidth && this.options.buttonWidth !== 'auto') {
                 this.$button.css({
-                    'width' : this.options.buttonWidth,
+                    'width' : '100%', //this.options.buttonWidth,
                     'overflow' : 'hidden',
                     'text-overflow' : 'ellipsis'
                 });
@@ -14399,12 +14506,25 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
                 });
             }
 
+            if (this.options.dropUp) {
+
+                var height = Math.min(this.options.maxHeight, $('option[data-role!="divider"]', this.$select).length*26 + $('option[data-role="divider"]', this.$select).length*19 + (this.options.includeSelectAllOption ? 26 : 0) + (this.options.enableFiltering || this.options.enableCaseInsensitiveFiltering ? 44 : 0));
+                var moveCalc = height + 34;
+
+                this.$ul.css({
+                    'max-height': height + 'px',
+                    'overflow-y': 'auto',
+                    'overflow-x': 'hidden',
+                    'margin-top': "-" + moveCalc + 'px'
+                });
+            }
+
             this.$container.append(this.$ul);
         },
 
         /**
-         * Build the dropdown options and binds all nessecary events.
-         * 
+         * Build the dropdown options and binds all necessary events.
+         *
          * Uses createDivider and createOptionValue to create the necessary options.
          */
         buildDropdownOptions: function() {
@@ -14415,7 +14535,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
                 // Support optgroups and options without a group simultaneously.
                 var tag = $element.prop('tagName')
                     .toLowerCase();
-            
+
                 if ($element.prop('value') === this.options.selectAllValue) {
                     return;
                 }
@@ -14438,7 +14558,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
             }, this));
 
             // Bind the change event on the dropdown elements.
-            $('li input', this.$ul).on('change', $.proxy(function(event) {
+            $(this.$ul).off('change', 'li:not(.multiselect-group) input[type="checkbox"], li:not(.multiselect-group) input[type="radio"]');
+            $(this.$ul).on('change', 'li:not(.multiselect-group) input[type="checkbox"], li:not(.multiselect-group) input[type="radio"]', $.proxy(function(event) {
                 var $target = $(event.target);
 
                 var checked = $target.prop('checked') || false;
@@ -14464,15 +14585,15 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
                 var $checkboxesNotThis = $('input', this.$container).not($target);
 
                 if (isSelectAllOption) {
+
                     if (checked) {
-                        this.selectAll();
+                        this.selectAll(this.options.selectAllJustVisible, true);
                     }
                     else {
-                        this.deselectAll();
+                        this.deselectAll(this.options.selectAllJustVisible, true);
                     }
                 }
-
-                if(!isSelectAllOption){
+                else {
                     if (checked) {
                         $option.prop('selected', true);
 
@@ -14501,14 +14622,20 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
                         // Unselect option.
                         $option.prop('selected', false);
                     }
+
+                    // To prevent select all from firing onChange: #575
+                    this.options.onChange($option, checked);
+
+                    // Do not update select all or optgroups on select all change!
+                    this.updateSelectAll();
+
+                    if (this.options.enableClickableOptGroups && this.options.multiple) {
+                        this.updateOptGroups();
+                    }
                 }
 
                 this.$select.change();
-
                 this.updateButtonText();
-                this.updateSelectAll();
-
-                this.options.onChange($option, checked);
 
                 if(this.options.preventInputChangeEvent) {
                     return false;
@@ -14521,12 +14648,12 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
                     return false;
                 }
             });
-        
-            $('li a', this.$ul).on('touchstart click', $.proxy(function(event) {
+
+            $(this.$ul).on('touchstart click', 'li a', $.proxy(function(event) {
                 event.stopPropagation();
 
                 var $target = $(event.target);
-                
+
                 if (event.shiftKey && this.options.multiple) {
                     if($target.is("label")){ // Handles checkbox selection manually (see https://github.com/davidstutz/bootstrap-multiselect/issues/431)
                         event.preventDefault();
@@ -14536,41 +14663,41 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
                     var checked = $target.prop('checked') || false;
 
                     if (this.lastToggledInput !== null && this.lastToggledInput !== $target) { // Make sure we actually have a range
-                        var from = $target.closest("li").index();
-                        var to = this.lastToggledInput.closest("li").index();
-                        
+                        var from = this.$ul.find("li:visible").index($target.parents("li"));
+                        var to = this.$ul.find("li:visible").index(this.lastToggledInput.parents("li"));
+
                         if (from > to) { // Swap the indices
                             var tmp = to;
                             to = from;
                             from = tmp;
                         }
-                        
+
                         // Make sure we grab all elements since slice excludes the last index
                         ++to;
-                        
+
                         // Change the checkboxes and underlying options
-                        var range = this.$ul.find("li").slice(from, to).find("input");
-                        
+                        var range = this.$ul.find("li").not(".multiselect-filter-hidden").slice(from, to).find("input");
+
                         range.prop('checked', checked);
-                        
+
                         if (this.options.selectedClass) {
                             range.closest('li')
                                 .toggleClass(this.options.selectedClass, checked);
                         }
-                        
+
                         for (var i = 0, j = range.length; i < j; i++) {
                             var $checkbox = $(range[i]);
 
                             var $option = this.getOptionByValue($checkbox.val());
 
                             $option.prop('selected', checked);
-                        }                   
+                        }
                     }
-                    
+
                     // Trigger the select "change" event
                     $target.trigger("change");
                 }
-                
+
                 // Remembers last clicked option
                 if($target.is("input") && !$target.closest("li").is(".multiselect-item")){
                     this.lastToggledInput = $target;
@@ -14596,7 +14723,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
                     }
 
                     var index = $items.index($items.filter(':focus'));
-
+                    
                     // Navigation up.
                     if (event.keyCode === 38 && index > 0) {
                         index--;
@@ -14624,25 +14751,88 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
                 }
             }, this));
 
-            if(this.options.enableClickableOptGroups && this.options.multiple) {
-                $('li.multiselect-group', this.$ul).on('click', $.proxy(function(event) {
+            if (this.options.enableClickableOptGroups && this.options.multiple) {
+                $("li.multiselect-group input", this.$ul).on("change", $.proxy(function(event) {
                     event.stopPropagation();
 
-                    var group = $(event.target).parent();
+                    var $target = $(event.target);
+                    var checked = $target.prop('checked') || false;
 
-                    // Search all option in optgroup
-                    var $options = group.nextUntil('li.multiselect-group');
-                    var $visibleOptions = $options.filter(":visible:not(.disabled)");
+                    var $li = $(event.target).closest('li');
+                    var $group = $li.nextUntil("li.multiselect-group")
+                        .not('.multiselect-filter-hidden')
+                        .not('.disabled');
 
-                    // check or uncheck items
-                    var allChecked = true;
-                    var optionInputs = $visibleOptions.find('input');
-                    optionInputs.each(function() {
-                        allChecked = allChecked && $(this).prop('checked');
+                    var $inputs = $group.find("input");
+
+                    var values = [];
+                    var $options = [];
+
+                    if (this.options.selectedClass) {
+                        if (checked) {
+                            $li.addClass(this.options.selectedClass);
+                        }
+                        else {
+                            $li.removeClass(this.options.selectedClass);
+                        }
+                    }
+
+                    $.each($inputs, $.proxy(function(index, input) {
+                        var value = $(input).val();
+                        var $option = this.getOptionByValue(value);
+
+                        if (checked) {
+                            $(input).prop('checked', true);
+                            $(input).closest('li')
+                                .addClass(this.options.selectedClass);
+
+                            $option.prop('selected', true);
+                        }
+                        else {
+                            $(input).prop('checked', false);
+                            $(input).closest('li')
+                                .removeClass(this.options.selectedClass);
+
+                            $option.prop('selected', false);
+                        }
+
+                        $options.push(this.getOptionByValue(value));
+                    }, this))
+
+                    // Cannot use select or deselect here because it would call updateOptGroups again.
+
+                    this.options.onChange($options, checked);
+
+                    this.$select.change();
+                    this.updateButtonText();
+                    this.updateSelectAll();
+                }, this));
+            }
+
+            if (this.options.enableCollapsibleOptGroups && this.options.multiple) {
+                $("li.multiselect-group .caret-container", this.$ul).on("click", $.proxy(function(event) {
+                    var $li = $(event.target).closest('li');
+                    var $inputs = $li.nextUntil("li.multiselect-group")
+                            .not('.multiselect-filter-hidden');
+
+                    var visible = true;
+                    $inputs.each(function() {
+                        visible = visible && !$(this).hasClass('multiselect-collapsible-hidden');
                     });
 
-                    optionInputs.prop('checked', !allChecked).trigger('change');
-               }, this));
+                    if (visible) {
+                        $inputs.hide()
+                            .addClass('multiselect-collapsible-hidden');
+                    }
+                    else {
+                        $inputs.show()
+                            .removeClass('multiselect-collapsible-hidden');
+                    }
+                }, this));
+
+                $("li.multiselect-all", this.$ul).css('background', '#f3f3f3').css('border-bottom', '1px solid #eaeaea');
+                $("li.multiselect-all > a > label.checkbox", this.$ul).css('padding', '3px 20px 3px 35px');
+                $("li.multiselect-group > a > input", this.$ul).css('margin', '4px 0px 5px -20px');
             }
         },
 
@@ -14659,12 +14849,21 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
             // Support the label attribute on options.
             var label = this.options.optionLabel(element);
+            var classes = this.options.optionClass(element);
             var value = $element.val();
             var inputType = this.options.multiple ? "checkbox" : "radio";
 
             var $li = $(this.options.templates.li);
             var $label = $('label', $li);
             $label.addClass(inputType);
+            $label.attr("title", label);
+            $li.addClass(classes);
+
+            // Hide all children items when collapseOptGroupsByDefault is true
+            if (this.options.collapseOptGroupsByDefault && $(element).parent().prop("tagName").toLowerCase() === "optgroup") {
+                $li.addClass("multiselect-collapsible-hidden");
+                $li.hide();
+            }
 
             if (this.options.enableHTML) {
                 $label.html(" " + label);
@@ -14672,12 +14871,14 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
             else {
                 $label.text(" " + label);
             }
-        
+
             var $checkbox = $('<input/>').attr('type', inputType);
 
-            if (this.options.checkboxName) {
-                $checkbox.attr('name', this.options.checkboxName);
+            var name = this.options.checkboxName($element);
+            if (name) {
+                $checkbox.attr('name', name);
             }
+
             $label.prepend($checkbox);
 
             var selected = $element.prop('selected') || false;
@@ -14726,44 +14927,78 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
          * @param {jQuery} group
          */
         createOptgroup: function(group) {
-            var groupName = $(group).prop('label');
+            var label = $(group).attr("label");
+            var value = $(group).attr("value");
+            var $li = $('<li class="multiselect-item multiselect-group"><a href="javascript:void(0);"><label><b></b></label></a></li>');
 
-            // Add a header for the group.
-            var $li = $(this.options.templates.liGroup);
-            
+            var classes = this.options.optionClass(group);
+            $li.addClass(classes);
+
             if (this.options.enableHTML) {
-                $('label', $li).html(groupName);
+                $('label b', $li).html(" " + label);
             }
             else {
-                $('label', $li).text(groupName);
-            }
-            
-            if (this.options.enableClickableOptGroups) {
-                $li.addClass('multiselect-group-clickable');
+                $('label b', $li).text(" " + label);
             }
 
-            this.$ul.append($li);
+            if (this.options.enableCollapsibleOptGroups && this.options.multiple) {
+                $('a', $li).append('<span class="caret-container"><b class="caret"></b></span>');
+            }
+
+            if (this.options.enableClickableOptGroups && this.options.multiple) {
+                $('a label', $li).prepend('<input type="checkbox" value="' + value + '"/>');
+            }
 
             if ($(group).is(':disabled')) {
                 $li.addClass('disabled');
             }
 
-            // Add the options of the group.
-            $('option', group).each($.proxy(function(index, element) {
-                this.createOptionValue(element);
-            }, this));
+            this.$ul.append($li);
+
+            $("option", group).each($.proxy(function($, group) {
+                this.createOptionValue(group);
+            }, this))
         },
 
         /**
-         * Build the selct all.
-         * 
+         * Build the reset.
+         *
+         */
+        buildReset: function() {
+            if (this.options.includeResetOption) {
+
+                // Check whether to add a divider after the reset.
+                if (this.options.includeResetDivider) {
+                    this.$ul.prepend($(this.options.templates.divider));
+                }
+
+                var $resetButton = $(this.options.templates.resetButton);
+
+                if (this.options.enableHTML) {
+                    $('a', $resetButton).html(this.options.resetText);
+                }
+                else {
+                    $('a', $resetButton).text(this.options.resetText);
+                }
+
+                $('a', $resetButton).click($.proxy(function(){
+                    this.clearSelection();
+                }, this));
+
+                this.$ul.prepend($resetButton);
+            }
+        },
+
+        /**
+         * Build the select all.
+         *
          * Checks if a select all has already been created.
          */
         buildSelectAll: function() {
             if (typeof this.options.selectAllValue === 'number') {
                 this.options.selectAllValue = this.options.selectAllValue.toString();
             }
-            
+
             var alreadyHasSelectAll = this.hasSelectAll();
 
             if (!alreadyHasSelectAll && this.options.includeSelectAllOption && this.options.multiple
@@ -14776,21 +15011,21 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
                 var $li = $(this.options.templates.li);
                 $('label', $li).addClass("checkbox");
-                
+
                 if (this.options.enableHTML) {
                     $('label', $li).html(" " + this.options.selectAllText);
                 }
                 else {
                     $('label', $li).text(" " + this.options.selectAllText);
                 }
-                
+
                 if (this.options.selectAllName) {
                     $('label', $li).prepend('<input type="checkbox" name="' + this.options.selectAllName + '" />');
                 }
                 else {
                     $('label', $li).prepend('<input type="checkbox" />');
                 }
-                
+
                 var $checkbox = $('input', $li);
                 $checkbox.val(this.options.selectAllValue);
 
@@ -14817,19 +15052,27 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
                     this.$filter = $(this.options.templates.filter);
                     $('input', this.$filter).attr('placeholder', this.options.filterPlaceholder);
-                    
+
                     // Adds optional filter clear button
-                    if(this.options.includeFilterClearBtn){
+                    if(this.options.includeFilterClearBtn) {
                         var clearBtn = $(this.options.templates.filterClearBtn);
                         clearBtn.on('click', $.proxy(function(event){
                             clearTimeout(this.searchTimeout);
+
+                            this.query = '';
                             this.$filter.find('.multiselect-search').val('');
-                            $('li', this.$ul).show().removeClass("filter-hidden");
+                            $('li', this.$ul).show().removeClass('multiselect-filter-hidden');
+
                             this.updateSelectAll();
+
+                            if (this.options.enableClickableOptGroups && this.options.multiple) {
+                                this.updateOptGroups();
+                            }
+
                         }, this));
                         this.$filter.find('.input-group').append(clearBtn);
                     }
-                    
+
                     this.$ul.prepend(this.$filter);
 
                     this.$filter.val(this.query).on('click', function(event) {
@@ -14838,8 +15081,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
                         // Cancel enter key default behaviour
                         if (event.which === 13) {
                           event.preventDefault();
-                        }
-                        
+                      }
+
                         // This is useful to catch "keydown" events after the browser has updated the control.
                         clearTimeout(this.searchTimeout);
 
@@ -14865,20 +15108,36 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
                                     }
 
                                     if (value !== this.options.selectAllValue && text) {
+
                                         // By default lets assume that element is not
                                         // interesting for this search.
                                         var showElement = false;
 
-                                        if (this.options.enableCaseInsensitiveFiltering && filterCandidate.toLowerCase().indexOf(this.query.toLowerCase()) > -1) {
-                                            showElement = true;
+                                        if (this.options.enableCaseInsensitiveFiltering) {
+                                            filterCandidate = filterCandidate.toLowerCase();
+                                            this.query = this.query.toLowerCase();
+                                        }
+
+                                        if (this.options.enableFullValueFiltering && this.options.filterBehavior !== 'both') {
+                                            var valueToMatch = filterCandidate.trim().substring(0, this.query.length);
+                                            if (this.query.indexOf(valueToMatch) > -1) {
+                                                showElement = true;
+                                            }
                                         }
                                         else if (filterCandidate.indexOf(this.query) > -1) {
                                             showElement = true;
                                         }
 
                                         // Toggle current element (group or group item) according to showElement boolean.
-                                        $(element).toggle(showElement).toggleClass('filter-hidden', !showElement);
-                                        
+                                        if(!showElement){
+                                          $(element).css('display', 'none');
+                                          $(element).addClass('multiselect-filter-hidden');
+                                        }
+                                        if(showElement){
+                                          $(element).css('display', 'block');
+                                          $(element).removeClass('multiselect-filter-hidden');
+                                        }
+
                                         // Differentiate groups and group items.
                                         if ($(element).hasClass('multiselect-group')) {
                                             // Remember group status.
@@ -14888,12 +15147,14 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
                                         else {
                                             // Show group name when at least one of its items is visible.
                                             if (showElement) {
-                                                $(currentGroup).show().removeClass('filter-hidden');
+                                                $(currentGroup).show()
+                                                    .removeClass('multiselect-filter-hidden');
                                             }
-                                            
+
                                             // Show all group items when group name satisfies filter.
                                             if (!showElement && currentGroupVisible) {
-                                                $(element).show().removeClass('filter-hidden');
+                                                $(element).show()
+                                                    .removeClass('multiselect-filter-hidden');
                                             }
                                         }
                                     }
@@ -14901,6 +15162,13 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
                             }
 
                             this.updateSelectAll();
+
+                            if (this.options.enableClickableOptGroups && this.options.multiple) {
+                                this.updateOptGroups();
+                            }
+
+                            this.options.onFiltering(event.target);
+
                         }, this), 300, this);
                     }, this));
                 }
@@ -14913,19 +15181,27 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
         destroy: function() {
             this.$container.remove();
             this.$select.show();
+
+            // reset original state
+            this.$select.prop('disabled', this.options.wasDisabled);
+
             this.$select.data('multiselect', null);
         },
 
         /**
          * Refreshs the multiselect based on the selected options of the select.
          */
-        refresh: function() {
-            $('option', this.$select).each($.proxy(function(index, element) {
-                var $input = $('li input', this.$ul).filter(function() {
-                    return $(this).val() === $(element).val();
-                });
+        refresh: function () {
+            var inputs = {};
+            $('li input', this.$ul).each(function() {
+              inputs[$(this).val()] = $(this);
+            });
 
-                if ($(element).is(':selected')) {
+            $('option', this.$select).each($.proxy(function (index, element) {
+                var $elem = $(element);
+                var $input = inputs[$(element).val()];
+
+                if ($elem.is(':selected')) {
                     $input.prop('checked', true);
 
                     if (this.options.selectedClass) {
@@ -14942,7 +15218,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
                     }
                 }
 
-                if ($(element).is(":disabled")) {
+                if ($elem.is(":disabled")) {
                     $input.attr('disabled', 'disabled')
                         .prop('disabled', true)
                         .closest('li')
@@ -14957,14 +15233,18 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
             this.updateButtonText();
             this.updateSelectAll();
+
+            if (this.options.enableClickableOptGroups && this.options.multiple) {
+                this.updateOptGroups();
+            }
         },
 
         /**
          * Select all options of the given values.
-         * 
+         *
          * If triggerOnChange is set to true, the on change event is triggered if
          * and only if one value is passed.
-         * 
+         *
          * @param {Array} selectValues
          * @param {Boolean} triggerOnChange
          */
@@ -14986,11 +15266,11 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
                 if($option === undefined || $checkbox === undefined) {
                     continue;
                 }
-                
+
                 if (!this.options.multiple) {
                     this.deselectAll(false);
                 }
-                
+
                 if (this.options.selectedClass) {
                     $checkbox.closest('li')
                         .addClass(this.options.selectedClass);
@@ -14998,7 +15278,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
                 $checkbox.prop('checked', true);
                 $option.prop('selected', true);
-                
+
                 if (triggerOnChange) {
                     this.options.onChange($option, true);
                 }
@@ -15006,6 +15286,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
             this.updateButtonText();
             this.updateSelectAll();
+
+            if (this.options.enableClickableOptGroups && this.options.multiple) {
+                this.updateOptGroups();
+            }
         },
 
         /**
@@ -15015,14 +15299,18 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
             this.deselectAll(false);
             this.updateButtonText();
             this.updateSelectAll();
+
+            if (this.options.enableClickableOptGroups && this.options.multiple) {
+                this.updateOptGroups();
+            }
         },
 
         /**
          * Deselects all options of the given values.
-         * 
+         *
          * If triggerOnChange is set to true, the on change event is triggered, if
          * and only if one value is passed.
-         * 
+         *
          * @param {Array} deselectValues
          * @param {Boolean} triggerOnChange
          */
@@ -15052,7 +15340,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
                 $checkbox.prop('checked', false);
                 $option.prop('selected', false);
-                
+
                 if (triggerOnChange) {
                     this.options.onChange($option, false);
                 }
@@ -15060,8 +15348,12 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
             this.updateButtonText();
             this.updateSelectAll();
+
+            if (this.options.enableClickableOptGroups && this.options.multiple) {
+                this.updateOptGroups();
+            }
         },
-        
+
         /**
          * Selects all enabled & visible options.
          *
@@ -15071,34 +15363,38 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
          * @param {Boolean} triggerOnSelectAll
          */
         selectAll: function (justVisible, triggerOnSelectAll) {
+
             var justVisible = typeof justVisible === 'undefined' ? true : justVisible;
-            var allCheckboxes = $("li input[type='checkbox']:enabled", this.$ul);
-            var visibleCheckboxes = allCheckboxes.filter(":visible");
-            var allCheckboxesCount = allCheckboxes.length;
-            var visibleCheckboxesCount = visibleCheckboxes.length;
-            
+            var allLis = $("li:not(.divider):not(.disabled):not(.multiselect-group)", this.$ul);
+            var visibleLis = $("li:not(.divider):not(.disabled):not(.multiselect-group):not(.multiselect-filter-hidden):not(.multiselect-collapisble-hidden)", this.$ul).filter(':visible');
+
             if(justVisible) {
-                visibleCheckboxes.prop('checked', true);
-                $("li:not(.divider):not(.disabled)", this.$ul).filter(":visible").addClass(this.options.selectedClass);
+                $('input:enabled' , visibleLis).prop('checked', true);
+                visibleLis.addClass(this.options.selectedClass);
+
+                $('input:enabled' , visibleLis).each($.proxy(function(index, element) {
+                    var value = $(element).val();
+                    var option = this.getOptionByValue(value);
+                    $(option).prop('selected', true);
+                }, this));
             }
             else {
-                allCheckboxes.prop('checked', true);
-                $("li:not(.divider):not(.disabled)", this.$ul).addClass(this.options.selectedClass);
+                $('input:enabled' , allLis).prop('checked', true);
+                allLis.addClass(this.options.selectedClass);
+
+                $('input:enabled' , allLis).each($.proxy(function(index, element) {
+                    var value = $(element).val();
+                    var option = this.getOptionByValue(value);
+                    $(option).prop('selected', true);
+                }, this));
             }
-                
-            if (allCheckboxesCount === visibleCheckboxesCount || justVisible === false) {
-                $("option:enabled", this.$select).prop('selected', true);
+
+            $('li input[value="' + this.options.selectAllValue + '"]', this.$ul).prop('checked', true);
+
+            if (this.options.enableClickableOptGroups && this.options.multiple) {
+                this.updateOptGroups();
             }
-            else {
-                var values = visibleCheckboxes.map(function() {
-                    return $(this).val();
-                }).get();
-                
-                $("option:enabled", this.$select).filter(function(index) {
-                    return $.inArray($(this).val(), values) !== -1;
-                }).prop('selected', true);
-            }
-            
+
             if (triggerOnSelectAll) {
                 this.options.onSelectAll();
             }
@@ -15106,43 +15402,52 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
         /**
          * Deselects all options.
-         * 
+         *
          * If justVisible is true or not specified, only visible options are deselected.
-         * 
+         *
          * @param {Boolean} justVisible
          */
-        deselectAll: function (justVisible) {
+        deselectAll: function (justVisible, triggerOnDeselectAll) {
+
             var justVisible = typeof justVisible === 'undefined' ? true : justVisible;
-            
-            if(justVisible) {              
-                var visibleCheckboxes = $("li input[type='checkbox']:not(:disabled)", this.$ul).filter(":visible");
-                visibleCheckboxes.prop('checked', false);
-                
-                var values = visibleCheckboxes.map(function() {
-                    return $(this).val();
-                }).get();
-                
-                $("option:enabled", this.$select).filter(function(index) {
-                    return $.inArray($(this).val(), values) !== -1;
-                }).prop('selected', false);
-                
-                if (this.options.selectedClass) {
-                    $("li:not(.divider):not(.disabled)", this.$ul).filter(":visible").removeClass(this.options.selectedClass);
-                }
+            var allLis = $("li:not(.divider):not(.disabled):not(.multiselect-group)", this.$ul);
+            var visibleLis = $("li:not(.divider):not(.disabled):not(.multiselect-group):not(.multiselect-filter-hidden):not(.multiselect-collapisble-hidden)", this.$ul).filter(':visible');
+
+            if(justVisible) {
+                $('input[type="checkbox"]:enabled' , visibleLis).prop('checked', false);
+                visibleLis.removeClass(this.options.selectedClass);
+
+                $('input[type="checkbox"]:enabled' , visibleLis).each($.proxy(function(index, element) {
+                    var value = $(element).val();
+                    var option = this.getOptionByValue(value);
+                    $(option).prop('selected', false);
+                }, this));
             }
             else {
-                $("li input[type='checkbox']:enabled", this.$ul).prop('checked', false);
-                $("option:enabled", this.$select).prop('selected', false);
-                
-                if (this.options.selectedClass) {
-                    $("li:not(.divider):not(.disabled)", this.$ul).removeClass(this.options.selectedClass);
-                }
+                $('input[type="checkbox"]:enabled' , allLis).prop('checked', false);
+                allLis.removeClass(this.options.selectedClass);
+
+                $('input[type="checkbox"]:enabled' , allLis).each($.proxy(function(index, element) {
+                    var value = $(element).val();
+                    var option = this.getOptionByValue(value);
+                    $(option).prop('selected', false);
+                }, this));
+            }
+
+            $('li input[value="' + this.options.selectAllValue + '"]', this.$ul).prop('checked', false);
+
+            if (this.options.enableClickableOptGroups && this.options.multiple) {
+                this.updateOptGroups();
+            }
+
+            if (triggerOnDeselectAll) {
+                this.options.onDeselectAll();
             }
         },
 
         /**
          * Rebuild the plugin.
-         * 
+         *
          * Rebuilds the dropdown, the filter and the select all option.
          */
         rebuild: function() {
@@ -15156,15 +15461,19 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
             this.buildFilter();
 
             this.updateButtonText();
-            this.updateSelectAll();
-            
+            this.updateSelectAll(true);
+
+            if (this.options.enableClickableOptGroups && this.options.multiple) {
+                this.updateOptGroups();
+            }
+
             if (this.options.disableIfEmpty && $('option', this.$select).length <= 0) {
                 this.disable();
             }
             else {
                 this.enable();
             }
-            
+
             if (this.options.dropRight) {
                 this.$ul.addClass('pull-right');
             }
@@ -15174,44 +15483,62 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
          * The provided data will be used to build the dropdown.
          */
         dataprovider: function(dataprovider) {
-            
+
             var groupCounter = 0;
             var $select = this.$select.empty();
-            
+
             $.each(dataprovider, function (index, option) {
                 var $tag;
-                
+
                 if ($.isArray(option.children)) { // create optiongroup tag
                     groupCounter++;
-                    
+
                     $tag = $('<optgroup/>').attr({
                         label: option.label || 'Group ' + groupCounter,
-                        disabled: !!option.disabled
+                        disabled: !!option.disabled,
+                        value: option.value
                     });
-                    
+
                     forEach(option.children, function(subOption) { // add children option tags
-                        $tag.append($('<option/>').attr({
+                        var attributes = {
                             value: subOption.value,
                             label: subOption.label || subOption.value,
                             title: subOption.title,
                             selected: !!subOption.selected,
                             disabled: !!subOption.disabled
-                        }));
+                        };
+
+                        //Loop through attributes object and add key-value for each attribute
+                       for (var key in subOption.attributes) {
+                            attributes['data-' + key] = subOption.attributes[key];
+                       }
+                         //Append original attributes + new data attributes to option
+                        $tag.append($('<option/>').attr(attributes));
                     });
                 }
                 else {
-                    $tag = $('<option/>').attr({
-                        value: option.value,
-                        label: option.label || option.value,
-                        title: option.title,
-                        selected: !!option.selected,
-                        disabled: !!option.disabled
-                    });
+
+                    var attributes = {
+                        'value': option.value,
+                        'label': option.label || option.value,
+                        'title': option.title,
+                        'class': option['class'],
+                        'selected': !!option['selected'],
+                        'disabled': !!option['disabled']
+                    };
+                    //Loop through attributes object and add key-value for each attribute
+                    for (var key in option.attributes) {
+                      attributes['data-' + key] = option.attributes[key];
+                    }
+                    //Append original attributes + new data attributes to option
+                    $tag = $('<option/>').attr(attributes);
+
+                    $tag.text(option.label || option.value);
                 }
-                
+
                 $select.append($tag);
             });
-            
+
             this.rebuild();
         },
 
@@ -15262,20 +15589,53 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
         },
 
         /**
+         * Update opt groups.
+         */
+        updateOptGroups: function() {
+            var $groups = $('li.multiselect-group', this.$ul)
+            var selectedClass = this.options.selectedClass;
+
+            $groups.each(function() {
+                var $options = $(this).nextUntil('li.multiselect-group')
+                    .not('.multiselect-filter-hidden')
+                    .not('.disabled');
+
+                var checked = true;
+                $options.each(function() {
+                    var $input = $('input', this);
+
+                    if (!$input.prop('checked')) {
+                        checked = false;
+                    }
+                });
+
+                if (selectedClass) {
+                    if (checked) {
+                        $(this).addClass(selectedClass);
+                    }
+                    else {
+                        $(this).removeClass(selectedClass);
+                    }
+                }
+
+                $('input', this).prop('checked', checked);
+            });
+        },
+
+        /**
          * Updates the select all checkbox based on the currently displayed and selected checkboxes.
          */
-        updateSelectAll: function() {
+        updateSelectAll: function(notTriggerOnSelectAll) {
             if (this.hasSelectAll()) {
-                var allBoxes = $("li:not(.multiselect-item):not(.filter-hidden) input:enabled", this.$ul);
+                var allBoxes = $("li:not(.multiselect-item):not(.multiselect-filter-hidden):not(.multiselect-group):not(.disabled) input:enabled", this.$ul);
                 var allBoxesLength = allBoxes.length;
                 var checkedBoxesLength = allBoxes.filter(":checked").length;
                 var selectAllLi  = $("li.multiselect-all", this.$ul);
                 var selectAllInput = selectAllLi.find("input");
-                
+
                 if (checkedBoxesLength > 0 && checkedBoxesLength === allBoxesLength) {
                     selectAllInput.prop("checked", true);
                     selectAllLi.addClass(this.options.selectedClass);
-                    this.options.onSelectAll();
                 }
                 else {
                     selectAllInput.prop("checked", false);
@@ -15289,7 +15649,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
          */
         updateButtonText: function() {
             var options = this.getSelected();
-            
+
             // First update the displayed button text.
             if (this.options.enableHTML) {
                 $('.multiselect .multiselect-selected-text', this.$container).html(this.options.buttonText(options, this.$select));
@@ -15297,7 +15657,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
             else {
                 $('.multiselect .multiselect-selected-text', this.$container).text(this.options.buttonText(options, this.$select));
             }
-            
+
             // Now update the title attribute of the button.
             $('.multiselect', this.$container).attr('title', this.options.buttonTitle(options, this.$select));
         },
@@ -15338,7 +15698,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
          */
         getInputByValue: function (value) {
 
-            var checkboxes = $('li input', this.$ul);
+            var checkboxes = $('li input:not(.multiselect-search)', this.$ul);
             var valueToCompare = value.toString();
 
             for (var i = 0; i < checkboxes.length; i = i + 1) {
@@ -15383,7 +15743,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
             // Call multiselect method.
             if (typeof option === 'string') {
                 data[option](parameter, extraOptions);
-                
+
                 if (option === 'destroy') {
                     $(this).data('multiselect', false);
                 }
@@ -15397,7 +15757,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
         $("select[data-role=multiselect]").multiselect();
     });
 
-}(window.jQuery);
+});
 
 ;(function () {
 	'use strict';
@@ -19928,8 +20288,8 @@ x();"bottom"===a.start?(c.css({top:b.outerHeight()-c.outerHeight()}),n(0,!0)):"t
 
 }));
 //! moment-timezone.js
-//! version : 0.5.6
-//! author : Tim Wood
+//! version : 0.5.17
+//! Copyright (c) JS Foundation and other contributors
 //! license : MIT
 //! github.com/moment/moment-timezone
 
@@ -19948,12 +20308,12 @@ x();"bottom"===a.start?(c.css({top:b.outerHeight()-c.outerHeight()}),n(0,!0)):"t
 	"use strict";
 
 	// Do not load moment-timezone a second time.
-	if (moment.tz !== undefined) {
-		logError('Moment Timezone ' + moment.tz.version + ' was already loaded ' + (moment.tz.dataVersion ? 'with data from ' : 'without any data') + moment.tz.dataVersion);
-		return moment;
-	}
+	// if (moment.tz !== undefined) {
+	// 	logError('Moment Timezone ' + moment.tz.version + ' was already loaded ' + (moment.tz.dataVersion ? 'with data from ' : 'without any data') + moment.tz.dataVersion);
+	// 	return moment;
+	// }
 
-	var VERSION = "0.5.6",
+	var VERSION = "0.5.17",
 		zones = {},
 		links = {},
 		names = {},
@@ -20121,6 +20481,11 @@ x();"bottom"===a.start?(c.css({top:b.outerHeight()-c.outerHeight()}),n(0,!0)):"t
 		},
 
 		offset : function (mom) {
+			logError("zone.offset has been deprecated in favor of zone.utcOffset");
+			return this.offsets[this._index(mom)];
+		},
+
+		utcOffset : function (mom) {
 			return this.offsets[this._index(mom)];
 		}
 	};
@@ -20160,7 +20525,7 @@ x();"bottom"===a.start?(c.css({top:b.outerHeight()-c.outerHeight()}),n(0,!0)):"t
 	}
 
 	ZoneScore.prototype.scoreOffsetAt = function (offsetAt) {
-		this.offsetScore += Math.abs(this.zone.offset(offsetAt.at) - offsetAt.offset);
+		this.offsetScore += Math.abs(this.zone.utcOffset(offsetAt.at) - offsetAt.offset);
 		if (this.zone.abbr(offsetAt.at).replace(/[^A-Z]/g, '') !== offsetAt.abbr) {
 			this.abbrScore++;
 		}
@@ -20254,7 +20619,7 @@ x();"bottom"===a.start?(c.css({top:b.outerHeight()-c.outerHeight()}),n(0,!0)):"t
 		// use Intl API when available and returning valid time zone
 		try {
 			var intlName = Intl.DateTimeFormat().resolvedOptions().timeZone;
-			if (intlName){
+			if (intlName && intlName.length > 3) {
 				var name = names[normalizeName(intlName)];
 				if (name) {
 					return name;
@@ -20312,9 +20677,7 @@ x();"bottom"===a.start?(c.css({top:b.outerHeight()-c.outerHeight()}),n(0,!0)):"t
 			normalized = normalizeName(name);
 			zones[normalized] = packed[i];
 			names[normalized] = name;
-			if (split[5]) {
-				addToGuesses(normalized, split[2].split(' '));
-			}
+			addToGuesses(normalized, split[2].split(' '));
 		}
 	}
 
@@ -20393,7 +20756,8 @@ x();"bottom"===a.start?(c.css({top:b.outerHeight()-c.outerHeight()}),n(0,!0)):"t
 	}
 
 	function needsOffset (m) {
-		return !!(m._a && (m._tzm === undefined));
+		var isUnixTimestamp = (m._f === 'X' || m._f === 'x');
+		return !!(m._a && (m._tzm === undefined) && !isUnixTimestamp);
 	}
 
 	function logError (message) {
@@ -20462,7 +20826,7 @@ x();"bottom"===a.start?(c.css({top:b.outerHeight()-c.outerHeight()}),n(0,!0)):"t
 			mom._z = zone;
 		}
 		if (mom._z) {
-			offset = mom._z.offset(mom);
+			offset = mom._z.utcOffset(mom);
 			if (Math.abs(offset) < 16) {
 				offset = offset / 60;
 			}
@@ -20474,11 +20838,11 @@ x();"bottom"===a.start?(c.css({top:b.outerHeight()-c.outerHeight()}),n(0,!0)):"t
 		}
 	};
 
-	fn.tz = function (name) {
+	fn.tz = function (name, keepTime) {
 		if (name) {
 			this._z = getZone(name);
 			if (this._z) {
-				moment.updateOffset(this);
+				moment.updateOffset(this, keepTime);
 			} else {
 				logError("Moment Timezone has no data for " + name + ". See http://momentjs.com/timezone/docs/#/data-loading/.");
 			}
@@ -20525,217 +20889,154 @@ x();"bottom"===a.start?(c.css({top:b.outerHeight()-c.outerHeight()}),n(0,!0)):"t
 	}
 
 	loadData({
-		"version": "2016g",
+		"version": "2018e",
 		"zones": [
 			"Africa/Abidjan|GMT|0|0||48e5",
-			"Africa/Khartoum|EAT|-30|0||51e5",
+			"Africa/Nairobi|EAT|-30|0||47e5",
 			"Africa/Algiers|CET|-10|0||26e5",
 			"Africa/Lagos|WAT|-10|0||17e6",
 			"Africa/Maputo|CAT|-20|0||26e5",
-			"Africa/Cairo|EET EEST|-20 -30|010101010|1Cby0 Fb0 c10 8n0 8Nd0 gL0 e10 mn0|15e6",
-			"Africa/Casablanca|WET WEST|0 -10|01010101010101010101010101010101010101010|1Cco0 Db0 1zd0 Lz0 1Nf0 wM0 co0 go0 1o00 s00 dA0 vc0 11A0 A00 e00 y00 11A0 uM0 e00 Dc0 11A0 s00 e00 IM0 WM0 mo0 gM0 LA0 WM0 jA0 e00 Rc0 11A0 e00 e00 U00 11A0 8o0 e00 11A0|32e5",
-			"Europe/Paris|CET CEST|-10 -20|01010101010101010101010|1BWp0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00|11e6",
+			"Africa/Cairo|EET EEST|-20 -30|01010|1M2m0 gL0 e10 mn0|15e6",
+			"Africa/Casablanca|WET WEST|0 -10|0101010101010101010101010101010101010101010|1H3C0 wM0 co0 go0 1o00 s00 dA0 vc0 11A0 A00 e00 y00 11A0 uM0 e00 Dc0 11A0 s00 e00 IM0 WM0 mo0 gM0 LA0 WM0 jA0 e00 Rc0 11A0 e00 e00 U00 11A0 8o0 e00 11A0 11A0 5A0 e00 17c0 1fA0 1a00|32e5",
+			"Europe/Paris|CET CEST|-10 -20|01010101010101010101010|1GNB0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0|11e6",
 			"Africa/Johannesburg|SAST|-20|0||84e5",
+			"Africa/Khartoum|EAT CAT|-30 -20|01|1Usl0|51e5",
+			"Africa/Sao_Tome|GMT WAT|0 -10|01|1UQN0",
 			"Africa/Tripoli|EET CET CEST|-20 -10 -20|0120|1IlA0 TA0 1o00|11e5",
-			"Africa/Windhoek|WAST WAT|-20 -10|01010101010101010101010|1C1c0 11B0 1nX0 11B0 1nX0 11B0 1qL0 WN0 1qL0 11B0 1nX0 11B0 1nX0 11B0 1nX0 11B0 1nX0 11B0 1qL0 WN0 1qL0 11B0|32e4",
-			"America/Adak|HST HDT|a0 90|01010101010101010101010|1BR00 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0|326",
-			"America/Anchorage|AKST AKDT|90 80|01010101010101010101010|1BQX0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0|30e4",
+			"Africa/Windhoek|CAT WAT|-20 -10|0101010101010|1GQo0 11B0 1qL0 WN0 1qL0 11B0 1nX0 11B0 1nX0 11B0 1nX0 11B0|32e4",
+			"America/Adak|HST HDT|a0 90|01010101010101010101010|1GIc0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0|326",
+			"America/Anchorage|AKST AKDT|90 80|01010101010101010101010|1GIb0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0|30e4",
 			"America/Santo_Domingo|AST|40|0||29e5",
-			"America/Araguaina|BRT BRST|30 20|010|1IdD0 Lz0|14e4",
-			"America/Argentina/Buenos_Aires|ART|30|0|",
-			"America/Asuncion|PYST PYT|30 40|01010101010101010101010|1C430 1a10 1fz0 1a10 1fz0 1cN0 17b0 1ip0 17b0 1ip0 17b0 1ip0 19X0 1fB0 19X0 1fB0 19X0 1ip0 17b0 1ip0 17b0 1ip0|28e5",
+			"America/Araguaina|-03 -02|30 20|010|1IdD0 Lz0|14e4",
+			"America/Fortaleza|-03|30|0||34e5",
+			"America/Asuncion|-03 -04|30 40|01010101010101010101010|1GTf0 1cN0 17b0 1ip0 17b0 1ip0 17b0 1ip0 19X0 1fB0 19X0 1fB0 19X0 1ip0 17b0 1ip0 17b0 1ip0 19X0 1fB0 19X0 1fB0|28e5",
 			"America/Panama|EST|50|0||15e5",
-			"America/Bahia|BRT BRST|30 20|010|1FJf0 Rb0|27e5",
-			"America/Bahia_Banderas|MST CDT CST|70 50 60|01212121212121212121212|1C1l0 1nW0 11B0 1nX0 11B0 1nX0 14p0 1lb0 14p0 1lb0 14p0 1lb0 14p0 1nX0 11B0 1nX0 11B0 1nX0 14p0 1lb0 14p0 1lb0|84e3",
-			"America/Fortaleza|BRT|30|0||34e5",
+			"America/Mexico_City|CST CDT|60 50|01010101010101010101010|1GQw0 1nX0 14p0 1lb0 14p0 1lb0 14p0 1lb0 14p0 1nX0 11B0 1nX0 11B0 1nX0 14p0 1lb0 14p0 1lb0 14p0 1nX0 11B0 1nX0|20e6",
+			"America/Bahia|-02 -03|20 30|01|1GCq0|27e5",
 			"America/Managua|CST|60|0||22e5",
-			"America/Manaus|AMT|40|0||19e5",
-			"America/Bogota|COT|50|0||90e5",
-			"America/Denver|MST MDT|70 60|01010101010101010101010|1BQV0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0|26e5",
-			"America/Campo_Grande|AMST AMT|30 40|01010101010101010101010|1BIr0 1zd0 On0 1zd0 Rb0 1zd0 Lz0 1C10 Lz0 1C10 On0 1zd0 On0 1zd0 On0 1zd0 On0 1C10 Lz0 1C10 Lz0 1C10|77e4",
-			"America/Cancun|CST CDT EST|60 50 50|010101010102|1C1k0 1nX0 11B0 1nX0 11B0 1nX0 14p0 1lb0 14p0 1lb0 Dd0|63e4",
-			"America/Caracas|VET VET|4u 40|01|1QMT0|29e5",
-			"America/Cayenne|GFT|30|0||58e3",
-			"America/Chicago|CST CDT|60 50|01010101010101010101010|1BQU0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0|92e5",
-			"America/Chihuahua|MST MDT|70 60|01010101010101010101010|1C1l0 1nX0 11B0 1nX0 11B0 1nX0 14p0 1lb0 14p0 1lb0 14p0 1lb0 14p0 1nX0 11B0 1nX0 11B0 1nX0 14p0 1lb0 14p0 1lb0|81e4",
+			"America/La_Paz|-04|40|0||19e5",
+			"America/Lima|-05|50|0||11e6",
+			"America/Denver|MST MDT|70 60|01010101010101010101010|1GI90 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0|26e5",
+			"America/Campo_Grande|-03 -04|30 40|01010101010101010101010|1GCr0 1zd0 Lz0 1C10 Lz0 1C10 On0 1zd0 On0 1zd0 On0 1zd0 On0 1HB0 FX0 1HB0 FX0 1HB0 IL0 1HB0 FX0 1HB0|77e4",
+			"America/Cancun|CST CDT EST|60 50 50|01010102|1GQw0 1nX0 14p0 1lb0 14p0 1lb0 Dd0|63e4",
+			"America/Caracas|-0430 -04|4u 40|01|1QMT0|29e5",
+			"America/Chicago|CST CDT|60 50|01010101010101010101010|1GI80 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0|92e5",
+			"America/Chihuahua|MST MDT|70 60|01010101010101010101010|1GQx0 1nX0 14p0 1lb0 14p0 1lb0 14p0 1lb0 14p0 1nX0 11B0 1nX0 11B0 1nX0 14p0 1lb0 14p0 1lb0 14p0 1nX0 11B0 1nX0|81e4",
 			"America/Phoenix|MST|70|0||42e5",
-			"America/Los_Angeles|PST PDT|80 70|01010101010101010101010|1BQW0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0|15e6",
-			"America/New_York|EST EDT|50 40|01010101010101010101010|1BQT0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0|21e6",
-			"America/Rio_Branco|AMT ACT|40 50|01|1KLE0|31e4",
-			"America/Fort_Nelson|PST PDT MST|80 70 70|010101010102|1BQW0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0|39e2",
-			"America/Halifax|AST ADT|40 30|01010101010101010101010|1BQS0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0|39e4",
-			"America/Godthab|WGT WGST|30 20|01010101010101010101010|1BWp0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00|17e3",
-			"America/Goose_Bay|AST ADT|40 30|01010101010101010101010|1BQQ1 1zb0 Op0 1zcX Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0|76e2",
-			"America/Grand_Turk|EST EDT AST|50 40 40|0101010101012|1BQT0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0|37e2",
-			"America/Guayaquil|ECT|50|0||27e5",
-			"America/Guyana|GYT|40|0||80e4",
-			"America/Havana|CST CDT|50 40|01010101010101010101010|1BQR0 1wo0 U00 1zc0 U00 1qM0 Oo0 1zc0 Oo0 1zc0 Oo0 1zc0 Rc0 1zc0 Oo0 1zc0 Oo0 1zc0 Oo0 1zc0 Oo0 1zc0|21e5",
-			"America/La_Paz|BOT|40|0||19e5",
-			"America/Lima|PET|50|0||11e6",
-			"America/Mexico_City|CST CDT|60 50|01010101010101010101010|1C1k0 1nX0 11B0 1nX0 11B0 1nX0 14p0 1lb0 14p0 1lb0 14p0 1lb0 14p0 1nX0 11B0 1nX0 11B0 1nX0 14p0 1lb0 14p0 1lb0|20e6",
-			"America/Metlakatla|PST AKST AKDT|80 90 80|012121212121|1PAa0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0|14e2",
-			"America/Miquelon|PMST PMDT|30 20|01010101010101010101010|1BQR0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0|61e2",
-			"America/Montevideo|UYST UYT|20 30|010101010101|1BQQ0 1ld0 14n0 1ld0 14n0 1o10 11z0 1o10 11z0 1o10 11z0|17e5",
-			"America/Noronha|FNT|20|0||30e2",
-			"America/North_Dakota/Beulah|MST MDT CST CDT|70 60 60 50|01232323232323232323232|1BQV0 1zb0 Oo0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0",
-			"America/Paramaribo|SRT|30|0||24e4",
-			"America/Port-au-Prince|EST EDT|50 40|010101010|1GI70 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0|23e5",
-			"America/Santiago|CLST CLT|30 40|010101010101010101010|1C1f0 1fB0 1nX0 G10 1EL0 Op0 1zb0 Rd0 1wn0 Rd0 46n0 Ap0 1Nb0 Ap0 1Nb0 Ap0 1Nb0 Ap0 1Nb0 Ap0|62e5",
-			"America/Sao_Paulo|BRST BRT|20 30|01010101010101010101010|1BIq0 1zd0 On0 1zd0 Rb0 1zd0 Lz0 1C10 Lz0 1C10 On0 1zd0 On0 1zd0 On0 1zd0 On0 1C10 Lz0 1C10 Lz0 1C10|20e6",
-			"America/Scoresbysund|EGT EGST|10 0|01010101010101010101010|1BWp0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00|452",
-			"America/St_Johns|NST NDT|3u 2u|01010101010101010101010|1BQPv 1zb0 Op0 1zcX Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0|11e4",
-			"Antarctica/Casey|+11 +08|-b0 -80|0101|1BN30 40P0 KL0|10",
-			"Antarctica/Davis|+05 +07|-50 -70|0101|1BPw0 3Wn0 KN0|70",
-			"Antarctica/DumontDUrville|+10|-a0|0||80",
-			"Antarctica/Macquarie|AEDT MIST|-b0 -b0|01|1C140|1",
+			"America/Los_Angeles|PST PDT|80 70|01010101010101010101010|1GIa0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0|15e6",
+			"America/New_York|EST EDT|50 40|01010101010101010101010|1GI70 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0|21e6",
+			"America/Rio_Branco|-04 -05|40 50|01|1KLE0|31e4",
+			"America/Fort_Nelson|PST PDT MST|80 70 70|01010102|1GIa0 1zb0 Op0 1zb0 Op0 1zb0 Op0|39e2",
+			"America/Halifax|AST ADT|40 30|01010101010101010101010|1GI60 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0|39e4",
+			"America/Godthab|-03 -02|30 20|01010101010101010101010|1GNB0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0|17e3",
+			"America/Grand_Turk|EST EDT AST|50 40 40|0101010121010101010|1GI70 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 5Ip0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0|37e2",
+			"America/Havana|CST CDT|50 40|01010101010101010101010|1GQt0 1qM0 Oo0 1zc0 Oo0 1zc0 Oo0 1zc0 Rc0 1zc0 Oo0 1zc0 Oo0 1zc0 Oo0 1zc0 Oo0 1zc0 Rc0 1zc0 Oo0 1zc0|21e5",
+			"America/Metlakatla|PST AKST AKDT|80 90 80|0121212121212121|1PAa0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0|14e2",
+			"America/Miquelon|-03 -02|30 20|01010101010101010101010|1GI50 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0|61e2",
+			"America/Montevideo|-02 -03|20 30|01010101|1GI40 1o10 11z0 1o10 11z0 1o10 11z0|17e5",
+			"America/Noronha|-02|20|0||30e2",
+			"America/Port-au-Prince|EST EDT|50 40|010101010101010101010|1GI70 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 3iN0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0|23e5",
+			"Antarctica/Palmer|-03 -04|30 40|010101010|1H3D0 Op0 1zb0 Rd0 1wn0 Rd0 46n0 Ap0|40",
+			"America/Santiago|-03 -04|30 40|010101010101010101010|1H3D0 Op0 1zb0 Rd0 1wn0 Rd0 46n0 Ap0 1Nb0 Ap0 1Nb0 Ap0 1Nb0 Ap0 1Nb0 Ap0 1Nb0 Dd0 1Nb0 Ap0|62e5",
+			"America/Sao_Paulo|-02 -03|20 30|01010101010101010101010|1GCq0 1zd0 Lz0 1C10 Lz0 1C10 On0 1zd0 On0 1zd0 On0 1zd0 On0 1HB0 FX0 1HB0 FX0 1HB0 IL0 1HB0 FX0 1HB0|20e6",
+			"Atlantic/Azores|-01 +00|10 0|01010101010101010101010|1GNB0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0|25e4",
+			"America/St_Johns|NST NDT|3u 2u|01010101010101010101010|1GI5u 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0|11e4",
+			"Antarctica/Casey|+11 +08|-b0 -80|0101|1GAF0 blz0 3m10|10",
+			"Antarctica/Davis|+05 +07|-50 -70|01|1GAI0|70",
+			"Pacific/Port_Moresby|+10|-a0|0||25e4",
+			"Pacific/Guadalcanal|+11|-b0|0||11e4",
 			"Asia/Tashkent|+05|-50|0||23e5",
-			"Pacific/Auckland|NZDT NZST|-d0 -c0|01010101010101010101010|1C120 1a00 1fA0 1a00 1fA0 1cM0 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1cM0 1fA0 1a00 1fA0 1a00|14e5",
-			"Antarctica/Rothera|-03|30|0||130",
-			"Antarctica/Syowa|+03|-30|0||20",
-			"Antarctica/Troll|+00 +02|0 -20|01010101010101010101010|1BWp0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00|40",
-			"Asia/Almaty|+06|-60|0||15e5",
-			"Asia/Baghdad|AST|-30|0||66e5",
-			"Asia/Amman|EET EEST|-20 -30|010101010101010101010|1BVy0 1qM0 11A0 1o00 11A0 4bX0 Dd0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00 11A0 1o00 11A0 1qM0|25e5",
-			"Asia/Kamchatka|+12 +11|-c0 -b0|010|1Dp30 WM0|18e4",
-			"Asia/Baku|+04 +05|-40 -50|0101010101010|1BWo0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00|27e5",
-			"Asia/Bangkok|ICT|-70|0||15e6",
-			"Asia/Barnaul|+06 +07|-60 -70|010101|1BWk0 1qM0 WM0 8Hz0 3rd0",
-			"Asia/Beirut|EET EEST|-20 -30|01010101010101010101010|1BWm0 1qL0 WN0 1qL0 WN0 1qL0 11B0 1nX0 11B0 1nX0 11B0 1nX0 11B0 1qL0 WN0 1qL0 WN0 1qL0 11B0 1nX0 11B0 1nX0|22e5",
-			"Asia/Brunei|BNT|-80|0||42e4",
+			"Pacific/Auckland|NZDT NZST|-d0 -c0|01010101010101010101010|1GQe0 1cM0 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1cM0 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00|14e5",
+			"Asia/Baghdad|+03|-30|0||66e5",
+			"Antarctica/Troll|+00 +02|0 -20|01010101010101010101010|1GNB0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0|40",
+			"Asia/Dhaka|+06|-60|0||16e6",
+			"Asia/Amman|EET EEST|-20 -30|010101010101010101010|1GPy0 4bX0 Dd0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 11A0 1o00|25e5",
+			"Asia/Kamchatka|+12|-c0|0||18e4",
+			"Asia/Baku|+04 +05|-40 -50|010101010|1GNA0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00|27e5",
+			"Asia/Bangkok|+07|-70|0||15e6",
+			"Asia/Barnaul|+07 +06|-70 -60|010|1N7v0 3rd0",
+			"Asia/Beirut|EET EEST|-20 -30|01010101010101010101010|1GNy0 1qL0 11B0 1nX0 11B0 1nX0 11B0 1nX0 11B0 1qL0 WN0 1qL0 WN0 1qL0 11B0 1nX0 11B0 1nX0 11B0 1qL0 WN0 1qL0|22e5",
+			"Asia/Manila|+08|-80|0||24e6",
 			"Asia/Kolkata|IST|-5u|0||15e6",
-			"Asia/Chita|+09 +10 +08|-90 -a0 -80|010120|1BWh0 1qM0 WM0 8Hz0 3re0|33e4",
-			"Asia/Choibalsan|CHOT CHOST|-80 -90|0101010101010|1O8G0 1cJ0 1cP0 1cJ0 1cP0 1fx0 1cP0 1cJ0 1cP0 1cJ0 1cP0 1cJ0|38e3",
+			"Asia/Chita|+10 +08 +09|-a0 -80 -90|012|1N7s0 3re0|33e4",
+			"Asia/Ulaanbaatar|+08 +09|-80 -90|01010|1O8G0 1cJ0 1cP0 1cJ0|12e5",
 			"Asia/Shanghai|CST|-80|0||23e6",
-			"Asia/Dhaka|BDT|-60|0||16e6",
-			"Asia/Damascus|EET EEST|-20 -30|01010101010101010101010|1C0m0 1nX0 11B0 1nX0 11B0 1nX0 11B0 1nX0 11B0 1qL0 WN0 1qL0 WN0 1qL0 11B0 1nX0 11B0 1nX0 11B0 1nX0 11B0 1qL0|26e5",
-			"Asia/Dili|TLT|-90|0||19e4",
-			"Asia/Dubai|GST|-40|0||39e5",
-			"Asia/Gaza|EET EEST|-20 -30|01010101010101010101010|1BVW1 SKX 1xd1 MKX 1AN0 1a00 1fA0 1cL0 1cN0 1nX0 1210 1nz0 1220 1ny0 1220 1qm0 1220 1ny0 1220 1ny0 1220 1ny0|18e5",
-			"Asia/Hebron|EET EEST|-20 -30|0101010101010101010101010|1BVy0 Tb0 1xd1 MKX bB0 cn0 1cN0 1a00 1fA0 1cL0 1cN0 1nX0 1210 1nz0 1220 1ny0 1220 1qm0 1220 1ny0 1220 1ny0 1220 1ny0|25e4",
+			"Asia/Colombo|+0530|-5u|0||22e5",
+			"Asia/Damascus|EET EEST|-20 -30|01010101010101010101010|1GPy0 1nX0 11B0 1nX0 11B0 1qL0 WN0 1qL0 WN0 1qL0 11B0 1nX0 11B0 1nX0 11B0 1nX0 11B0 1qL0 WN0 1qL0 WN0 1qL0|26e5",
+			"Asia/Dili|+09|-90|0||19e4",
+			"Asia/Dubai|+04|-40|0||39e5",
+			"Asia/Famagusta|EET EEST +03|-20 -30 -30|0101010101201010101010|1GNB0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00 11A0 15U0 2Ks0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0",
+			"Asia/Gaza|EET EEST|-20 -30|01010101010101010101010|1GPy0 1a00 1fA0 1cL0 1cN0 1nX0 1210 1nz0 1220 1qL0 WN0 1qL0 WN0 1qL0 WN0 1qL0 11B0 1qL0 WN0 1qL0 WN0 1qL0|18e5",
 			"Asia/Hong_Kong|HKT|-80|0||73e5",
-			"Asia/Hovd|HOVT HOVST|-70 -80|0101010101010|1O8H0 1cJ0 1cP0 1cJ0 1cP0 1fx0 1cP0 1cJ0 1cP0 1cJ0 1cP0 1cJ0|81e3",
-			"Asia/Irkutsk|+08 +09|-80 -90|01010|1BWi0 1qM0 WM0 8Hz0|60e4",
-			"Europe/Istanbul|EET EEST +03|-20 -30 -30|010101010101012|1BWp0 1qM0 Xc0 1qo0 WM0 1qM0 11A0 1o00 1200 1nA0 11A0 1tA0 U00 15w0|13e6",
+			"Asia/Hovd|+07 +08|-70 -80|01010|1O8H0 1cJ0 1cP0 1cJ0|81e3",
+			"Asia/Irkutsk|+09 +08|-90 -80|01|1N7t0|60e4",
+			"Europe/Istanbul|EET EEST +03|-20 -30 -30|01010101012|1GNB0 1qM0 11A0 1o00 1200 1nA0 11A0 1tA0 U00 15w0|13e6",
 			"Asia/Jakarta|WIB|-70|0||31e6",
 			"Asia/Jayapura|WIT|-90|0||26e4",
-			"Asia/Jerusalem|IST IDT|-20 -30|01010101010101010101010|1BVA0 17X0 1kp0 1dz0 1c10 1aL0 1eN0 1oL0 10N0 1oL0 10N0 1oL0 10N0 1rz0 W10 1rz0 W10 1rz0 10N0 1oL0 10N0 1oL0|81e4",
-			"Asia/Kabul|AFT|-4u|0||46e5",
+			"Asia/Jerusalem|IST IDT|-20 -30|01010101010101010101010|1GPA0 1aL0 1eN0 1oL0 10N0 1oL0 10N0 1oL0 10N0 1rz0 W10 1rz0 W10 1rz0 10N0 1oL0 10N0 1oL0 10N0 1rz0 W10 1rz0|81e4",
+			"Asia/Kabul|+0430|-4u|0||46e5",
 			"Asia/Karachi|PKT|-50|0||24e6",
-			"Asia/Urumqi|XJT|-60|0||32e5",
-			"Asia/Kathmandu|NPT|-5J|0||12e5",
-			"Asia/Khandyga|+10 +11 +09|-a0 -b0 -90|010102|1BWg0 1qM0 WM0 17V0 7zD0|66e2",
-			"Asia/Krasnoyarsk|+07 +08|-70 -80|01010|1BWj0 1qM0 WM0 8Hz0|10e5",
-			"Asia/Kuala_Lumpur|MYT|-80|0||71e5",
-			"Asia/Magadan|+11 +12 +10|-b0 -c0 -a0|010120|1BWf0 1qM0 WM0 8Hz0 3Cq0|95e3",
+			"Asia/Kathmandu|+0545|-5J|0||12e5",
+			"Asia/Yakutsk|+10 +09|-a0 -90|01|1N7s0|28e4",
+			"Asia/Krasnoyarsk|+08 +07|-80 -70|01|1N7u0|10e5",
+			"Asia/Magadan|+12 +10 +11|-c0 -a0 -b0|012|1N7q0 3Cq0|95e3",
 			"Asia/Makassar|WITA|-80|0||15e5",
-			"Asia/Manila|PHT|-80|0||24e6",
-			"Europe/Athens|EET EEST|-20 -30|01010101010101010101010|1BWp0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00|35e5",
-			"Asia/Novokuznetsk|+07 +06|-70 -60|010|1Dp80 WM0|55e4",
-			"Asia/Novosibirsk|+06 +07|-60 -70|010101|1BWk0 1qM0 WM0 8Hz0 4eN0|15e5",
-			"Asia/Omsk|+06 +07|-60 -70|01010|1BWk0 1qM0 WM0 8Hz0|12e5",
-			"Asia/Pyongyang|KST KST|-90 -8u|01|1P4D0|29e5",
-			"Asia/Rangoon|MMT|-6u|0||48e5",
-			"Asia/Sakhalin|+10 +11|-a0 -b0|010101|1BWg0 1qM0 WM0 8Hz0 3rd0|58e4",
+			"Europe/Athens|EET EEST|-20 -30|01010101010101010101010|1GNB0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0|35e5",
+			"Asia/Novosibirsk|+07 +06|-70 -60|010|1N7v0 4eN0|15e5",
+			"Asia/Omsk|+07 +06|-70 -60|01|1N7v0|12e5",
+			"Asia/Pyongyang|KST KST|-90 -8u|010|1P4D0 6BAu|29e5",
+			"Asia/Rangoon|+0630|-6u|0||48e5",
+			"Asia/Sakhalin|+11 +10|-b0 -a0|010|1N7r0 3rd0|58e4",
 			"Asia/Seoul|KST|-90|0||23e6",
-			"Asia/Singapore|SGT|-80|0||56e5",
-			"Asia/Srednekolymsk|+11 +12|-b0 -c0|01010|1BWf0 1qM0 WM0 8Hz0|35e2",
-			"Asia/Tbilisi|+04|-40|0||11e5",
-			"Asia/Tehran|IRST IRDT|-3u -4u|01010101010101010101010|1BTUu 1dz0 1cp0 1dz0 1cp0 1dz0 1cN0 1dz0 1cp0 1dz0 1cp0 1dz0 1cp0 1dz0 1cN0 1dz0 1cp0 1dz0 1cp0 1dz0 1cp0 1dz0|14e6",
-			"Asia/Thimphu|BTT|-60|0||79e3",
+			"Asia/Srednekolymsk|+12 +11|-c0 -b0|01|1N7q0|35e2",
+			"Asia/Tehran|+0330 +0430|-3u -4u|01010101010101010101010|1GLUu 1dz0 1cN0 1dz0 1cp0 1dz0 1cp0 1dz0 1cp0 1dz0 1cN0 1dz0 1cp0 1dz0 1cp0 1dz0 1cp0 1dz0 1cN0 1dz0 1cp0 1dz0|14e6",
 			"Asia/Tokyo|JST|-90|0||38e6",
-			"Asia/Tomsk|+06 +07|-60 -70|010101|1BWk0 1qM0 WM0 8Hz0 3Qp0|10e5",
-			"Asia/Ulaanbaatar|ULAT ULAST|-80 -90|0101010101010|1O8G0 1cJ0 1cP0 1cJ0 1cP0 1fx0 1cP0 1cJ0 1cP0 1cJ0 1cP0 1cJ0|12e5",
-			"Asia/Ust-Nera|+11 +12 +10|-b0 -c0 -a0|010102|1BWf0 1qM0 WM0 17V0 7zD0|65e2",
-			"Asia/Vladivostok|+10 +11|-a0 -b0|01010|1BWg0 1qM0 WM0 8Hz0|60e4",
-			"Asia/Yakutsk|+09 +10|-90 -a0|01010|1BWh0 1qM0 WM0 8Hz0|28e4",
-			"Asia/Yekaterinburg|+05 +06|-50 -60|01010|1BWl0 1qM0 WM0 8Hz0|14e5",
-			"Asia/Yerevan|+04 +05|-40 -50|01010|1BWm0 1qM0 WM0 1qM0|13e5",
-			"Atlantic/Azores|AZOT AZOST|10 0|01010101010101010101010|1BWp0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00|25e4",
-			"Europe/Lisbon|WET WEST|0 -10|01010101010101010101010|1BWp0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00|27e5",
-			"Atlantic/Cape_Verde|CVT|10|0||50e4",
-			"Atlantic/South_Georgia|GST|20|0||30",
-			"Atlantic/Stanley|FKST FKT|30 40|010|1C6R0 U10|21e2",
-			"Australia/Sydney|AEDT AEST|-b0 -a0|01010101010101010101010|1C140 1cM0 1cM0 1cM0 1cM0 1fA0 1cM0 1cM0 1cM0 1cM0 1cM0 1cM0 1cM0 1cM0 1cM0 1cM0 1cM0 1fA0 1cM0 1cM0 1cM0 1cM0|40e5",
-			"Australia/Adelaide|ACDT ACST|-au -9u|01010101010101010101010|1C14u 1cM0 1cM0 1cM0 1cM0 1fA0 1cM0 1cM0 1cM0 1cM0 1cM0 1cM0 1cM0 1cM0 1cM0 1cM0 1cM0 1fA0 1cM0 1cM0 1cM0 1cM0|11e5",
+			"Asia/Tomsk|+07 +06|-70 -60|010|1N7v0 3Qp0|10e5",
+			"Asia/Vladivostok|+11 +10|-b0 -a0|01|1N7r0|60e4",
+			"Asia/Yekaterinburg|+06 +05|-60 -50|01|1N7w0|14e5",
+			"Europe/Lisbon|WET WEST|0 -10|01010101010101010101010|1GNB0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0|27e5",
+			"Atlantic/Cape_Verde|-01|10|0||50e4",
+			"Australia/Sydney|AEDT AEST|-b0 -a0|01010101010101010101010|1GQg0 1fA0 1cM0 1cM0 1cM0 1cM0 1cM0 1cM0 1cM0 1cM0 1cM0 1cM0 1cM0 1fA0 1cM0 1cM0 1cM0 1cM0 1cM0 1cM0 1cM0 1cM0|40e5",
+			"Australia/Adelaide|ACDT ACST|-au -9u|01010101010101010101010|1GQgu 1fA0 1cM0 1cM0 1cM0 1cM0 1cM0 1cM0 1cM0 1cM0 1cM0 1cM0 1cM0 1fA0 1cM0 1cM0 1cM0 1cM0 1cM0 1cM0 1cM0 1cM0|11e5",
 			"Australia/Brisbane|AEST|-a0|0||20e5",
 			"Australia/Darwin|ACST|-9u|0||12e4",
-			"Australia/Eucla|ACWST|-8J|0||368",
-			"Australia/Lord_Howe|LHDT LHST|-b0 -au|01010101010101010101010|1C130 1cMu 1cLu 1cMu 1cLu 1fAu 1cLu 1cMu 1cLu 1cMu 1cLu 1cMu 1cLu 1cMu 1cLu 1cMu 1cLu 1fAu 1cLu 1cMu 1cLu 1cMu|347",
+			"Australia/Eucla|+0845|-8J|0||368",
+			"Australia/Lord_Howe|+11 +1030|-b0 -au|01010101010101010101010|1GQf0 1fAu 1cLu 1cMu 1cLu 1cMu 1cLu 1cMu 1cLu 1cMu 1cLu 1cMu 1cLu 1fAu 1cLu 1cMu 1cLu 1cMu 1cLu 1cMu 1cLu 1cMu|347",
 			"Australia/Perth|AWST|-80|0||18e5",
-			"Pacific/Easter|EASST EAST|50 60|010101010101010101010|1C1f0 1fB0 1nX0 G10 1EL0 Op0 1zb0 Rd0 1wn0 Rd0 46n0 Ap0 1Nb0 Ap0 1Nb0 Ap0 1Nb0 Ap0 1Nb0 Ap0|30e2",
-			"Europe/Dublin|GMT IST|0 -10|01010101010101010101010|1BWp0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00|12e5",
-			"Etc/GMT+1|-01|10|0|",
-			"Etc/GMT+10|-10|a0|0|",
-			"Etc/GMT+11|-11|b0|0|",
-			"Etc/GMT+12|-12|c0|0|",
-			"Etc/GMT+2|-02|20|0|",
-			"Etc/GMT+4|-04|40|0|",
-			"Etc/GMT+5|-05|50|0|",
-			"Etc/GMT+6|-06|60|0|",
-			"Etc/GMT+7|-07|70|0|",
-			"Etc/GMT+8|-08|80|0|",
-			"Etc/GMT+9|-09|90|0|",
+			"Pacific/Easter|-05 -06|50 60|010101010101010101010|1H3D0 Op0 1zb0 Rd0 1wn0 Rd0 46n0 Ap0 1Nb0 Ap0 1Nb0 Ap0 1Nb0 Ap0 1Nb0 Ap0 1Nb0 Dd0 1Nb0 Ap0|30e2",
+			"Europe/Dublin|GMT IST|0 -10|01010101010101010101010|1GNB0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0|12e5",
 			"Etc/GMT-1|+01|-10|0|",
-			"Etc/GMT-11|+11|-b0|0|",
-			"Etc/GMT-12|+12|-c0|0|",
-			"Etc/GMT-13|+13|-d0|0|",
-			"Etc/GMT-14|+14|-e0|0|",
+			"Pacific/Fakaofo|+13|-d0|0||483",
+			"Pacific/Kiritimati|+14|-e0|0||51e2",
 			"Etc/GMT-2|+02|-20|0|",
-			"Etc/GMT-7|+07|-70|0|",
-			"Etc/GMT-8|+08|-80|0|",
-			"Etc/GMT-9|+09|-90|0|",
+			"Pacific/Tahiti|-10|a0|0||18e4",
+			"Pacific/Niue|-11|b0|0||12e2",
+			"Etc/GMT+12|-12|c0|0|",
+			"Pacific/Galapagos|-06|60|0||25e3",
+			"Etc/GMT+7|-07|70|0|",
+			"Pacific/Pitcairn|-08|80|0||56",
+			"Pacific/Gambier|-09|90|0||125",
 			"Etc/UCT|UCT|0|0|",
 			"Etc/UTC|UTC|0|0|",
-			"Europe/Astrakhan|+03 +04|-30 -40|010101|1BWn0 1qM0 WM0 8Hz0 3rd0",
-			"Europe/London|GMT BST|0 -10|01010101010101010101010|1BWp0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00|10e6",
-			"Europe/Chisinau|EET EEST|-20 -30|01010101010101010101010|1BWo0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00|67e4",
-			"Europe/Kaliningrad|EET EEST +03|-20 -30 -30|01020|1BWo0 1qM0 WM0 8Hz0|44e4",
-			"Europe/Volgograd|+03 +04|-30 -40|01010|1BWn0 1qM0 WM0 8Hz0|10e5",
-			"Europe/Minsk|EET EEST +03|-20 -30 -30|0102|1BWo0 1qM0 WM0|19e5",
-			"Europe/Moscow|MSK MSD MSK|-30 -40 -40|01020|1BWn0 1qM0 WM0 8Hz0|16e6",
-			"Europe/Samara|+04 +03|-40 -30|010|1Dpb0 WM0|12e5",
-			"Europe/Simferopol|EET EEST MSK MSK|-20 -30 -40 -30|01010101023|1BWp0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11z0 1nW0|33e4",
+			"Europe/Astrakhan|+04 +03|-40 -30|010|1N7y0 3rd0",
+			"Europe/London|GMT BST|0 -10|01010101010101010101010|1GNB0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0|10e6",
+			"Europe/Chisinau|EET EEST|-20 -30|01010101010101010101010|1GNA0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0|67e4",
+			"Europe/Kaliningrad|+03 EET|-30 -20|01|1N7z0|44e4",
+			"Europe/Volgograd|+04 +03|-40 -30|01|1N7y0|10e5",
+			"Europe/Moscow|MSK MSK|-40 -30|01|1N7y0|16e6",
+			"Europe/Saratov|+04 +03|-40 -30|010|1N7y0 5810",
+			"Europe/Simferopol|EET EEST MSK MSK|-20 -30 -40 -30|0101023|1GNB0 1qM0 11A0 1o00 11z0 1nW0|33e4",
 			"Pacific/Honolulu|HST|a0|0||37e4",
-			"Indian/Chagos|IOT|-60|0||30e2",
-			"Indian/Christmas|CXT|-70|0||21e2",
-			"Indian/Cocos|CCT|-6u|0||596",
-			"Indian/Mahe|SCT|-40|0||79e3",
-			"Indian/Maldives|MVT|-50|0||35e4",
-			"Indian/Mauritius|MUT|-40|0||15e4",
-			"Indian/Reunion|RET|-40|0||84e4",
-			"Pacific/Majuro|MHT|-c0|0||28e3",
-			"MET|MET MEST|-10 -20|01010101010101010101010|1BWp0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00",
-			"Pacific/Chatham|CHADT CHAST|-dJ -cJ|01010101010101010101010|1C120 1a00 1fA0 1a00 1fA0 1cM0 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1cM0 1fA0 1a00 1fA0 1a00|600",
-			"Pacific/Apia|SST SDT WSDT WSST|b0 a0 -e0 -d0|01012323232323232323232|1Dbn0 1ff0 1a00 CI0 AQ0 1cM0 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1cM0 1fA0 1a00 1fA0 1a00|37e3",
-			"Pacific/Bougainville|PGT BST|-a0 -b0|01|1NwE0|18e4",
-			"Pacific/Chuuk|CHUT|-a0|0||49e3",
-			"Pacific/Efate|VUT|-b0|0||66e3",
-			"Pacific/Enderbury|PHOT|-d0|0||1",
-			"Pacific/Fakaofo|TKT TKT|b0 -d0|01|1Gfn0|483",
-			"Pacific/Fiji|FJST FJT|-d0 -c0|01010101010101010101010|1BWe0 1o00 Rc0 1wo0 Ao0 1Nc0 Ao0 1Q00 xz0 1SN0 uM0 1SM0 uM0 1VA0 s00 1VA0 uM0 1SM0 uM0 1SM0 uM0 1SM0|88e4",
-			"Pacific/Funafuti|TVT|-c0|0||45e2",
-			"Pacific/Galapagos|GALT|60|0||25e3",
-			"Pacific/Gambier|GAMT|90|0||125",
-			"Pacific/Guadalcanal|SBT|-b0|0||11e4",
+			"MET|MET MEST|-10 -20|01010101010101010101010|1GNB0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0",
+			"Pacific/Chatham|+1345 +1245|-dJ -cJ|01010101010101010101010|1GQe0 1cM0 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1cM0 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00|600",
+			"Pacific/Apia|+14 +13|-e0 -d0|01010101010101010101010|1GQe0 1cM0 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1cM0 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00|37e3",
+			"Pacific/Bougainville|+10 +11|-a0 -b0|01|1NwE0|18e4",
+			"Pacific/Fiji|+13 +12|-d0 -c0|01010101010101010101010|1Goe0 1Nc0 Ao0 1Q00 xz0 1SN0 uM0 1SM0 uM0 1VA0 s00 1VA0 s00 1VA0 uM0 1SM0 uM0 1SM0 uM0 1VA0 s00 1VA0|88e4",
 			"Pacific/Guam|ChST|-a0|0||17e4",
-			"Pacific/Kiritimati|LINT|-e0|0||51e2",
-			"Pacific/Kosrae|KOST|-b0|0||66e2",
-			"Pacific/Marquesas|MART|9u|0||86e2",
+			"Pacific/Marquesas|-0930|9u|0||86e2",
 			"Pacific/Pago_Pago|SST|b0|0||37e2",
-			"Pacific/Nauru|NRT|-c0|0||10e3",
-			"Pacific/Niue|NUT|b0|0||12e2",
-			"Pacific/Norfolk|NFT NFT|-bu -b0|01|1PoCu|25e4",
-			"Pacific/Noumea|NCT|-b0|0||98e3",
-			"Pacific/Palau|PWT|-90|0||21e3",
-			"Pacific/Pitcairn|PST|80|0||56",
-			"Pacific/Pohnpei|PONT|-b0|0||34e3",
-			"Pacific/Port_Moresby|PGT|-a0|0||25e4",
-			"Pacific/Rarotonga|CKT|a0|0||13e3",
-			"Pacific/Tahiti|TAHT|a0|0||18e4",
-			"Pacific/Tarawa|GILT|-c0|0||29e3",
-			"Pacific/Tongatapu|TOT|-d0|0||75e3",
-			"Pacific/Wake|WAKT|-c0|0||16e3",
-			"Pacific/Wallis|WFT|-c0|0||94"
+			"Pacific/Norfolk|+1130 +11|-bu -b0|01|1PoCu|25e4",
+			"Pacific/Tongatapu|+13 +14|-d0 -e0|010|1S4d0 s00|75e3"
 		],
 		"links": [
 			"Africa/Abidjan|Africa/Accra",
@@ -20749,7 +21050,6 @@ x();"bottom"===a.start?(c.css({top:b.outerHeight()-c.outerHeight()}),n(0,!0)):"t
 			"Africa/Abidjan|Africa/Monrovia",
 			"Africa/Abidjan|Africa/Nouakchott",
 			"Africa/Abidjan|Africa/Ouagadougou",
-			"Africa/Abidjan|Africa/Sao_Tome",
 			"Africa/Abidjan|Africa/Timbuktu",
 			"Africa/Abidjan|America/Danmarkshavn",
 			"Africa/Abidjan|Atlantic/Reykjavik",
@@ -20770,18 +21070,6 @@ x();"bottom"===a.start?(c.css({top:b.outerHeight()-c.outerHeight()}),n(0,!0)):"t
 			"Africa/Casablanca|Africa/El_Aaiun",
 			"Africa/Johannesburg|Africa/Maseru",
 			"Africa/Johannesburg|Africa/Mbabane",
-			"Africa/Khartoum|Africa/Addis_Ababa",
-			"Africa/Khartoum|Africa/Asmara",
-			"Africa/Khartoum|Africa/Asmera",
-			"Africa/Khartoum|Africa/Dar_es_Salaam",
-			"Africa/Khartoum|Africa/Djibouti",
-			"Africa/Khartoum|Africa/Juba",
-			"Africa/Khartoum|Africa/Kampala",
-			"Africa/Khartoum|Africa/Mogadishu",
-			"Africa/Khartoum|Africa/Nairobi",
-			"Africa/Khartoum|Indian/Antananarivo",
-			"Africa/Khartoum|Indian/Comoro",
-			"Africa/Khartoum|Indian/Mayotte",
 			"Africa/Lagos|Africa/Bangui",
 			"Africa/Lagos|Africa/Brazzaville",
 			"Africa/Lagos|Africa/Douala",
@@ -20799,6 +21087,17 @@ x();"bottom"===a.start?(c.css({top:b.outerHeight()-c.outerHeight()}),n(0,!0)):"t
 			"Africa/Maputo|Africa/Kigali",
 			"Africa/Maputo|Africa/Lubumbashi",
 			"Africa/Maputo|Africa/Lusaka",
+			"Africa/Nairobi|Africa/Addis_Ababa",
+			"Africa/Nairobi|Africa/Asmara",
+			"Africa/Nairobi|Africa/Asmera",
+			"Africa/Nairobi|Africa/Dar_es_Salaam",
+			"Africa/Nairobi|Africa/Djibouti",
+			"Africa/Nairobi|Africa/Juba",
+			"Africa/Nairobi|Africa/Kampala",
+			"Africa/Nairobi|Africa/Mogadishu",
+			"Africa/Nairobi|Indian/Antananarivo",
+			"Africa/Nairobi|Indian/Comoro",
+			"Africa/Nairobi|Indian/Mayotte",
 			"Africa/Tripoli|Libya",
 			"America/Adak|America/Atka",
 			"America/Adak|US/Aleutian",
@@ -20807,30 +21106,13 @@ x();"bottom"===a.start?(c.css({top:b.outerHeight()-c.outerHeight()}),n(0,!0)):"t
 			"America/Anchorage|America/Sitka",
 			"America/Anchorage|America/Yakutat",
 			"America/Anchorage|US/Alaska",
-			"America/Argentina/Buenos_Aires|America/Argentina/Catamarca",
-			"America/Argentina/Buenos_Aires|America/Argentina/ComodRivadavia",
-			"America/Argentina/Buenos_Aires|America/Argentina/Cordoba",
-			"America/Argentina/Buenos_Aires|America/Argentina/Jujuy",
-			"America/Argentina/Buenos_Aires|America/Argentina/La_Rioja",
-			"America/Argentina/Buenos_Aires|America/Argentina/Mendoza",
-			"America/Argentina/Buenos_Aires|America/Argentina/Rio_Gallegos",
-			"America/Argentina/Buenos_Aires|America/Argentina/Salta",
-			"America/Argentina/Buenos_Aires|America/Argentina/San_Juan",
-			"America/Argentina/Buenos_Aires|America/Argentina/San_Luis",
-			"America/Argentina/Buenos_Aires|America/Argentina/Tucuman",
-			"America/Argentina/Buenos_Aires|America/Argentina/Ushuaia",
-			"America/Argentina/Buenos_Aires|America/Buenos_Aires",
-			"America/Argentina/Buenos_Aires|America/Catamarca",
-			"America/Argentina/Buenos_Aires|America/Cordoba",
-			"America/Argentina/Buenos_Aires|America/Jujuy",
-			"America/Argentina/Buenos_Aires|America/Mendoza",
-			"America/Argentina/Buenos_Aires|America/Rosario",
 			"America/Campo_Grande|America/Cuiaba",
 			"America/Chicago|America/Indiana/Knox",
 			"America/Chicago|America/Indiana/Tell_City",
 			"America/Chicago|America/Knox_IN",
 			"America/Chicago|America/Matamoros",
 			"America/Chicago|America/Menominee",
+			"America/Chicago|America/North_Dakota/Beulah",
 			"America/Chicago|America/North_Dakota/Center",
 			"America/Chicago|America/North_Dakota/New_Salem",
 			"America/Chicago|America/Rainy_River",
@@ -20854,16 +21136,50 @@ x();"bottom"===a.start?(c.css({top:b.outerHeight()-c.outerHeight()}),n(0,!0)):"t
 			"America/Denver|MST7MDT",
 			"America/Denver|Navajo",
 			"America/Denver|US/Mountain",
+			"America/Fortaleza|America/Argentina/Buenos_Aires",
+			"America/Fortaleza|America/Argentina/Catamarca",
+			"America/Fortaleza|America/Argentina/ComodRivadavia",
+			"America/Fortaleza|America/Argentina/Cordoba",
+			"America/Fortaleza|America/Argentina/Jujuy",
+			"America/Fortaleza|America/Argentina/La_Rioja",
+			"America/Fortaleza|America/Argentina/Mendoza",
+			"America/Fortaleza|America/Argentina/Rio_Gallegos",
+			"America/Fortaleza|America/Argentina/Salta",
+			"America/Fortaleza|America/Argentina/San_Juan",
+			"America/Fortaleza|America/Argentina/San_Luis",
+			"America/Fortaleza|America/Argentina/Tucuman",
+			"America/Fortaleza|America/Argentina/Ushuaia",
 			"America/Fortaleza|America/Belem",
+			"America/Fortaleza|America/Buenos_Aires",
+			"America/Fortaleza|America/Catamarca",
+			"America/Fortaleza|America/Cayenne",
+			"America/Fortaleza|America/Cordoba",
+			"America/Fortaleza|America/Jujuy",
 			"America/Fortaleza|America/Maceio",
+			"America/Fortaleza|America/Mendoza",
+			"America/Fortaleza|America/Paramaribo",
 			"America/Fortaleza|America/Recife",
+			"America/Fortaleza|America/Rosario",
 			"America/Fortaleza|America/Santarem",
+			"America/Fortaleza|Antarctica/Rothera",
+			"America/Fortaleza|Atlantic/Stanley",
+			"America/Fortaleza|Etc/GMT+3",
 			"America/Halifax|America/Glace_Bay",
+			"America/Halifax|America/Goose_Bay",
 			"America/Halifax|America/Moncton",
 			"America/Halifax|America/Thule",
 			"America/Halifax|Atlantic/Bermuda",
 			"America/Halifax|Canada/Atlantic",
 			"America/Havana|Cuba",
+			"America/La_Paz|America/Boa_Vista",
+			"America/La_Paz|America/Guyana",
+			"America/La_Paz|America/Manaus",
+			"America/La_Paz|America/Porto_Velho",
+			"America/La_Paz|Brazil/West",
+			"America/La_Paz|Etc/GMT+4",
+			"America/Lima|America/Bogota",
+			"America/Lima|America/Guayaquil",
+			"America/Lima|Etc/GMT+5",
 			"America/Los_Angeles|America/Dawson",
 			"America/Los_Angeles|America/Ensenada",
 			"America/Los_Angeles|America/Santa_Isabel",
@@ -20883,11 +21199,8 @@ x();"bottom"===a.start?(c.css({top:b.outerHeight()-c.outerHeight()}),n(0,!0)):"t
 			"America/Managua|America/Regina",
 			"America/Managua|America/Swift_Current",
 			"America/Managua|America/Tegucigalpa",
-			"America/Managua|Canada/East-Saskatchewan",
 			"America/Managua|Canada/Saskatchewan",
-			"America/Manaus|America/Boa_Vista",
-			"America/Manaus|America/Porto_Velho",
-			"America/Manaus|Brazil/West",
+			"America/Mexico_City|America/Bahia_Banderas",
 			"America/Mexico_City|America/Merida",
 			"America/Mexico_City|America/Monterrey",
 			"America/Mexico_City|Mexico/General",
@@ -20915,7 +21228,9 @@ x();"bottom"===a.start?(c.css({top:b.outerHeight()-c.outerHeight()}),n(0,!0)):"t
 			"America/New_York|US/East-Indiana",
 			"America/New_York|US/Eastern",
 			"America/New_York|US/Michigan",
+			"America/Noronha|Atlantic/South_Georgia",
 			"America/Noronha|Brazil/DeNoronha",
+			"America/Noronha|Etc/GMT+2",
 			"America/Panama|America/Atikokan",
 			"America/Panama|America/Cayman",
 			"America/Panama|America/Coral_Harbour",
@@ -20930,7 +21245,6 @@ x();"bottom"===a.start?(c.css({top:b.outerHeight()-c.outerHeight()}),n(0,!0)):"t
 			"America/Rio_Branco|America/Eirunepe",
 			"America/Rio_Branco|America/Porto_Acre",
 			"America/Rio_Branco|Brazil/Acre",
-			"America/Santiago|Antarctica/Palmer",
 			"America/Santiago|Chile/Continental",
 			"America/Santo_Domingo|America/Anguilla",
 			"America/Santo_Domingo|America/Antigua",
@@ -20957,35 +21271,69 @@ x();"bottom"===a.start?(c.css({top:b.outerHeight()-c.outerHeight()}),n(0,!0)):"t
 			"America/Santo_Domingo|America/Virgin",
 			"America/Sao_Paulo|Brazil/East",
 			"America/St_Johns|Canada/Newfoundland",
-			"Antarctica/DumontDUrville|Etc/GMT-10",
-			"Antarctica/Rothera|Etc/GMT+3",
-			"Antarctica/Syowa|Etc/GMT-3",
-			"Asia/Almaty|Antarctica/Vostok",
-			"Asia/Almaty|Asia/Bishkek",
-			"Asia/Almaty|Asia/Qyzylorda",
-			"Asia/Almaty|Etc/GMT-6",
+			"Antarctica/Palmer|America/Punta_Arenas",
+			"Asia/Baghdad|Antarctica/Syowa",
 			"Asia/Baghdad|Asia/Aden",
 			"Asia/Baghdad|Asia/Bahrain",
 			"Asia/Baghdad|Asia/Kuwait",
 			"Asia/Baghdad|Asia/Qatar",
 			"Asia/Baghdad|Asia/Riyadh",
+			"Asia/Baghdad|Etc/GMT-3",
+			"Asia/Baghdad|Europe/Minsk",
 			"Asia/Bangkok|Asia/Ho_Chi_Minh",
+			"Asia/Bangkok|Asia/Novokuznetsk",
 			"Asia/Bangkok|Asia/Phnom_Penh",
 			"Asia/Bangkok|Asia/Saigon",
 			"Asia/Bangkok|Asia/Vientiane",
+			"Asia/Bangkok|Etc/GMT-7",
+			"Asia/Bangkok|Indian/Christmas",
+			"Asia/Dhaka|Antarctica/Vostok",
+			"Asia/Dhaka|Asia/Almaty",
+			"Asia/Dhaka|Asia/Bishkek",
 			"Asia/Dhaka|Asia/Dacca",
+			"Asia/Dhaka|Asia/Kashgar",
+			"Asia/Dhaka|Asia/Qyzylorda",
+			"Asia/Dhaka|Asia/Thimbu",
+			"Asia/Dhaka|Asia/Thimphu",
+			"Asia/Dhaka|Asia/Urumqi",
+			"Asia/Dhaka|Etc/GMT-6",
+			"Asia/Dhaka|Indian/Chagos",
+			"Asia/Dili|Etc/GMT-9",
+			"Asia/Dili|Pacific/Palau",
 			"Asia/Dubai|Asia/Muscat",
+			"Asia/Dubai|Asia/Tbilisi",
+			"Asia/Dubai|Asia/Yerevan",
+			"Asia/Dubai|Etc/GMT-4",
+			"Asia/Dubai|Europe/Samara",
+			"Asia/Dubai|Indian/Mahe",
+			"Asia/Dubai|Indian/Mauritius",
+			"Asia/Dubai|Indian/Reunion",
+			"Asia/Gaza|Asia/Hebron",
 			"Asia/Hong_Kong|Hongkong",
 			"Asia/Jakarta|Asia/Pontianak",
 			"Asia/Jerusalem|Asia/Tel_Aviv",
 			"Asia/Jerusalem|Israel",
 			"Asia/Kamchatka|Asia/Anadyr",
+			"Asia/Kamchatka|Etc/GMT-12",
+			"Asia/Kamchatka|Kwajalein",
+			"Asia/Kamchatka|Pacific/Funafuti",
+			"Asia/Kamchatka|Pacific/Kwajalein",
+			"Asia/Kamchatka|Pacific/Majuro",
+			"Asia/Kamchatka|Pacific/Nauru",
+			"Asia/Kamchatka|Pacific/Tarawa",
+			"Asia/Kamchatka|Pacific/Wake",
+			"Asia/Kamchatka|Pacific/Wallis",
 			"Asia/Kathmandu|Asia/Katmandu",
 			"Asia/Kolkata|Asia/Calcutta",
-			"Asia/Kolkata|Asia/Colombo",
-			"Asia/Kuala_Lumpur|Asia/Kuching",
 			"Asia/Makassar|Asia/Ujung_Pandang",
+			"Asia/Manila|Asia/Brunei",
+			"Asia/Manila|Asia/Kuala_Lumpur",
+			"Asia/Manila|Asia/Kuching",
+			"Asia/Manila|Asia/Singapore",
+			"Asia/Manila|Etc/GMT-8",
+			"Asia/Manila|Singapore",
 			"Asia/Rangoon|Asia/Yangon",
+			"Asia/Rangoon|Indian/Cocos",
 			"Asia/Seoul|ROK",
 			"Asia/Shanghai|Asia/Chongqing",
 			"Asia/Shanghai|Asia/Chungking",
@@ -20995,23 +21343,26 @@ x();"bottom"===a.start?(c.css({top:b.outerHeight()-c.outerHeight()}),n(0,!0)):"t
 			"Asia/Shanghai|Asia/Taipei",
 			"Asia/Shanghai|PRC",
 			"Asia/Shanghai|ROC",
-			"Asia/Singapore|Singapore",
 			"Asia/Tashkent|Antarctica/Mawson",
 			"Asia/Tashkent|Asia/Aqtau",
 			"Asia/Tashkent|Asia/Aqtobe",
 			"Asia/Tashkent|Asia/Ashgabat",
 			"Asia/Tashkent|Asia/Ashkhabad",
+			"Asia/Tashkent|Asia/Atyrau",
 			"Asia/Tashkent|Asia/Dushanbe",
 			"Asia/Tashkent|Asia/Oral",
 			"Asia/Tashkent|Asia/Samarkand",
 			"Asia/Tashkent|Etc/GMT-5",
 			"Asia/Tashkent|Indian/Kerguelen",
-			"Asia/Tbilisi|Etc/GMT-4",
+			"Asia/Tashkent|Indian/Maldives",
 			"Asia/Tehran|Iran",
-			"Asia/Thimphu|Asia/Thimbu",
 			"Asia/Tokyo|Japan",
+			"Asia/Ulaanbaatar|Asia/Choibalsan",
 			"Asia/Ulaanbaatar|Asia/Ulan_Bator",
-			"Asia/Urumqi|Asia/Kashgar",
+			"Asia/Vladivostok|Asia/Ust-Nera",
+			"Asia/Yakutsk|Asia/Khandyga",
+			"Atlantic/Azores|America/Scoresbysund",
+			"Atlantic/Cape_Verde|Etc/GMT+1",
 			"Australia/Adelaide|Australia/Broken_Hill",
 			"Australia/Adelaide|Australia/South",
 			"Australia/Adelaide|Australia/Yancowinna",
@@ -21105,19 +21456,35 @@ x();"bottom"===a.start?(c.css({top:b.outerHeight()-c.outerHeight()}),n(0,!0)):"t
 			"Pacific/Auckland|Antarctica/South_Pole",
 			"Pacific/Auckland|NZ",
 			"Pacific/Chatham|NZ-CHAT",
-			"Pacific/Chuuk|Pacific/Truk",
-			"Pacific/Chuuk|Pacific/Yap",
 			"Pacific/Easter|Chile/EasterIsland",
+			"Pacific/Fakaofo|Etc/GMT-13",
+			"Pacific/Fakaofo|Pacific/Enderbury",
+			"Pacific/Galapagos|Etc/GMT+6",
+			"Pacific/Gambier|Etc/GMT+9",
+			"Pacific/Guadalcanal|Antarctica/Macquarie",
+			"Pacific/Guadalcanal|Etc/GMT-11",
+			"Pacific/Guadalcanal|Pacific/Efate",
+			"Pacific/Guadalcanal|Pacific/Kosrae",
+			"Pacific/Guadalcanal|Pacific/Noumea",
+			"Pacific/Guadalcanal|Pacific/Pohnpei",
+			"Pacific/Guadalcanal|Pacific/Ponape",
 			"Pacific/Guam|Pacific/Saipan",
 			"Pacific/Honolulu|HST",
 			"Pacific/Honolulu|Pacific/Johnston",
 			"Pacific/Honolulu|US/Hawaii",
-			"Pacific/Majuro|Kwajalein",
-			"Pacific/Majuro|Pacific/Kwajalein",
+			"Pacific/Kiritimati|Etc/GMT-14",
+			"Pacific/Niue|Etc/GMT+11",
 			"Pacific/Pago_Pago|Pacific/Midway",
 			"Pacific/Pago_Pago|Pacific/Samoa",
 			"Pacific/Pago_Pago|US/Samoa",
-			"Pacific/Pohnpei|Pacific/Ponape"
+			"Pacific/Pitcairn|Etc/GMT+8",
+			"Pacific/Port_Moresby|Antarctica/DumontDUrville",
+			"Pacific/Port_Moresby|Etc/GMT-10",
+			"Pacific/Port_Moresby|Pacific/Chuuk",
+			"Pacific/Port_Moresby|Pacific/Truk",
+			"Pacific/Port_Moresby|Pacific/Yap",
+			"Pacific/Tahiti|Etc/GMT+10",
+			"Pacific/Tahiti|Pacific/Rarotonga"
 		]
 	});
 
@@ -45290,7 +45657,7 @@ b[_type],e=/wn|up/.test(d)?t:v;if(!c[n]){if(d==_click)A(a,!1,!0);else{if(/wn|er|
 })(window, document);
 
 /*!
- * JavaScript Cookie v2.1.3
+ * JavaScript Cookie v2.2.0
  * https://github.com/js-cookie/js-cookie
  *
  * Copyright 2006, 2015 Klaus Hartl & Fagner Brack
@@ -45347,6 +45714,9 @@ b[_type],e=/wn|up/.test(d)?t:v;if(!c[n]){if(d==_click)A(a,!1,!0);else{if(/wn|er|
 					attributes.expires = expires;
 				}
 
+				// We're using "expires" because "max-age" is not supported by IE
+				attributes.expires = attributes.expires ? attributes.expires.toUTCString() : '';
+
 				try {
 					result = JSON.stringify(value);
 					if (/^[\{\[]/.test(result)) {
@@ -45365,13 +45735,19 @@ b[_type],e=/wn|up/.test(d)?t:v;if(!c[n]){if(d==_click)A(a,!1,!0);else{if(/wn|er|
 				key = key.replace(/%(23|24|26|2B|5E|60|7C)/g, decodeURIComponent);
 				key = key.replace(/[\(\)]/g, escape);
 
-				return (document.cookie = [
-					key, '=', value,
-					attributes.expires ? '; expires=' + attributes.expires.toUTCString() : '', // use expires attribute, max-age is not supported by IE
-					attributes.path ? '; path=' + attributes.path : '',
-					attributes.domain ? '; domain=' + attributes.domain : '',
-					attributes.secure ? '; secure' : ''
-				].join(''));
+				var stringifiedAttributes = '';
+
+				for (var attributeName in attributes) {
+					if (!attributes[attributeName]) {
+						continue;
+					}
+					stringifiedAttributes += '; ' + attributeName;
+					if (attributes[attributeName] === true) {
+						continue;
+					}
+					stringifiedAttributes += '=' + attributes[attributeName];
+				}
+				return (document.cookie = key + '=' + value + stringifiedAttributes);
 			}
 
 			// Read
@@ -45391,7 +45767,7 @@ b[_type],e=/wn|up/.test(d)?t:v;if(!c[n]){if(d==_click)A(a,!1,!0);else{if(/wn|er|
 				var parts = cookies[i].split('=');
 				var cookie = parts.slice(1).join('=');
 
-				if (cookie.charAt(0) === '"') {
+				if (!this.json && cookie.charAt(0) === '"') {
 					cookie = cookie.slice(1, -1);
 				}
 
@@ -45806,8 +46182,7 @@ b[_type],e=/wn|up/.test(d)?t:v;if(!c[n]){if(d==_click)A(a,!1,!0);else{if(/wn|er|
  * @license MIT
  */
 
-
-(function (factory) {
+(function sortableModule(factory) {
 	"use strict";
 
 	if (typeof define === "function" && define.amd) {
@@ -45816,15 +46191,18 @@ b[_type],e=/wn|up/.test(d)?t:v;if(!c[n]){if(d==_click)A(a,!1,!0);else{if(/wn|er|
 	else if (typeof module != "undefined" && typeof module.exports != "undefined") {
 		module.exports = factory();
 	}
-	else if (typeof Package !== "undefined") {
-		Sortable = factory();  // export for Meteor.js
-	}
 	else {
 		/* jshint sub:true */
 		window["Sortable"] = factory();
 	}
-})(function () {
+})(function sortableFactory() {
 	"use strict";
+
+	if (typeof window == "undefined" || !window.document) {
+		return function sortableError() {
+			throw new Error("Sortable.js requires a window with a document");
+		};
+	}
 
 	var dragEl,
 		parentEl,
@@ -45832,9 +46210,11 @@ b[_type],e=/wn|up/.test(d)?t:v;if(!c[n]){if(d==_click)A(a,!1,!0);else{if(/wn|er|
 		cloneEl,
 		rootEl,
 		nextEl,
+		lastDownEl,
 
 		scrollEl,
 		scrollParentEl,
+		scrollCustomFn,
 
 		lastEl,
 		lastCSS,
@@ -45844,6 +46224,8 @@ b[_type],e=/wn|up/.test(d)?t:v;if(!c[n]){if(d==_click)A(a,!1,!0);else{if(/wn|er|
 		newIndex,
 
 		activeGroup,
+		putSortable,
+
 		autoScroll = {},
 
 		tapEvt,
@@ -45852,7 +46234,8 @@ b[_type],e=/wn|up/.test(d)?t:v;if(!c[n]){if(d==_click)A(a,!1,!0);else{if(/wn|er|
 		moved,
 
 		/** @const */
-		RSPACE = /\s+/g,
+		R_SPACE = /\s+/g,
+		R_FLOAT = /left|right|inline/,
 
 		expando = 'Sortable' + (new Date).getTime(),
 
@@ -45860,8 +46243,17 @@ b[_type],e=/wn|up/.test(d)?t:v;if(!c[n]){if(d==_click)A(a,!1,!0);else{if(/wn|er|
 		document = win.document,
 		parseInt = win.parseInt,
 
+		$ = win.jQuery || win.Zepto,
+		Polymer = win.Polymer,
+
+		captureMode = false,
+
 		supportDraggable = !!('draggable' in document.createElement('div')),
 		supportCssPointerEvents = (function (el) {
+			// false when IE11
+			if (!!navigator.userAgent.match(/Trident.*rv[ :]?11\./)) {
+				return false;
+			}
 			el = document.createElement('x');
 			el.style.cssText = 'pointer-events:auto';
 			return el.style.pointerEvents === 'auto';
@@ -45870,14 +46262,16 @@ b[_type],e=/wn|up/.test(d)?t:v;if(!c[n]){if(d==_click)A(a,!1,!0);else{if(/wn|er|
 		_silent = false,
 
 		abs = Math.abs,
-		slice = [].slice,
+		min = Math.min,
 
+		savedInputChecked = [],
 		touchDragOverListeners = [],
 
 		_autoScroll = _throttle(function (/**Event*/evt, /**Object*/options, /**HTMLElement*/rootEl) {
 			// Bug: https://bugzilla.mozilla.org/show_bug.cgi?id=505521
 			if (rootEl && options.scroll) {
-				var el,
+				var _this = rootEl[expando],
+					el,
 					rect,
 					sens = options.scrollSensitivity,
 					speed = options.scrollSpeed,
@@ -45889,13 +46283,17 @@ b[_type],e=/wn|up/.test(d)?t:v;if(!c[n]){if(d==_click)A(a,!1,!0);else{if(/wn|er|
 					winHeight = window.innerHeight,
 
 					vx,
-					vy
+					vy,
+
+					scrollOffsetX,
+					scrollOffsetY
 				;
 
 				// Delect scrollEl
 				if (scrollParentEl !== rootEl) {
 					scrollEl = options.scroll;
 					scrollParentEl = rootEl;
+					scrollCustomFn = options.scrollFn;
 
 					if (scrollEl === true) {
 						scrollEl = rootEl;
@@ -45937,11 +46335,18 @@ b[_type],e=/wn|up/.test(d)?t:v;if(!c[n]){if(d==_click)A(a,!1,!0);else{if(/wn|er|
 
 					if (el) {
 						autoScroll.pid = setInterval(function () {
+							scrollOffsetY = vy ? vy * speed : 0;
+							scrollOffsetX = vx ? vx * speed : 0;
+
+							if ('function' === typeof(scrollCustomFn)) {
+								return scrollCustomFn.call(_this, scrollOffsetX, scrollOffsetY, evt);
+							}
+
 							if (el === win) {
-								win.scrollTo(win.pageXOffset + vx * speed, win.pageYOffset + vy * speed);
+								win.scrollTo(win.pageXOffset + scrollOffsetX, win.pageYOffset + scrollOffsetY);
 							} else {
-								vy && (el.scrollTop += vy * speed);
-								vx && (el.scrollLeft += vx * speed);
+								el.scrollTop += scrollOffsetY;
+								el.scrollLeft += scrollOffsetX;
 							}
 						}, 24);
 					}
@@ -45950,22 +46355,42 @@ b[_type],e=/wn|up/.test(d)?t:v;if(!c[n]){if(d==_click)A(a,!1,!0);else{if(/wn|er|
 		}, 30),
 
 		_prepareGroup = function (options) {
-			var group = options.group;
+			function toFn(value, pull) {
+				if (value === void 0 || value === true) {
+					value = group.name;
+				}
 
-			if (!group || typeof group != 'object') {
-				group = options.group = {name: group};
+				if (typeof value === 'function') {
+					return value;
+				} else {
+					return function (to, from) {
+						var fromGroup = from.options.group.name;
+
+						return pull
+							? value
+							: value && (value.join
+								? value.indexOf(fromGroup) > -1
+								: (fromGroup == value)
+							);
+					};
+				}
 			}
 
-			['pull', 'put'].forEach(function (key) {
-				if (!(key in group)) {
-					group[key] = true;
-				}
-			});
+			var group = {};
+			var originalGroup = options.group;
 
-			options.groups = ' ' + group.name + (group.put.join ? ' ' + group.put.join(' ') : '') + ' ';
+			if (!originalGroup || typeof originalGroup != 'object') {
+				originalGroup = {name: originalGroup};
+			}
+
+			group.name = originalGroup.name;
+			group.checkPull = toFn(originalGroup.pull, true);
+			group.checkPut = toFn(originalGroup.put);
+			group.revertClone = originalGroup.revertClone;
+
+			options.group = group;
 		}
 	;
-
 
 
 	/**
@@ -45985,7 +46410,6 @@ b[_type],e=/wn|up/.test(d)?t:v;if(!c[n]){if(d==_click)A(a,!1,!0);else{if(/wn|er|
 		// Export instance
 		el[expando] = this;
 
-
 		// Default options
 		var defaults = {
 			group: Math.random(),
@@ -45999,8 +46423,10 @@ b[_type],e=/wn|up/.test(d)?t:v;if(!c[n]){if(d==_click)A(a,!1,!0);else{if(/wn|er|
 			draggable: /[uo]l/i.test(el.nodeName) ? 'li' : '>*',
 			ghostClass: 'sortable-ghost',
 			chosenClass: 'sortable-chosen',
+			dragClass: 'sortable-drag',
 			ignore: 'a, img',
 			filter: null,
+			preventOnFilter: true,
 			animation: 0,
 			setData: function (dataTransfer, dragEl) {
 				dataTransfer.setData('Text', dragEl.textContent);
@@ -46011,7 +46437,9 @@ b[_type],e=/wn|up/.test(d)?t:v;if(!c[n]){if(d==_click)A(a,!1,!0);else{if(/wn|er|
 			delay: 0,
 			forceFallback: false,
 			fallbackClass: 'sortable-fallback',
-			fallbackOnBody: false
+			fallbackOnBody: false,
+			fallbackTolerance: 0,
+			fallbackOffset: {x: 0, y: 0}
 		};
 
 
@@ -46024,7 +46452,7 @@ b[_type],e=/wn|up/.test(d)?t:v;if(!c[n]){if(d==_click)A(a,!1,!0);else{if(/wn|er|
 
 		// Bind all private methods
 		for (var fn in this) {
-			if (fn.charAt(0) === '_') {
+			if (fn.charAt(0) === '_' && typeof this[fn] === 'function') {
 				this[fn] = this[fn].bind(this);
 			}
 		}
@@ -46035,6 +46463,7 @@ b[_type],e=/wn|up/.test(d)?t:v;if(!c[n]){if(d==_click)A(a,!1,!0);else{if(/wn|er|
 		// Bind events
 		_on(el, 'mousedown', this._onTapStart);
 		_on(el, 'touchstart', this._onTapStart);
+		_on(el, 'pointerdown', this._onTapStart);
 
 		if (this.nativeDraggable) {
 			_on(el, 'dragover', this);
@@ -46055,16 +46484,26 @@ b[_type],e=/wn|up/.test(d)?t:v;if(!c[n]){if(d==_click)A(a,!1,!0);else{if(/wn|er|
 			var _this = this,
 				el = this.el,
 				options = this.options,
+				preventOnFilter = options.preventOnFilter,
 				type = evt.type,
 				touch = evt.touches && evt.touches[0],
 				target = (touch || evt).target,
-				originalTarget = target,
-				filter = options.filter;
+				originalTarget = evt.target.shadowRoot && evt.path[0] || target,
+				filter = options.filter,
+				startIndex;
 
+			_saveInputCheckedState(el);
+
+
+			// Don't trigger start event when an element is been dragged, otherwise the evt.oldindex always wrong when set option.group.
+			if (dragEl) {
+				return;
+			}
 
 			if (type === 'mousedown' && evt.button !== 0 || options.disabled) {
 				return; // only left button or enabled
 			}
+
 
 			target = _closest(target, options.draggable, el);
 
@@ -46072,14 +46511,19 @@ b[_type],e=/wn|up/.test(d)?t:v;if(!c[n]){if(d==_click)A(a,!1,!0);else{if(/wn|er|
 				return;
 			}
 
-			// get the index of the dragged element within its parent
-			oldIndex = _index(target);
+			if (lastDownEl === target) {
+				// Ignoring duplicate `down`
+				return;
+			}
+
+			// Get the index of the dragged element within its parent
+			startIndex = _index(target, options.draggable);
 
 			// Check filter
 			if (typeof filter === 'function') {
 				if (filter.call(this, evt, target, this)) {
-					_dispatchEvent(_this, originalTarget, 'filter', target, el, oldIndex);
-					evt.preventDefault();
+					_dispatchEvent(_this, originalTarget, 'filter', target, el, startIndex);
+					preventOnFilter && evt.preventDefault();
 					return; // cancel dnd
 				}
 			}
@@ -46088,28 +46532,26 @@ b[_type],e=/wn|up/.test(d)?t:v;if(!c[n]){if(d==_click)A(a,!1,!0);else{if(/wn|er|
 					criteria = _closest(originalTarget, criteria.trim(), el);
 
 					if (criteria) {
-						_dispatchEvent(_this, criteria, 'filter', target, el, oldIndex);
+						_dispatchEvent(_this, criteria, 'filter', target, el, startIndex);
 						return true;
 					}
 				});
 
 				if (filter) {
-					evt.preventDefault();
+					preventOnFilter && evt.preventDefault();
 					return; // cancel dnd
 				}
 			}
-
 
 			if (options.handle && !_closest(originalTarget, options.handle, el)) {
 				return;
 			}
 
-
 			// Prepare `dragstart`
-			this._prepareDragStart(evt, touch, target);
+			this._prepareDragStart(evt, touch, target, startIndex);
 		},
 
-		_prepareDragStart: function (/** Event */evt, /** Touch */touch, /** HTMLElement */target) {
+		_prepareDragStart: function (/** Event */evt, /** Touch */touch, /** HTMLElement */target, /** Number */startIndex) {
 			var _this = this,
 				el = _this.el,
 				options = _this.options,
@@ -46123,7 +46565,14 @@ b[_type],e=/wn|up/.test(d)?t:v;if(!c[n]){if(d==_click)A(a,!1,!0);else{if(/wn|er|
 				dragEl = target;
 				parentEl = dragEl.parentNode;
 				nextEl = dragEl.nextSibling;
+				lastDownEl = target;
 				activeGroup = options.group;
+				oldIndex = startIndex;
+
+				this._lastX = (touch || evt).clientX;
+				this._lastY = (touch || evt).clientY;
+
+				dragEl.style['will-change'] = 'transform';
 
 				dragStartFn = function () {
 					// Delayed drag has been triggered
@@ -46131,13 +46580,16 @@ b[_type],e=/wn|up/.test(d)?t:v;if(!c[n]){if(d==_click)A(a,!1,!0);else{if(/wn|er|
 					_this._disableDelayedDrag();
 
 					// Make the element draggable
-					dragEl.draggable = true;
+					dragEl.draggable = _this.nativeDraggable;
 
 					// Chosen item
-					_toggleClass(dragEl, _this.options.chosenClass, true);
+					_toggleClass(dragEl, options.chosenClass, true);
 
 					// Bind the events: dragstart/dragend
-					_this._triggerDragStart(touch);
+					_this._triggerDragStart(evt, touch);
+
+					// Drag start event
+					_dispatchEvent(_this, rootEl, 'choose', dragEl, rootEl, oldIndex);
 				};
 
 				// Disable "draggable"
@@ -46148,6 +46600,8 @@ b[_type],e=/wn|up/.test(d)?t:v;if(!c[n]){if(d==_click)A(a,!1,!0);else{if(/wn|er|
 				_on(ownerDocument, 'mouseup', _this._onDrop);
 				_on(ownerDocument, 'touchend', _this._onDrop);
 				_on(ownerDocument, 'touchcancel', _this._onDrop);
+				_on(ownerDocument, 'pointercancel', _this._onDrop);
+				_on(ownerDocument, 'selectstart', _this);
 
 				if (options.delay) {
 					// If the user moves the pointer or let go the click or touch
@@ -46158,11 +46612,14 @@ b[_type],e=/wn|up/.test(d)?t:v;if(!c[n]){if(d==_click)A(a,!1,!0);else{if(/wn|er|
 					_on(ownerDocument, 'touchcancel', _this._disableDelayedDrag);
 					_on(ownerDocument, 'mousemove', _this._disableDelayedDrag);
 					_on(ownerDocument, 'touchmove', _this._disableDelayedDrag);
+					_on(ownerDocument, 'pointermove', _this._disableDelayedDrag);
 
 					_this._dragStartTimer = setTimeout(dragStartFn, options.delay);
 				} else {
 					dragStartFn();
 				}
+
+
 			}
 		},
 
@@ -46175,9 +46632,12 @@ b[_type],e=/wn|up/.test(d)?t:v;if(!c[n]){if(d==_click)A(a,!1,!0);else{if(/wn|er|
 			_off(ownerDocument, 'touchcancel', this._disableDelayedDrag);
 			_off(ownerDocument, 'mousemove', this._disableDelayedDrag);
 			_off(ownerDocument, 'touchmove', this._disableDelayedDrag);
+			_off(ownerDocument, 'pointermove', this._disableDelayedDrag);
 		},
 
-		_triggerDragStart: function (/** Touch */touch) {
+		_triggerDragStart: function (/** Event */evt, /** Touch */touch) {
+			touch = touch || (evt.pointerType == 'touch' ? evt : null);
+
 			if (touch) {
 				// Touch device support
 				tapEvt = {
@@ -46198,7 +46658,10 @@ b[_type],e=/wn|up/.test(d)?t:v;if(!c[n]){if(d==_click)A(a,!1,!0);else{if(/wn|er|
 
 			try {
 				if (document.selection) {
-					document.selection.empty();
+					// Timeout neccessary for IE9
+					setTimeout(function () {
+						document.selection.empty();
+					});
 				} else {
 					window.getSelection().removeAllRanges();
 				}
@@ -46208,13 +46671,18 @@ b[_type],e=/wn|up/.test(d)?t:v;if(!c[n]){if(d==_click)A(a,!1,!0);else{if(/wn|er|
 
 		_dragStarted: function () {
 			if (rootEl && dragEl) {
+				var options = this.options;
+
 				// Apply effect
-				_toggleClass(dragEl, this.options.ghostClass, true);
+				_toggleClass(dragEl, options.ghostClass, true);
+				_toggleClass(dragEl, options.dragClass, false);
 
 				Sortable.active = this;
 
 				// Drag start event
 				_dispatchEvent(this, rootEl, 'start', dragEl, rootEl, oldIndex);
+			} else {
+				this._nulling();
 			}
 		},
 
@@ -46233,12 +46701,11 @@ b[_type],e=/wn|up/.test(d)?t:v;if(!c[n]){if(d==_click)A(a,!1,!0);else{if(/wn|er|
 
 				var target = document.elementFromPoint(touchEvt.clientX, touchEvt.clientY),
 					parent = target,
-					groupName = ' ' + this.options.group.name + '',
 					i = touchDragOverListeners.length;
 
 				if (parent) {
 					do {
-						if (parent[expando] && parent[expando].options.groups.indexOf(groupName) > -1) {
+						if (parent[expando]) {
 							while (i--) {
 								touchDragOverListeners[i]({
 									clientX: touchEvt.clientX,
@@ -46266,18 +46733,27 @@ b[_type],e=/wn|up/.test(d)?t:v;if(!c[n]){if(d==_click)A(a,!1,!0);else{if(/wn|er|
 
 		_onTouchMove: function (/**TouchEvent*/evt) {
 			if (tapEvt) {
+				var	options = this.options,
+					fallbackTolerance = options.fallbackTolerance,
+					fallbackOffset = options.fallbackOffset,
+					touch = evt.touches ? evt.touches[0] : evt,
+					dx = (touch.clientX - tapEvt.clientX) + fallbackOffset.x,
+					dy = (touch.clientY - tapEvt.clientY) + fallbackOffset.y,
+					translate3d = evt.touches ? 'translate3d(' + dx + 'px,' + dy + 'px,0)' : 'translate(' + dx + 'px,' + dy + 'px)';
+
 				// only set the status to dragging, when we are actually dragging
 				if (!Sortable.active) {
+					if (fallbackTolerance &&
+						min(abs(touch.clientX - this._lastX), abs(touch.clientY - this._lastY)) < fallbackTolerance
+					) {
+						return;
+					}
+
 					this._dragStarted();
 				}
 
 				// as well as creating the ghost element on the document body
 				this._appendGhost();
-
-				var touch = evt.touches ? evt.touches[0] : evt,
-					dx = touch.clientX - tapEvt.clientX,
-					dy = touch.clientY - tapEvt.clientY,
-					translate3d = evt.touches ? 'translate3d(' + dx + 'px,' + dy + 'px,0)' : 'translate(' + dx + 'px,' + dy + 'px)';
 
 				moved = true;
 				touchEvt = touch;
@@ -46302,6 +46778,7 @@ b[_type],e=/wn|up/.test(d)?t:v;if(!c[n]){if(d==_click)A(a,!1,!0);else{if(/wn|er|
 
 				_toggleClass(ghostEl, options.ghostClass, false);
 				_toggleClass(ghostEl, options.fallbackClass, true);
+				_toggleClass(ghostEl, options.dragClass, true);
 
 				_css(ghostEl, 'top', rect.top - parseInt(css.marginTop, 10));
 				_css(ghostEl, 'left', rect.left - parseInt(css.marginLeft, 10));
@@ -46327,19 +46804,29 @@ b[_type],e=/wn|up/.test(d)?t:v;if(!c[n]){if(d==_click)A(a,!1,!0);else{if(/wn|er|
 
 			this._offUpEvents();
 
-			if (activeGroup.pull == 'clone') {
-				cloneEl = dragEl.cloneNode(true);
+			if (activeGroup.checkPull(this, this, dragEl, evt)) {
+				cloneEl = _clone(dragEl);
+
+				cloneEl.draggable = false;
+				cloneEl.style['will-change'] = '';
+
 				_css(cloneEl, 'display', 'none');
+				_toggleClass(cloneEl, this.options.chosenClass, false);
+
 				rootEl.insertBefore(cloneEl, dragEl);
+				_dispatchEvent(this, rootEl, 'clone', dragEl);
 			}
 
-			if (useFallback) {
+			_toggleClass(dragEl, options.dragClass, true);
 
+			if (useFallback) {
 				if (useFallback === 'touch') {
 					// Bind touch events
 					_on(document, 'touchmove', this._onTouchMove);
 					_on(document, 'touchend', this._onDrop);
 					_on(document, 'touchcancel', this._onDrop);
+					_on(document, 'pointermove', this._onTouchMove);
+					_on(document, 'pointerup', this._onDrop);
 				} else {
 					// Old brwoser
 					_on(document, 'mousemove', this._onTouchMove);
@@ -46363,11 +46850,13 @@ b[_type],e=/wn|up/.test(d)?t:v;if(!c[n]){if(d==_click)A(a,!1,!0);else{if(/wn|er|
 			var el = this.el,
 				target,
 				dragRect,
+				targetRect,
 				revert,
 				options = this.options,
 				group = options.group,
-				groupPut = group.put,
+				activeSortable = Sortable.active,
 				isOwner = (activeGroup === group),
+				isMovingBetweenSortable = false,
 				canSort = options.sort;
 
 			if (evt.preventDefault !== void 0) {
@@ -46375,14 +46864,21 @@ b[_type],e=/wn|up/.test(d)?t:v;if(!c[n]){if(d==_click)A(a,!1,!0);else{if(/wn|er|
 				!options.dragoverBubble && evt.stopPropagation();
 			}
 
+			if (dragEl.animated) {
+				return;
+			}
+
 			moved = true;
 
-			if (activeGroup && !options.disabled &&
+			if (activeSortable && !options.disabled &&
 				(isOwner
 					? canSort || (revert = !rootEl.contains(dragEl)) // Reverting item into the original list
-					: activeGroup.pull && groupPut && (
-						(activeGroup.name === group.name) || // by Name
-						(groupPut.indexOf && ~groupPut.indexOf(activeGroup.name)) // by Array
+					: (
+						putSortable === this ||
+						(
+							(activeSortable.lastPullMode = activeGroup.checkPull(this, activeSortable, dragEl, evt)) &&
+							group.checkPut(this, activeSortable, dragEl, evt)
+						)
 					)
 				) &&
 				(evt.rootEl === void 0 || evt.rootEl === this.el) // touch fallback
@@ -46397,8 +46893,14 @@ b[_type],e=/wn|up/.test(d)?t:v;if(!c[n]){if(d==_click)A(a,!1,!0);else{if(/wn|er|
 				target = _closest(evt.target, options.draggable, el);
 				dragRect = dragEl.getBoundingClientRect();
 
+				if (putSortable !== this) {
+					putSortable = this;
+					isMovingBetweenSortable = true;
+				}
+
 				if (revert) {
-					_cloneHide(true);
+					_cloneHide(activeSortable, true);
+					parentEl = rootEl; // actualization
 
 					if (cloneEl || nextEl) {
 						rootEl.insertBefore(dragEl, cloneEl || nextEl);
@@ -46412,8 +46914,12 @@ b[_type],e=/wn|up/.test(d)?t:v;if(!c[n]){if(d==_click)A(a,!1,!0);else{if(/wn|er|
 
 
 				if ((el.children.length === 0) || (el.children[0] === ghostEl) ||
-					(el === evt.target) && (target = _ghostIsLast(el, evt))
+					(el === evt.target) && (_ghostIsLast(el, evt))
 				) {
+					//assign target only if condition is true
+					if (el.children.length !== 0 && el.children[0] !== ghostEl && el === evt.target) {
+						target = el.lastElementChild;
+					}
 
 					if (target) {
 						if (target.animated) {
@@ -46423,9 +46929,9 @@ b[_type],e=/wn|up/.test(d)?t:v;if(!c[n]){if(d==_click)A(a,!1,!0);else{if(/wn|er|
 						targetRect = target.getBoundingClientRect();
 					}
 
-					_cloneHide(isOwner);
+					_cloneHide(activeSortable, isOwner);
 
-					if (_onMove(rootEl, el, dragEl, dragRect, target, targetRect) !== false) {
+					if (_onMove(rootEl, el, dragEl, dragRect, target, targetRect, evt) !== false) {
 						if (!dragEl.contains(el)) {
 							el.appendChild(dragEl);
 							parentEl = el; // actualization
@@ -46442,41 +46948,46 @@ b[_type],e=/wn|up/.test(d)?t:v;if(!c[n]){if(d==_click)A(a,!1,!0);else{if(/wn|er|
 						lastParentCSS = _css(target.parentNode);
 					}
 
+					targetRect = target.getBoundingClientRect();
 
-					var targetRect = target.getBoundingClientRect(),
-						width = targetRect.right - targetRect.left,
+					var width = targetRect.right - targetRect.left,
 						height = targetRect.bottom - targetRect.top,
-						floating = /left|right|inline/.test(lastCSS.cssFloat + lastCSS.display)
+						floating = R_FLOAT.test(lastCSS.cssFloat + lastCSS.display)
 							|| (lastParentCSS.display == 'flex' && lastParentCSS['flex-direction'].indexOf('row') === 0),
 						isWide = (target.offsetWidth > dragEl.offsetWidth),
 						isLong = (target.offsetHeight > dragEl.offsetHeight),
 						halfway = (floating ? (evt.clientX - targetRect.left) / width : (evt.clientY - targetRect.top) / height) > 0.5,
 						nextSibling = target.nextElementSibling,
-						moveVector = _onMove(rootEl, el, dragEl, dragRect, target, targetRect),
-						after
+						after = false
 					;
 
+					if (floating) {
+						var elTop = dragEl.offsetTop,
+							tgTop = target.offsetTop;
+
+						if (elTop === tgTop) {
+							after = (target.previousElementSibling === dragEl) && !isWide || halfway && isWide;
+						}
+						else if (target.previousElementSibling === dragEl || dragEl.previousElementSibling === target) {
+							after = (evt.clientY - targetRect.top) / height > 0.5;
+						} else {
+							after = tgTop > elTop;
+						}
+						} else if (!isMovingBetweenSortable) {
+						after = (nextSibling !== dragEl) && !isLong || halfway && isLong;
+					}
+
+					var moveVector = _onMove(rootEl, el, dragEl, dragRect, target, targetRect, evt, after);
+
 					if (moveVector !== false) {
-						_silent = true;
-						setTimeout(_unsilent, 30);
-
-						_cloneHide(isOwner);
-
 						if (moveVector === 1 || moveVector === -1) {
 							after = (moveVector === 1);
 						}
-						else if (floating) {
-							var elTop = dragEl.offsetTop,
-								tgTop = target.offsetTop;
 
-							if (elTop === tgTop) {
-								after = (target.previousElementSibling === dragEl) && !isWide || halfway && isWide;
-							} else {
-								after = tgTop > elTop;
-							}
-						} else {
-							after = (nextSibling !== dragEl) && !isLong || halfway && isLong;
-						}
+						_silent = true;
+						setTimeout(_unsilent, 30);
+
+						_cloneHide(activeSortable, isOwner);
 
 						if (!dragEl.contains(el)) {
 							if (after && !nextSibling) {
@@ -46500,6 +47011,10 @@ b[_type],e=/wn|up/.test(d)?t:v;if(!c[n]){if(d==_click)A(a,!1,!0);else{if(/wn|er|
 
 			if (ms) {
 				var currentRect = target.getBoundingClientRect();
+
+				if (prevRect.nodeType === 1) {
+					prevRect = prevRect.getBoundingClientRect();
+				}
 
 				_css(target, 'transition', 'none');
 				_css(target, 'transform', 'translate3d('
@@ -46525,9 +47040,13 @@ b[_type],e=/wn|up/.test(d)?t:v;if(!c[n]){if(d==_click)A(a,!1,!0);else{if(/wn|er|
 			var ownerDocument = this.el.ownerDocument;
 
 			_off(document, 'touchmove', this._onTouchMove);
+			_off(document, 'pointermove', this._onTouchMove);
 			_off(ownerDocument, 'mouseup', this._onDrop);
 			_off(ownerDocument, 'touchend', this._onDrop);
+			_off(ownerDocument, 'pointerup', this._onDrop);
 			_off(ownerDocument, 'touchcancel', this._onDrop);
+			_off(ownerDocument, 'pointercancel', this._onDrop);
+			_off(ownerDocument, 'selectstart', this);
 		},
 
 		_onDrop: function (/**Event*/evt) {
@@ -46554,7 +47073,12 @@ b[_type],e=/wn|up/.test(d)?t:v;if(!c[n]){if(d==_click)A(a,!1,!0);else{if(/wn|er|
 					!options.dropBubble && evt.stopPropagation();
 				}
 
-				ghostEl && ghostEl.parentNode.removeChild(ghostEl);
+				ghostEl && ghostEl.parentNode && ghostEl.parentNode.removeChild(ghostEl);
+
+				if (rootEl === parentEl || Sortable.active.lastPullMode !== 'clone') {
+					// Remove clone
+					cloneEl && cloneEl.parentNode && cloneEl.parentNode.removeChild(cloneEl);
+				}
 
 				if (dragEl) {
 					if (this.nativeDraggable) {
@@ -46562,33 +47086,34 @@ b[_type],e=/wn|up/.test(d)?t:v;if(!c[n]){if(d==_click)A(a,!1,!0);else{if(/wn|er|
 					}
 
 					_disableDraggable(dragEl);
+					dragEl.style['will-change'] = '';
 
 					// Remove class's
 					_toggleClass(dragEl, this.options.ghostClass, false);
 					_toggleClass(dragEl, this.options.chosenClass, false);
 
+					// Drag stop event
+					_dispatchEvent(this, rootEl, 'unchoose', dragEl, rootEl, oldIndex);
+
 					if (rootEl !== parentEl) {
-						newIndex = _index(dragEl);
+						newIndex = _index(dragEl, options.draggable);
 
 						if (newIndex >= 0) {
-							// drag from one list and drop into another
-							_dispatchEvent(null, parentEl, 'sort', dragEl, rootEl, oldIndex, newIndex);
-							_dispatchEvent(this, rootEl, 'sort', dragEl, rootEl, oldIndex, newIndex);
-
 							// Add event
 							_dispatchEvent(null, parentEl, 'add', dragEl, rootEl, oldIndex, newIndex);
 
 							// Remove event
 							_dispatchEvent(this, rootEl, 'remove', dragEl, rootEl, oldIndex, newIndex);
+
+							// drag from one list and drop into another
+							_dispatchEvent(null, parentEl, 'sort', dragEl, rootEl, oldIndex, newIndex);
+							_dispatchEvent(this, rootEl, 'sort', dragEl, rootEl, oldIndex, newIndex);
 						}
 					}
 					else {
-						// Remove clone
-						cloneEl && cloneEl.parentNode.removeChild(cloneEl);
-
 						if (dragEl.nextSibling !== nextEl) {
 							// Get the index of the dragged element within its parent
-							newIndex = _index(dragEl);
+							newIndex = _index(dragEl, options.draggable);
 
 							if (newIndex >= 0) {
 								// drag & drop within the same list
@@ -46599,7 +47124,8 @@ b[_type],e=/wn|up/.test(d)?t:v;if(!c[n]){if(d==_click)A(a,!1,!0);else{if(/wn|er|
 					}
 
 					if (Sortable.active) {
-						if (newIndex === null || newIndex === -1) {
+						/* jshint eqnull:true */
+						if (newIndex == null || newIndex === -1) {
 							newIndex = oldIndex;
 						}
 
@@ -46610,43 +47136,60 @@ b[_type],e=/wn|up/.test(d)?t:v;if(!c[n]){if(d==_click)A(a,!1,!0);else{if(/wn|er|
 					}
 				}
 
-				// Nulling
-				rootEl =
-				dragEl =
-				parentEl =
-				ghostEl =
-				nextEl =
-				cloneEl =
-
-				scrollEl =
-				scrollParentEl =
-
-				tapEvt =
-				touchEvt =
-
-				moved =
-				newIndex =
-
-				lastEl =
-				lastCSS =
-
-				activeGroup =
-				Sortable.active = null;
 			}
+
+			this._nulling();
 		},
 
+		_nulling: function() {
+			rootEl =
+			dragEl =
+			parentEl =
+			ghostEl =
+			nextEl =
+			cloneEl =
+			lastDownEl =
+
+			scrollEl =
+			scrollParentEl =
+
+			tapEvt =
+			touchEvt =
+
+			moved =
+			newIndex =
+
+			lastEl =
+			lastCSS =
+
+			putSortable =
+			activeGroup =
+			Sortable.active = null;
+
+			savedInputChecked.forEach(function (el) {
+				el.checked = true;
+			});
+			savedInputChecked.length = 0;
+		},
 
 		handleEvent: function (/**Event*/evt) {
-			var type = evt.type;
+			switch (evt.type) {
+				case 'drop':
+				case 'dragend':
+					this._onDrop(evt);
+					break;
 
-			if (type === 'dragover' || type === 'dragenter') {
-				if (dragEl) {
-					this._onDragOver(evt);
-					_globalDragOver(evt);
-				}
-			}
-			else if (type === 'drop' || type === 'dragend') {
-				this._onDrop(evt);
+				case 'dragover':
+				case 'dragenter':
+					if (dragEl) {
+						this._onDragOver(evt);
+						_globalDragOver(evt);
+					}
+					break;
+
+				case 'selectstart':
+					evt.preventDefault();
+					break;
 			}
 		},
 
@@ -46749,6 +47292,7 @@ b[_type],e=/wn|up/.test(d)?t:v;if(!c[n]){if(d==_click)A(a,!1,!0);else{if(/wn|er|
 
 			_off(el, 'mousedown', this._onTapStart);
 			_off(el, 'touchstart', this._onTapStart);
+			_off(el, 'pointerdown', this._onTapStart);
 
 			if (this.nativeDraggable) {
 				_off(el, 'dragover', this);
@@ -46769,10 +47313,25 @@ b[_type],e=/wn|up/.test(d)?t:v;if(!c[n]){if(d==_click)A(a,!1,!0);else{if(/wn|er|
 	};
 
 
-	function _cloneHide(state) {
+	function _cloneHide(sortable, state) {
+		if (sortable.lastPullMode !== 'clone') {
+			state = true;
+		}
+
 		if (cloneEl && (cloneEl.state !== state)) {
 			_css(cloneEl, 'display', state ? 'none' : '');
-			!state && cloneEl.state && rootEl.insertBefore(cloneEl, dragEl);
+
+			if (!state) {
+				if (cloneEl.state) {
+					if (sortable.options.group.revertClone) {
+						rootEl.insertBefore(cloneEl, nextEl);
+						sortable._animate(dragEl, cloneEl);
+					} else {
+						rootEl.insertBefore(cloneEl, dragEl);
+					}
+				}
+			}
+
 			cloneEl.state = state;
 		}
 	}
@@ -46781,25 +47340,23 @@ b[_type],e=/wn|up/.test(d)?t:v;if(!c[n]){if(d==_click)A(a,!1,!0);else{if(/wn|er|
 	function _closest(/**HTMLElement*/el, /**String*/selector, /**HTMLElement*/ctx) {
 		if (el) {
 			ctx = ctx || document;
-			selector = selector.split('.');
-
-			var tag = selector.shift().toUpperCase(),
-				re = new RegExp('\\s(' + selector.join('|') + ')(?=\\s)', 'g');
 
 			do {
-				if (
-					(tag === '>*' && el.parentNode === ctx) || (
-						(tag === '' || el.nodeName.toUpperCase() == tag) &&
-						(!selector.length || ((' ' + el.className + ' ').match(re) || []).length == selector.length)
-					)
-				) {
+				if ((selector === '>*' && el.parentNode === ctx) || _matches(el, selector)) {
 					return el;
 				}
-			}
-			while (el !== ctx && (el = el.parentNode));
+				/* jshint boss:true */
+			} while (el = _getParentOrHost(el));
 		}
 
 		return null;
+	}
+
+
+	function _getParentOrHost(el) {
+		var parent = el.host;
+
+		return (parent && parent.nodeType) ? parent : el.parentNode;
 	}
 
 
@@ -46812,12 +47369,12 @@ b[_type],e=/wn|up/.test(d)?t:v;if(!c[n]){if(d==_click)A(a,!1,!0);else{if(/wn|er|
 
 
 	function _on(el, event, fn) {
-		el.addEventListener(event, fn, false);
+		el.addEventListener(event, fn, captureMode);
 	}
 
 
 	function _off(el, event, fn) {
-		el.removeEventListener(event, fn, false);
+		el.removeEventListener(event, fn, captureMode);
 	}
 
 
@@ -46827,8 +47384,8 @@ b[_type],e=/wn|up/.test(d)?t:v;if(!c[n]){if(d==_click)A(a,!1,!0);else{if(/wn|er|
 				el.classList[state ? 'add' : 'remove'](name);
 			}
 			else {
-				var className = (' ' + el.className + ' ').replace(RSPACE, ' ').replace(' ' + name + ' ', ' ');
-				el.className = (className + (state ? ' ' + name : '')).replace(RSPACE, ' ');
+				var className = (' ' + el.className + ' ').replace(R_SPACE, ' ').replace(' ' + name + ' ', ' ');
+				el.className = (className + (state ? ' ' + name : '')).replace(R_SPACE, ' ');
 			}
 		}
 	}
@@ -46878,8 +47435,10 @@ b[_type],e=/wn|up/.test(d)?t:v;if(!c[n]){if(d==_click)A(a,!1,!0);else{if(/wn|er|
 
 
 	function _dispatchEvent(sortable, rootEl, name, targetEl, fromEl, startIndex, newIndex) {
+		sortable = (sortable || rootEl[expando]);
+
 		var evt = document.createEvent('Event'),
-			options = (sortable || rootEl[expando]).options,
+			options = sortable.options,
 			onName = 'on' + name.charAt(0).toUpperCase() + name.substr(1);
 
 		evt.initEvent(name, true, true);
@@ -46900,7 +47459,7 @@ b[_type],e=/wn|up/.test(d)?t:v;if(!c[n]){if(d==_click)A(a,!1,!0);else{if(/wn|er|
 	}
 
 
-	function _onMove(fromEl, toEl, dragEl, dragRect, targetEl, targetRect) {
+	function _onMove(fromEl, toEl, dragEl, dragRect, targetEl, targetRect, originalEvt, willInsertAfter) {
 		var evt,
 			sortable = fromEl[expando],
 			onMoveFn = sortable.options.onMove,
@@ -46915,11 +47474,12 @@ b[_type],e=/wn|up/.test(d)?t:v;if(!c[n]){if(d==_click)A(a,!1,!0);else{if(/wn|er|
 		evt.draggedRect = dragRect;
 		evt.related = targetEl || toEl;
 		evt.relatedRect = targetRect || toEl.getBoundingClientRect();
+		evt.willInsertAfter = willInsertAfter;
 
 		fromEl.dispatchEvent(evt);
 
 		if (onMoveFn) {
-			retVal = onMoveFn.call(sortable, evt);
+			retVal = onMoveFn.call(sortable, evt, originalEvt);
 		}
 
 		return retVal;
@@ -46939,9 +47499,12 @@ b[_type],e=/wn|up/.test(d)?t:v;if(!c[n]){if(d==_click)A(a,!1,!0);else{if(/wn|er|
 	/** @returns {HTMLElement|false} */
 	function _ghostIsLast(el, evt) {
 		var lastEl = el.lastElementChild,
-				rect = lastEl.getBoundingClientRect();
+			rect = lastEl.getBoundingClientRect();
 
-		return ((evt.clientY - (rect.top + rect.height) > 5) || (evt.clientX - (rect.right + rect.width) > 5)) && lastEl; // min delta
+		// 5 — min delta
+		// abs — нельзя добавлять, а то глюки при наведении сверху
+		return (evt.clientY - (rect.top + rect.height) > 5) ||
+			(evt.clientX - (rect.left + rect.width) > 5);
 	}
 
 
@@ -46964,11 +47527,13 @@ b[_type],e=/wn|up/.test(d)?t:v;if(!c[n]){if(d==_click)A(a,!1,!0);else{if(/wn|er|
 	}
 
 	/**
-	 * Returns the index of an element within its parent
+	 * Returns the index of an element within its parent for a selected set of
+	 * elements
 	 * @param  {HTMLElement} el
+	 * @param  {selector} selector
 	 * @return {number}
 	 */
-	function _index(el) {
+	function _index(el, selector) {
 		var index = 0;
 
 		if (!el || !el.parentNode) {
@@ -46976,12 +47541,28 @@ b[_type],e=/wn|up/.test(d)?t:v;if(!c[n]){if(d==_click)A(a,!1,!0);else{if(/wn|er|
 		}
 
 		while (el && (el = el.previousElementSibling)) {
-			if (el.nodeName.toUpperCase() !== 'TEMPLATE') {
+			if ((el.nodeName.toUpperCase() !== 'TEMPLATE') && (selector === '>*' || _matches(el, selector))) {
 				index++;
 			}
 		}
 
 		return index;
+	}
+
+	function _matches(/**HTMLElement*/el, /**String*/selector) {
+		if (el) {
+			selector = selector.split('.');
+
+			var tag = selector.shift().toUpperCase(),
+				re = new RegExp('\\s(' + selector.join('|') + ')(?=\\s)', 'g');
+
+			return (
+				(tag === '' || el.nodeName.toUpperCase() == tag) &&
+				(!selector.length || ((' ' + el.className + ' ').match(re) || []).length == selector.length)
+			);
+		}
+
+		return false;
 	}
 
 	function _throttle(callback, ms) {
@@ -47017,6 +47598,42 @@ b[_type],e=/wn|up/.test(d)?t:v;if(!c[n]){if(d==_click)A(a,!1,!0);else{if(/wn|er|
 		return dst;
 	}
 
+	function _clone(el) {
+		return $
+			? $(el).clone(true)[0]
+			: (Polymer && Polymer.dom
+				? Polymer.dom(el).cloneNode(true)
+				: el.cloneNode(true)
+			);
+	}
+
+	function _saveInputCheckedState(root) {
+		var inputs = root.getElementsByTagName('input');
+		var idx = inputs.length;
+
+		while (idx--) {
+			var el = inputs[idx];
+			el.checked && savedInputChecked.push(el);
+		}
+	}
+
+	// Fixed #973: 
+	_on(document, 'touchmove', function (evt) {
+		if (Sortable.active) {
+			evt.preventDefault();
+		}
+	});
+
+	try {
+		window.addEventListener('test', null, Object.defineProperty({}, 'passive', {
+			get: function () {
+				captureMode = {
+					capture: false,
+					passive: false
+				};
+			}
+		}));
+	} catch (err) {}
 
 	// Export utils
 	Sortable.utils = {
@@ -47031,6 +47648,7 @@ b[_type],e=/wn|up/.test(d)?t:v;if(!c[n]){if(d==_click)A(a,!1,!0);else{if(/wn|er|
 		throttle: _throttle,
 		closest: _closest,
 		toggleClass: _toggleClass,
+		clone: _clone,
 		index: _index
 	};
 
@@ -47046,13 +47664,13 @@ b[_type],e=/wn|up/.test(d)?t:v;if(!c[n]){if(d==_click)A(a,!1,!0);else{if(/wn|er|
 
 
 	// Export
-	Sortable.version = '1.4.2';
+	Sortable.version = '1.6.0';
 	return Sortable;
 });
 
 (function(){var a,b,c,d,e,f,g,h,i=[].slice,j={}.hasOwnProperty,k=function(a,b){function c(){this.constructor=a}for(var d in b)j.call(b,d)&&(a[d]=b[d]);return c.prototype=b.prototype,a.prototype=new c,a.__super__=b.prototype,a};g=function(){},b=function(){function a(){}return a.prototype.addEventListener=a.prototype.on,a.prototype.on=function(a,b){return this._callbacks=this._callbacks||{},this._callbacks[a]||(this._callbacks[a]=[]),this._callbacks[a].push(b),this},a.prototype.emit=function(){var a,b,c,d,e,f;if(d=arguments[0],a=2<=arguments.length?i.call(arguments,1):[],this._callbacks=this._callbacks||{},c=this._callbacks[d])for(e=0,f=c.length;f>e;e++)b=c[e],b.apply(this,a);return this},a.prototype.removeListener=a.prototype.off,a.prototype.removeAllListeners=a.prototype.off,a.prototype.removeEventListener=a.prototype.off,a.prototype.off=function(a,b){var c,d,e,f,g;if(!this._callbacks||0===arguments.length)return this._callbacks={},this;if(d=this._callbacks[a],!d)return this;if(1===arguments.length)return delete this._callbacks[a],this;for(e=f=0,g=d.length;g>f;e=++f)if(c=d[e],c===b){d.splice(e,1);break}return this},a}(),a=function(a){function c(a,b){var e,f,g;if(this.element=a,this.version=c.version,this.defaultOptions.previewTemplate=this.defaultOptions.previewTemplate.replace(/\n*/g,""),this.clickableElements=[],this.listeners=[],this.files=[],"string"==typeof this.element&&(this.element=document.querySelector(this.element)),!this.element||null==this.element.nodeType)throw new Error("Invalid dropzone element.");if(this.element.dropzone)throw new Error("Dropzone already attached.");if(c.instances.push(this),this.element.dropzone=this,e=null!=(g=c.optionsForElement(this.element))?g:{},this.options=d({},this.defaultOptions,e,null!=b?b:{}),this.options.forceFallback||!c.isBrowserSupported())return this.options.fallback.call(this);if(null==this.options.url&&(this.options.url=this.element.getAttribute("action")),!this.options.url)throw new Error("No URL provided.");if(this.options.acceptedFiles&&this.options.acceptedMimeTypes)throw new Error("You can't provide both 'acceptedFiles' and 'acceptedMimeTypes'. 'acceptedMimeTypes' is deprecated.");this.options.acceptedMimeTypes&&(this.options.acceptedFiles=this.options.acceptedMimeTypes,delete this.options.acceptedMimeTypes),this.options.method=this.options.method.toUpperCase(),(f=this.getExistingFallback())&&f.parentNode&&f.parentNode.removeChild(f),this.options.previewsContainer!==!1&&(this.previewsContainer=this.options.previewsContainer?c.getElement(this.options.previewsContainer,"previewsContainer"):this.element),this.options.clickable&&(this.clickableElements=this.options.clickable===!0?[this.element]:c.getElements(this.options.clickable,"clickable")),this.init()}var d,e;return k(c,a),c.prototype.Emitter=b,c.prototype.events=["drop","dragstart","dragend","dragenter","dragover","dragleave","addedfile","addedfiles","removedfile","thumbnail","error","errormultiple","processing","processingmultiple","uploadprogress","totaluploadprogress","sending","sendingmultiple","success","successmultiple","canceled","canceledmultiple","complete","completemultiple","reset","maxfilesexceeded","maxfilesreached","queuecomplete"],c.prototype.defaultOptions={url:null,method:"post",withCredentials:!1,parallelUploads:2,uploadMultiple:!1,maxFilesize:256,paramName:"file",createImageThumbnails:!0,maxThumbnailFilesize:10,thumbnailWidth:120,thumbnailHeight:120,filesizeBase:1e3,maxFiles:null,params:{},clickable:!0,ignoreHiddenFiles:!0,acceptedFiles:null,acceptedMimeTypes:null,autoProcessQueue:!0,autoQueue:!0,addRemoveLinks:!1,previewsContainer:null,hiddenInputContainer:"body",capture:null,renameFilename:null,dictDefaultMessage:"Drop files here to upload",dictFallbackMessage:"Your browser does not support drag'n'drop file uploads.",dictFallbackText:"Please use the fallback form below to upload your files like in the olden days.",dictFileTooBig:"File is too big ({{filesize}}MiB). Max filesize: {{maxFilesize}}MiB.",dictInvalidFileType:"You can't upload files of this type.",dictResponseError:"Server responded with {{statusCode}} code.",dictCancelUpload:"Cancel upload",dictCancelUploadConfirmation:"Are you sure you want to cancel this upload?",dictRemoveFile:"Remove file",dictRemoveFileConfirmation:null,dictMaxFilesExceeded:"You can not upload any more files.",accept:function(a,b){return b()},init:function(){return g},forceFallback:!1,fallback:function(){var a,b,d,e,f,g;for(this.element.className=""+this.element.className+" dz-browser-not-supported",g=this.element.getElementsByTagName("div"),e=0,f=g.length;f>e;e++)a=g[e],/(^| )dz-message($| )/.test(a.className)&&(b=a,a.className="dz-message");return b||(b=c.createElement('<div class="dz-message"><span></span></div>'),this.element.appendChild(b)),d=b.getElementsByTagName("span")[0],d&&(null!=d.textContent?d.textContent=this.options.dictFallbackMessage:null!=d.innerText&&(d.innerText=this.options.dictFallbackMessage)),this.element.appendChild(this.getFallbackForm())},resize:function(a){var b,c,d;return b={srcX:0,srcY:0,srcWidth:a.width,srcHeight:a.height},c=a.width/a.height,b.optWidth=this.options.thumbnailWidth,b.optHeight=this.options.thumbnailHeight,null==b.optWidth&&null==b.optHeight?(b.optWidth=b.srcWidth,b.optHeight=b.srcHeight):null==b.optWidth?b.optWidth=c*b.optHeight:null==b.optHeight&&(b.optHeight=1/c*b.optWidth),d=b.optWidth/b.optHeight,a.height<b.optHeight||a.width<b.optWidth?(b.trgHeight=b.srcHeight,b.trgWidth=b.srcWidth):c>d?(b.srcHeight=a.height,b.srcWidth=b.srcHeight*d):(b.srcWidth=a.width,b.srcHeight=b.srcWidth/d),b.srcX=(a.width-b.srcWidth)/2,b.srcY=(a.height-b.srcHeight)/2,b},drop:function(){return this.element.classList.remove("dz-drag-hover")},dragstart:g,dragend:function(){return this.element.classList.remove("dz-drag-hover")},dragenter:function(){return this.element.classList.add("dz-drag-hover")},dragover:function(){return this.element.classList.add("dz-drag-hover")},dragleave:function(){return this.element.classList.remove("dz-drag-hover")},paste:g,reset:function(){return this.element.classList.remove("dz-started")},addedfile:function(a){var b,d,e,f,g,h,i,j,k,l,m,n,o;if(this.element===this.previewsContainer&&this.element.classList.add("dz-started"),this.previewsContainer){for(a.previewElement=c.createElement(this.options.previewTemplate.trim()),a.previewTemplate=a.previewElement,this.previewsContainer.appendChild(a.previewElement),l=a.previewElement.querySelectorAll("[data-dz-name]"),f=0,i=l.length;i>f;f++)b=l[f],b.textContent=this._renameFilename(a.name);for(m=a.previewElement.querySelectorAll("[data-dz-size]"),g=0,j=m.length;j>g;g++)b=m[g],b.innerHTML=this.filesize(a.size);for(this.options.addRemoveLinks&&(a._removeLink=c.createElement('<a class="dz-remove" href="javascript:undefined;" data-dz-remove>'+this.options.dictRemoveFile+"</a>"),a.previewElement.appendChild(a._removeLink)),d=function(b){return function(d){return d.preventDefault(),d.stopPropagation(),a.status===c.UPLOADING?c.confirm(b.options.dictCancelUploadConfirmation,function(){return b.removeFile(a)}):b.options.dictRemoveFileConfirmation?c.confirm(b.options.dictRemoveFileConfirmation,function(){return b.removeFile(a)}):b.removeFile(a)}}(this),n=a.previewElement.querySelectorAll("[data-dz-remove]"),o=[],h=0,k=n.length;k>h;h++)e=n[h],o.push(e.addEventListener("click",d));return o}},removedfile:function(a){var b;return a.previewElement&&null!=(b=a.previewElement)&&b.parentNode.removeChild(a.previewElement),this._updateMaxFilesReachedClass()},thumbnail:function(a,b){var c,d,e,f;if(a.previewElement){for(a.previewElement.classList.remove("dz-file-preview"),f=a.previewElement.querySelectorAll("[data-dz-thumbnail]"),d=0,e=f.length;e>d;d++)c=f[d],c.alt=a.name,c.src=b;return setTimeout(function(){return function(){return a.previewElement.classList.add("dz-image-preview")}}(this),1)}},error:function(a,b){var c,d,e,f,g;if(a.previewElement){for(a.previewElement.classList.add("dz-error"),"String"!=typeof b&&b.error&&(b=b.error),f=a.previewElement.querySelectorAll("[data-dz-errormessage]"),g=[],d=0,e=f.length;e>d;d++)c=f[d],g.push(c.textContent=b);return g}},errormultiple:g,processing:function(a){return a.previewElement&&(a.previewElement.classList.add("dz-processing"),a._removeLink)?a._removeLink.textContent=this.options.dictCancelUpload:void 0},processingmultiple:g,uploadprogress:function(a,b){var c,d,e,f,g;if(a.previewElement){for(f=a.previewElement.querySelectorAll("[data-dz-uploadprogress]"),g=[],d=0,e=f.length;e>d;d++)c=f[d],g.push("PROGRESS"===c.nodeName?c.value=b:c.style.width=""+b+"%");return g}},totaluploadprogress:g,sending:g,sendingmultiple:g,success:function(a){return a.previewElement?a.previewElement.classList.add("dz-success"):void 0},successmultiple:g,canceled:function(a){return this.emit("error",a,"Upload canceled.")},canceledmultiple:g,complete:function(a){return a._removeLink&&(a._removeLink.textContent=this.options.dictRemoveFile),a.previewElement?a.previewElement.classList.add("dz-complete"):void 0},completemultiple:g,maxfilesexceeded:g,maxfilesreached:g,queuecomplete:g,addedfiles:g,previewTemplate:'<div class="dz-preview dz-file-preview">\n  <div class="dz-image"><img data-dz-thumbnail /></div>\n  <div class="dz-details">\n    <div class="dz-size"><span data-dz-size></span></div>\n    <div class="dz-filename"><span data-dz-name></span></div>\n  </div>\n  <div class="dz-progress"><span class="dz-upload" data-dz-uploadprogress></span></div>\n  <div class="dz-error-message"><span data-dz-errormessage></span></div>\n  <div class="dz-success-mark">\n    <svg width="54px" height="54px" viewBox="0 0 54 54" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:sketch="http://www.bohemiancoding.com/sketch/ns">\n      <title>Check</title>\n      <defs></defs>\n      <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" sketch:type="MSPage">\n        <path d="M23.5,31.8431458 L17.5852419,25.9283877 C16.0248253,24.3679711 13.4910294,24.366835 11.9289322,25.9289322 C10.3700136,27.4878508 10.3665912,30.0234455 11.9283877,31.5852419 L20.4147581,40.0716123 C20.5133999,40.1702541 20.6159315,40.2626649 20.7218615,40.3488435 C22.2835669,41.8725651 24.794234,41.8626202 26.3461564,40.3106978 L43.3106978,23.3461564 C44.8771021,21.7797521 44.8758057,19.2483887 43.3137085,17.6862915 C41.7547899,16.1273729 39.2176035,16.1255422 37.6538436,17.6893022 L23.5,31.8431458 Z M27,53 C41.3594035,53 53,41.3594035 53,27 C53,12.6405965 41.3594035,1 27,1 C12.6405965,1 1,12.6405965 1,27 C1,41.3594035 12.6405965,53 27,53 Z" id="Oval-2" stroke-opacity="0.198794158" stroke="#747474" fill-opacity="0.816519475" fill="#FFFFFF" sketch:type="MSShapeGroup"></path>\n      </g>\n    </svg>\n  </div>\n  <div class="dz-error-mark">\n    <svg width="54px" height="54px" viewBox="0 0 54 54" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:sketch="http://www.bohemiancoding.com/sketch/ns">\n      <title>Error</title>\n      <defs></defs>\n      <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" sketch:type="MSPage">\n        <g id="Check-+-Oval-2" sketch:type="MSLayerGroup" stroke="#747474" stroke-opacity="0.198794158" fill="#FFFFFF" fill-opacity="0.816519475">\n          <path d="M32.6568542,29 L38.3106978,23.3461564 C39.8771021,21.7797521 39.8758057,19.2483887 38.3137085,17.6862915 C36.7547899,16.1273729 34.2176035,16.1255422 32.6538436,17.6893022 L27,23.3431458 L21.3461564,17.6893022 C19.7823965,16.1255422 17.2452101,16.1273729 15.6862915,17.6862915 C14.1241943,19.2483887 14.1228979,21.7797521 15.6893022,23.3461564 L21.3431458,29 L15.6893022,34.6538436 C14.1228979,36.2202479 14.1241943,38.7516113 15.6862915,40.3137085 C17.2452101,41.8726271 19.7823965,41.8744578 21.3461564,40.3106978 L27,34.6568542 L32.6538436,40.3106978 C34.2176035,41.8744578 36.7547899,41.8726271 38.3137085,40.3137085 C39.8758057,38.7516113 39.8771021,36.2202479 38.3106978,34.6538436 L32.6568542,29 Z M27,53 C41.3594035,53 53,41.3594035 53,27 C53,12.6405965 41.3594035,1 27,1 C12.6405965,1 1,12.6405965 1,27 C1,41.3594035 12.6405965,53 27,53 Z" id="Oval-2" sketch:type="MSShapeGroup"></path>\n        </g>\n      </g>\n    </svg>\n  </div>\n</div>'},d=function(){var a,b,c,d,e,f,g;for(d=arguments[0],c=2<=arguments.length?i.call(arguments,1):[],f=0,g=c.length;g>f;f++){b=c[f];for(a in b)e=b[a],d[a]=e}return d},c.prototype.getAcceptedFiles=function(){var a,b,c,d,e;for(d=this.files,e=[],b=0,c=d.length;c>b;b++)a=d[b],a.accepted&&e.push(a);return e},c.prototype.getRejectedFiles=function(){var a,b,c,d,e;for(d=this.files,e=[],b=0,c=d.length;c>b;b++)a=d[b],a.accepted||e.push(a);return e},c.prototype.getFilesWithStatus=function(a){var b,c,d,e,f;for(e=this.files,f=[],c=0,d=e.length;d>c;c++)b=e[c],b.status===a&&f.push(b);return f},c.prototype.getQueuedFiles=function(){return this.getFilesWithStatus(c.QUEUED)},c.prototype.getUploadingFiles=function(){return this.getFilesWithStatus(c.UPLOADING)},c.prototype.getAddedFiles=function(){return this.getFilesWithStatus(c.ADDED)},c.prototype.getActiveFiles=function(){var a,b,d,e,f;for(e=this.files,f=[],b=0,d=e.length;d>b;b++)a=e[b],(a.status===c.UPLOADING||a.status===c.QUEUED)&&f.push(a);return f},c.prototype.init=function(){var a,b,d,e,f,g,h;for("form"===this.element.tagName&&this.element.setAttribute("enctype","multipart/form-data"),this.element.classList.contains("dropzone")&&!this.element.querySelector(".dz-message")&&this.element.appendChild(c.createElement('<div class="dz-default dz-message"><span>'+this.options.dictDefaultMessage+"</span></div>")),this.clickableElements.length&&(d=function(a){return function(){return a.hiddenFileInput&&a.hiddenFileInput.parentNode.removeChild(a.hiddenFileInput),a.hiddenFileInput=document.createElement("input"),a.hiddenFileInput.setAttribute("type","file"),(null==a.options.maxFiles||a.options.maxFiles>1)&&a.hiddenFileInput.setAttribute("multiple","multiple"),a.hiddenFileInput.className="dz-hidden-input",null!=a.options.acceptedFiles&&a.hiddenFileInput.setAttribute("accept",a.options.acceptedFiles),null!=a.options.capture&&a.hiddenFileInput.setAttribute("capture",a.options.capture),a.hiddenFileInput.style.visibility="hidden",a.hiddenFileInput.style.position="absolute",a.hiddenFileInput.style.top="0",a.hiddenFileInput.style.left="0",a.hiddenFileInput.style.height="0",a.hiddenFileInput.style.width="0",document.querySelector(a.options.hiddenInputContainer).appendChild(a.hiddenFileInput),a.hiddenFileInput.addEventListener("change",function(){var b,c,e,f;if(c=a.hiddenFileInput.files,c.length)for(e=0,f=c.length;f>e;e++)b=c[e],a.addFile(b);return a.emit("addedfiles",c),d()})}}(this))(),this.URL=null!=(g=window.URL)?g:window.webkitURL,h=this.events,e=0,f=h.length;f>e;e++)a=h[e],this.on(a,this.options[a]);return this.on("uploadprogress",function(a){return function(){return a.updateTotalUploadProgress()}}(this)),this.on("removedfile",function(a){return function(){return a.updateTotalUploadProgress()}}(this)),this.on("canceled",function(a){return function(b){return a.emit("complete",b)}}(this)),this.on("complete",function(a){return function(){return 0===a.getAddedFiles().length&&0===a.getUploadingFiles().length&&0===a.getQueuedFiles().length?setTimeout(function(){return a.emit("queuecomplete")},0):void 0}}(this)),b=function(a){return a.stopPropagation(),a.preventDefault?a.preventDefault():a.returnValue=!1},this.listeners=[{element:this.element,events:{dragstart:function(a){return function(b){return a.emit("dragstart",b)}}(this),dragenter:function(a){return function(c){return b(c),a.emit("dragenter",c)}}(this),dragover:function(a){return function(c){var d;try{d=c.dataTransfer.effectAllowed}catch(e){}return c.dataTransfer.dropEffect="move"===d||"linkMove"===d?"move":"copy",b(c),a.emit("dragover",c)}}(this),dragleave:function(a){return function(b){return a.emit("dragleave",b)}}(this),drop:function(a){return function(c){return b(c),a.drop(c)}}(this),dragend:function(a){return function(b){return a.emit("dragend",b)}}(this)}}],this.clickableElements.forEach(function(a){return function(b){return a.listeners.push({element:b,events:{click:function(d){return(b!==a.element||d.target===a.element||c.elementInside(d.target,a.element.querySelector(".dz-message")))&&a.hiddenFileInput.click(),!0}}})}}(this)),this.enable(),this.options.init.call(this)},c.prototype.destroy=function(){var a;return this.disable(),this.removeAllFiles(!0),(null!=(a=this.hiddenFileInput)?a.parentNode:void 0)&&(this.hiddenFileInput.parentNode.removeChild(this.hiddenFileInput),this.hiddenFileInput=null),delete this.element.dropzone,c.instances.splice(c.instances.indexOf(this),1)},c.prototype.updateTotalUploadProgress=function(){var a,b,c,d,e,f,g,h;if(d=0,c=0,a=this.getActiveFiles(),a.length){for(h=this.getActiveFiles(),f=0,g=h.length;g>f;f++)b=h[f],d+=b.upload.bytesSent,c+=b.upload.total;e=100*d/c}else e=100;return this.emit("totaluploadprogress",e,c,d)},c.prototype._getParamName=function(a){return"function"==typeof this.options.paramName?this.options.paramName(a):""+this.options.paramName+(this.options.uploadMultiple?"["+a+"]":"")},c.prototype._renameFilename=function(a){return"function"!=typeof this.options.renameFilename?a:this.options.renameFilename(a)},c.prototype.getFallbackForm=function(){var a,b,d,e;return(a=this.getExistingFallback())?a:(d='<div class="dz-fallback">',this.options.dictFallbackText&&(d+="<p>"+this.options.dictFallbackText+"</p>"),d+='<input type="file" name="'+this._getParamName(0)+'" '+(this.options.uploadMultiple?'multiple="multiple"':void 0)+' /><input type="submit" value="Upload!"></div>',b=c.createElement(d),"FORM"!==this.element.tagName?(e=c.createElement('<form action="'+this.options.url+'" enctype="multipart/form-data" method="'+this.options.method+'"></form>'),e.appendChild(b)):(this.element.setAttribute("enctype","multipart/form-data"),this.element.setAttribute("method",this.options.method)),null!=e?e:b)},c.prototype.getExistingFallback=function(){var a,b,c,d,e,f;for(b=function(a){var b,c,d;for(c=0,d=a.length;d>c;c++)if(b=a[c],/(^| )fallback($| )/.test(b.className))return b},f=["div","form"],d=0,e=f.length;e>d;d++)if(c=f[d],a=b(this.element.getElementsByTagName(c)))return a},c.prototype.setupEventListeners=function(){var a,b,c,d,e,f,g;for(f=this.listeners,g=[],d=0,e=f.length;e>d;d++)a=f[d],g.push(function(){var d,e;d=a.events,e=[];for(b in d)c=d[b],e.push(a.element.addEventListener(b,c,!1));return e}());return g},c.prototype.removeEventListeners=function(){var a,b,c,d,e,f,g;for(f=this.listeners,g=[],d=0,e=f.length;e>d;d++)a=f[d],g.push(function(){var d,e;d=a.events,e=[];for(b in d)c=d[b],e.push(a.element.removeEventListener(b,c,!1));return e}());return g},c.prototype.disable=function(){var a,b,c,d,e;for(this.clickableElements.forEach(function(a){return a.classList.remove("dz-clickable")}),this.removeEventListeners(),d=this.files,e=[],b=0,c=d.length;c>b;b++)a=d[b],e.push(this.cancelUpload(a));return e},c.prototype.enable=function(){return this.clickableElements.forEach(function(a){return a.classList.add("dz-clickable")}),this.setupEventListeners()},c.prototype.filesize=function(a){var b,c,d,e,f,g,h,i;if(d=0,e="b",a>0){for(g=["TB","GB","MB","KB","b"],c=h=0,i=g.length;i>h;c=++h)if(f=g[c],b=Math.pow(this.options.filesizeBase,4-c)/10,a>=b){d=a/Math.pow(this.options.filesizeBase,4-c),e=f;break}d=Math.round(10*d)/10}return"<strong>"+d+"</strong> "+e},c.prototype._updateMaxFilesReachedClass=function(){return null!=this.options.maxFiles&&this.getAcceptedFiles().length>=this.options.maxFiles?(this.getAcceptedFiles().length===this.options.maxFiles&&this.emit("maxfilesreached",this.files),this.element.classList.add("dz-max-files-reached")):this.element.classList.remove("dz-max-files-reached")},c.prototype.drop=function(a){var b,c;a.dataTransfer&&(this.emit("drop",a),b=a.dataTransfer.files,this.emit("addedfiles",b),b.length&&(c=a.dataTransfer.items,c&&c.length&&null!=c[0].webkitGetAsEntry?this._addFilesFromItems(c):this.handleFiles(b)))},c.prototype.paste=function(a){var b,c;if(null!=(null!=a&&null!=(c=a.clipboardData)?c.items:void 0))return this.emit("paste",a),b=a.clipboardData.items,b.length?this._addFilesFromItems(b):void 0},c.prototype.handleFiles=function(a){var b,c,d,e;for(e=[],c=0,d=a.length;d>c;c++)b=a[c],e.push(this.addFile(b));return e},c.prototype._addFilesFromItems=function(a){var b,c,d,e,f;for(f=[],d=0,e=a.length;e>d;d++)c=a[d],f.push(null!=c.webkitGetAsEntry&&(b=c.webkitGetAsEntry())?b.isFile?this.addFile(c.getAsFile()):b.isDirectory?this._addFilesFromDirectory(b,b.name):void 0:null!=c.getAsFile?null==c.kind||"file"===c.kind?this.addFile(c.getAsFile()):void 0:void 0);return f},c.prototype._addFilesFromDirectory=function(a,b){var c,d,e;return c=a.createReader(),d=function(a){return"undefined"!=typeof console&&null!==console&&"function"==typeof console.log?console.log(a):void 0},(e=function(a){return function(){return c.readEntries(function(c){var d,f,g;if(c.length>0){for(f=0,g=c.length;g>f;f++)d=c[f],d.isFile?d.file(function(c){return a.options.ignoreHiddenFiles&&"."===c.name.substring(0,1)?void 0:(c.fullPath=""+b+"/"+c.name,a.addFile(c))}):d.isDirectory&&a._addFilesFromDirectory(d,""+b+"/"+d.name);e()}return null},d)}}(this))()},c.prototype.accept=function(a,b){return a.size>1024*this.options.maxFilesize*1024?b(this.options.dictFileTooBig.replace("{{filesize}}",Math.round(a.size/1024/10.24)/100).replace("{{maxFilesize}}",this.options.maxFilesize)):c.isValidFile(a,this.options.acceptedFiles)?null!=this.options.maxFiles&&this.getAcceptedFiles().length>=this.options.maxFiles?(b(this.options.dictMaxFilesExceeded.replace("{{maxFiles}}",this.options.maxFiles)),this.emit("maxfilesexceeded",a)):this.options.accept.call(this,a,b):b(this.options.dictInvalidFileType)},c.prototype.addFile=function(a){return a.upload={progress:0,total:a.size,bytesSent:0},this.files.push(a),a.status=c.ADDED,this.emit("addedfile",a),this._enqueueThumbnail(a),this.accept(a,function(b){return function(c){return c?(a.accepted=!1,b._errorProcessing([a],c)):(a.accepted=!0,b.options.autoQueue&&b.enqueueFile(a)),b._updateMaxFilesReachedClass()}}(this))},c.prototype.enqueueFiles=function(a){var b,c,d;for(c=0,d=a.length;d>c;c++)b=a[c],this.enqueueFile(b);return null},c.prototype.enqueueFile=function(a){if(a.status!==c.ADDED||a.accepted!==!0)throw new Error("This file can't be queued because it has already been processed or was rejected.");return a.status=c.QUEUED,this.options.autoProcessQueue?setTimeout(function(a){return function(){return a.processQueue()}}(this),0):void 0},c.prototype._thumbnailQueue=[],c.prototype._processingThumbnail=!1,c.prototype._enqueueThumbnail=function(a){return this.options.createImageThumbnails&&a.type.match(/image.*/)&&a.size<=1024*this.options.maxThumbnailFilesize*1024?(this._thumbnailQueue.push(a),setTimeout(function(a){return function(){return a._processThumbnailQueue()}}(this),0)):void 0},c.prototype._processThumbnailQueue=function(){return this._processingThumbnail||0===this._thumbnailQueue.length?void 0:(this._processingThumbnail=!0,this.createThumbnail(this._thumbnailQueue.shift(),function(a){return function(){return a._processingThumbnail=!1,a._processThumbnailQueue()}}(this)))},c.prototype.removeFile=function(a){return a.status===c.UPLOADING&&this.cancelUpload(a),this.files=h(this.files,a),this.emit("removedfile",a),0===this.files.length?this.emit("reset"):void 0},c.prototype.removeAllFiles=function(a){var b,d,e,f;for(null==a&&(a=!1),f=this.files.slice(),d=0,e=f.length;e>d;d++)b=f[d],(b.status!==c.UPLOADING||a)&&this.removeFile(b);return null},c.prototype.createThumbnail=function(a,b){var c;return c=new FileReader,c.onload=function(d){return function(){return"image/svg+xml"===a.type?(d.emit("thumbnail",a,c.result),void(null!=b&&b())):d.createThumbnailFromUrl(a,c.result,b)}}(this),c.readAsDataURL(a)},c.prototype.createThumbnailFromUrl=function(a,b,c,d){var e;return e=document.createElement("img"),d&&(e.crossOrigin=d),e.onload=function(b){return function(){var d,g,h,i,j,k,l,m;return a.width=e.width,a.height=e.height,h=b.options.resize.call(b,a),null==h.trgWidth&&(h.trgWidth=h.optWidth),null==h.trgHeight&&(h.trgHeight=h.optHeight),d=document.createElement("canvas"),g=d.getContext("2d"),d.width=h.trgWidth,d.height=h.trgHeight,f(g,e,null!=(j=h.srcX)?j:0,null!=(k=h.srcY)?k:0,h.srcWidth,h.srcHeight,null!=(l=h.trgX)?l:0,null!=(m=h.trgY)?m:0,h.trgWidth,h.trgHeight),i=d.toDataURL("image/png"),b.emit("thumbnail",a,i),null!=c?c():void 0}}(this),null!=c&&(e.onerror=c),e.src=b},c.prototype.processQueue=function(){var a,b,c,d;if(b=this.options.parallelUploads,c=this.getUploadingFiles().length,a=c,!(c>=b)&&(d=this.getQueuedFiles(),d.length>0)){if(this.options.uploadMultiple)return this.processFiles(d.slice(0,b-c));for(;b>a;){if(!d.length)return;this.processFile(d.shift()),a++}}},c.prototype.processFile=function(a){return this.processFiles([a])},c.prototype.processFiles=function(a){var b,d,e;for(d=0,e=a.length;e>d;d++)b=a[d],b.processing=!0,b.status=c.UPLOADING,this.emit("processing",b);return this.options.uploadMultiple&&this.emit("processingmultiple",a),this.uploadFiles(a)},c.prototype._getFilesWithXhr=function(a){var b,c;return c=function(){var c,d,e,f;for(e=this.files,f=[],c=0,d=e.length;d>c;c++)b=e[c],b.xhr===a&&f.push(b);return f}.call(this)},c.prototype.cancelUpload=function(a){var b,d,e,f,g,h,i;if(a.status===c.UPLOADING){for(d=this._getFilesWithXhr(a.xhr),e=0,g=d.length;g>e;e++)b=d[e],b.status=c.CANCELED;for(a.xhr.abort(),f=0,h=d.length;h>f;f++)b=d[f],this.emit("canceled",b);this.options.uploadMultiple&&this.emit("canceledmultiple",d)}else((i=a.status)===c.ADDED||i===c.QUEUED)&&(a.status=c.CANCELED,this.emit("canceled",a),this.options.uploadMultiple&&this.emit("canceledmultiple",[a]));return this.options.autoProcessQueue?this.processQueue():void 0},e=function(){var a,b;return b=arguments[0],a=2<=arguments.length?i.call(arguments,1):[],"function"==typeof b?b.apply(this,a):b},c.prototype.uploadFile=function(a){return this.uploadFiles([a])},c.prototype.uploadFiles=function(a){var b,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,A,B,C,D,E,F,G,H,I,J,K,L;for(w=new XMLHttpRequest,x=0,B=a.length;B>x;x++)b=a[x],b.xhr=w;p=e(this.options.method,a),u=e(this.options.url,a),w.open(p,u,!0),w.withCredentials=!!this.options.withCredentials,s=null,g=function(c){return function(){var d,e,f;for(f=[],d=0,e=a.length;e>d;d++)b=a[d],f.push(c._errorProcessing(a,s||c.options.dictResponseError.replace("{{statusCode}}",w.status),w));return f}}(this),t=function(c){return function(d){var e,f,g,h,i,j,k,l,m;if(null!=d)for(f=100*d.loaded/d.total,g=0,j=a.length;j>g;g++)b=a[g],b.upload={progress:f,total:d.total,bytesSent:d.loaded};else{for(e=!0,f=100,h=0,k=a.length;k>h;h++)b=a[h],(100!==b.upload.progress||b.upload.bytesSent!==b.upload.total)&&(e=!1),b.upload.progress=f,b.upload.bytesSent=b.upload.total;if(e)return}for(m=[],i=0,l=a.length;l>i;i++)b=a[i],m.push(c.emit("uploadprogress",b,f,b.upload.bytesSent));return m}}(this),w.onload=function(b){return function(d){var e;if(a[0].status!==c.CANCELED&&4===w.readyState){if(s=w.responseText,w.getResponseHeader("content-type")&&~w.getResponseHeader("content-type").indexOf("application/json"))try{s=JSON.parse(s)}catch(f){d=f,s="Invalid JSON response from server."}return t(),200<=(e=w.status)&&300>e?b._finished(a,s,d):g()}}}(this),w.onerror=function(){return function(){return a[0].status!==c.CANCELED?g():void 0}}(this),r=null!=(G=w.upload)?G:w,r.onprogress=t,j={Accept:"application/json","Cache-Control":"no-cache","X-Requested-With":"XMLHttpRequest"},this.options.headers&&d(j,this.options.headers);for(h in j)i=j[h],i&&w.setRequestHeader(h,i);if(f=new FormData,this.options.params){H=this.options.params;for(o in H)v=H[o],f.append(o,v)}for(y=0,C=a.length;C>y;y++)b=a[y],this.emit("sending",b,w,f);if(this.options.uploadMultiple&&this.emit("sendingmultiple",a,w,f),"FORM"===this.element.tagName)for(I=this.element.querySelectorAll("input, textarea, select, button"),z=0,D=I.length;D>z;z++)if(l=I[z],m=l.getAttribute("name"),n=l.getAttribute("type"),"SELECT"===l.tagName&&l.hasAttribute("multiple"))for(J=l.options,A=0,E=J.length;E>A;A++)q=J[A],q.selected&&f.append(m,q.value);else(!n||"checkbox"!==(K=n.toLowerCase())&&"radio"!==K||l.checked)&&f.append(m,l.value);for(k=F=0,L=a.length-1;L>=0?L>=F:F>=L;k=L>=0?++F:--F)f.append(this._getParamName(k),a[k],this._renameFilename(a[k].name));return this.submitRequest(w,f,a)},c.prototype.submitRequest=function(a,b){return a.send(b)},c.prototype._finished=function(a,b,d){var e,f,g;for(f=0,g=a.length;g>f;f++)e=a[f],e.status=c.SUCCESS,this.emit("success",e,b,d),this.emit("complete",e);return this.options.uploadMultiple&&(this.emit("successmultiple",a,b,d),this.emit("completemultiple",a)),this.options.autoProcessQueue?this.processQueue():void 0},c.prototype._errorProcessing=function(a,b,d){var e,f,g;for(f=0,g=a.length;g>f;f++)e=a[f],e.status=c.ERROR,this.emit("error",e,b,d),this.emit("complete",e);return this.options.uploadMultiple&&(this.emit("errormultiple",a,b,d),this.emit("completemultiple",a)),this.options.autoProcessQueue?this.processQueue():void 0},c}(b),a.version="4.3.0",a.options={},a.optionsForElement=function(b){return b.getAttribute("id")?a.options[c(b.getAttribute("id"))]:void 0},a.instances=[],a.forElement=function(a){if("string"==typeof a&&(a=document.querySelector(a)),null==(null!=a?a.dropzone:void 0))throw new Error("No Dropzone found for given element. This is probably because you're trying to access it before Dropzone had the time to initialize. Use the `init` option to setup any additional observers on your Dropzone.");return a.dropzone},a.autoDiscover=!0,a.discover=function(){var b,c,d,e,f,g;for(document.querySelectorAll?d=document.querySelectorAll(".dropzone"):(d=[],b=function(a){var b,c,e,f;for(f=[],c=0,e=a.length;e>c;c++)b=a[c],f.push(/(^| )dropzone($| )/.test(b.className)?d.push(b):void 0);return f},b(document.getElementsByTagName("div")),b(document.getElementsByTagName("form"))),g=[],e=0,f=d.length;f>e;e++)c=d[e],g.push(a.optionsForElement(c)!==!1?new a(c):void 0);return g},a.blacklistedBrowsers=[/opera.*Macintosh.*version\/12/i],a.isBrowserSupported=function(){var b,c,d,e,f;if(b=!0,window.File&&window.FileReader&&window.FileList&&window.Blob&&window.FormData&&document.querySelector)if("classList"in document.createElement("a"))for(f=a.blacklistedBrowsers,d=0,e=f.length;e>d;d++)c=f[d],c.test(navigator.userAgent)&&(b=!1);else b=!1;else b=!1;return b},h=function(a,b){var c,d,e,f;for(f=[],d=0,e=a.length;e>d;d++)c=a[d],c!==b&&f.push(c);return f},c=function(a){return a.replace(/[\-_](\w)/g,function(a){return a.charAt(1).toUpperCase()})},a.createElement=function(a){var b;return b=document.createElement("div"),b.innerHTML=a,b.childNodes[0]},a.elementInside=function(a,b){if(a===b)return!0;for(;a=a.parentNode;)if(a===b)return!0;return!1},a.getElement=function(a,b){var c;if("string"==typeof a?c=document.querySelector(a):null!=a.nodeType&&(c=a),null==c)throw new Error("Invalid `"+b+"` option provided. Please provide a CSS selector or a plain HTML element.");return c},a.getElements=function(a,b){var c,d,e,f,g,h,i,j;if(a instanceof Array){e=[];try{for(f=0,h=a.length;h>f;f++)d=a[f],e.push(this.getElement(d,b))}catch(k){c=k,e=null}}else if("string"==typeof a)for(e=[],j=document.querySelectorAll(a),g=0,i=j.length;i>g;g++)d=j[g],e.push(d);else null!=a.nodeType&&(e=[a]);if(null==e||!e.length)throw new Error("Invalid `"+b+"` option provided. Please provide a CSS selector, a plain HTML element or a list of those.");return e},a.confirm=function(a,b,c){return window.confirm(a)?b():null!=c?c():void 0},a.isValidFile=function(a,b){var c,d,e,f,g;if(!b)return!0;for(b=b.split(","),d=a.type,c=d.replace(/\/.*$/,""),f=0,g=b.length;g>f;f++)if(e=b[f],e=e.trim(),"."===e.charAt(0)){if(-1!==a.name.toLowerCase().indexOf(e.toLowerCase(),a.name.length-e.length))return!0}else if(/\/\*$/.test(e)){if(c===e.replace(/\/.*$/,""))return!0
 }else if(d===e)return!0;return!1},"undefined"!=typeof jQuery&&null!==jQuery&&(jQuery.fn.dropzone=function(b){return this.each(function(){return new a(this,b)})}),"undefined"!=typeof module&&null!==module?module.exports=a:window.Dropzone=a,a.ADDED="added",a.QUEUED="queued",a.ACCEPTED=a.QUEUED,a.UPLOADING="uploading",a.PROCESSING=a.UPLOADING,a.CANCELED="canceled",a.ERROR="error",a.SUCCESS="success",e=function(a){var b,c,d,e,f,g,h,i,j,k;for(h=a.naturalWidth,g=a.naturalHeight,c=document.createElement("canvas"),c.width=1,c.height=g,d=c.getContext("2d"),d.drawImage(a,0,0),e=d.getImageData(0,0,1,g).data,k=0,f=g,i=g;i>k;)b=e[4*(i-1)+3],0===b?f=i:k=i,i=f+k>>1;return j=i/g,0===j?1:j},f=function(a,b,c,d,f,g,h,i,j,k){var l;return l=e(b),a.drawImage(b,c,d,f,g,h,i,j,k/l)},d=function(a,b){var c,d,e,f,g,h,i,j,k;if(e=!1,k=!0,d=a.document,j=d.documentElement,c=d.addEventListener?"addEventListener":"attachEvent",i=d.addEventListener?"removeEventListener":"detachEvent",h=d.addEventListener?"":"on",f=function(c){return"readystatechange"!==c.type||"complete"===d.readyState?(("load"===c.type?a:d)[i](h+c.type,f,!1),!e&&(e=!0)?b.call(a,c.type||c):void 0):void 0},g=function(){var a;try{j.doScroll("left")}catch(b){return a=b,void setTimeout(g,50)}return f("poll")},"complete"!==d.readyState){if(d.createEventObject&&j.doScroll){try{k=!a.frameElement}catch(l){}k&&g()}return d[c](h+"DOMContentLoaded",f,!1),d[c](h+"readystatechange",f,!1),a[c](h+"load",f,!1)}},a._autoDiscoverFunction=function(){return a.autoDiscover?a.discover():void 0},d(window,a._autoDiscoverFunction)}).call(this);
-!function(t){"use strict";var e=t.HTMLCanvasElement&&t.HTMLCanvasElement.prototype,o=t.Blob&&function(){try{return Boolean(new Blob)}catch(t){return!1}}(),n=o&&t.Uint8Array&&function(){try{return 100===new Blob([new Uint8Array(100)]).size}catch(t){return!1}}(),r=t.BlobBuilder||t.WebKitBlobBuilder||t.MozBlobBuilder||t.MSBlobBuilder,a=/^data:((.*?)(;charset=.*?)?)(;base64)?,/,i=(o||r)&&t.atob&&t.ArrayBuffer&&t.Uint8Array&&function(t){var e,i,l,u,b,c,d,B,f;if(e=t.match(a),!e)throw new Error("invalid data URI");for(i=e[2]?e[1]:"text/plain"+(e[3]||";charset=US-ASCII"),l=!!e[4],u=t.slice(e[0].length),b=l?atob(u):decodeURIComponent(u),c=new ArrayBuffer(b.length),d=new Uint8Array(c),B=0;B<b.length;B+=1)d[B]=b.charCodeAt(B);return o?new Blob([n?d:c],{type:i}):(f=new r,f.append(c),f.getBlob(i))};t.HTMLCanvasElement&&!e.toBlob&&(e.mozGetAsFile?e.toBlob=function(t,o,n){t(n&&e.toDataURL&&i?i(this.toDataURL(o,n)):this.mozGetAsFile("blob",o))}:e.toDataURL&&i&&(e.toBlob=function(t,e,o){t(i(this.toDataURL(e,o)))})),"function"==typeof define&&define.amd?define(function(){return i}):"object"==typeof module&&module.exports?module.exports=i:t.dataURLtoBlob=i}(window);
+!function(t){"use strict";var e=t.HTMLCanvasElement&&t.HTMLCanvasElement.prototype,o=t.Blob&&function(){try{return Boolean(new Blob)}catch(t){return!1}}(),n=o&&t.Uint8Array&&function(){try{return 100===new Blob([new Uint8Array(100)]).size}catch(t){return!1}}(),r=t.BlobBuilder||t.WebKitBlobBuilder||t.MozBlobBuilder||t.MSBlobBuilder,a=/^data:((.*?)(;charset=.*?)?)(;base64)?,/,i=(o||r)&&t.atob&&t.ArrayBuffer&&t.Uint8Array&&function(t){var e,i,l,u,c,f,b,d,B;if(!(e=t.match(a)))throw new Error("invalid data URI");for(i=e[2]?e[1]:"text/plain"+(e[3]||";charset=US-ASCII"),l=!!e[4],u=t.slice(e[0].length),c=l?atob(u):decodeURIComponent(u),f=new ArrayBuffer(c.length),b=new Uint8Array(f),d=0;d<c.length;d+=1)b[d]=c.charCodeAt(d);return o?new Blob([n?b:f],{type:i}):((B=new r).append(f),B.getBlob(i))};t.HTMLCanvasElement&&!e.toBlob&&(e.mozGetAsFile?e.toBlob=function(t,o,n){var r=this;setTimeout(function(){t(n&&e.toDataURL&&i?i(r.toDataURL(o,n)):r.mozGetAsFile("blob",o))})}:e.toDataURL&&i&&(e.toBlob=function(t,e,o){var n=this;setTimeout(function(){t(i(n.toDataURL(e,o)))})})),"function"==typeof define&&define.amd?define(function(){return i}):"object"==typeof module&&module.exports?module.exports=i:t.dataURLtoBlob=i}(window);
 //# sourceMappingURL=canvas-to-blob.min.js.map
 /* build: `node build.js modules=ALL exclude=gestures,cufon,json minifier=uglifyjs` *//*! Fabric.js Copyright 2008-2014, Printio (Juriy Zaytsev, Maxim Chernyak) */var fabric=fabric||{version:"1.4.13"};typeof exports!="undefined"&&(exports.fabric=fabric),typeof document!="undefined"&&typeof window!="undefined"?(fabric.document=document,fabric.window=window):(fabric.document=require("jsdom").jsdom("<!DOCTYPE html><html><head></head><body></body></html>"),fabric.document.createWindow?fabric.window=fabric.document.createWindow():fabric.window=fabric.document.parentWindow),fabric.isTouchSupported="ontouchstart"in fabric.document.documentElement,fabric.isLikelyNode=typeof Buffer!="undefined"&&typeof window=="undefined",fabric.SHARED_ATTRIBUTES=["display","transform","fill","fill-opacity","fill-rule","opacity","stroke","stroke-dasharray","stroke-linecap","stroke-linejoin","stroke-miterlimit","stroke-opacity","stroke-width"],fabric.DPI=96,fabric.reNum="(?:[-+]?(?:\\d+|\\d*\\.\\d+)(?:e[-+]?\\d+)?)",function(){function e(e,t){if(!this.__eventListeners[e])return;t?fabric.util.removeFromArray(this.__eventListeners[e],t):this.__eventListeners[e].length=0}function t(e,t){this.__eventListeners||(this.__eventListeners={});if(arguments.length===1)for(var n in e)this.on(n,e[n]);else this.__eventListeners[e]||(this.__eventListeners[e]=[]),this.__eventListeners[e].push(t);return this}function n(t,n){if(!this.__eventListeners)return;if(arguments.length===0)this.__eventListeners={};else if(arguments.length===1&&typeof arguments[0]=="object")for(var r in t)e.call(this,r,t[r]);else e.call(this,t,n);return this}function r(e,t){if(!this.__eventListeners)return;var n=this.__eventListeners[e];if(!n)return;for(var r=0,i=n.length;r<i;r++)n[r].call(this,t||{});return this}fabric.Observable={observe:t,stopObserving:n,fire:r,on:t,off:n,trigger:r}}(),fabric.Collection={add:function(){this._objects.push.apply(this._objects,arguments);for(var e=0,t=arguments.length;e<t;e++)this._onObjectAdded(arguments[e]);return this.renderOnAddRemove&&this.renderAll(),this},insertAt:function(e,t,n){var r=this.getObjects();return n?r[t]=e:r.splice(t,0,e),this._onObjectAdded(e),this.renderOnAddRemove&&this.renderAll(),this},remove:function(){var e=this.getObjects(),t;for(var n=0,r=arguments.length;n<r;n++)t=e.indexOf(arguments[n]),t!==-1&&(e.splice(t,1),this._onObjectRemoved(arguments[n]));return this.renderOnAddRemove&&this.renderAll(),this},forEachObject:function(e,t){var n=this.getObjects(),r=n.length;while(r--)e.call(t,n[r],r,n);return this},getObjects:function(e){return typeof e=="undefined"?this._objects:this._objects.filter(function(t){return t.type===e})},item:function(e){return this.getObjects()[e]},isEmpty:function(){return this.getObjects().length===0},size:function(){return this.getObjects().length},contains:function(e){return this.getObjects().indexOf(e)>-1},complexity:function(){return this.getObjects().reduce(function(e,t){return e+=t.complexity?t.complexity():0,e},0)}},function(e){var t=Math.sqrt,n=Math.atan2,r=Math.PI/180;fabric.util={removeFromArray:function(e,t){var n=e.indexOf(t);return n!==-1&&e.splice(n,1),e},getRandomInt:function(e,t){return Math.floor(Math.random()*(t-e+1))+e},degreesToRadians:function(e){return e*r},radiansToDegrees:function(e){return e/r},rotatePoint:function(e,t,n){var r=Math.sin(n),i=Math.cos(n);e.subtractEquals(t);var s=e.x*i-e.y*r,o=e.x*r+e.y*i;return(new fabric.Point(s,o)).addEquals(t)},transformPoint:function(e,t,n){return n?new fabric.Point(t[0]*e.x+t[1]*e.y,t[2]*e.x+t[3]*e.y):new fabric.Point(t[0]*e.x+t[1]*e.y+t[4],t[2]*e.x+t[3]*e.y+t[5])},invertTransform:function(e){var t=e.slice(),n=1/(e[0]*e[3]-e[1]*e[2]);t=[n*e[3],-n*e[1],-n*e[2],n*e[0],0,0];var r=fabric.util.transformPoint({x:e[4],y:e[5]},t);return t[4]=-r.x,t[5]=-r.y,t},toFixed:function(e,t){return parseFloat(Number(e).toFixed(t))},parseUnit:function(e,t){var n=/\D{0,2}$/.exec(e),r=parseFloat(e);t||(t=fabric.Text.DEFAULT_SVG_FONT_SIZE);switch(n[0]){case"mm":return r*fabric.DPI/25.4;case"cm":return r*fabric.DPI/2.54;case"in":return r*fabric.DPI;case"pt":return r*fabric.DPI/72;case"pc":return r*fabric.DPI/72*12;case"em":return r*t;default:return r}},falseFunction:function(){return!1},getKlass:function(e,t){return e=fabric.util.string.camelize(e.charAt(0).toUpperCase()+e.slice(1)),fabric.util.resolveNamespace(t)[e]},resolveNamespace:function(t){if(!t)return fabric;var n=t.split("."),r=n.length,i=e||fabric.window;for(var s=0;s<r;++s)i=i[n[s]];return i},loadImage:function(e,t,n,r){if(!e){t&&t.call(n,e);return}var i=fabric.util.createImage();i.onload=function(){t&&t.call(n,i),i=i.onload=i.onerror=null},i.onerror=function(){fabric.log("Error loading "+i.src),t&&t.call(n,null,!0),i=i.onload=i.onerror=null},e.indexOf("data")!==0&&typeof r!="undefined"&&(i.crossOrigin=r),i.src=e},enlivenObjects:function(e,t,n,r){function i(){++o===u&&t&&t(s)}e=e||[];var s=[],o=0,u=e.length;if(!u){t&&t(s);return}e.forEach(function(e,t){if(!e||!e.type){i();return}var o=fabric.util.getKlass(e.type,n);o.async?o.fromObject(e,function(n,o){o||(s[t]=n,r&&r(e,s[t])),i()}):(s[t]=o.fromObject(e),r&&r(e,s[t]),i())})},groupSVGElements:function(e,t,n){var r;return r=new fabric.PathGroup(e,t),typeof n!="undefined"&&r.setSourcePath(n),r},populateWithProperties:function(e,t,n){if(n&&Object.prototype.toString.call(n)==="[object Array]")for(var r=0,i=n.length;r<i;r++)n[r]in e&&(t[n[r]]=e[n[r]])},drawDashedLine:function(e,r,i,s,o,u){var a=s-r,f=o-i,l=t(a*a+f*f),c=n(f,a),h=u.length,p=0,d=!0;e.save(),e.translate(r,i),e.moveTo(0,0),e.rotate(c),r=0;while(l>r)r+=u[p++%h],r>l&&(r=l),e[d?"lineTo":"moveTo"](r,0),d=!d;e.restore()},createCanvasElement:function(e){return e||(e=fabric.document.createElement("canvas")),!e.getContext&&typeof G_vmlCanvasManager!="undefined"&&G_vmlCanvasManager.initElement(e),e},createImage:function(){return fabric.isLikelyNode?new(require("canvas").Image):fabric.document.createElement("img")},createAccessors:function(e){var t=e.prototype;for(var n=t.stateProperties.length;n--;){var r=t.stateProperties[n],i=r.charAt(0).toUpperCase()+r.slice(1),s="set"+i,o="get"+i;t[o]||(t[o]=function(e){return new Function('return this.get("'+e+'")')}(r)),t[s]||(t[s]=function(e){return new Function("value",'return this.set("'+e+'", value)')}(r))}},clipContext:function(e,t){t.save(),t.beginPath(),e.clipTo(t),t.clip()},multiplyTransformMatrices:function(e,t){var n=[[e[0],e[2],e[4]],[e[1],e[3],e[5]],[0,0,1]],r=[[t[0],t[2],t[4]],[t[1],t[3],t[5]],[0,0,1]],i=[];for(var s=0;s<3;s++){i[s]=[];for(var o=0;o<3;o++){var u=0;for(var a=0;a<3;a++)u+=n[s][a]*r[a][o];i[s][o]=u}}return[i[0][0],i[1][0],i[0][1],i[1][1],i[0][2],i[1][2]]},getFunctionBody:function(e){return(String(e).match(/function[^{]*\{([\s\S]*)\}/)||{})[1]},isTransparent:function(e,t,n,r){r>0&&(t>r?t-=r:t=0,n>r?n-=r:n=0);var i=!0,s=e.getImageData(t,n,r*2||1,r*2||1);for(var o=3,u=s.data.length;o<u;o+=4){var a=s.data[o];i=a<=0;if(i===!1)break}return s=null,i}}}(typeof exports!="undefined"?exports:this),function(){function i(t,n,i,u,a,f,l){var c=r.call(arguments);if(e[c])return e[c];var h=Math.PI,p=l*h/180,d=Math.sin(p),v=Math.cos(p),m=0,g=0;i=Math.abs(i),u=Math.abs(u);var y=-v*t*.5-d*n*.5,b=-v*n*.5+d*t*.5,w=i*i,E=u*u,S=b*b,x=y*y,T=w*E-w*S-E*x,N=0;if(T<0){var C=Math.sqrt(1-T/(w*E));i*=C,u*=C}else N=(a===f?-1:1)*Math.sqrt(T/(w*S+E*x));var k=N*i*b/u,L=-N*u*y/i,A=v*k-d*L+t*.5,O=d*k+v*L+n*.5,M=o(1,0,(y-k)/i,(b-L)/u),_=o((y-k)/i,(b-L)/u,(-y-k)/i,(-b-L)/u);f===0&&_>0?_-=2*h:f===1&&_<0&&(_+=2*h);var D=Math.ceil(Math.abs(_/h*2)),P=[],H=_/D,B=8/3*Math.sin(H/4)*Math.sin(H/4)/Math.sin(H/2),j=M+H;for(var F=0;F<D;F++)P[F]=s(M,j,v,d,i,u,A,O,B,m,g),m=P[F][4],g=P[F][5],M=j,j+=H;return e[c]=P,P}function s(e,n,i,s,o,u,a,f,l,c,h){var p=r.call(arguments);if(t[p])return t[p];var d=Math.cos(e),v=Math.sin(e),m=Math.cos(n),g=Math.sin(n),y=i*o*m-s*u*g+a,b=s*o*m+i*u*g+f,w=c+l*(-i*o*v-s*u*d),E=h+l*(-s*o*v+i*u*d),S=y+l*(i*o*g+s*u*m),x=b+l*(s*o*g-i*u*m);return t[p]=[w,E,S,x,y,b],t[p]}function o(e,t,n,r){var i=Math.atan2(t,e),s=Math.atan2(r,n);return s>=i?s-i:2*Math.PI-(i-s)}function u(e,t,i,s,o,u,a,f){var l=r.call(arguments);if(n[l])return n[l];var c=Math.sqrt,h=Math.min,p=Math.max,d=Math.abs,v=[],m=[[],[]],g,y,b,w,E,S,x,T;y=6*e-12*i+6*o,g=-3*e+9*i-9*o+3*a,b=3*i-3*e;for(var N=0;N<2;++N){N>0&&(y=6*t-12*s+6*u,g=-3*t+9*s-9*u+3*f,b=3*s-3*t);if(d(g)<1e-12){if(d(y)<1e-12)continue;w=-b/y,0<w&&w<1&&v.push(w);continue}x=y*y-4*b*g;if(x<0)continue;T=c(x),E=(-y+T)/(2*g),0<E&&E<1&&v.push(E),S=(-y-T)/(2*g),0<S&&S<1&&v.push(S)}var C,k,L=v.length,A=L,O;while(L--)w=v[L],O=1-w,C=O*O*O*e+3*O*O*w*i+3*O*w*w*o+w*w*w*a,m[0][L]=C,k=O*O*O*t+3*O*O*w*s+3*O*w*w*u+w*w*w*f,m[1][L]=k;m[0][A]=e,m[1][A]=t,m[0][A+1]=a,m[1][A+1]=f;var M=[{x:h.apply(null,m[0]),y:h.apply(null,m[1])},{x:p.apply(null,m[0]),y:p.apply(null,m[1])}];return n[l]=M,M}var e={},t={},n={},r=Array.prototype.join;fabric.util.drawArc=function(e,t,n,r){var s=r[0],o=r[1],u=r[2],a=r[3],f=r[4],l=r[5],c=r[6],h=[[],[],[],[]],p=i(l-t,c-n,s,o,a,f,u);for(var d=0,v=p.length;d<v;d++)h[d][0]=p[d][0]+t,h[d][1]=p[d][1]+n,h[d][2]=p[d][2]+t,h[d][3]=p[d][3]+n,h[d][4]=p[d][4]+t,h[d][5]=p[d][5]+n,e.bezierCurveTo.apply(e,h[d])},fabric.util.getBoundsOfArc=function(e,t,n,r,s,o,a,f,l){var c=0,h=0,p=[],d=[],v=i(f-e,l-t,n,r,o,a,s);for(var m=0,g=v.length;m<g;m++)p=u(c,h,v[m][0],v[m][1],v[m][2],v[m][3],v[m][4],v[m][5]),p[0].x+=e,p[0].y+=t,p[1].x+=e,p[1].y+=t,d.push(p[0]),d.push(p[1]),c=v[m][4],h=v[m][5];return d},fabric.util.getBoundsOfCurve=u}(),function(){function t(t,n){var r=e.call(arguments,2),i=[];for(var s=0,o=t.length;s<o;s++)i[s]=r.length?t[s][n].apply(t[s],r):t[s][n].call(t[s]);return i}function n(e,t){return i(e,t,function(e,t){return e>=t})}function r(e,t){return i(e,t,function(e,t){return e<t})}function i(e,t,n){if(!e||e.length===0)return;var r=e.length-1,i=t?e[r][t]:e[r];if(t)while(r--)n(e[r][t],i)&&(i=e[r][t]);else while(r--)n(e[r],i)&&(i=e[r]);return i}var e=Array.prototype.slice;Array.prototype.indexOf||(Array.prototype.indexOf=function(e){if(this===void 0||this===null)throw new TypeError;var t=Object(this),n=t.length>>>0;if(n===0)return-1;var r=0;arguments.length>0&&(r=Number(arguments[1]),r!==r?r=0:r!==0&&r!==Number.POSITIVE_INFINITY&&r!==Number.NEGATIVE_INFINITY&&(r=(r>0||-1)*Math.floor(Math.abs(r))));if(r>=n)return-1;var i=r>=0?r:Math.max(n-Math.abs(r),0);for(;i<n;i++)if(i in t&&t[i]===e)return i;return-1}),Array.prototype.forEach||(Array.prototype.forEach=function(e,t){for(var n=0,r=this.length>>>0;n<r;n++)n in this&&e.call(t,this[n],n,this)}),Array.prototype.map||(Array.prototype.map=function(e,t){var n=[];for(var r=0,i=this.length>>>0;r<i;r++)r in this&&(n[r]=e.call(t,this[r],r,this));return n}),Array.prototype.every||(Array.prototype.every=function(e,t){for(var n=0,r=this.length>>>0;n<r;n++)if(n in this&&!e.call(t,this[n],n,this))return!1;return!0}),Array.prototype.some||(Array.prototype.some=function(e,t){for(var n=0,r=this.length>>>0;n<r;n++)if(n in this&&e.call(t,this[n],n,this))return!0;return!1}),Array.prototype.filter||(Array.prototype.filter=function(e,t){var n=[],r;for(var i=0,s=this.length>>>0;i<s;i++)i in this&&(r=this[i],e.call(t,r,i,this)&&n.push(r));return n}),Array.prototype.reduce||(Array.prototype.reduce=function(e){var t=this.length>>>0,n=0,r;if(arguments.length>1)r=arguments[1];else do{if(n in this){r=this[n++];break}if(++n>=t)throw new TypeError}while(!0);for(;n<t;n++)n in this&&(r=e.call(null,r,this[n],n,this));return r}),fabric.util.array={invoke:t,min:r,max:n}}(),function(){function e(e,t){for(var n in t)e[n]=t[n];return e}function t(t){return e({},t)}fabric.util.object={extend:e,clone:t}}(),function(){function e(e){return e.replace(/-+(.)?/g,function(e,t){return t?t.toUpperCase():""})}function t(e,t){return e.charAt(0).toUpperCase()+(t?e.slice(1):e.slice(1).toLowerCase())}function n(e){return e.replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/'/g,"&apos;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}String.prototype.trim||(String.prototype.trim=function(){return this.replace(/^[\s\xA0]+/,"").replace(/[\s\xA0]+$/,"")}),fabric.util.string={camelize:e,capitalize:t,escapeXml:n}}(),function(){var e=Array.prototype.slice,t=Function.prototype.apply,n=function(){};Function.prototype.bind||(Function.prototype.bind=function(r){var i=this,s=e.call(arguments,1),o;return s.length?o=function(){return t.call(i,this instanceof n?this:r,s.concat(e.call(arguments)))}:o=function(){return t.call(i,this instanceof n?this:r,arguments)},n.prototype=this.prototype,o.prototype=new n,o})}(),function(){function i(){}function s(t){var n=this.constructor.superclass.prototype[t];return arguments.length>1?n.apply(this,e.call(arguments,1)):n.call(this)}function o(){function u(){this.initialize.apply(this,arguments)}var n=null,o=e.call(arguments,0);typeof o[0]=="function"&&(n=o.shift()),u.superclass=n,u.subclasses=[],n&&(i.prototype=n.prototype,u.prototype=new i,n.subclasses.push(u));for(var a=0,f=o.length;a<f;a++)r(u,o[a],n);return u.prototype.initialize||(u.prototype.initialize=t),u.prototype.constructor=u,u.prototype.callSuper=s,u}var e=Array.prototype.slice,t=function(){},n=function(){for(var e in{toString:1})if(e==="toString")return!1;return!0}(),r=function(e,t,r){for(var i in t)i in e.prototype&&typeof e.prototype[i]=="function"&&(t[i]+"").indexOf("callSuper")>-1?e.prototype[i]=function(e){return function(){var n=this.constructor.superclass;this.constructor.superclass=r;var i=t[e].apply(this,arguments);this.constructor.superclass=n;if(e!=="initialize")return i}}(i):e.prototype[i]=t[i],n&&(t.toString!==Object.prototype.toString&&(e.prototype.toString=t.toString),t.valueOf!==Object.prototype.valueOf&&(e.prototype.valueOf=t.valueOf))};fabric.util.createClass=o}(),function(){function t(e){var t=Array.prototype.slice.call(arguments,1),n,r,i=t.length;for(r=0;r<i;r++){n=typeof e[t[r]];if(!/^(?:function|object|unknown)$/.test(n))return!1}return!0}function s(e,t){return{handler:t,wrappedHandler:o(e,t)}}function o(e,t){return function(r){t.call(n(e),r||fabric.window.event)}}function u(e,t){return function(n){if(c[e]&&c[e][t]){var r=c[e][t];for(var i=0,s=r.length;i<s;i++)r[i].call(this,n||fabric.window.event)}}}function d(t,n){t||(t=fabric.window.event);var r=t.target||(typeof t.srcElement!==e?t.srcElement:null),i=fabric.util.getScrollLeftTop(r,n);return{x:v(t)+i.left,y:m(t)+i.top}}function g(e,t,n){var r=e.type==="touchend"?"changedTouches":"touches";return e[r]&&e[r][0]?e[r][0][t]-(e[r][0][t]-e[r][0][n])||e[n]:e[n]}var e="unknown",n,r,i=function(){var e=0;return function(t){return t.__uniqueID||(t.__uniqueID="uniqueID__"+e++)}}();(function(){var e={};n=function(t){return e[t]},r=function(t,n){e[t]=n}})();var a=t(fabric.document.documentElement,"addEventListener","removeEventListener")&&t(fabric.window,"addEventListener","removeEventListener"),f=t(fabric.document.documentElement,"attachEvent","detachEvent")&&t(fabric.window,"attachEvent","detachEvent"),l={},c={},h,p;a?(h=function(e,t,n){e.addEventListener(t,n,!1)},p=function(e,t,n){e.removeEventListener(t,n,!1)}):f?(h=function(e,t,n){var o=i(e);r(o,e),l[o]||(l[o]={}),l[o][t]||(l[o][t]=[]);var u=s(o,n);l[o][t].push(u),e.attachEvent("on"+t,u.wrappedHandler)},p=function(e,t,n){var r=i(e),s;if(l[r]&&l[r][t])for(var o=0,u=l[r][t].length;o<u;o++)s=l[r][t][o],s&&s.handler===n&&(e.detachEvent("on"+t,s.wrappedHandler),l[r][t][o]=null)}):(h=function(e,t,n){var r=i(e);c[r]||(c[r]={});if(!c[r][t]){c[r][t]=[];var s=e["on"+t];s&&c[r][t].push(s),e["on"+t]=u(r,t)}c[r][t].push(n)},p=function(e,t,n){var r=i(e);if(c[r]&&c[r][t]){var s=c[r][t];for(var o=0,u=s.length;o<u;o++)s[o]===n&&s.splice(o,1)}}),fabric.util.addListener=h,fabric.util.removeListener=p;var v=function(t){return typeof t.clientX!==e?t.clientX:0},m=function(t){return typeof t.clientY!==e?t.clientY:0};fabric.isTouchSupported&&(v=function(e){return g(e,"pageX","clientX")},m=function(e){return g(e,"pageY","clientY")}),fabric.util.getPointer=d,fabric.util.object.extend(fabric.util,fabric.Observable)}(),function(){function e(e,t){var n=e.style;if(!n)return e;if(typeof t=="string")return e.style.cssText+=";"+t,t.indexOf("opacity")>-1?s(e,t.match(/opacity:\s*(\d?\.?\d*)/)[1]):e;for(var r in t)if(r==="opacity")s(e,t[r]);else{var i=r==="float"||r==="cssFloat"?typeof n.styleFloat=="undefined"?"cssFloat":"styleFloat":r;n[i]=t[r]}return e}var t=fabric.document.createElement("div"),n=typeof t.style.opacity=="string",r=typeof t.style.filter=="string",i=/alpha\s*\(\s*opacity\s*=\s*([^\)]+)\)/,s=function(e){return e};n?s=function(e,t){return e.style.opacity=t,e}:r&&(s=function(e,t){var n=e.style;return e.currentStyle&&!e.currentStyle.hasLayout&&(n.zoom=1),i.test(n.filter)?(t=t>=.9999?"":"alpha(opacity="+t*100+")",n.filter=n.filter.replace(i,t)):n.filter+=" alpha(opacity="+t*100+")",e}),fabric.util.setStyle=e}(),function(){function t(e){return typeof e=="string"?fabric.document.getElementById(e):e}function s(e,t){var n=fabric.document.createElement(e);for(var r in t)r==="class"?n.className=t[r]:r==="for"?n.htmlFor=t[r]:n.setAttribute(r,t[r]);return n}function o(e,t){e&&(" "+e.className+" ").indexOf(" "+t+" ")===-1&&(e.className+=(e.className?" ":"")+t)}function u(e,t,n){return typeof t=="string"&&(t=s(t,n)),e.parentNode&&e.parentNode.replaceChild(t,e),t.appendChild(e),t}function a(e,t){var n,r,i=0,s=0,o=fabric.document.documentElement,u=fabric.document.body||{scrollLeft:0,scrollTop:0};r=e;while(e&&e.parentNode&&!n)e=e.parentNode,e.nodeType===1&&fabric.util.getElementStyle(e,"position")==="fixed"&&(n=e),e.nodeType===1&&r!==t&&fabric.util.getElementStyle(e,"position")==="absolute"?(i=0,s=0):e===fabric.document?(i=u.scrollLeft||o.scrollLeft||0,s=u.scrollTop||o.scrollTop||0):(i+=e.scrollLeft||0,s+=e.scrollTop||0);return{left:i,top:s}}function f(e){var t,n=e&&e.ownerDocument,r={left:0,top:0},i={left:0,top:0},s,o={borderLeftWidth:"left",borderTopWidth:"top",paddingLeft:"left",paddingTop:"top"};if(!n)return{left:0,top:0};for(var u in o)i[o[u]]+=parseInt(l(e,u),10)||0;return t=n.documentElement,typeof e.getBoundingClientRect!="undefined"&&(r=e.getBoundingClientRect()),s=fabric.util.getScrollLeftTop(e,null),{left:r.left+s.left-(t.clientLeft||0)+i.left,top:r.top+s.top-(t.clientTop||0)+i.top}}var e=Array.prototype.slice,n,r=function(t){return e.call(t,0)};try{n=r(fabric.document.childNodes)instanceof Array}catch(i){}n||(r=function(e){var t=new Array(e.length),n=e.length;while(n--)t[n]=e[n];return t});var l;fabric.document.defaultView&&fabric.document.defaultView.getComputedStyle?l=function(e,t){var n=fabric.document.defaultView.getComputedStyle(e,null);return n?n[t]:undefined}:l=function(e,t){var n=e.style[t];return!n&&e.currentStyle&&(n=e.currentStyle[t]),n},function(){function n(e){return typeof e.onselectstart!="undefined"&&(e.onselectstart=fabric.util.falseFunction),t?e.style[t]="none":typeof e.unselectable=="string"&&(e.unselectable="on"),e}function r(e){return typeof e.onselectstart!="undefined"&&(e.onselectstart=null),t?e.style[t]="":typeof e.unselectable=="string"&&(e.unselectable=""),e}var e=fabric.document.documentElement.style,t="userSelect"in e?"userSelect":"MozUserSelect"in e?"MozUserSelect":"WebkitUserSelect"in e?"WebkitUserSelect":"KhtmlUserSelect"in e?"KhtmlUserSelect":"";fabric.util.makeElementUnselectable=n,fabric.util.makeElementSelectable=r}(),function(){function e(e,t){var n=fabric.document.getElementsByTagName("head")[0],r=fabric.document.createElement("script"),i=!0;r.onload=r.onreadystatechange=function(e){if(i){if(typeof this.readyState=="string"&&this.readyState!=="loaded"&&this.readyState!=="complete")return;i=!1,t(e||fabric.window.event),r=r.onload=r.onreadystatechange=null}},r.src=e,n.appendChild(r)}fabric.util.getScript=e}(),fabric.util.getById=t,fabric.util.toArray=r,fabric.util.makeElement=s,fabric.util.addClass=o,fabric.util.wrapElement=u,fabric.util.getScrollLeftTop=a,fabric.util.getElementOffset=f,fabric.util.getElementStyle=l}(),function(){function e(e,t){return e+(/\?/.test(e)?"&":"?")+t}function n(){}function r(r,i){i||(i={});var s=i.method?i.method.toUpperCase():"GET",o=i.onComplete||function(){},u=t(),a;return u.onreadystatechange=function(){u.readyState===4&&(o(u),u.onreadystatechange=n)},s==="GET"&&(a=null,typeof i.parameters=="string"&&(r=e(r,i.parameters))),u.open(s,r,!0),(s==="POST"||s==="PUT")&&u.setRequestHeader("Content-Type","application/x-www-form-urlencoded"),u.send(a),u}var t=function(){var e=[function(){return new ActiveXObject("Microsoft.XMLHTTP")},function(){return new ActiveXObject("Msxml2.XMLHTTP")},function(){return new ActiveXObject("Msxml2.XMLHTTP.3.0")},function(){return new XMLHttpRequest}];for(var t=e.length;t--;)try{var n=e[t]();if(n)return e[t]}catch(r){}}();fabric.util.request=r}(),fabric.log=function(){},fabric.warn=function(){},typeof console!="undefined"&&["log","warn"].forEach(function(e){typeof console[e]!="undefined"&&console[e].apply&&(fabric[e]=function(){return console[e].apply(console,arguments)})}),function(){function e(e){n(function(t){e||(e={});var r=t||+(new Date),i=e.duration||500,s=r+i,o,u=e.onChange||function(){},a=e.abort||function(){return!1},f=e.easing||function(e,t,n,r){return-n*Math.cos(e/r*(Math.PI/2))+n+t},l="startValue"in e?e.startValue:0,c="endValue"in e?e.endValue:100,h=e.byValue||c-l;e.onStart&&e.onStart(),function p(t){o=t||+(new Date);var c=o>s?i:o-r;if(a()){e.onComplete&&e.onComplete();return}u(f(c,l,h,i));if(o>s){e.onComplete&&e.onComplete();return}n(p)}(r)})}function n(){return t.apply(fabric.window,arguments)}var t=fabric.window.requestAnimationFrame||fabric.window.webkitRequestAnimationFrame||fabric.window.mozRequestAnimationFrame||fabric.window.oRequestAnimationFrame||fabric.window.msRequestAnimationFrame||function(e){fabric.window.setTimeout(e,1e3/60)};fabric.util.animate=e,fabric.util.requestAnimFrame=n}(),function(){function e(e,t,n,r){return e<Math.abs(t)?(e=t,r=n/4):r=n/(2*Math.PI)*Math.asin(t/e),{a:e,c:t,p:n,s:r}}function t(e,t,n){return e.a*Math.pow(2,10*(t-=1))*Math.sin((t*n-e.s)*2*Math.PI/e.p)}function n(e,t,n,r){return n*((e=e/r-1)*e*e+1)+t}function r(e,t,n,r){return e/=r/2,e<1?n/2*e*e*e+t:n/2*((e-=2)*e*e+2)+t}function i(e,t,n,r){return n*(e/=r)*e*e*e+t}function s(e,t,n,r){return-n*((e=e/r-1)*e*e*e-1)+t}function o(e,t,n,r){return e/=r/2,e<1?n/2*e*e*e*e+t:-n/2*((e-=2)*e*e*e-2)+t}function u(e,t,n,r){return n*(e/=r)*e*e*e*e+t}function a(e,t,n,r){return n*((e=e/r-1)*e*e*e*e+1)+t}function f(e,t,n,r){return e/=r/2,e<1?n/2*e*e*e*e*e+t:n/2*((e-=2)*e*e*e*e+2)+t}function l(e,t,n,r){return-n*Math.cos(e/r*(Math.PI/2))+n+t}function c(e,t,n,r){return n*Math.sin(e/r*(Math.PI/2))+t}function h(e,t,n,r){return-n/2*(Math.cos(Math.PI*e/r)-1)+t}function p(e,t,n,r){return e===0?t:n*Math.pow(2,10*(e/r-1))+t}function d(e,t,n,r){return e===r?t+n:n*(-Math.pow(2,-10*e/r)+1)+t}function v(e,t,n,r){return e===0?t:e===r?t+n:(e/=r/2,e<1?n/2*Math.pow(2,10*(e-1))+t:n/2*(-Math.pow(2,-10*--e)+2)+t)}function m(e,t,n,r){return-n*(Math.sqrt(1-(e/=r)*e)-1)+t}function g(e,t,n,r){return n*Math.sqrt(1-(e=e/r-1)*e)+t}function y(e,t,n,r){return e/=r/2,e<1?-n/2*(Math.sqrt(1-e*e)-1)+t:n/2*(Math.sqrt(1-(e-=2)*e)+1)+t}function b(n,r,i,s){var o=1.70158,u=0,a=i;if(n===0)return r;n/=s;if(n===1)return r+i;u||(u=s*.3);var f=e(a,i,u,o);return-t(f,n,s)+r}function w(t,n,r,i){var s=1.70158,o=0,u=r;if(t===0)return n;t/=i;if(t===1)return n+r;o||(o=i*.3);var a=e(u,r,o,s);return a.a*Math.pow(2,-10*t)*Math.sin((t*i-a.s)*2*Math.PI/a.p)+a.c+n}function E(n,r,i,s){var o=1.70158,u=0,a=i;if(n===0)return r;n/=s/2;if(n===2)return r+i;u||(u=s*.3*1.5);var f=e(a,i,u,o);return n<1?-0.5*t(f,n,s)+r:f.a*Math.pow(2,-10*(n-=1))*Math.sin((n*s-f.s)*2*Math.PI/f.p)*.5+f.c+r}function S(e,t,n,r,i){return i===undefined&&(i=1.70158),n*(e/=r)*e*((i+1)*e-i)+t}function x(e,t,n,r,i){return i===undefined&&(i=1.70158),n*((e=e/r-1)*e*((i+1)*e+i)+1)+t}function T(e,t,n,r,i){return i===undefined&&(i=1.70158),e/=r/2,e<1?n/2*e*e*(((i*=1.525)+1)*e-i)+t:n/2*((e-=2)*e*(((i*=1.525)+1)*e+i)+2)+t}function N(e,t,n,r){return n-C(r-e,0,n,r)+t}function C(e,t,n,r){return(e/=r)<1/2.75?n*7.5625*e*e+t:e<2/2.75?n*(7.5625*(e-=1.5/2.75)*e+.75)+t:e<2.5/2.75?n*(7.5625*(e-=2.25/2.75)*e+.9375)+t:n*(7.5625*(e-=2.625/2.75)*e+.984375)+t}function k(e,t,n,r){return e<r/2?N(e*2,0,n,r)*.5+t:C(e*2-r,0,n,r)*.5+n*.5+t}fabric.util.ease={easeInQuad:function(e,t,n,r){return n*(e/=r)*e+t},easeOutQuad:function(e,t,n,r){return-n*(e/=r)*(e-2)+t},easeInOutQuad:function(e,t,n,r){return e/=r/2,e<1?n/2*e*e+t:-n/2*(--e*(e-2)-1)+t},easeInCubic:function(e,t,n,r){return n*(e/=r)*e*e+t},easeOutCubic:n,easeInOutCubic:r,easeInQuart:i,easeOutQuart:s,easeInOutQuart:o,easeInQuint:u,easeOutQuint:a,easeInOutQuint:f,easeInSine:l,easeOutSine:c,easeInOutSine:h,easeInExpo:p,easeOutExpo:d,easeInOutExpo:v,easeInCirc:m,easeOutCirc:g,easeInOutCirc:y,easeInElastic:b,easeOutElastic:w,easeInOutElastic:E,easeInBack:S,easeOutBack:x,easeInOutBack:T,easeInBounce:N,easeOutBounce:C,easeInOutBounce:k}}(),function(e){"use strict";function l(e){return e in a?a[e]:e}function c(e,n,r,i){var s=Object.prototype.toString.call(n)==="[object Array]",a;return e!=="fill"&&e!=="stroke"||n!=="none"?e==="strokeDashArray"?n=n.replace(/,/g," ").split(/\s+/).map(function(e){return parseFloat(e)}):e==="transformMatrix"?r&&r.transformMatrix?n=u(r.transformMatrix,t.parseTransformAttribute(n)):n=t.parseTransformAttribute(n):e==="visible"?(n=n==="none"||n==="hidden"?!1:!0,r&&r.visible===!1&&(n=!1)):e==="originX"?n=n==="start"?"left":n==="end"?"right":"center":a=s?n.map(o):o(n,i):n="",!s&&isNaN(a)?n:a}function h(e){for(var n in f){if(!e[n]||typeof e[f[n]]=="undefined")continue;if(e[n].indexOf("url(")===0)continue;var r=new t.Color(e[n]);e[n]=r.setAlpha(s(r.getAlpha()*e[f[n]],2)).toRgba()}return e}function p(e,t){var n,r;e.replace(/;$/,"").split(";").forEach(function(e){var i=e.split(":");n=l(i[0].trim().toLowerCase()),r=c(n,i[1].trim()),t[n]=r})}function d(e,t){var n,r;for(var i in e){if(typeof e[i]=="undefined")continue;n=l(i.toLowerCase()),r=c(n,e[i]),t[n]=r}}function v(e,n){var r={};for(var i in t.cssRules[n])if(m(e,i.split(" ")))for(var s in t.cssRules[n][i])r[s]=t.cssRules[n][i][s];return r}function m(e,t){var n,r=!0;return n=y(e,t.pop()),n&&t.length&&(r=g(e,t)),n&&r&&t.length===0}function g(e,t){var n,r=!0;while(e.parentNode&&e.parentNode.nodeType===1&&t.length)r&&(n=t.pop()),e=e.parentNode,r=y(e,n);return t.length===0}function y(e,t){var n=e.nodeName,r=e.getAttribute("class"),i=e.getAttribute("id"),s;s=new RegExp("^"+n,"i"),t=t.replace(s,""),i&&t.length&&(s=new RegExp("#"+i+"(?![a-zA-Z\\-]+)","i"),t=t.replace(s,""));if(r&&t.length){r=r.split(" ");for(var o=r.length;o--;)s=new RegExp("\\."+r[o]+"(?![a-zA-Z\\-]+)","i"),t=t.replace(s,"")}return t.length===0}function b(e){var t=e.getElementsByTagName("use");while(t.length){var n=t[0],r=n.getAttribute("xlink:href").substr(1),i=n.getAttribute("x")||0,s=n.getAttribute("y")||0,o=e.getElementById(r).cloneNode(!0),u=(o.getAttribute("transform")||"")+" translate("+i+", "+s+")",a;for(var f=0,l=n.attributes,c=l.length;f<c;f++){var h=l.item(f);if(h.nodeName==="x"||h.nodeName==="y"||h.nodeName==="xlink:href")continue;h.nodeName==="transform"?u=h.nodeValue+" "+u:o.setAttribute(h.nodeName,h.nodeValue)}o.setAttribute("transform",u),o.setAttribute("instantiated_by_use","1"),o.removeAttribute("id"),a=n.parentNode,a.replaceChild(o,n)}}function w(e,n,r){var i=new RegExp("^\\s*("+t.reNum+"+)\\s*,?"+"\\s*("+t.reNum+"+)\\s*,?"+"\\s*("+t.reNum+"+)\\s*,?"+"\\s*("+t.reNum+"+)\\s*"+"$"),s=e.getAttribute("viewBox"),o=1,u=1,a=0,f=0,l,c,h,p;if(!s||!(s=s.match(i)))return;a=-parseFloat(s[1]),f=-parseFloat(s[2]),l=parseFloat(s[3]),c=parseFloat(s[4]),n&&n!==l&&(o=n/l),r&&r!==c&&(u=r/c),u=o=o>u?u:o;if(o===1&&u===1&&a===0&&f===0)return;h="matrix("+o+" 0"+" 0 "+u+" "+a*o+" "+f*u+")";if(e.tagName==="svg"){p=e.ownerDocument.createElement("g");while(e.firstChild!=null)p.appendChild(e.firstChild);e.appendChild(p)}else p=e,h+=p.getAttribute("transform");p.setAttribute("transform",h)}function S(e){var n=e.objects,i=e.options;return n=n.map(function(e){return t[r(e.type)].fromObject(e)}),{objects:n,options:i}}function x(e,t,n){t[n]&&t[n].toSVG&&e.push('<pattern x="0" y="0" id="',n,'Pattern" ','width="',t[n].source.width,'" height="',t[n].source.height,'" patternUnits="userSpaceOnUse">','<image x="0" y="0" ','width="',t[n].source.width,'" height="',t[n].source.height,'" xlink:href="',t[n].source.src,'"></image></pattern>')}var t=e.fabric||(e.fabric={}),n=t.util.object.extend,r=t.util.string.capitalize,i=t.util.object.clone,s=t.util.toFixed,o=t.util.parseUnit,u=t.util.multiplyTransformMatrices,a={cx:"left",x:"left",r:"radius",cy:"top",y:"top",display:"visible",visibility:"visible",transform:"transformMatrix","fill-opacity":"fillOpacity","fill-rule":"fillRule","font-family":"fontFamily","font-size":"fontSize","font-style":"fontStyle","font-weight":"fontWeight","stroke-dasharray":"strokeDashArray","stroke-linecap":"strokeLineCap","stroke-linejoin":"strokeLineJoin","stroke-miterlimit":"strokeMiterLimit","stroke-opacity":"strokeOpacity","stroke-width":"strokeWidth","text-decoration":"textDecoration","text-anchor":"originX"},f={stroke:"strokeOpacity",fill:"fillOpacity"};t.cssRules={},t.gradientDefs={},t.parseTransformAttribute=function(){function e(e,t){var n=t[0];e[0]=Math.cos(n),e[1]=Math.sin(n),e[2]=-Math.sin(n),e[3]=Math.cos(n)}function n(e,t){var n=t[0],r=t.length===2?t[1]:t[0];e[0]=n,e[3]=r}function r(e,n){e[2]=Math.tan(t.util.degreesToRadians(n[0]))}function i(e,n){e[1]=Math.tan(t.util.degreesToRadians(n[0]))}function s(e,t){e[4]=t[0],t.length===2&&(e[5]=t[1])}var o=[1,0,0,1,0,0],u=t.reNum,a="(?:\\s+,?\\s*|,\\s*)",f="(?:(skewX)\\s*\\(\\s*("+u+")\\s*\\))",l="(?:(skewY)\\s*\\(\\s*("+u+")\\s*\\))",c="(?:(rotate)\\s*\\(\\s*("+u+")(?:"+a+"("+u+")"+a+"("+u+"))?\\s*\\))",h="(?:(scale)\\s*\\(\\s*("+u+")(?:"+a+"("+u+"))?\\s*\\))",p="(?:(translate)\\s*\\(\\s*("+u+")(?:"+a+"("+u+"))?\\s*\\))",d="(?:(matrix)\\s*\\(\\s*("+u+")"+a+"("+u+")"+a+"("+u+")"+a+"("+u+")"+a+"("+u+")"+a+"("+u+")"+"\\s*\\))",v="(?:"+d+"|"+p+"|"+h+"|"+c+"|"+f+"|"+l+")",m="(?:"+v+"(?:"+a+v+")*"+")",g="^\\s*(?:"+m+"?)\\s*$",y=new RegExp(g),b=new RegExp(v,"g");return function(u){var a=o.concat(),f=[];if(!u||u&&!y.test(u))return a;u.replace(b,function(u){var l=(new RegExp(v)).exec(u).filter(function(e){return e!==""&&e!=null}),c=l[1],h=l.slice(2).map(parseFloat);switch(c){case"translate":s(a,h);break;case"rotate":h[0]=t.util.degreesToRadians(h[0]),e(a,h);break;case"scale":n(a,h);break;case"skewX":r(a,h);break;case"skewY":i(a,h);break;case"matrix":a=h}f.push(a.concat()),a=o.concat()});var l=f[0];while(f.length>1)f.shift(),l=t.util.multiplyTransformMatrices(l,f[0]);return l}}(),t.parseSVGDocument=function(){function r(e,t){while(e&&(e=e.parentNode))if(t.test(e.nodeName)&&!e.getAttribute("instantiated_by_use"))return!0;return!1}var e=/^(path|circle|polygon|polyline|ellipse|rect|line|image|text)$/,n=/^(symbol|image|marker|pattern|view)$/;return function(s,u,a){if(!s)return;b(s);var f=new Date,l=t.Object.__uid++,c=o(s.getAttribute("width")||"100%"),h=o(s.getAttribute("height")||"100%");w(s,c,h);var p=t.util.toArray(s.getElementsByTagName("*"));if(p.length===0&&t.isLikelyNode){p=s.selectNodes('//*[name(.)!="svg"]');var d=[];for(var v=0,m=p.length;v<m;v++)d[v]=p[v];p=d}var g=p.filter(function(t){return n.test(t.tagName)&&w(t,0,0),e.test(t.tagName)&&!r(t,/^(?:pattern|defs|symbol)$/)});if(!g||g&&!g.length){u&&u([],{});return}var y={width:c,height:h,widthAttr:c,heightAttr:h,svgUid:l};t.gradientDefs[l]=t.getGradientDefs(s),t.cssRules[l]=t.getCSSRules(s),t.parseElements(g,function(e){t.documentParsingTime=new Date-f,u&&u(e,y)},i(y),a)}}();var E={has:function(e,t){t(!1)},get:function(){},set:function(){}};n(t,{parseFontDeclaration:function(e,n){var r="(normal|italic)?\\s*(normal|small-caps)?\\s*(normal|bold|bolder|lighter|100|200|300|400|500|600|700|800|900)?\\s*("+t.reNum+"(?:px|cm|mm|em|pt|pc|in)*)(?:\\/(normal|"+t.reNum+"))?\\s+(.*)",i=e.match(r);if(!i)return;var s=i[1],u=i[3],a=i[4],f=i[5],l=i[6];s&&(n.fontStyle=s),u&&(n.fontWeight=isNaN(parseFloat(u))?u:parseFloat(u)),a&&(n.fontSize=o(a)),l&&(n.fontFamily=l),f&&(n.lineHeight=f==="normal"?1:f)},getGradientDefs:function(e){var t=e.getElementsByTagName("linearGradient"),n=e.getElementsByTagName("radialGradient"),r,i,s=0,o,u,a=[],f={},l={};a.length=t.length+n.length,i=t.length;while(i--)a[s++]=t[i];i=n.length;while(i--)a[s++]=n[i];while(s--)r=a[s],u=r.getAttribute("xlink:href"),o=r.getAttribute("id"),u&&(l[o]=u.substr(1)),f[o]=r;for(o in l){var c=f[l[o]].cloneNode(!0);r=f[o];while(c.firstChild)r.appendChild(c.firstChild)}return f},parseAttributes:function(e,r,i){if(!e)return;var s,o={},u;typeof i=="undefined"&&(i=e.getAttribute("svgUid")),e.parentNode&&/^symbol|[g|a]$/i.test(e.parentNode.nodeName)&&(o=t.parseAttributes(e.parentNode,r,i)),u=o&&o.fontSize||e.getAttribute("font-size")||t.Text.DEFAULT_SVG_FONT_SIZE
 ;var a=r.reduce(function(t,n){return s=e.getAttribute(n),s&&(n=l(n),s=c(n,s,o,u),t[n]=s),t},{});return a=n(a,n(v(e,i),t.parseStyleAttribute(e))),a.font&&t.parseFontDeclaration(a.font,a),h(n(o,a))},parseElements:function(e,n,r,i){(new t.ElementsParser(e,n,r,i)).parse()},parseStyleAttribute:function(e){var t={},n=e.getAttribute("style");return n?(typeof n=="string"?p(n,t):d(n,t),t):t},parsePointsAttribute:function(e){if(!e)return null;e=e.replace(/,/g," ").trim(),e=e.split(/\s+/);var t=[],n,r;n=0,r=e.length;for(;n<r;n+=2)t.push({x:parseFloat(e[n]),y:parseFloat(e[n+1])});return t},getCSSRules:function(e){var n=e.getElementsByTagName("style"),r={},i;for(var s=0,o=n.length;s<o;s++){var u=n[s].textContent;u=u.replace(/\/\*[\s\S]*?\*\//g,"");if(u.trim()==="")continue;i=u.match(/[^{]*\{[\s\S]*?\}/g),i=i.map(function(e){return e.trim()}),i.forEach(function(e){var n=e.match(/([\s\S]*?)\s*\{([^}]*)\}/),i={},s=n[2].trim(),o=s.replace(/;$/,"").split(/\s*;\s*/);for(var u=0,a=o.length;u<a;u++){var f=o[u].split(/\s*:\s*/),h=l(f[0]),p=c(h,f[1],f[0]);i[h]=p}e=n[1],e.split(",").forEach(function(e){e=e.replace(/^svg/i,"").trim();if(e==="")return;r[e]=t.util.object.clone(i)})})}return r},loadSVGFromURL:function(e,n,r){function i(i){var s=i.responseXML;s&&!s.documentElement&&t.window.ActiveXObject&&i.responseText&&(s=new ActiveXObject("Microsoft.XMLDOM"),s.async="false",s.loadXML(i.responseText.replace(/<!DOCTYPE[\s\S]*?(\[[\s\S]*\])*?>/i,"")));if(!s||!s.documentElement)return;t.parseSVGDocument(s.documentElement,function(r,i){E.set(e,{objects:t.util.array.invoke(r,"toObject"),options:i}),n(r,i)},r)}e=e.replace(/^\n\s*/,"").trim(),E.has(e,function(r){r?E.get(e,function(e){var t=S(e);n(t.objects,t.options)}):new t.util.request(e,{method:"get",onComplete:i})})},loadSVGFromString:function(e,n,r){e=e.trim();var i;if(typeof DOMParser!="undefined"){var s=new DOMParser;s&&s.parseFromString&&(i=s.parseFromString(e,"text/xml"))}else t.window.ActiveXObject&&(i=new ActiveXObject("Microsoft.XMLDOM"),i.async="false",i.loadXML(e.replace(/<!DOCTYPE[\s\S]*?(\[[\s\S]*\])*?>/i,"")));t.parseSVGDocument(i.documentElement,function(e,t){n(e,t)},r)},createSVGFontFacesMarkup:function(e){var t="";for(var n=0,r=e.length;n<r;n++){if(e[n].type!=="text"||!e[n].path)continue;t+=["@font-face {","font-family: ",e[n].fontFamily,"; ","src: url('",e[n].path,"')","}"].join("")}return t&&(t=['<style type="text/css">',"<![CDATA[",t,"]]>","</style>"].join("")),t},createSVGRefElementsMarkup:function(e){var t=[];return x(t,e,"backgroundColor"),x(t,e,"overlayColor"),t.join("")}})}(typeof exports!="undefined"?exports:this),fabric.ElementsParser=function(e,t,n,r){this.elements=e,this.callback=t,this.options=n,this.reviver=r,this.svgUid=n&&n.svgUid||0},fabric.ElementsParser.prototype.parse=function(){this.instances=new Array(this.elements.length),this.numElements=this.elements.length,this.createObjects()},fabric.ElementsParser.prototype.createObjects=function(){for(var e=0,t=this.elements.length;e<t;e++)this.elements[e].setAttribute("svgUid",this.svgUid),function(e,t){setTimeout(function(){e.createObject(e.elements[t],t)},0)}(this,e)},fabric.ElementsParser.prototype.createObject=function(e,t){var n=fabric[fabric.util.string.capitalize(e.tagName)];if(n&&n.fromElement)try{this._createObject(n,e,t)}catch(r){fabric.log(r)}else this.checkIfDone()},fabric.ElementsParser.prototype._createObject=function(e,t,n){if(e.async)e.fromElement(t,this.createCallback(n,t),this.options);else{var r=e.fromElement(t,this.options);this.resolveGradient(r,"fill"),this.resolveGradient(r,"stroke"),this.reviver&&this.reviver(t,r),this.instances[n]=r,this.checkIfDone()}},fabric.ElementsParser.prototype.createCallback=function(e,t){var n=this;return function(r){n.resolveGradient(r,"fill"),n.resolveGradient(r,"stroke"),n.reviver&&n.reviver(t,r),n.instances[e]=r,n.checkIfDone()}},fabric.ElementsParser.prototype.resolveGradient=function(e,t){var n=e.get(t);if(!/^url\(/.test(n))return;var r=n.slice(5,n.length-1);fabric.gradientDefs[this.svgUid][r]&&e.set(t,fabric.Gradient.fromElement(fabric.gradientDefs[this.svgUid][r],e))},fabric.ElementsParser.prototype.checkIfDone=function(){--this.numElements===0&&(this.instances=this.instances.filter(function(e){return e!=null}),this.callback(this.instances))},function(e){"use strict";function n(e,t){this.x=e,this.y=t}var t=e.fabric||(e.fabric={});if(t.Point){t.warn("fabric.Point is already defined");return}t.Point=n,n.prototype={constructor:n,add:function(e){return new n(this.x+e.x,this.y+e.y)},addEquals:function(e){return this.x+=e.x,this.y+=e.y,this},scalarAdd:function(e){return new n(this.x+e,this.y+e)},scalarAddEquals:function(e){return this.x+=e,this.y+=e,this},subtract:function(e){return new n(this.x-e.x,this.y-e.y)},subtractEquals:function(e){return this.x-=e.x,this.y-=e.y,this},scalarSubtract:function(e){return new n(this.x-e,this.y-e)},scalarSubtractEquals:function(e){return this.x-=e,this.y-=e,this},multiply:function(e){return new n(this.x*e,this.y*e)},multiplyEquals:function(e){return this.x*=e,this.y*=e,this},divide:function(e){return new n(this.x/e,this.y/e)},divideEquals:function(e){return this.x/=e,this.y/=e,this},eq:function(e){return this.x===e.x&&this.y===e.y},lt:function(e){return this.x<e.x&&this.y<e.y},lte:function(e){return this.x<=e.x&&this.y<=e.y},gt:function(e){return this.x>e.x&&this.y>e.y},gte:function(e){return this.x>=e.x&&this.y>=e.y},lerp:function(e,t){return new n(this.x+(e.x-this.x)*t,this.y+(e.y-this.y)*t)},distanceFrom:function(e){var t=this.x-e.x,n=this.y-e.y;return Math.sqrt(t*t+n*n)},midPointFrom:function(e){return new n(this.x+(e.x-this.x)/2,this.y+(e.y-this.y)/2)},min:function(e){return new n(Math.min(this.x,e.x),Math.min(this.y,e.y))},max:function(e){return new n(Math.max(this.x,e.x),Math.max(this.y,e.y))},toString:function(){return this.x+","+this.y},setXY:function(e,t){this.x=e,this.y=t},setFromPoint:function(e){this.x=e.x,this.y=e.y},swap:function(e){var t=this.x,n=this.y;this.x=e.x,this.y=e.y,e.x=t,e.y=n}}}(typeof exports!="undefined"?exports:this),function(e){"use strict";function n(e){this.status=e,this.points=[]}var t=e.fabric||(e.fabric={});if(t.Intersection){t.warn("fabric.Intersection is already defined");return}t.Intersection=n,t.Intersection.prototype={appendPoint:function(e){this.points.push(e)},appendPoints:function(e){this.points=this.points.concat(e)}},t.Intersection.intersectLineLine=function(e,r,i,s){var o,u=(s.x-i.x)*(e.y-i.y)-(s.y-i.y)*(e.x-i.x),a=(r.x-e.x)*(e.y-i.y)-(r.y-e.y)*(e.x-i.x),f=(s.y-i.y)*(r.x-e.x)-(s.x-i.x)*(r.y-e.y);if(f!==0){var l=u/f,c=a/f;0<=l&&l<=1&&0<=c&&c<=1?(o=new n("Intersection"),o.points.push(new t.Point(e.x+l*(r.x-e.x),e.y+l*(r.y-e.y)))):o=new n}else u===0||a===0?o=new n("Coincident"):o=new n("Parallel");return o},t.Intersection.intersectLinePolygon=function(e,t,r){var i=new n,s=r.length;for(var o=0;o<s;o++){var u=r[o],a=r[(o+1)%s],f=n.intersectLineLine(e,t,u,a);i.appendPoints(f.points)}return i.points.length>0&&(i.status="Intersection"),i},t.Intersection.intersectPolygonPolygon=function(e,t){var r=new n,i=e.length;for(var s=0;s<i;s++){var o=e[s],u=e[(s+1)%i],a=n.intersectLinePolygon(o,u,t);r.appendPoints(a.points)}return r.points.length>0&&(r.status="Intersection"),r},t.Intersection.intersectPolygonRectangle=function(e,r,i){var s=r.min(i),o=r.max(i),u=new t.Point(o.x,s.y),a=new t.Point(s.x,o.y),f=n.intersectLinePolygon(s,u,e),l=n.intersectLinePolygon(u,o,e),c=n.intersectLinePolygon(o,a,e),h=n.intersectLinePolygon(a,s,e),p=new n;return p.appendPoints(f.points),p.appendPoints(l.points),p.appendPoints(c.points),p.appendPoints(h.points),p.points.length>0&&(p.status="Intersection"),p}}(typeof exports!="undefined"?exports:this),function(e){"use strict";function n(e){e?this._tryParsingColor(e):this.setSource([0,0,0,1])}function r(e,t,n){return n<0&&(n+=1),n>1&&(n-=1),n<1/6?e+(t-e)*6*n:n<.5?t:n<2/3?e+(t-e)*(2/3-n)*6:e}var t=e.fabric||(e.fabric={});if(t.Color){t.warn("fabric.Color is already defined.");return}t.Color=n,t.Color.prototype={_tryParsingColor:function(e){var t;e in n.colorNameMap&&(e=n.colorNameMap[e]);if(e==="transparent"){this.setSource([255,255,255,0]);return}t=n.sourceFromHex(e),t||(t=n.sourceFromRgb(e)),t||(t=n.sourceFromHsl(e)),t&&this.setSource(t)},_rgbToHsl:function(e,n,r){e/=255,n/=255,r/=255;var i,s,o,u=t.util.array.max([e,n,r]),a=t.util.array.min([e,n,r]);o=(u+a)/2;if(u===a)i=s=0;else{var f=u-a;s=o>.5?f/(2-u-a):f/(u+a);switch(u){case e:i=(n-r)/f+(n<r?6:0);break;case n:i=(r-e)/f+2;break;case r:i=(e-n)/f+4}i/=6}return[Math.round(i*360),Math.round(s*100),Math.round(o*100)]},getSource:function(){return this._source},setSource:function(e){this._source=e},toRgb:function(){var e=this.getSource();return"rgb("+e[0]+","+e[1]+","+e[2]+")"},toRgba:function(){var e=this.getSource();return"rgba("+e[0]+","+e[1]+","+e[2]+","+e[3]+")"},toHsl:function(){var e=this.getSource(),t=this._rgbToHsl(e[0],e[1],e[2]);return"hsl("+t[0]+","+t[1]+"%,"+t[2]+"%)"},toHsla:function(){var e=this.getSource(),t=this._rgbToHsl(e[0],e[1],e[2]);return"hsla("+t[0]+","+t[1]+"%,"+t[2]+"%,"+e[3]+")"},toHex:function(){var e=this.getSource(),t,n,r;return t=e[0].toString(16),t=t.length===1?"0"+t:t,n=e[1].toString(16),n=n.length===1?"0"+n:n,r=e[2].toString(16),r=r.length===1?"0"+r:r,t.toUpperCase()+n.toUpperCase()+r.toUpperCase()},getAlpha:function(){return this.getSource()[3]},setAlpha:function(e){var t=this.getSource();return t[3]=e,this.setSource(t),this},toGrayscale:function(){var e=this.getSource(),t=parseInt((e[0]*.3+e[1]*.59+e[2]*.11).toFixed(0),10),n=e[3];return this.setSource([t,t,t,n]),this},toBlackWhite:function(e){var t=this.getSource(),n=(t[0]*.3+t[1]*.59+t[2]*.11).toFixed(0),r=t[3];return e=e||127,n=Number(n)<Number(e)?0:255,this.setSource([n,n,n,r]),this},overlayWith:function(e){e instanceof n||(e=new n(e));var t=[],r=this.getAlpha(),i=.5,s=this.getSource(),o=e.getSource();for(var u=0;u<3;u++)t.push(Math.round(s[u]*(1-i)+o[u]*i));return t[3]=r,this.setSource(t),this}},t.Color.reRGBa=/^rgba?\(\s*(\d{1,3}(?:\.\d+)?\%?)\s*,\s*(\d{1,3}(?:\.\d+)?\%?)\s*,\s*(\d{1,3}(?:\.\d+)?\%?)\s*(?:\s*,\s*(\d+(?:\.\d+)?)\s*)?\)$/,t.Color.reHSLa=/^hsla?\(\s*(\d{1,3})\s*,\s*(\d{1,3}\%)\s*,\s*(\d{1,3}\%)\s*(?:\s*,\s*(\d+(?:\.\d+)?)\s*)?\)$/,t.Color.reHex=/^#?([0-9a-f]{6}|[0-9a-f]{3})$/i,t.Color.colorNameMap={aqua:"#00FFFF",black:"#000000",blue:"#0000FF",fuchsia:"#FF00FF",gray:"#808080",green:"#008000",lime:"#00FF00",maroon:"#800000",navy:"#000080",olive:"#808000",orange:"#FFA500",purple:"#800080",red:"#FF0000",silver:"#C0C0C0",teal:"#008080",white:"#FFFFFF",yellow:"#FFFF00"},t.Color.fromRgb=function(e){return n.fromSource(n.sourceFromRgb(e))},t.Color.sourceFromRgb=function(e){var t=e.match(n.reRGBa);if(t){var r=parseInt(t[1],10)/(/%$/.test(t[1])?100:1)*(/%$/.test(t[1])?255:1),i=parseInt(t[2],10)/(/%$/.test(t[2])?100:1)*(/%$/.test(t[2])?255:1),s=parseInt(t[3],10)/(/%$/.test(t[3])?100:1)*(/%$/.test(t[3])?255:1);return[parseInt(r,10),parseInt(i,10),parseInt(s,10),t[4]?parseFloat(t[4]):1]}},t.Color.fromRgba=n.fromRgb,t.Color.fromHsl=function(e){return n.fromSource(n.sourceFromHsl(e))},t.Color.sourceFromHsl=function(e){var t=e.match(n.reHSLa);if(!t)return;var i=(parseFloat(t[1])%360+360)%360/360,s=parseFloat(t[2])/(/%$/.test(t[2])?100:1),o=parseFloat(t[3])/(/%$/.test(t[3])?100:1),u,a,f;if(s===0)u=a=f=o;else{var l=o<=.5?o*(s+1):o+s-o*s,c=o*2-l;u=r(c,l,i+1/3),a=r(c,l,i),f=r(c,l,i-1/3)}return[Math.round(u*255),Math.round(a*255),Math.round(f*255),t[4]?parseFloat(t[4]):1]},t.Color.fromHsla=n.fromHsl,t.Color.fromHex=function(e){return n.fromSource(n.sourceFromHex(e))},t.Color.sourceFromHex=function(e){if(e.match(n.reHex)){var t=e.slice(e.indexOf("#")+1),r=t.length===3,i=r?t.charAt(0)+t.charAt(0):t.substring(0,2),s=r?t.charAt(1)+t.charAt(1):t.substring(2,4),o=r?t.charAt(2)+t.charAt(2):t.substring(4,6);return[parseInt(i,16),parseInt(s,16),parseInt(o,16),1]}},t.Color.fromSource=function(e){var t=new n;return t.setSource(e),t}}(typeof exports!="undefined"?exports:this),function(){function e(e){var t=e.getAttribute("style"),n=e.getAttribute("offset"),r,i,s;n=parseFloat(n)/(/%$/.test(n)?100:1),n=n<0?0:n>1?1:n;if(t){var o=t.split(/\s*;\s*/);o[o.length-1]===""&&o.pop();for(var u=o.length;u--;){var a=o[u].split(/\s*:\s*/),f=a[0].trim(),l=a[1].trim();f==="stop-color"?r=l:f==="stop-opacity"&&(s=l)}}return r||(r=e.getAttribute("stop-color")||"rgb(0,0,0)"),s||(s=e.getAttribute("stop-opacity")),r=new fabric.Color(r),i=r.getAlpha(),s=isNaN(parseFloat(s))?1:parseFloat(s),s*=i,{offset:n,color:r.toRgb(),opacity:s}}function t(e){return{x1:e.getAttribute("x1")||0,y1:e.getAttribute("y1")||0,x2:e.getAttribute("x2")||"100%",y2:e.getAttribute("y2")||0}}function n(e){return{x1:e.getAttribute("fx")||e.getAttribute("cx")||"50%",y1:e.getAttribute("fy")||e.getAttribute("cy")||"50%",r1:0,x2:e.getAttribute("cx")||"50%",y2:e.getAttribute("cy")||"50%",r2:e.getAttribute("r")||"50%"}}function r(e,t,n){var r,i=0,s=1,o="";for(var u in t){r=parseFloat(t[u],10),typeof t[u]=="string"&&/^\d+%$/.test(t[u])?s=.01:s=1;if(u==="x1"||u==="x2"||u==="r2")s*=n==="objectBoundingBox"?e.width:1,i=n==="objectBoundingBox"?e.left||0:0;else if(u==="y1"||u==="y2")s*=n==="objectBoundingBox"?e.height:1,i=n==="objectBoundingBox"?e.top||0:0;t[u]=r*s+i}if(e.type==="ellipse"&&t.r2!==null&&n==="objectBoundingBox"&&e.rx!==e.ry){var a=e.ry/e.rx;o=" scale(1, "+a+")",t.y1&&(t.y1/=a),t.y2&&(t.y2/=a)}return o}fabric.Gradient=fabric.util.createClass({offsetX:0,offsetY:0,initialize:function(e){e||(e={});var t={};this.id=fabric.Object.__uid++,this.type=e.type||"linear",t={x1:e.coords.x1||0,y1:e.coords.y1||0,x2:e.coords.x2||0,y2:e.coords.y2||0},this.type==="radial"&&(t.r1=e.coords.r1||0,t.r2=e.coords.r2||0),this.coords=t,this.colorStops=e.colorStops.slice(),e.gradientTransform&&(this.gradientTransform=e.gradientTransform),this.offsetX=e.offsetX||this.offsetX,this.offsetY=e.offsetY||this.offsetY},addColorStop:function(e){for(var t in e){var n=new fabric.Color(e[t]);this.colorStops.push({offset:t,color:n.toRgb(),opacity:n.getAlpha()})}return this},toObject:function(){return{type:this.type,coords:this.coords,colorStops:this.colorStops,offsetX:this.offsetX,offsetY:this.offsetY}},toSVG:function(e){var t=fabric.util.object.clone(this.coords),n,r;this.colorStops.sort(function(e,t){return e.offset-t.offset});if(!e.group||e.group.type!=="path-group")for(var i in t)if(i==="x1"||i==="x2"||i==="r2")t[i]+=this.offsetX-e.width/2;else if(i==="y1"||i==="y2")t[i]+=this.offsetY-e.height/2;r='id="SVGID_'+this.id+'" gradientUnits="userSpaceOnUse"',this.gradientTransform&&(r+=' gradientTransform="matrix('+this.gradientTransform.join(" ")+')" '),this.type==="linear"?n=["<linearGradient ",r,' x1="',t.x1,'" y1="',t.y1,'" x2="',t.x2,'" y2="',t.y2,'">\n']:this.type==="radial"&&(n=["<radialGradient ",r,' cx="',t.x2,'" cy="',t.y2,'" r="',t.r2,'" fx="',t.x1,'" fy="',t.y1,'">\n']);for(var s=0;s<this.colorStops.length;s++)n.push("<stop ",'offset="',this.colorStops[s].offset*100+"%",'" style="stop-color:',this.colorStops[s].color,this.colorStops[s].opacity!=null?";stop-opacity: "+this.colorStops[s].opacity:";",'"/>\n');return n.push(this.type==="linear"?"</linearGradient>\n":"</radialGradient>\n"),n.join("")},toLive:function(e,t){var n,r=fabric.util.object.clone(this.coords);if(!this.type)return;if(t.group&&t.group.type==="path-group")for(var i in r)if(i==="x1"||i==="x2")r[i]+=-this.offsetX+t.width/2;else if(i==="y1"||i==="y2")r[i]+=-this.offsetY+t.height/2;this.type==="linear"?n=e.createLinearGradient(r.x1,r.y1,r.x2,r.y2):this.type==="radial"&&(n=e.createRadialGradient(r.x1,r.y1,r.r1,r.x2,r.y2,r.r2));for(var s=0,o=this.colorStops.length;s<o;s++){var u=this.colorStops[s].color,a=this.colorStops[s].opacity,f=this.colorStops[s].offset;typeof a!="undefined"&&(u=(new fabric.Color(u)).setAlpha(a).toRgba()),n.addColorStop(parseFloat(f),u)}return n}}),fabric.util.object.extend(fabric.Gradient,{fromElement:function(i,s){var o=i.getElementsByTagName("stop"),u=i.nodeName==="linearGradient"?"linear":"radial",a=i.getAttribute("gradientUnits")||"objectBoundingBox",f=i.getAttribute("gradientTransform"),l=[],c={},h;u==="linear"?c=t(i):u==="radial"&&(c=n(i));for(var p=o.length;p--;)l.push(e(o[p]));h=r(s,c,a);var d=new fabric.Gradient({type:u,coords:c,colorStops:l,offsetX:-s.left,offsetY:-s.top});if(f||h!=="")d.gradientTransform=fabric.parseTransformAttribute((f||"")+h);return d},forObject:function(e,t){return t||(t={}),r(e,t.coords,"userSpaceOnUse"),new fabric.Gradient(t)}})}(),fabric.Pattern=fabric.util.createClass({repeat:"repeat",offsetX:0,offsetY:0,initialize:function(e){e||(e={}),this.id=fabric.Object.__uid++;if(e.source)if(typeof e.source=="string")if(typeof fabric.util.getFunctionBody(e.source)!="undefined")this.source=new Function(fabric.util.getFunctionBody(e.source));else{var t=this;this.source=fabric.util.createImage(),fabric.util.loadImage(e.source,function(e){t.source=e})}else this.source=e.source;e.repeat&&(this.repeat=e.repeat),e.offsetX&&(this.offsetX=e.offsetX),e.offsetY&&(this.offsetY=e.offsetY)},toObject:function(){var e;return typeof this.source=="function"?e=String(this.source):typeof this.source.src=="string"&&(e=this.source.src),{source:e,repeat:this.repeat,offsetX:this.offsetX,offsetY:this.offsetY}},toSVG:function(e){var t=typeof this.source=="function"?this.source():this.source,n=t.width/e.getWidth(),r=t.height/e.getHeight(),i=this.offsetX/e.getWidth(),s=this.offsetY/e.getHeight(),o="";if(this.repeat==="repeat-x"||this.repeat==="no-repeat")r=1;if(this.repeat==="repeat-y"||this.repeat==="no-repeat")n=1;return t.src?o=t.src:t.toDataURL&&(o=t.toDataURL()),'<pattern id="SVGID_'+this.id+'" x="'+i+'" y="'+s+'" width="'+n+'" height="'+r+'">\n'+'<image x="0" y="0"'+' width="'+t.width+'" height="'+t.height+'" xlink:href="'+o+'"></image>\n'+"</pattern>\n"},toLive:function(e){var t=typeof this.source=="function"?this.source():this.source;if(!t)return"";if(typeof t.src!="undefined"){if(!t.complete)return"";if(t.naturalWidth===0||t.naturalHeight===0)return""}return e.createPattern(t,this.repeat)}}),function(e){"use strict";var t=e.fabric||(e.fabric={});if(t.Shadow){t.warn("fabric.Shadow is already defined.");return}t.Shadow=t.util.createClass({color:"rgb(0,0,0)",blur:0,offsetX:0,offsetY:0,affectStroke:!1,includeDefaultValues:!0,initialize:function(e){typeof e=="string"&&(e=this._parseShadow(e));for(var n in e)this[n]=e[n];this.id=t.Object.__uid++},_parseShadow:function(e){var n=e.trim(),r=t.Shadow.reOffsetsAndBlur.exec(n)||[],i=n.replace(t.Shadow.reOffsetsAndBlur,"")||"rgb(0,0,0)";return{color:i.trim(),offsetX:parseInt(r[1],10)||0,offsetY:parseInt(r[2],10)||0,blur:parseInt(r[3],10)||0}},toString:function(){return[this.offsetX,this.offsetY,this.blur,this.color].join("px ")},toSVG:function(e){var t="SourceAlpha",n=40,r=40;return e&&(e.fill===this.color||e.stroke===this.color)&&(t="SourceGraphic"),e.width&&e.height&&(n=Math.abs(this.offsetX/e.getWidth())*100+20,r=Math.abs(this.offsetY/e.getHeight())*100+20),'<filter id="SVGID_'+this.id+'" y="-'+r+'%" height="'+(100+2*r)+'%" '+'x="-'+n+'%" width="'+(100+2*n)+'%" '+">\n"+'	<feGaussianBlur in="'+t+'" stdDeviation="'+(this.blur?this.blur/3:0)+'"></feGaussianBlur>\n'+'	<feOffset dx="'+this.offsetX+'" dy="'+this.offsetY+'"></feOffset>\n'+"	<feMerge>\n"+"		<feMergeNode></feMergeNode>\n"+'		<feMergeNode in="SourceGraphic"></feMergeNode>\n'+"	</feMerge>\n"+"</filter>\n"},toObject:function(){if(this.includeDefaultValues)return{color:this.color,blur:this.blur,offsetX:this.offsetX,offsetY:this.offsetY};var e={},n=t.Shadow.prototype;return this.color!==n.color&&(e.color=this.color),this.blur!==n.blur&&(e.blur=this.blur),this.offsetX!==n.offsetX&&(e.offsetX=this.offsetX),this.offsetY!==n.offsetY&&(e.offsetY=this.offsetY),e}}),t.Shadow.reOffsetsAndBlur=/(?:\s|^)(-?\d+(?:px)?(?:\s?|$))?(-?\d+(?:px)?(?:\s?|$))?(\d+(?:px)?)?(?:\s?|$)(?:$|\s)/}(typeof exports!="undefined"?exports:this),function(){"use strict";if(fabric.StaticCanvas){fabric.warn("fabric.StaticCanvas is already defined.");return}var e=fabric.util.object.extend,t=fabric.util.getElementOffset,n=fabric.util.removeFromArray,r=new Error("Could not initialize `canvas` element");fabric.StaticCanvas=fabric.util.createClass({initialize:function(e,t){t||(t={}),this._initStatic(e,t),fabric.StaticCanvas.activeInstance=this},backgroundColor:"",backgroundImage:null,overlayColor:"",overlayImage:null,includeDefaultValues:!0,stateful:!0,renderOnAddRemove:!0,clipTo:null,controlsAboveOverlay:!1,allowTouchScrolling:!1,imageSmoothingEnabled:!0,preserveObjectStacking:!1,viewportTransform:[1,0,0,1,0,0],onBeforeScaleRotate:function(){},_initStatic:function(e,t){this._objects=[],this._createLowerCanvas(e),this._initOptions(t),this._setImageSmoothing(),t.overlayImage&&this.setOverlayImage(t.overlayImage,this.renderAll.bind(this)),t.backgroundImage&&this.setBackgroundImage(t.backgroundImage,this.renderAll.bind(this)),t.backgroundColor&&this.setBackgroundColor(t.backgroundColor,this.renderAll.bind(this)),t.overlayColor&&this.setOverlayColor(t.overlayColor,this.renderAll.bind(this)),this.calcOffset()},calcOffset:function(){return this._offset=t(this.lowerCanvasEl),this},setOverlayImage:function(e,t,n){return this.__setBgOverlayImage("overlayImage",e,t,n)},setBackgroundImage:function(e,t,n){return this.__setBgOverlayImage("backgroundImage",e,t,n)},setOverlayColor:function(e,t){return this.__setBgOverlayColor("overlayColor",e,t)},setBackgroundColor:function(e,t){return this.__setBgOverlayColor("backgroundColor",e,t)},_setImageSmoothing:function(){var e=this.getContext();e.imageSmoothingEnabled=this.imageSmoothingEnabled,e.webkitImageSmoothingEnabled=this.imageSmoothingEnabled,e.mozImageSmoothingEnabled=this.imageSmoothingEnabled,e.msImageSmoothingEnabled=this.imageSmoothingEnabled,e.oImageSmoothingEnabled=this.imageSmoothingEnabled},__setBgOverlayImage:function(e,t,n,r){return typeof t=="string"?fabric.util.loadImage(t,function(t){this[e]=new fabric.Image(t,r),n&&n()},this,r&&r.crossOrigin):(this[e]=t,n&&n()),this},__setBgOverlayColor:function(e,t,n){if(t&&t.source){var r=this;fabric.util.loadImage(t.source,function(i){r[e]=new fabric.Pattern({source:i,repeat:t.repeat,offsetX:t.offsetX,offsetY:t.offsetY}),n&&n()})}else this[e]=t,n&&n();return this},_createCanvasElement:function(){var e=fabric.document.createElement("canvas");e.style||(e.style={});if(!e)throw r;return this._initCanvasElement(e),e},_initCanvasElement:function(e){fabric.util.createCanvasElement(e);if(typeof e.getContext=="undefined")throw r},_initOptions:function(e){for(var t in e)this[t]=e[t];this.width=this.width||parseInt(this.lowerCanvasEl.width,10)||0,this.height=this.height||parseInt(this.lowerCanvasEl.height,10)||0;if(!this.lowerCanvasEl.style)return;this.lowerCanvasEl.width=this.width,this.lowerCanvasEl.height=this.height,this.lowerCanvasEl.style.width=this.width+"px",this.lowerCanvasEl.style.height=this.height+"px",this.viewportTransform=this.viewportTransform.slice()},_createLowerCanvas:function(e){this.lowerCanvasEl=fabric.util.getById(e)||this._createCanvasElement(),this._initCanvasElement(this.lowerCanvasEl),fabric.util.addClass(this.lowerCanvasEl,"lower-canvas"),this.interactive&&this._applyCanvasStyle(this.lowerCanvasEl),this.contextContainer=this.lowerCanvasEl.getContext("2d")},getWidth:function(){return this.width},getHeight:function(){return this.height},setWidth:function(e,t){return this.setDimensions({width:e},t)},setHeight:function(e,t){return this.setDimensions({height:e},t)},setDimensions:function(e,t){var n;t=t||{};for(var r in e)n=e[r],t.cssOnly||(this._setBackstoreDimension(r,e[r]),n+="px"),t.backstoreOnly||this._setCssDimension(r,n);return t.cssOnly||this.renderAll(),this.calcOffset(),this},_setBackstoreDimension:function(e,t){return this.lowerCanvasEl[e]=t,this.upperCanvasEl&&(this.upperCanvasEl[e]=t),this.cacheCanvasEl&&(this.cacheCanvasEl[e]=t),this[e]=t,this},_setCssDimension:function(e,t){return this.lowerCanvasEl.style[e]=t,this.upperCanvasEl&&(this.upperCanvasEl.style[e]=t),this.wrapperEl&&(this.wrapperEl.style[e]=t),this},getZoom:function(){return Math.sqrt(this.viewportTransform[0]*this.viewportTransform[3])},setViewportTransform:function(e){this.viewportTransform=e,this.renderAll();for(var t=0,n=this._objects.length;t<n;t++)this._objects[t].setCoords();return this},zoomToPoint:function(e,t){var n=e;e=fabric.util.transformPoint(e,fabric.util.invertTransform(this.viewportTransform)),this.viewportTransform[0]=t,this.viewportTransform[3]=t;var r=fabric.util.transformPoint(e,this.viewportTransform);this.viewportTransform[4]+=n.x-r.x,this.viewportTransform[5]+=n.y-r.y,this.renderAll();for(var i=0,s=this._objects.length;i<s;i++)this._objects[i].setCoords();return this},setZoom:function(e){return this.zoomToPoint(new fabric.Point(0,0),e),this},absolutePan:function(e){this.viewportTransform[4]=-e.x,this.viewportTransform[5]=-e.y,this.renderAll();for(var t=0,n=this._objects.length;t<n;t++)this._objects[t].setCoords();return this},relativePan:function(e){return this.absolutePan(new fabric.Point(-e.x-this.viewportTransform[4],-e.y-this.viewportTransform[5]))},getElement:function(){return this.lowerCanvasEl},getActiveObject:function(){return null},getActiveGroup:function(){return null},_draw:function(e,t){if(!t)return;e.save();var n=this.viewportTransform;e.transform(n[0],n[1],n[2],n[3],n[4],n[5]),this._shouldRenderObject(t)&&t.render(e),e.restore(),this.controlsAboveOverlay||t._renderControls(e)},_shouldRenderObject:function(e){return e?e!==this.getActiveGroup()||!this.preserveObjectStacking:!1},_onObjectAdded:function(e){this.stateful&&e.setupState(),e.canvas=this,e.setCoords(),this.fire("object:added",{target:e}),e.fire("added")},_onObjectRemoved:function(e){this.getActiveObject()===e&&(this.fire("before:selection:cleared",{target:e}),this._discardActiveObject(),this.fire("selection:cleared")),this.fire("object:removed",{target:e}),e.fire("removed")},clearContext:function(e){return e.clearRect(0,0,this.width,this.height),this},getContext:function(){return this.contextContainer},clear:function(){return this._objects.length=0,this.discardActiveGroup&&this.discardActiveGroup(),this.discardActiveObject&&this.discardActiveObject(),this.clearContext(this.contextContainer),this.contextTop&&this.clearContext(this.contextTop),this.fire("canvas:cleared"),this.renderAll(),this},renderAll:function(e){var t=this[e===!0&&this.interactive?"contextTop":"contextContainer"],n=this.getActiveGroup();return this.contextTop&&this.selection&&!this._groupSelector&&this.clearContext(this.contextTop),e||this.clearContext(t),this.fire("before:render"),this.clipTo&&fabric.util.clipContext(this,t),this._renderBackground(t),this._renderObjects(t,n),this._renderActiveGroup(t,n),this.clipTo&&t.restore(),this._renderOverlay(t),this.controlsAboveOverlay&&this.interactive&&this.drawControls(t),this.fire("after:render"),this},_renderObjects:function(e,t){var n,r;if(!t||this.preserveObjectStacking)for(n=0,r=this._objects.length;n<r;++n)this._draw(e,this._objects[n]);else for(n=0,r=this._objects.length;n<r;++n)this._objects[n]&&!t.contains(this._objects[n])&&this._draw(e,this._objects[n])},_renderActiveGroup:function(e,t){if(t){var n=[];this.forEachObject(function(e){t.contains(e)&&n.push(e)}),t._set("objects",n),this._draw(e,t)}},_renderBackground:function(e){this.backgroundColor&&(e.fillStyle=this.backgroundColor.toLive?this.backgroundColor.toLive(e):this.backgroundColor,e.fillRect(this.backgroundColor.offsetX||0,this.backgroundColor.offsetY||0,this.width,this.height)),this.backgroundImage&&this._draw(e,this.backgroundImage)},_renderOverlay:function(e){this.overlayColor&&(e.fillStyle=this.overlayColor.toLive?this.overlayColor.toLive(e):this.overlayColor,e.fillRect(this.overlayColor.offsetX||0,this.overlayColor.offsetY||0,this.width,this.height)),this.overlayImage&&this._draw(e,this.overlayImage)},renderTop:function(){var e=this.contextTop||this.contextContainer;this.clearContext(e),this.selection&&this._groupSelector&&this._drawSelection();var t=this.getActiveGroup();return t&&t.render(e),this._renderOverlay(e),this.fire("after:render"),this},getCenter:function(){return{top:this.getHeight()/2,left:this.getWidth()/2}},centerObjectH:function(e){return this._centerObject(e,new fabric.Point(this.getCenter().left,e.getCenterPoint().y)),this.renderAll(),this},centerObjectV:function(e){return this._centerObject(e,new fabric.Point(e.getCenterPoint().x,this.getCenter().top)),this.renderAll(),this},centerObject:function(e){var t=this.getCenter();return this._centerObject(e,new fabric.Point(t.left,t.top)),this.renderAll(),this},_centerObject:function(e,t){return e.setPositionByOrigin(t,"center","center"),this},toDatalessJSON:function(e){return this.toDatalessObject(e)},toObject:function(e){return this._toObjectMethod("toObject",e)},toDatalessObject:function(e){return this._toObjectMethod("toDatalessObject",e)},_toObjectMethod:function(t,n){var r=this.getActiveGroup();r&&this.discardActiveGroup();var i={objects:this._toObjects(t,n)};return e(i,this.__serializeBgOverlay()),fabric.util.populateWithProperties(this,i,n),r&&(this.setActiveGroup(new fabric.Group(r.getObjects(),{originX:"center",originY:"center"})),r.forEachObject(function(e){e.set("active",!0)}),this._currentTransform&&(this._currentTransform.target=this.getActiveGroup())),i},_toObjects:function(e,t){return this.getObjects().map(function(n){return this._toObject(n,e,t)},this)},_toObject:function(e,t,n){var r;this.includeDefaultValues||(r=e.includeDefaultValues,e.includeDefaultValues=!1);var i=e[t](n);return this.includeDefaultValues||(e.includeDefaultValues=r),i},__serializeBgOverlay:function(){var e={background:this.backgroundColor&&this.backgroundColor.toObject?this.backgroundColor.toObject():this.backgroundColor};return this.overlayColor&&(e.overlay=this.overlayColor.toObject?this.overlayColor.toObject():this.overlayColor),this.backgroundImage&&(e.backgroundImage=this.backgroundImage.toObject()),this.overlayImage&&(e.overlayImage=this.overlayImage.toObject()),e},svgViewportTransformation:!0,toSVG:function(e,t){e||(e={});var n=[];return this._setSVGPreamble(n,e),this._setSVGHeader(n,e),this._setSVGBgOverlayColor(n,"backgroundColor"),this._setSVGBgOverlayImage(n,"backgroundImage"),this._setSVGObjects(n,t),this._setSVGBgOverlayColor(n,"overlayColor"),this._setSVGBgOverlayImage(n,"overlayImage"),n.push("</svg>"),n.join("")},_setSVGPreamble:function(e,t){t.suppressPreamble||e.push('<?xml version="1.0" encoding="',t.encoding||"UTF-8",'" standalone="no" ?>','<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" ','"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">\n')},_setSVGHeader:function(e,t){var n,r,i;t.viewBox?(n=t.viewBox.width,r=t.viewBox.height):(n=this.width,r=this.height,this.svgViewportTransformation||(i=this.viewportTransform,n/=i[0],r/=i[3])),e.push("<svg ",'xmlns="http://www.w3.org/2000/svg" ','xmlns:xlink="http://www.w3.org/1999/xlink" ','version="1.1" ','width="',n,'" ','height="',r,'" ',this.backgroundColor&&!this.backgroundColor.toLive?'style="background-color: '+this.backgroundColor+'" ':null,t.viewBox?'viewBox="'+t.viewBox.x+" "+t.viewBox.y+" "+t.viewBox.width+" "+t.viewBox.height+'" ':null,'xml:space="preserve">',"<desc>Created with Fabric.js ",fabric.version,"</desc>","<defs>",fabric.createSVGFontFacesMarkup(this.getObjects()),fabric.createSVGRefElementsMarkup(this),"</defs>")},_setSVGObjects:function(e,t){var n=this.getActiveGroup();n&&this.discardActiveGroup();for(var r=0,i=this.getObjects(),s=i.length;r<s;r++)e.push(i[r].toSVG(t));n&&(this.setActiveGroup(new fabric.Group(n.getObjects())),n.forEachObject(function(e){e.set("active",!0)}))},_setSVGBgOverlayImage:function(e,t){this[t]&&this[t].toSVG&&e.push(this[t].toSVG())},_setSVGBgOverlayColor:function(e,t){this[t]&&this[t].source?e.push('<rect x="',this[t].offsetX,'" y="',this[t].offsetY,'" ','width="',this[t].repeat==="repeat-y"||this[t].repeat==="no-repeat"?this[t].source.width:this.width,'" height="',this[t].repeat==="repeat-x"||this[t].repeat==="no-repeat"?this[t].source.height:this.height,'" fill="url(#'+t+'Pattern)"',"></rect>"):this[t]&&t==="overlayColor"&&e.push('<rect x="0" y="0" ','width="',this.width,'" height="',this.height,'" fill="',this[t],'"',"></rect>")},sendToBack:function(e){return n(this._objects,e),this._objects.unshift(e),this.renderAll&&this.renderAll()},bringToFront:function(e){return n(this._objects,e),this._objects.push(e),this.renderAll&&this.renderAll()},sendBackwards:function(e,t){var r=this._objects.indexOf(e);if(r!==0){var i=this._findNewLowerIndex(e,r,t);n(this._objects,e),this._objects.splice(i,0,e),this.renderAll&&this.renderAll()}return this},_findNewLowerIndex:function(e,t,n){var r;if(n){r=t;for(var i=t-1;i>=0;--i){var s=e.intersectsWithObject(this._objects[i])||e.isContainedWithinObject(this._objects
@@ -47063,18 +47681,19 @@ t);return{width:e,height:t,marginX:i,marginY:s}},_resetWidthHeight:function(){va
 _getLineLeftOffset(n))},renderCursor:function(e){var t=this.ctx;t.save();var n=this.get2DCursorLocation(),r=n.lineIndex,i=n.charIndex,s=this.getCurrentCharFontSize(r,i),o=r===0&&i===0?this._getCachedLineOffset(r,this.text.split(this._reNewline)):e.leftOffset;t.fillStyle=this.getCurrentCharColor(r,i),t.globalAlpha=this.__isMousedown?1:this._currentCursorOpacity,t.fillRect(e.left+o,e.top+e.topOffset,this.cursorWidth/this.scaleX,s),t.restore()},renderSelection:function(e,t){var n=this.ctx;n.save(),n.fillStyle=this.selectionColor;var r=this.get2DCursorLocation(this.selectionStart),i=this.get2DCursorLocation(this.selectionEnd),s=r.lineIndex,o=i.lineIndex,u=this.text.split(this._reNewline);for(var a=s;a<=o;a++){var f=this._getCachedLineOffset(a,u)||0,l=this._getCachedLineHeight(a),c=0;if(a===s)for(var h=0,p=u[a].length;h<p;h++)h>=r.charIndex&&(a!==o||h<i.charIndex)&&(c+=this._getWidthOfChar(n,u[a][h],a,h)),h<r.charIndex&&(f+=this._getWidthOfChar(n,u[a][h],a,h));else if(a>s&&a<o)c+=this._getCachedLineWidth(a,u)||5;else if(a===o)for(var d=0,v=i.charIndex;d<v;d++)c+=this._getWidthOfChar(n,u[a][d],a,d);n.fillRect(t.left+f,t.top+t.topOffset,c,l),t.topOffset+=l}n.restore()},_renderChars:function(e,t,n,r,i,s){if(this.isEmptyStyles())return this._renderCharsFast(e,t,n,r,i);this.skipTextAlign=!0,r-=this.textAlign==="center"?this.width/2:this.textAlign==="right"?this.width:0;var o=this.text.split(this._reNewline),u=this._getWidthOfLine(t,s,o),a=this._getHeightOfLine(t,s,o),f=this._getLineLeftOffset(u),l=n.split(""),c,h="";r+=f||0,t.save();for(var p=0,d=l.length;p<=d;p++){c=c||this.getCurrentCharStyle(s,p);var v=this.getCurrentCharStyle(s,p+1);if(this._hasStyleChanged(c,v)||p===d)this._renderChar(e,t,s,p-1,h,r,i,a),h="",c=v;h+=l[p]}t.restore()},_renderCharsFast:function(e,t,n,r,i){this.skipTextAlign=!1,e==="fillText"&&this.fill&&this.callSuper("_renderChars",e,t,n,r,i),e==="strokeText"&&this.stroke&&this.callSuper("_renderChars",e,t,n,r,i)},_renderChar:function(e,t,n,r,i,s,o,u){var a,f,l;if(this.styles&&this.styles[n]&&(a=this.styles[n][r])){var c=a.stroke||this.stroke,h=a.fill||this.fill;t.save(),f=this._applyCharStylesGetWidth(t,i,n,r,a),l=this._getHeightOfChar(t,i,n,r),h&&t.fillText(i,s,o),c&&t.strokeText(i,s,o),this._renderCharDecoration(t,a,s,o,f,u,l),t.restore(),t.translate(f,0)}else e==="strokeText"&&this.stroke&&t[e](i,s,o),e==="fillText"&&this.fill&&t[e](i,s,o),f=this._applyCharStylesGetWidth(t,i,n,r),this._renderCharDecoration(t,null,s,o,f,u),t.translate(t.measureText(i).width,0)},_hasStyleChanged:function(e,t){return e.fill!==t.fill||e.fontSize!==t.fontSize||e.textBackgroundColor!==t.textBackgroundColor||e.textDecoration!==t.textDecoration||e.fontFamily!==t.fontFamily||e.fontWeight!==t.fontWeight||e.fontStyle!==t.fontStyle||e.stroke!==t.stroke||e.strokeWidth!==t.strokeWidth},_renderCharDecoration:function(e,t,n,r,i,s,o){var u=t?t.textDecoration||this.textDecoration:this.textDecoration,a=(t?t.fontSize:null)||this.fontSize;if(!u)return;u.indexOf("underline")>-1&&this._renderCharDecorationAtOffset(e,n,r+this.fontSize/this._fontSizeFraction,i,0,this.fontSize/20),u.indexOf("line-through")>-1&&this._renderCharDecorationAtOffset(e,n,r+this.fontSize/this._fontSizeFraction,i,o/2,a/20),u.indexOf("overline")>-1&&this._renderCharDecorationAtOffset(e,n,r,i,s-this.fontSize/this._fontSizeFraction,this.fontSize/20)},_renderCharDecorationAtOffset:function(e,t,n,r,i,s){e.fillRect(t,n-i,r,s)},_renderTextLine:function(e,t,n,r,i,s){i+=this.fontSize/4,this.callSuper("_renderTextLine",e,t,n,r,i,s)},_renderTextDecoration:function(e,t){if(this.isEmptyStyles())return this.callSuper("_renderTextDecoration",e,t)},_renderTextLinesBackground:function(e,t){if(!this.textBackgroundColor&&!this.styles)return;e.save(),this.textBackgroundColor&&(e.fillStyle=this.textBackgroundColor);var n=0,r=this.fontSize/this._fontSizeFraction;for(var i=0,s=t.length;i<s;i++){var o=this._getHeightOfLine(e,i,t);if(t[i]===""){n+=o;continue}var u=this._getWidthOfLine(e,i,t),a=this._getLineLeftOffset(u);this.textBackgroundColor&&(e.fillStyle=this.textBackgroundColor,e.fillRect(this._getLeftOffset()+a,this._getTopOffset()+n+r,u,o));if(this.styles[i])for(var f=0,l=t[i].length;f<l;f++)if(this.styles[i]&&this.styles[i][f]&&this.styles[i][f].textBackgroundColor){var c=t[i][f];e.fillStyle=this.styles[i][f].textBackgroundColor,e.fillRect(this._getLeftOffset()+a+this._getWidthOfCharsAt(e,i,f,t),this._getTopOffset()+n+r,this._getWidthOfChar(e,c,i,f,t)+1,o)}n+=o}e.restore()},_getCacheProp:function(e,t){return e+t.fontFamily+t.fontSize+t.fontWeight+t.fontStyle+t.shadow},_applyCharStylesGetWidth:function(t,n,r,i,s){var o=s||this.styles[r]&&this.styles[r][i];o?o=e(o):o={},this._applyFontStyles(o);var u=this._getCacheProp(n,o);if(this.isEmptyStyles()&&this._charWidthsCache[u]&&this.caching)return this._charWidthsCache[u];typeof o.shadow=="string"&&(o.shadow=new fabric.Shadow(o.shadow));var a=o.fill||this.fill;return t.fillStyle=a.toLive?a.toLive(t):a,o.stroke&&(t.strokeStyle=o.stroke&&o.stroke.toLive?o.stroke.toLive(t):o.stroke),t.lineWidth=o.strokeWidth||this.strokeWidth,t.font=this._getFontDeclaration.call(o),this._setShadow.call(o,t),this.caching?(this._charWidthsCache[u]||(this._charWidthsCache[u]=t.measureText(n).width),this._charWidthsCache[u]):t.measureText(n).width},_applyFontStyles:function(e){e.fontFamily||(e.fontFamily=this.fontFamily),e.fontSize||(e.fontSize=this.fontSize),e.fontWeight||(e.fontWeight=this.fontWeight),e.fontStyle||(e.fontStyle=this.fontStyle)},_getStyleDeclaration:function(t,n){return this.styles[t]&&this.styles[t][n]?e(this.styles[t][n]):{}},_getWidthOfChar:function(e,t,n,r){if(this.textAlign==="justify"&&/\s/.test(t))return this._getWidthOfSpace(e,n);var i=this._getStyleDeclaration(n,r);this._applyFontStyles(i);var s=this._getCacheProp(t,i);if(this._charWidthsCache[s]&&this.caching)return this._charWidthsCache[s];if(e){e.save();var o=this._applyCharStylesGetWidth(e,t,n,r);return e.restore(),o}},_getHeightOfChar:function(e,t,n,r){return this.styles[n]&&this.styles[n][r]?this.styles[n][r].fontSize||this.fontSize:this.fontSize},_getWidthOfCharAt:function(e,t,n,r){r=r||this.text.split(this._reNewline);var i=r[t].split("")[n];return this._getWidthOfChar(e,i,t,n)},_getHeightOfCharAt:function(e,t,n,r){r=r||this.text.split(this._reNewline);var i=r[t].split("")[n];return this._getHeightOfChar(e,i,t,n)},_getWidthOfCharsAt:function(e,t,n,r){var i=0;for(var s=0;s<n;s++)i+=this._getWidthOfCharAt(e,t,s,r);return i},_getWidthOfLine:function(e,t,n){return this._getWidthOfCharsAt(e,t,n[t].length,n)},_getWidthOfSpace:function(e,t){var n=this.text.split(this._reNewline),r=n[t],i=r.split(/\s+/),s=this._getWidthOfWords(e,r,t),o=this.width-s,u=i.length-1,a=o/u;return a},_getWidthOfWords:function(e,t,n){var r=0;for(var i=0;i<t.length;i++){var s=t[i];s.match(/\s/)||(r+=this._getWidthOfChar(e,s,n,i))}return r},_getTextWidth:function(e,t){if(this.isEmptyStyles())return this.callSuper("_getTextWidth",e,t);var n=this._getWidthOfLine(e,0,t);for(var r=1,i=t.length;r<i;r++){var s=this._getWidthOfLine(e,r,t);s>n&&(n=s)}return n},_getHeightOfLine:function(e,t,n){n=n||this.text.split(this._reNewline);var r=this._getHeightOfChar(e,n[t][0],t,0),i=n[t],s=i.split("");for(var o=1,u=s.length;o<u;o++){var a=this._getHeightOfChar(e,s[o],t,o);a>r&&(r=a)}return r*this.lineHeight},_getTextHeight:function(e,t){var n=0;for(var r=0,i=t.length;r<i;r++)n+=this._getHeightOfLine(e,r,t);return n},_getTopOffset:function(){var e=fabric.Text.prototype._getTopOffset.call(this);return e-this.fontSize/this._fontSizeFraction},_renderTextBoxBackground:function(e){if(!this.backgroundColor)return;e.save(),e.fillStyle=this.backgroundColor,e.fillRect(this._getLeftOffset(),this._getTopOffset()+this.fontSize/this._fontSizeFraction,this.width,this.height),e.restore()},toObject:function(t){return fabric.util.object.extend(this.callSuper("toObject",t),{styles:e(this.styles)})}}),fabric.IText.fromObject=function(t){return new fabric.IText(t.text,e(t))},fabric.IText.instances=[]}(),function(){var e=fabric.util.object.clone;fabric.util.object.extend(fabric.IText.prototype,{initBehavior:function(){this.initAddedHandler(),this.initCursorSelectionHandlers(),this.initDoubleClickSimulation()},initSelectedHandler:function(){this.on("selected",function(){var e=this;setTimeout(function(){e.selected=!0},100)})},initAddedHandler:function(){this.on("added",function(){this.canvas&&!this.canvas._hasITextHandlers&&(this.canvas._hasITextHandlers=!0,this._initCanvasHandlers())})},_initCanvasHandlers:function(){this.canvas.on("selection:cleared",function(){fabric.IText.prototype.exitEditingOnOthers.call()}),this.canvas.on("mouse:up",function(){fabric.IText.instances.forEach(function(e){e.__isMousedown=!1})}),this.canvas.on("object:selected",function(e){fabric.IText.prototype.exitEditingOnOthers.call(e.target)})},_tick:function(){if(this._abortCursorAnimation)return;var e=this;this.animate("_currentCursorOpacity",1,{duration:this.cursorDuration,onComplete:function(){e._onTickComplete()},onChange:function(){e.canvas&&e.canvas.renderAll()},abort:function(){return e._abortCursorAnimation}})},_onTickComplete:function(){if(this._abortCursorAnimation)return;var e=this;this._cursorTimeout1&&clearTimeout(this._cursorTimeout1),this._cursorTimeout1=setTimeout(function(){e.animate("_currentCursorOpacity",0,{duration:this.cursorDuration/2,onComplete:function(){e._tick()},onChange:function(){e.canvas&&e.canvas.renderAll()},abort:function(){return e._abortCursorAnimation}})},100)},initDelayedCursor:function(e){var t=this,n=e?0:this.cursorDelay;e&&(this._abortCursorAnimation=!0,clearTimeout(this._cursorTimeout1),this._currentCursorOpacity=1,this.canvas&&this.canvas.renderAll()),this._cursorTimeout2&&clearTimeout(this._cursorTimeout2),this._cursorTimeout2=setTimeout(function(){t._abortCursorAnimation=!1,t._tick()},n)},abortCursorAnimation:function(){this._abortCursorAnimation=!0,clearTimeout(this._cursorTimeout1),clearTimeout(this._cursorTimeout2),this._currentCursorOpacity=0,this.canvas&&this.canvas.renderAll();var e=this;setTimeout(function(){e._abortCursorAnimation=!1},10)},selectAll:function(){this.selectionStart=0,this.selectionEnd=this.text.length,this.fire("selection:changed"),this.canvas&&this.canvas.fire("text:selection:changed",{target:this})},getSelectedText:function(){return this.text.slice(this.selectionStart,this.selectionEnd)},findWordBoundaryLeft:function(e){var t=0,n=e-1;if(this._reSpace.test(this.text.charAt(n)))while(this._reSpace.test(this.text.charAt(n)))t++,n--;while(/\S/.test(this.text.charAt(n))&&n>-1)t++,n--;return e-t},findWordBoundaryRight:function(e){var t=0,n=e;if(this._reSpace.test(this.text.charAt(n)))while(this._reSpace.test(this.text.charAt(n)))t++,n++;while(/\S/.test(this.text.charAt(n))&&n<this.text.length)t++,n++;return e+t},findLineBoundaryLeft:function(e){var t=0,n=e-1;while(!/\n/.test(this.text.charAt(n))&&n>-1)t++,n--;return e-t},findLineBoundaryRight:function(e){var t=0,n=e;while(!/\n/.test(this.text.charAt(n))&&n<this.text.length)t++,n++;return e+t},getNumNewLinesInSelectedText:function(){var e=this.getSelectedText(),t=0;for(var n=0,r=e.split(""),i=r.length;n<i;n++)r[n]==="\n"&&t++;return t},searchWordBoundary:function(e,t){var n=this._reSpace.test(this.text.charAt(e))?e-1:e,r=this.text.charAt(n),i=/[ \n\.,;!\?\-]/;while(!i.test(r)&&n>0&&n<this.text.length)n+=t,r=this.text.charAt(n);return i.test(r)&&r!=="\n"&&(n+=t===1?0:1),n},selectWord:function(e){var t=this.searchWordBoundary(e,-1),n=this.searchWordBoundary(e,1);this.setSelectionStart(t),this.setSelectionEnd(n),this.initDelayedCursor(!0)},selectLine:function(e){var t=this.findLineBoundaryLeft(e),n=this.findLineBoundaryRight(e);this.setSelectionStart(t),this.setSelectionEnd(n),this.initDelayedCursor(!0)},enterEditing:function(){if(this.isEditing||!this.editable)return;return this.exitEditingOnOthers(),this.isEditing=!0,this.initHiddenTextarea(),this._updateTextarea(),this._saveEditingProps(),this._setEditingProps(),this._tick(),this.canvas&&this.canvas.renderAll(),this.fire("editing:entered"),this.canvas&&this.canvas.fire("text:editing:entered",{target:this}),this},exitEditingOnOthers:function(){fabric.IText.instances.forEach(function(e){e.selected=!1,e.isEditing&&e.exitEditing()},this)},_setEditingProps:function(){this.hoverCursor="text",this.canvas&&(this.canvas.defaultCursor=this.canvas.moveCursor="text"),this.borderColor=this.editingBorderColor,this.hasControls=this.selectable=!1,this.lockMovementX=this.lockMovementY=!0},_updateTextarea:function(){if(!this.hiddenTextarea)return;this.hiddenTextarea.value=this.text,this.hiddenTextarea.selectionStart=this.selectionStart},_saveEditingProps:function(){this._savedProps={hasControls:this.hasControls,borderColor:this.borderColor,lockMovementX:this.lockMovementX,lockMovementY:this.lockMovementY,hoverCursor:this.hoverCursor,defaultCursor:this.canvas&&this.canvas.defaultCursor,moveCursor:this.canvas&&this.canvas.moveCursor}},_restoreEditingProps:function(){if(!this._savedProps)return;this.hoverCursor=this._savedProps.overCursor,this.hasControls=this._savedProps.hasControls,this.borderColor=this._savedProps.borderColor,this.lockMovementX=this._savedProps.lockMovementX,this.lockMovementY=this._savedProps.lockMovementY,this.canvas&&(this.canvas.defaultCursor=this._savedProps.defaultCursor,this.canvas.moveCursor=this._savedProps.moveCursor)},exitEditing:function(){return this.selected=!1,this.isEditing=!1,this.selectable=!0,this.selectionEnd=this.selectionStart,this.hiddenTextarea&&this.canvas&&this.hiddenTextarea.parentNode.removeChild(this.hiddenTextarea),this.hiddenTextarea=null,this.abortCursorAnimation(),this._restoreEditingProps(),this._currentCursorOpacity=0,this.fire("editing:exited"),this.canvas&&this.canvas.fire("text:editing:exited",{target:this}),this},_removeExtraneousStyles:function(){var e=this.text.split(this._reNewline);for(var t in this.styles)e[t]||delete this.styles[t]},_removeCharsFromTo:function(e,t){var n=t;while(n!==e){var r=this.get2DCursorLocation(n).charIndex;n--;var i=this.get2DCursorLocation(n).charIndex,s=i>r;s?this.removeStyleObject(s,n+1):this.removeStyleObject(this.get2DCursorLocation(n).charIndex===0,n)}this.text=this.text.slice(0,e)+this.text.slice(t)},insertChars:function(e){var t=this.text.slice(this.selectionStart,this.selectionStart+1)==="\n";this.text=this.text.slice(0,this.selectionStart)+e+this.text.slice(this.selectionEnd),this.selectionStart===this.selectionEnd&&this.insertStyleObjects(e,t,this.copiedStyles),this.selectionStart+=e.length,this.selectionEnd=this.selectionStart,this.canvas&&this.canvas.renderAll().renderAll(),this.setCoords(),this.fire("changed"),this.canvas&&this.canvas.fire("text:changed",{target:this})},insertNewlineStyleObject:function(t,n,r){this.shiftLineStyles(t,1),this.styles[t+1]||(this.styles[t+1]={});var i=this.styles[t][n-1],s={};if(r)s[0]=e(i),this.styles[t+1]=s;else{for(var o in this.styles[t])parseInt(o,10)>=n&&(s[parseInt(o,10)-n]=this.styles[t][o],delete this.styles[t][o]);this.styles[t+1]=s}},insertCharStyleObject:function(t,n,r){var i=this.styles[t],s=e(i);n===0&&!r&&(n=1);for(var o in s){var u=parseInt(o,10);u>=n&&(i[u+1]=s[u])}this.styles[t][n]=r||e(i[n-1])},insertStyleObjects:function(e,t,n){var r=this.get2DCursorLocation(),i=r.lineIndex,s=r.charIndex;this.styles[i]||(this.styles[i]={}),e==="\n"?this.insertNewlineStyleObject(i,s,t):n?this._insertStyles(n):this.insertCharStyleObject(i,s)},_insertStyles:function(e){for(var t=0,n=e.length;t<n;t++){var r=this.get2DCursorLocation(this.selectionStart+t),i=r.lineIndex,s=r.charIndex;this.insertCharStyleObject(i,s,e[t])}},shiftLineStyles:function(t,n){var r=e(this.styles);for(var i in this.styles){var s=parseInt(i,10);s>t&&(this.styles[s+n]=r[s])}},removeStyleObject:function(t,n){var r=this.get2DCursorLocation(n),i=r.lineIndex,s=r.charIndex;if(t){var o=this.text.split(this._reNewline),u=o[i-1],a=u?u.length:0;this.styles[i-1]||(this.styles[i-1]={});for(s in this.styles[i])this.styles[i-1][parseInt(s,10)+a]=this.styles[i][s];this.shiftLineStyles(i,-1)}else{var f=this.styles[i];if(f){var l=this.selectionStart===this.selectionEnd?-1:0;delete f[s+l]}var c=e(f);for(var h in c){var p=parseInt(h,10);p>=s&&p!==0&&(f[p-1]=c[p],delete f[p])}}},insertNewline:function(){this.insertChars("\n")}})}(),fabric.util.object.extend(fabric.IText.prototype,{initDoubleClickSimulation:function(){this.__lastClickTime=+(new Date),this.__lastLastClickTime=+(new Date),this.__lastPointer={},this.on("mousedown",this.onMouseDown.bind(this))},onMouseDown:function(e){this.__newClickTime=+(new Date);var t=this.canvas.getPointer(e.e);this.isTripleClick(t)?(this.fire("tripleclick",e),this._stopEvent(e.e)):this.isDoubleClick(t)&&(this.fire("dblclick",e),this._stopEvent(e.e)),this.__lastLastClickTime=this.__lastClickTime,this.__lastClickTime=this.__newClickTime,this.__lastPointer=t,this.__lastIsEditing=this.isEditing,this.__lastSelected=this.selected},isDoubleClick:function(e){return this.__newClickTime-this.__lastClickTime<500&&this.__lastPointer.x===e.x&&this.__lastPointer.y===e.y&&this.__lastIsEditing},isTripleClick:function(e){return this.__newClickTime-this.__lastClickTime<500&&this.__lastClickTime-this.__lastLastClickTime<500&&this.__lastPointer.x===e.x&&this.__lastPointer.y===e.y},_stopEvent:function(e){e.preventDefault&&e.preventDefault(),e.stopPropagation&&e.stopPropagation()},initCursorSelectionHandlers:function(){this.initSelectedHandler(),this.initMousedownHandler(),this.initMousemoveHandler(),this.initMouseupHandler(),this.initClicks()},initClicks:function(){this.on("dblclick",function(e){this.selectWord(this.getSelectionStartFromPointer(e.e))}),this.on("tripleclick",function(e){this.selectLine(this.getSelectionStartFromPointer(e.e))})},initMousedownHandler:function(){this.on("mousedown",function(e){var t=this.canvas.getPointer(e.e);this.__mousedownX=t.x,this.__mousedownY=t.y,this.__isMousedown=!0,this.hiddenTextarea&&this.canvas&&this.canvas.wrapperEl.appendChild(this.hiddenTextarea),this.selected&&this.setCursorByClick(e.e),this.isEditing&&(this.__selectionStartOnMouseDown=this.selectionStart,this.initDelayedCursor(!0))})},initMousemoveHandler:function(){this.on("mousemove",function(e){if(!this.__isMousedown||!this.isEditing)return;var t=this.getSelectionStartFromPointer(e.e);t>=this.__selectionStartOnMouseDown?(this.setSelectionStart(this.__selectionStartOnMouseDown),this.setSelectionEnd(t)):(this.setSelectionStart(t),this.setSelectionEnd(this.__selectionStartOnMouseDown))})},_isObjectMoved:function(e){var t=this.canvas.getPointer(e);return this.__mousedownX!==t.x||this.__mousedownY!==t.y},initMouseupHandler:function(){this.on("mouseup",function(e){this.__isMousedown=!1;if(this._isObjectMoved(e.e))return;this.__lastSelected&&(this.enterEditing(),this.initDelayedCursor(!0)),this.selected=!0})},setCursorByClick:function(e){var t=this.getSelectionStartFromPointer(e);e.shiftKey?t<this.selectionStart?(this.setSelectionEnd(this.selectionStart),this.setSelectionStart(t)):this.setSelectionEnd(t):(this.setSelectionStart(t),this.setSelectionEnd(t))},_getLocalRotatedPointer:function(e){var t=this.canvas.getPointer(e),n=new fabric.Point(t.x,t.y),r=new fabric.Point(this.left,this.top),i=fabric.util.rotatePoint(n,r,fabric.util.degreesToRadians(-this.angle));return this.getLocalPointer(e,i)},getSelectionStartFromPointer:function(e){var t=this._getLocalRotatedPointer(e),n=this.text.split(this._reNewline),r=0,i=0,s=0,o=0,u;for(var a=0,f=n.length;a<f;a++){s+=this._getHeightOfLine(this.ctx,a)*this.scaleY;var l=this._getWidthOfLine(this.ctx,a,n),c=this._getLineLeftOffset(l);i=c*this.scaleX,this.flipX&&(n[a]=n[a].split("").reverse().join(""));for(var h=0,p=n[a].length;h<p;h++){var d=n[a][h];r=i,i+=this._getWidthOfChar(this.ctx,d,a,this.flipX?p-h:h)*this.scaleX;if(s<=t.y||i<=t.x){o++;continue}return this._getNewSelectionStartFromOffset(t,r,i,o+a,p)}if(t.y<s)return this._getNewSelectionStartFromOffset(t,r,i,o+a,p)}if(typeof u=="undefined")return this.text.length},_getNewSelectionStartFromOffset:function(e,t,n,r,i){var s=e.x-t,o=n-e.x,u=o>s?0:1,a=r+u;return this.flipX&&(a=i-a),a>this.text.length&&(a=this.text.length),a}}),fabric.util.object.extend(fabric.IText.prototype,{initHiddenTextarea:function(){this.hiddenTextarea=fabric.document.createElement("textarea"),this.hiddenTextarea.setAttribute("autocapitalize","off"),this.hiddenTextarea.style.cssText="position: fixed; bottom: 20px; left: 0px; opacity: 0; width: 0px; height: 0px; z-index: -999;",fabric.document.body.appendChild(this.hiddenTextarea),fabric.util.addListener(this.hiddenTextarea,"keydown",this.onKeyDown.bind(this)),fabric.util.addListener(this.hiddenTextarea,"keypress",this.onKeyPress.bind(this)),fabric.util.addListener(this.hiddenTextarea,"copy",this.copy.bind(this)),fabric.util.addListener(this.hiddenTextarea,"paste",this.paste.bind(this)),!this._clickHandlerInitialized&&this.canvas&&(fabric.util.addListener(this.canvas.upperCanvasEl,"click",this.onClick.bind(this)),this._clickHandlerInitialized=!0)},_keysMap:{8:"removeChars",9:"exitEditing",27:"exitEditing",13:"insertNewline",33:"moveCursorUp",34:"moveCursorDown",35:"moveCursorRight",36:"moveCursorLeft",37:"moveCursorLeft",38:"moveCursorUp",39:"moveCursorRight",40:"moveCursorDown",46:"forwardDelete"},_ctrlKeysMap:{65:"selectAll",88:"cut"},onClick:function(){this.hiddenTextarea&&this.hiddenTextarea.focus()},onKeyDown:function(e){if(!this.isEditing)return;if(e.keyCode in this._keysMap)this[this._keysMap[e.keyCode]](e);else{if(!(e.keyCode in this._ctrlKeysMap&&(e.ctrlKey||e.metaKey)))return;this[this._ctrlKeysMap[e.keyCode]](e)}e.stopImmediatePropagation(),e.preventDefault(),this.canvas&&this.canvas.renderAll()},forwardDelete:function(e){this.selectionStart===this.selectionEnd&&this.moveCursorRight(e),this.removeChars(e)},copy:function(e){var t=this.getSelectedText(),n=this._getClipboardData(e);n&&n.setData("text",t),this.copiedText=t,this.copiedStyles=this.getSelectionStyles(this.selectionStart,this.selectionEnd)},paste:function(e){var t=null,n=this._getClipboardData(e);n?t=n.getData("text"):t=this.copiedText,t&&this.insertChars(t)},cut:function(e){if(this.selectionStart===this.selectionEnd)return;this.copy(),this.removeChars(e)},_getClipboardData:function(e){return e&&(e.clipboardData||fabric.window.clipboardData)},onKeyPress:function(e){if(!this.isEditing||e.metaKey||e.ctrlKey)return;e.which!==0&&this.insertChars(String.fromCharCode(e.which)),e.stopPropagation()},getDownCursorOffset:function(e,t){var n=t?this.selectionEnd:this.selectionStart,r=this.text.split(this._reNewline),i,s,o=this.text.slice(0,n),u=this.text.slice(n),a=o.slice(o.lastIndexOf("\n")+1),f=u.match(/(.*)\n?/)[1],l=(u.match(/.*\n(.*)\n?/)||{})[1]||"",c=this.get2DCursorLocation(n);if(c.lineIndex===r.length-1||e.metaKey||e.keyCode===34)return this.text.length-n;var h=this._getWidthOfLine(this.ctx,c.lineIndex,r);s=this._getLineLeftOffset(h);var p=s,d=c.lineIndex;for(var v=0,m=a.length;v<m;v++)i=a[v],p+=this._getWidthOfChar(this.ctx,i,d,v);var g=this._getIndexOnNextLine(c,l,p,r);return f.length+1+g},_getIndexOnNextLine:function(e,t,n,r){var i=e.lineIndex+1,s=this._getWidthOfLine(this.ctx,i,r),o=this._getLineLeftOffset(s),u=o,a=0,f;for(var l=0,c=t.length;l<c;l++){var h=t[l],p=this._getWidthOfChar(this.ctx,h,i,l);u+=p;if(u>n){f=!0;var d=u-p,v=u,m=Math.abs(d-n),g=Math.abs(v-n);a=g<m?l+1:l;break}}return f||(a=t.length),a},moveCursorDown:function(e){this.abortCursorAnimation(),this._currentCursorOpacity=1;var t=this.getDownCursorOffset(e,this._selectionDirection==="right");e.shiftKey?this.moveCursorDownWithShift(t):this.moveCursorDownWithoutShift(t),this.initDelayedCursor()},moveCursorDownWithoutShift:function(e){this._selectionDirection="right",this.selectionStart+=e,this.selectionStart>this.text.length&&(this.selectionStart=this.text.length),this.selectionEnd=this.selectionStart,this.fire("selection:changed"),this.canvas&&this.canvas.fire("text:selection:changed",{target:this})},swapSelectionPoints:function(){var e=this.selectionEnd;this.selectionEnd=this.selectionStart,this.selectionStart=e},moveCursorDownWithShift:function(e){this.selectionEnd===this.selectionStart&&(this._selectionDirection="right");var t=this._selectionDirection==="right"?"selectionEnd":"selectionStart";this[t]+=e,this.selectionEnd<this.selectionStart&&this._selectionDirection==="left"&&(this.swapSelectionPoints(),this._selectionDirection="right"),this.selectionEnd>this.text.length&&(this.selectionEnd=this.text.length),this.fire("selection:changed"),this.canvas&&this.canvas.fire("text:selection:changed",{target:this})},getUpCursorOffset:function(e,t){var n=t?this.selectionEnd:this.selectionStart,r=this.get2DCursorLocation(n);if(r.lineIndex===0||e.metaKey||e.keyCode===33)return n;var i=this.text.slice(0,n),s=i.slice(i.lastIndexOf("\n")+1),o=(i.match(/\n?(.*)\n.*$/)||{})[1]||"",u=this.text.split(this._reNewline),a,f=this._getWidthOfLine(this.ctx,r.lineIndex,u),l=this._getLineLeftOffset(f),c=l,h=r.lineIndex;for(var p=0,d=s.length;p<d;p++)a=s[p],c+=this._getWidthOfChar(this.ctx,a,h,p);var v=this._getIndexOnPrevLine(r,o,c,u);return o.length-v+s.length},_getIndexOnPrevLine:function(e,t,n,r){var i=e.lineIndex-1,s=this._getWidthOfLine(this.ctx,i,r),o=this._getLineLeftOffset(s),u=o,a=0,f;for(var l=0,c=t.length;l<c;l++){var h=t[l],p=this._getWidthOfChar(this.ctx,h,i,l);u+=p;if(u>n){f=!0;var d=u-p,v=u,m=Math.abs(d-n),g=Math.abs(v-n);a=g<m?l:l-1;break}}return f||(a=t.length-1),a},moveCursorUp:function(e){this.abortCursorAnimation(),this._currentCursorOpacity=1;var t=this.getUpCursorOffset(e,this._selectionDirection==="right");e.shiftKey?this.moveCursorUpWithShift(t):this.moveCursorUpWithoutShift(t),this.initDelayedCursor()},moveCursorUpWithShift:function(e){this.selectionEnd===this.selectionStart&&(this._selectionDirection="left");var t=this._selectionDirection==="right"?"selectionEnd":"selectionStart";this[t]-=e,this.selectionEnd<this.selectionStart&&this._selectionDirection==="right"&&(this.swapSelectionPoints(),this._selectionDirection="left"),this.selectionStart<0&&(this.selectionStart=0),this.fire("selection:changed"),this.canvas&&this.canvas.fire("text:selection:changed",{target:this})},moveCursorUpWithoutShift:function(e){this.selectionStart===this.selectionEnd&&(this.selectionStart-=e),this.selectionStart<0&&(this.selectionStart=0),this.selectionEnd=this.selectionStart,this._selectionDirection="left",this.fire("selection:changed"),this.canvas&&this.canvas.fire("text:selection:changed",{target:this})},moveCursorLeft:function(e){if(this.selectionStart===0&&this.selectionEnd===0)return;this.abortCursorAnimation(),this._currentCursorOpacity=1,e.shiftKey?this.moveCursorLeftWithShift(e):this.moveCursorLeftWithoutShift(e),this.initDelayedCursor()},_move:function(e,t,n){e.altKey?this[t]=this["findWordBoundary"+n](this[t]):e.metaKey||e.keyCode===35||e.keyCode===36?this[t]=this["findLineBoundary"+n](this[t]):this[t]+=n==="Left"?-1:1},_moveLeft:function(e,t){this._move(e,t,"Left")},_moveRight:function(e,t){this._move(e,t,"Right")},moveCursorLeftWithoutShift:function(e){this._selectionDirection="left",this.selectionEnd===this.selectionStart&&this._moveLeft(e,"selectionStart"),this.selectionEnd=this.selectionStart,this.fire("selection:changed"),this.canvas&&this.canvas.fire("text:selection:changed",{target:this})},moveCursorLeftWithShift:function(e){this._selectionDirection==="right"&&this.selectionStart!==this.selectionEnd?this._moveLeft(e,"selectionEnd"):(this._selectionDirection="left",this._moveLeft(e,"selectionStart"),this.text.charAt(this.selectionStart)==="\n"&&this.selectionStart--,this.selectionStart<0&&(this.selectionStart=0)),this.fire("selection:changed"),this.canvas&&this.canvas.fire("text:selection:changed",{target:this})},moveCursorRight:function(e){if(this.selectionStart>=this.text.length&&this.selectionEnd>=this.text.length)return;this.abortCursorAnimation(),this._currentCursorOpacity=1,e.shiftKey?this.moveCursorRightWithShift(e):this.moveCursorRightWithoutShift(e),this.initDelayedCursor()},moveCursorRightWithShift:function(e){this._selectionDirection==="left"&&this.selectionStart!==this.selectionEnd?this._moveRight(e,"selectionStart"):(this._selectionDirection="right",this._moveRight(e,"selectionEnd"),this.text.charAt(this.selectionEnd-1)==="\n"&&this.selectionEnd++,this.selectionEnd>this.text.length&&(this.selectionEnd=this.text.length)),this.fire("selection:changed"),this.canvas&&this.canvas.fire("text:selection:changed",{target:this})},moveCursorRightWithoutShift:function(e){this._selectionDirection="right",this.selectionStart===this.selectionEnd?(this._moveRight(e,"selectionStart"),this.selectionEnd=this.selectionStart):(this.selectionEnd+=this.getNumNewLinesInSelectedText(),this.selectionEnd>this.text.length&&(this.selectionEnd=this.text.length),this.selectionStart=this.selectionEnd),this.fire("selection:changed"),this.canvas&&this.canvas.fire("text:selection:changed",{target:this})},removeChars:function(e){this.selectionStart===this.selectionEnd?this._removeCharsNearCursor(e):this._removeCharsFromTo(this.selectionStart,this.selectionEnd),this.selectionEnd=this.selectionStart,this._removeExtraneousStyles(),this.canvas&&this.canvas.renderAll().renderAll(),this.setCoords(),this.fire("changed"),this.canvas&&this.canvas.fire("text:changed",{target:this})},_removeCharsNearCursor:function(e){if(this.selectionStart!==0)if(e.metaKey){var t=this.findLineBoundaryLeft(this.selectionStart);this._removeCharsFromTo(t,this.selectionStart),this.selectionStart=t}else if(e.altKey){var n=this.findWordBoundaryLeft(this.selectionStart);this._removeCharsFromTo(n,this.selectionStart),this.selectionStart=n}else{var r=this.text.slice(this.selectionStart-1,this.selectionStart)==="\n";this.removeStyleObject(r),this.selectionStart--,this.text=this.text.slice(0,this.selectionStart)+this.text.slice(this.selectionStart+1)}}}),fabric.util.object.extend(fabric.IText.prototype,{_setSVGTextLineText:function(e,t,n,r,i,s){this.styles[t]?this._setSVGTextLineChars(e,t,n,r,i,s):this.callSuper("_setSVGTextLineText",e,t,n,r,i)},_setSVGTextLineChars:function(e,t,n,r,i,s){var o=t===0||this.useNative?"y":"dy",u=e.split(""),a=0,f=this._getSVGLineLeftOffset(t),l=this._getSVGLineTopOffset(t),c=this._getHeightOfLine(this.ctx,t);for(var h=0,p=u.length;h<p;h++){var d=this.styles[t][h]||{};n.push(this._createTextCharSpan(u[h],d,f,l,o,a));var v=this._getWidthOfChar(this.ctx,u[h],t,h);d.textBackgroundColor&&s.push(this._createTextCharBg(d,f,l,c,v,a)),a+=v}},_getSVGLineLeftOffset:function(e){return this._boundaries&&this._boundaries[e]?fabric.util.toFixed(this._boundaries[e].left,2):0},_getSVGLineTopOffset:function(e){var t=0;for(var n=0;n<=e;n++)t+=this._getHeightOfLine(this.ctx,n);return t-this.height/2},_createTextCharBg:function(e,t,n,r,i,s){return['<rect fill="',e.textBackgroundColor,'" transform="translate(',-this.width/2," ",-this.height+r,")",'" x="',t+s,'" y="',n+r,'" width="',i,'" height="',r,'"></rect>'].join("")},_createTextCharSpan:function(e,t,n,r,i,s){var o=this.getSvgStyles.call(fabric.util.object.extend({visible:!0,fill:this.fill,stroke:this.stroke,type:"text"},t));return['<tspan x="',n+s,'" ',i,'="',r,'" ',t.fontFamily?'font-family="'+t.fontFamily.replace(/"/g,"'")+'" ':"",t.fontSize?'font-size="'+t.fontSize+'" ':"",t.fontStyle?'font-style="'+t.fontStyle+'" ':"",t.fontWeight?'font-weight="'+t.fontWeight+'" ':"",t.textDecoration?'text-decoration="'+t.textDecoration+'" ':"",'style="',o,'">',fabric.util.string.escapeXml(e),"</tspan>"].join("")}}),function(){function request(e,t,n){var r=URL.parse(e);r.port||(r.port=r.protocol.indexOf("https:")===0?443:80);var i=r.port===443?HTTPS:HTTP,s=i.request({hostname:r.hostname,port:r.port,path:r.path,method:"GET"},function(e){var r="";t&&e.setEncoding(t),e.on("end",function(){n(r)}),e.on("data",function(t){e.statusCode===200&&(r+=t)})});s.on("error",function(e){e.errno===process.ECONNREFUSED?fabric.log("ECONNREFUSED: connection refused to "+r.hostname+":"+r.port):fabric.log(e.message)}),s.end()}function requestFs(e,t){var n=require("fs");n.readFile(e,function(e,n){if(e)throw fabric.log(e),e;t(n)})}if(typeof document!="undefined"&&typeof window!="undefined")return;var DOMParser=require("xmldom").DOMParser,URL=require("url"),HTTP=require("http"),HTTPS=require("https"),Canvas=require("canvas"),Image=require("canvas").Image;fabric.util.loadImage=function(e,t,n){function r(r){i.src=new Buffer(r,"binary"),i._src=e,t&&t.call(n,i)}var i=new Image;e&&(e instanceof Buffer||e.indexOf("data")===0)?(i.src=i._src=e,t&&t.call(n,i)):e&&e.indexOf("http")!==0?requestFs(e,r):e?request(e,"binary",r):t&&t.call(n,e)},fabric.loadSVGFromURL=function(e,t,n){e=e.replace(/^\n\s*/,"").replace(/\?.*$/,"").trim(),e.indexOf("http")!==0?requestFs(e,function(
 e){fabric.loadSVGFromString(e.toString(),t,n)}):request(e,"",function(e){fabric.loadSVGFromString(e,t,n)})},fabric.loadSVGFromString=function(e,t,n){var r=(new DOMParser).parseFromString(e);fabric.parseSVGDocument(r.documentElement,function(e,n){t&&t(e,n)},n)},fabric.util.getScript=function(url,callback){request(url,"",function(body){eval(body),callback&&callback()})},fabric.Image.fromObject=function(e,t){fabric.util.loadImage(e.src,function(n){var r=new fabric.Image(n);r._initConfig(e),r._initFilters(e,function(e){r.filters=e||[],t&&t(r)})})},fabric.createCanvasForNode=function(e,t,n,r){r=r||n;var i=fabric.document.createElement("canvas"),s=new Canvas(e||600,t||600,r);i.style={},i.width=s.width,i.height=s.height;var o=fabric.Canvas||fabric.StaticCanvas,u=new o(i,n);return u.contextContainer=s.getContext("2d"),u.nodeCanvas=s,u.Font=Canvas.Font,u},fabric.StaticCanvas.prototype.createPNGStream=function(){return this.nodeCanvas.createPNGStream()},fabric.StaticCanvas.prototype.createJPEGStream=function(e){return this.nodeCanvas.createJPEGStream(e)};var origSetWidth=fabric.StaticCanvas.prototype.setWidth;fabric.StaticCanvas.prototype.setWidth=function(e,t){return origSetWidth.call(this,e,t),this.nodeCanvas.width=e,this},fabric.Canvas&&(fabric.Canvas.prototype.setWidth=fabric.StaticCanvas.prototype.setWidth);var origSetHeight=fabric.StaticCanvas.prototype.setHeight;fabric.StaticCanvas.prototype.setHeight=function(e,t){return origSetHeight.call(this,e,t),this.nodeCanvas.height=e,this},fabric.Canvas&&(fabric.Canvas.prototype.setHeight=fabric.StaticCanvas.prototype.setHeight)}();
 /**
-* @version: 2.1.24
+* @version: 2.1.27
 * @author: Dan Grossman http://www.dangrossman.info/
-* @copyright: Copyright (c) 2012-2016 Dan Grossman. All rights reserved.
+* @copyright: Copyright (c) 2012-2017 Dan Grossman. All rights reserved.
 * @license: Licensed under the MIT license. See http://www.opensource.org/licenses/mit-license.php
-* @website: https://www.improvely.com/
+* @website: http://www.daterangepicker.com/
 */
 // Follow the UMD template https://github.com/umdjs/umd/blob/master/templates/returnExportsGlobal.js
 (function (root, factory) {
     if (typeof define === 'function' && define.amd) {
         // AMD. Make globaly available as well
         define(['moment', 'jquery'], function (moment, jquery) {
-            return (root.daterangepicker = factory(moment, jquery));
+            if (!jquery.fn) jquery.fn = {}; // webpack server rendering
+            return factory(moment, jquery);
         });
     } else if (typeof module === 'object' && module.exports) {
         // Node / Browserify
@@ -47084,7 +47703,8 @@ e){fabric.loadSVGFromString(e.toString(),t,n)}):request(e,"",function(e){fabric.
             jQuery = require('jquery');
             if (!jQuery.fn) jQuery.fn = {};
         }
-        module.exports = factory(require('moment'), jQuery);
+        var moment = (typeof window != 'undefined' && typeof window.moment != 'undefined') ? window.moment : require('moment');
+        module.exports = factory(moment, jQuery);
     } else {
         // Browser globals
         root.daterangepicker = factory(root.moment, root.jQuery);
@@ -47129,7 +47749,7 @@ e){fabric.loadSVGFromString(e.toString(),t,n)}):request(e,"",function(e){fabric.
 
         this.locale = {
             direction: 'ltr',
-            format: 'MM/DD/YYYY',
+            format: moment.localeData().longDateFormat('L'),
             separator: ' - ',
             applyLabel: 'Apply',
             cancelLabel: 'Cancel',
@@ -47224,9 +47844,13 @@ e){fabric.loadSVGFromString(e.toString(),t,n)}):request(e,"",function(e){fabric.
             if (typeof options.locale.weekLabel === 'string')
               this.locale.weekLabel = options.locale.weekLabel;
 
-            if (typeof options.locale.customRangeLabel === 'string')
-              this.locale.customRangeLabel = options.locale.customRangeLabel;
-
+            if (typeof options.locale.customRangeLabel === 'string'){
+                //Support unicode chars in the custom range name.
+                var elem = document.createElement('textarea');
+                elem.innerHTML = options.locale.customRangeLabel;
+                var rangeHtml = elem.value;
+                this.locale.customRangeLabel = rangeHtml;
+            }
         }
         this.container.addClass(this.locale.direction);
 
@@ -47482,7 +48106,8 @@ e){fabric.loadSVGFromString(e.toString(),t,n)}):request(e,"",function(e){fabric.
             .on('click.daterangepicker', '.daterangepicker_input input', $.proxy(this.showCalendars, this))
             .on('focus.daterangepicker', '.daterangepicker_input input', $.proxy(this.formInputsFocused, this))
             .on('blur.daterangepicker', '.daterangepicker_input input', $.proxy(this.formInputsBlurred, this))
-            .on('change.daterangepicker', '.daterangepicker_input input', $.proxy(this.formInputsChanged, this));
+            .on('change.daterangepicker', '.daterangepicker_input input', $.proxy(this.formInputsChanged, this))
+            .on('keydown.daterangepicker', '.daterangepicker_input input', $.proxy(this.formInputsKeydown, this));
 
         this.container.find('.ranges')
             .on('click.daterangepicker', 'button.applyBtn', $.proxy(this.clickApply, this))
@@ -47496,10 +48121,11 @@ e){fabric.loadSVGFromString(e.toString(),t,n)}):request(e,"",function(e){fabric.
                 'click.daterangepicker': $.proxy(this.show, this),
                 'focus.daterangepicker': $.proxy(this.show, this),
                 'keyup.daterangepicker': $.proxy(this.elementChanged, this),
-                'keydown.daterangepicker': $.proxy(this.keydown, this)
+                'keydown.daterangepicker': $.proxy(this.keydown, this) //IE 11 compatibility
             });
         } else {
             this.element.on('click.daterangepicker', $.proxy(this.toggle, this));
+            this.element.on('keydown.daterangepicker', $.proxy(this.toggle, this));
         }
 
         //
@@ -47534,13 +48160,13 @@ e){fabric.loadSVGFromString(e.toString(),t,n)}):request(e,"",function(e){fabric.
                 this.startDate.minute(Math.round(this.startDate.minute() / this.timePickerIncrement) * this.timePickerIncrement);
 
             if (this.minDate && this.startDate.isBefore(this.minDate)) {
-                this.startDate = this.minDate;
+                this.startDate = this.minDate.clone();
                 if (this.timePicker && this.timePickerIncrement)
                     this.startDate.minute(Math.round(this.startDate.minute() / this.timePickerIncrement) * this.timePickerIncrement);
             }
 
             if (this.maxDate && this.startDate.isAfter(this.maxDate)) {
-                this.startDate = this.maxDate;
+                this.startDate = this.maxDate.clone();
                 if (this.timePicker && this.timePickerIncrement)
                     this.startDate.minute(Math.floor(this.startDate.minute() / this.timePickerIncrement) * this.timePickerIncrement);
             }
@@ -47559,7 +48185,7 @@ e){fabric.loadSVGFromString(e.toString(),t,n)}):request(e,"",function(e){fabric.
                 this.endDate = moment(endDate);
 
             if (!this.timePicker)
-                this.endDate = this.endDate.endOf('day');
+                this.endDate = this.endDate.add(1,'d').startOf('day').subtract(1,'second');
 
             if (this.timePicker && this.timePickerIncrement)
                 this.endDate.minute(Math.round(this.endDate.minute() / this.timePickerIncrement) * this.timePickerIncrement);
@@ -47568,7 +48194,7 @@ e){fabric.loadSVGFromString(e.toString(),t,n)}):request(e,"",function(e){fabric.
                 this.endDate = this.startDate.clone();
 
             if (this.maxDate && this.endDate.isAfter(this.maxDate))
-                this.endDate = this.maxDate;
+                this.endDate = this.maxDate.clone();
 
             if (this.dateLimit && this.startDate.clone().add(this.dateLimit).isBefore(this.endDate))
                 this.endDate = this.startDate.clone().add(this.dateLimit);
@@ -47937,7 +48563,7 @@ e){fabric.loadSVGFromString(e.toString(),t,n)}):request(e,"",function(e){fabric.
 
                 //Preserve the time already selected
                 var timeSelector = this.container.find('.calendar.right .calendar-time div');
-                if (!this.endDate && timeSelector.html() != '') {
+                if (timeSelector.html() != '') {
 
                     selected.hour(timeSelector.find('.hourselect option:selected').val() || selected.hour());
                     selected.minute(timeSelector.find('.minuteselect option:selected').val() || selected.minute());
@@ -48331,7 +48957,7 @@ e){fabric.loadSVGFromString(e.toString(),t,n)}):request(e,"",function(e){fabric.
             var rightCalendar = this.rightCalendar;
             var startDate = this.startDate;
             if (!this.endDate) {
-                this.container.find('.calendar td').each(function(index, el) {
+                this.container.find('.calendar tbody td').each(function(index, el) {
 
                     //skip week numbers, only look at dates
                     if ($(el).hasClass('week')) return;
@@ -48426,30 +49052,36 @@ e){fabric.loadSVGFromString(e.toString(),t,n)}):request(e,"",function(e){fabric.
 
         },
 
-        calculateChosenLabel: function() {
-          var customRange = true;
-          var i = 0;
-          for (var range in this.ranges) {
+        calculateChosenLabel: function () {
+            var customRange = true;
+            var i = 0;
+            for (var range in this.ranges) {
               if (this.timePicker) {
-                  if (this.startDate.isSame(this.ranges[range][0]) && this.endDate.isSame(this.ranges[range][1])) {
-                      customRange = false;
-                      this.chosenLabel = this.container.find('.ranges li:eq(' + i + ')').addClass('active').html();
-                      break;
-                  }
-              } else {
-                  //ignore times when comparing dates if time picker is not enabled
-                  if (this.startDate.format('YYYY-MM-DD') == this.ranges[range][0].format('YYYY-MM-DD') && this.endDate.format('YYYY-MM-DD') == this.ranges[range][1].format('YYYY-MM-DD')) {
-                      customRange = false;
-                      this.chosenLabel = this.container.find('.ranges li:eq(' + i + ')').addClass('active').html();
-                      break;
-                  }
-              }
-              i++;
-          }
-          if (customRange && this.showCustomRangeLabel) {
-              this.chosenLabel = this.container.find('.ranges li:last').addClass('active').html();
-              this.showCalendars();
-          }
+                    var format = this.timePickerSeconds ? "YYYY-MM-DD hh:mm:ss" : "YYYY-MM-DD hh:mm";
+                    //ignore times when comparing dates if time picker seconds is not enabled
+                    if (this.startDate.format(format) == this.ranges[range][0].format(format) && this.endDate.format(format) == this.ranges[range][1].format(format)) {
+                        customRange = false;
+                        this.chosenLabel = this.container.find('.ranges li:eq(' + i + ')').addClass('active').html();
+                        break;
+                    }
+                } else {
+                    //ignore times when comparing dates if time picker is not enabled
+                    if (this.startDate.format('YYYY-MM-DD') == this.ranges[range][0].format('YYYY-MM-DD') && this.endDate.format('YYYY-MM-DD') == this.ranges[range][1].format('YYYY-MM-DD')) {
+                        customRange = false;
+                        this.chosenLabel = this.container.find('.ranges li:eq(' + i + ')').addClass('active').html();
+                        break;
+                    }
+                }
+                i++;
+            }
+            if (customRange) {
+                if (this.showCustomRangeLabel) {
+                    this.chosenLabel = this.container.find('.ranges li:last').addClass('active').html();
+                } else {
+                    this.chosenLabel = null;
+                }
+                this.showCalendars();
+            }
         },
 
         clickApply: function(e) {
@@ -48616,10 +49248,22 @@ e){fabric.loadSVGFromString(e.toString(),t,n)}):request(e,"",function(e){fabric.
 
         },
 
+        formInputsKeydown: function(e) {
+            // This function ensures that if the 'enter' key was pressed in the input, then the calendars
+            // are updated with the startDate and endDate.
+            // This behaviour is automatic in Chrome/Firefox/Edge but not in IE 11 hence why this exists.
+            // Other browsers and versions of IE are untested and the behaviour is unknown.
+            if (e.keyCode === 13) {
+                // Prevent the calendar from being updated twice on Chrome/Firefox/Edge
+                e.preventDefault(); 
+                this.formInputsChanged(e);
+            }
+        },
+
+
         elementChanged: function() {
             if (!this.element.is('input')) return;
             if (!this.element.val().length) return;
-            if (this.element.val().length < this.locale.format.length) return;
 
             var dateString = this.element.val().split(this.locale.separator),
                 start = null,
@@ -48647,6 +49291,14 @@ e){fabric.loadSVGFromString(e.toString(),t,n)}):request(e,"",function(e){fabric.
             if ((e.keyCode === 9) || (e.keyCode === 13)) {
                 this.hide();
             }
+
+            //hide on esc and prevent propagation
+            if (e.keyCode === 27) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                this.hide();
+            }
         },
 
         updateElement: function() {
@@ -48668,11 +49320,12 @@ e){fabric.loadSVGFromString(e.toString(),t,n)}):request(e,"",function(e){fabric.
     };
 
     $.fn.daterangepicker = function(options, callback) {
+        var implementOptions = $.extend(true, {}, $.fn.daterangepicker.defaultOptions, options);
         this.each(function() {
             var el = $(this);
             if (el.data('daterangepicker'))
                 el.data('daterangepicker').remove();
-            el.data('daterangepicker', new DateRangePicker(el, options, callback));
+            el.data('daterangepicker', new DateRangePicker(el, implementOptions, callback));
         });
         return this;
     };
@@ -48681,1140 +49334,1130 @@ e){fabric.loadSVGFromString(e.toString(),t,n)}):request(e,"",function(e){fabric.
 
 }));
 
-/*
- * jQuery MiniColors: A tiny color picker built on jQuery
- *
- * Copyright: Cory LaViska for A Beautiful Site, LLC: http://www.abeautifulsite.net/
- *
- * Contribute: https://github.com/claviska/jquery-minicolors
- *
- * @license: http://opensource.org/licenses/MIT
- *
- */
+//
+// jQuery MiniColors: A tiny color picker built on jQuery
+//
+// Developed by Cory LaViska for A Beautiful Site, LLC
+//
+// Licensed under the MIT license: http://opensource.org/licenses/MIT
+//
 (function (factory) {
-    /* jshint ignore:start */
-    if (typeof define === 'function' && define.amd) {
-        // AMD. Register as an anonymous module.
-        define(['jquery'], factory);
-    } else if (typeof exports === 'object') {
-        // Node/CommonJS
-        module.exports = factory(require('jquery'));
-    } else {
-        // Browser globals
-        factory(jQuery);
-    }
-    /* jshint ignore:end */
+  if(typeof define === 'function' && define.amd) {
+    // AMD. Register as an anonymous module.
+    define(['jquery'], factory);
+  } else if(typeof exports === 'object') {
+    // Node/CommonJS
+    module.exports = factory(require('jquery'));
+  } else {
+    // Browser globals
+    factory(jQuery);
+  }
 }(function ($) {
+  'use strict';
 
-    'use strict';
+  // Defaults
+  $.minicolors = {
+    defaults: {
+      animationSpeed: 50,
+      animationEasing: 'swing',
+      change: null,
+      changeDelay: 0,
+      control: 'hue',
+      defaultValue: '',
+      format: 'hex',
+      hide: null,
+      hideSpeed: 100,
+      inline: false,
+      keywords: '',
+      letterCase: 'lowercase',
+      opacity: false,
+      position: 'bottom',
+      show: null,
+      showSpeed: 100,
+      theme: 'default',
+      swatches: []
+    }
+  };
 
-    // Defaults
-    $.minicolors = {
-        defaults: {
-            animationSpeed: 50,
-            animationEasing: 'swing',
-            change: null,
-            changeDelay: 0,
-            control: 'hue',
-            dataUris: true,
-            defaultValue: '',
-            format: 'hex',
-            hide: null,
-            hideSpeed: 100,
-            inline: false,
-            keywords: '',
-            letterCase: 'lowercase',
-            opacity: false,
-            position: 'bottom left',
-            show: null,
-            showSpeed: 100,
-            theme: 'default',
-            swatches: []
+  // Public methods
+  $.extend($.fn, {
+    minicolors: function(method, data) {
+
+      switch(method) {
+      // Destroy the control
+      case 'destroy':
+        $(this).each(function() {
+          destroy($(this));
+        });
+        return $(this);
+
+      // Hide the color picker
+      case 'hide':
+        hide();
+        return $(this);
+
+      // Get/set opacity
+      case 'opacity':
+        // Getter
+        if(data === undefined) {
+          // Getter
+          return $(this).attr('data-opacity');
+        } else {
+          // Setter
+          $(this).each(function() {
+            updateFromInput($(this).attr('data-opacity', data));
+          });
         }
-    };
+        return $(this);
 
-    // Public methods
-    $.extend($.fn, {
-        minicolors: function(method, data) {
+      // Get an RGB(A) object based on the current color/opacity
+      case 'rgbObject':
+        return rgbObject($(this), method === 'rgbaObject');
 
-            switch(method) {
+      // Get an RGB(A) string based on the current color/opacity
+      case 'rgbString':
+      case 'rgbaString':
+        return rgbString($(this), method === 'rgbaString');
 
-                // Destroy the control
-                case 'destroy':
-                    $(this).each( function() {
-                        destroy($(this));
-                    });
-                    return $(this);
+      // Get/set settings on the fly
+      case 'settings':
+        if(data === undefined) {
+          return $(this).data('minicolors-settings');
+        } else {
+          // Setter
+          $(this).each(function() {
+            var settings = $(this).data('minicolors-settings') || {};
+            destroy($(this));
+            $(this).minicolors($.extend(true, settings, data));
+          });
+        }
+        return $(this);
 
-                // Hide the color picker
-                case 'hide':
-                    hide();
-                    return $(this);
+      // Show the color picker
+      case 'show':
+        show($(this).eq(0));
+        return $(this);
 
-                // Get/set opacity
-                case 'opacity':
-                    // Getter
-                    if( data === undefined ) {
-                        // Getter
-                        return $(this).attr('data-opacity');
-                    } else {
-                        // Setter
-                        $(this).each( function() {
-                            updateFromInput($(this).attr('data-opacity', data));
-                        });
-                    }
-                    return $(this);
-
-                // Get an RGB(A) object based on the current color/opacity
-                case 'rgbObject':
-                    return rgbObject($(this), method === 'rgbaObject');
-
-                // Get an RGB(A) string based on the current color/opacity
-                case 'rgbString':
-                case 'rgbaString':
-                    return rgbString($(this), method === 'rgbaString');
-
-                // Get/set settings on the fly
-                case 'settings':
-                    if( data === undefined ) {
-                        return $(this).data('minicolors-settings');
-                    } else {
-                        // Setter
-                        $(this).each( function() {
-                            var settings = $(this).data('minicolors-settings') || {};
-                            destroy($(this));
-                            $(this).minicolors($.extend(true, settings, data));
-                        });
-                    }
-                    return $(this);
-
-                // Show the color picker
-                case 'show':
-                    show( $(this).eq(0) );
-                    return $(this);
-
-                // Get/set the hex color value
-                case 'value':
-                    if( data === undefined ) {
-                        // Getter
-                        return $(this).val();
-                    } else {
-                        // Setter
-                        $(this).each( function() {
-                            if( typeof(data) === 'object' ) {
-                                if( data.opacity ) {
-                                    $(this).attr('data-opacity', keepWithin(data.opacity, 0, 1));
-                                }
-                                if( data.color ) {
-                                    $(this).val(data.color);
-                                }
-                            } else {
-                                $(this).val(data);
-                            }
-                            updateFromInput($(this));
-                        });
-                    }
-                    return $(this);
-
-                // Initializes the control
-                default:
-                    if( method !== 'create' ) data = method;
-                    $(this).each( function() {
-                        init($(this), data);
-                    });
-                    return $(this);
-
+      // Get/set the hex color value
+      case 'value':
+        if(data === undefined) {
+          // Getter
+          return $(this).val();
+        } else {
+          // Setter
+          $(this).each(function() {
+            if(typeof(data) === 'object' && data !== null) {
+              if(data.opacity !== undefined) {
+                $(this).attr('data-opacity', keepWithin(data.opacity, 0, 1));
+              }
+              if(data.color) {
+                $(this).val(data.color);
+              }
+            } else {
+              $(this).val(data);
             }
-
+            updateFromInput($(this));
+          });
         }
+        return $(this);
+
+      // Initializes the control
+      default:
+        if(method !== 'create') data = method;
+        $(this).each(function() {
+          init($(this), data);
+        });
+        return $(this);
+
+      }
+
+    }
+  });
+
+  // Initialize input elements
+  function init(input, settings) {
+    var minicolors = $('<div class="minicolors" />');
+    var defaults = $.minicolors.defaults;
+    var name;
+    var size;
+    var swatches;
+    var swatch;
+    var panel;
+    var i;
+
+    // Do nothing if already initialized
+    if(input.data('minicolors-initialized')) return;
+
+    // Handle settings
+    settings = $.extend(true, {}, defaults, settings);
+
+    // The wrapper
+    minicolors
+      .addClass('minicolors-theme-' + settings.theme)
+      .toggleClass('minicolors-with-opacity', settings.opacity);
+
+    // Custom positioning
+    if(settings.position !== undefined) {
+      $.each(settings.position.split(' '), function() {
+        minicolors.addClass('minicolors-position-' + this);
+      });
+    }
+
+    // Input size
+    if(settings.format === 'rgb') {
+      size = settings.opacity ? '25' : '20';
+    } else {
+      size = settings.keywords ? '11' : '7';
+    }
+
+    // The input
+    input
+      .addClass('minicolors-input')
+      .data('minicolors-initialized', false)
+      .data('minicolors-settings', settings)
+      .prop('size', size)
+      .wrap(minicolors)
+      .after(
+        '<div class="minicolors-panel minicolors-slider-' + settings.control + '">' +
+      '<div class="minicolors-slider minicolors-sprite">' +
+      '<div class="minicolors-picker"></div>' +
+      '</div>' +
+      '<div class="minicolors-opacity-slider minicolors-sprite">' +
+      '<div class="minicolors-picker"></div>' +
+      '</div>' +
+      '<div class="minicolors-grid minicolors-sprite">' +
+      '<div class="minicolors-grid-inner"></div>' +
+      '<div class="minicolors-picker"><div></div></div>' +
+      '</div>' +
+      '</div>'
+      );
+
+    // The swatch
+    if(!settings.inline) {
+      input.after('<span class="minicolors-swatch minicolors-sprite minicolors-input-swatch"><span class="minicolors-swatch-color"></span></span>');
+      input.next('.minicolors-input-swatch').on('click', function(event) {
+        event.preventDefault();
+        input.focus();
+      });
+    }
+
+    // Prevent text selection in IE
+    panel = input.parent().find('.minicolors-panel');
+    panel.on('selectstart', function() { return false; }).end();
+
+    // Swatches
+    if(settings.swatches && settings.swatches.length !== 0) {
+      panel.addClass('minicolors-with-swatches');
+      swatches = $('<ul class="minicolors-swatches"></ul>')
+        .appendTo(panel);
+      for(i = 0; i < settings.swatches.length; ++i) {
+        // allow for custom objects as swatches
+        if($.type(settings.swatches[i]) === 'object') {
+          name = settings.swatches[i].name;
+          swatch = settings.swatches[i].color;
+        } else {
+          name = '';
+          swatch = settings.swatches[i];
+        }
+        swatch = isRgb(swatch) ? parseRgb(swatch, true) : hex2rgb(parseHex(swatch, true));
+        $('<li class="minicolors-swatch minicolors-sprite"><span class="minicolors-swatch-color" title="' + name + '"></span></li>')
+          .appendTo(swatches)
+          .data('swatch-color', settings.swatches[i])
+          .find('.minicolors-swatch-color')
+          .css({
+            backgroundColor: rgb2hex(swatch),
+            opacity: swatch.a
+          });
+        settings.swatches[i] = swatch;
+      }
+    }
+
+    // Inline controls
+    if(settings.inline) input.parent().addClass('minicolors-inline');
+
+    updateFromInput(input, false);
+
+    input.data('minicolors-initialized', true);
+  }
+
+  // Returns the input back to its original state
+  function destroy(input) {
+    var minicolors = input.parent();
+
+    // Revert the input element
+    input
+      .removeData('minicolors-initialized')
+      .removeData('minicolors-settings')
+      .removeProp('size')
+      .removeClass('minicolors-input');
+
+    // Remove the wrap and destroy whatever remains
+    minicolors.before(input).remove();
+  }
+
+  // Shows the specified dropdown panel
+  function show(input) {
+    var minicolors = input.parent();
+    var panel = minicolors.find('.minicolors-panel');
+    var settings = input.data('minicolors-settings');
+
+    // Do nothing if uninitialized, disabled, inline, or already open
+    if(
+      !input.data('minicolors-initialized') ||
+      input.prop('disabled') ||
+      minicolors.hasClass('minicolors-inline') ||
+      minicolors.hasClass('minicolors-focus')
+    ) return;
+
+    hide();
+
+    minicolors.addClass('minicolors-focus');
+    if (panel.animate) {
+      panel
+        .stop(true, true)
+        .fadeIn(settings.showSpeed, function () {
+          if (settings.show) settings.show.call(input.get(0));
+        });
+    } else {
+      panel.css('opacity', 1);
+      if (settings.show) settings.show.call(input.get(0));
+    }
+  }
+
+  // Hides all dropdown panels
+  function hide() {
+    $('.minicolors-focus').each(function() {
+      var minicolors = $(this);
+      var input = minicolors.find('.minicolors-input');
+      var panel = minicolors.find('.minicolors-panel');
+      var settings = input.data('minicolors-settings');
+
+      if (panel.animate) {
+        panel.fadeOut(settings.hideSpeed, function () {
+          if (settings.hide) settings.hide.call(input.get(0));
+          minicolors.removeClass('minicolors-focus');
+        });
+      } else {
+        panel.css('opacity', 0);
+        if (settings.hide) settings.hide.call(input.get(0));
+        minicolors.removeClass('minicolors-focus');
+      }
+    });
+  }
+
+  // Moves the selected picker
+  function move(target, event, animate) {
+    var input = target.parents('.minicolors').find('.minicolors-input');
+    var settings = input.data('minicolors-settings');
+    var picker = target.find('[class$=-picker]');
+    var offsetX = target.offset().left;
+    var offsetY = target.offset().top;
+    var x = Math.round(event.pageX - offsetX);
+    var y = Math.round(event.pageY - offsetY);
+    var duration = animate ? settings.animationSpeed : 0;
+    var wx, wy, r, phi, styles;
+
+    // Touch support
+    if(event.originalEvent.changedTouches) {
+      x = event.originalEvent.changedTouches[0].pageX - offsetX;
+      y = event.originalEvent.changedTouches[0].pageY - offsetY;
+    }
+
+    // Constrain picker to its container
+    if(x < 0) x = 0;
+    if(y < 0) y = 0;
+    if(x > target.width()) x = target.width();
+    if(y > target.height()) y = target.height();
+
+    // Constrain color wheel values to the wheel
+    if(target.parent().is('.minicolors-slider-wheel') && picker.parent().is('.minicolors-grid')) {
+      wx = 75 - x;
+      wy = 75 - y;
+      r = Math.sqrt(wx * wx + wy * wy);
+      phi = Math.atan2(wy, wx);
+      if(phi < 0) phi += Math.PI * 2;
+      if(r > 75) {
+        r = 75;
+        x = 75 - (75 * Math.cos(phi));
+        y = 75 - (75 * Math.sin(phi));
+      }
+      x = Math.round(x);
+      y = Math.round(y);
+    }
+
+    // Move the picker
+    styles = {
+      top: y + 'px'
+    };
+    if(target.is('.minicolors-grid')) {
+      styles.left = x + 'px';
+    }
+    if (picker.animate) {
+      picker
+        .stop(true)
+        .animate(styles, duration, settings.animationEasing, function() {
+          updateFromControl(input, target);
+        });
+    } else {
+      picker
+        .css(styles);
+      updateFromControl(input, target);
+    }
+  }
+
+  // Sets the input based on the color picker values
+  function updateFromControl(input, target) {
+
+    function getCoords(picker, container) {
+      var left, top;
+      if(!picker.length || !container) return null;
+      left = picker.offset().left;
+      top = picker.offset().top;
+
+      return {
+        x: left - container.offset().left + (picker.outerWidth() / 2),
+        y: top - container.offset().top + (picker.outerHeight() / 2)
+      };
+    }
+
+    var hue, saturation, brightness, x, y, r, phi;
+    var hex = input.val();
+    var opacity = input.attr('data-opacity');
+
+    // Helpful references
+    var minicolors = input.parent();
+    var settings = input.data('minicolors-settings');
+    var swatch = minicolors.find('.minicolors-input-swatch');
+
+    // Panel objects
+    var grid = minicolors.find('.minicolors-grid');
+    var slider = minicolors.find('.minicolors-slider');
+    var opacitySlider = minicolors.find('.minicolors-opacity-slider');
+
+    // Picker objects
+    var gridPicker = grid.find('[class$=-picker]');
+    var sliderPicker = slider.find('[class$=-picker]');
+    var opacityPicker = opacitySlider.find('[class$=-picker]');
+
+    // Picker positions
+    var gridPos = getCoords(gridPicker, grid);
+    var sliderPos = getCoords(sliderPicker, slider);
+    var opacityPos = getCoords(opacityPicker, opacitySlider);
+
+    // Handle colors
+    if(target.is('.minicolors-grid, .minicolors-slider, .minicolors-opacity-slider')) {
+
+      // Determine HSB values
+      switch(settings.control) {
+      case 'wheel':
+        // Calculate hue, saturation, and brightness
+        x = (grid.width() / 2) - gridPos.x;
+        y = (grid.height() / 2) - gridPos.y;
+        r = Math.sqrt(x * x + y * y);
+        phi = Math.atan2(y, x);
+        if(phi < 0) phi += Math.PI * 2;
+        if(r > 75) {
+          r = 75;
+          gridPos.x = 69 - (75 * Math.cos(phi));
+          gridPos.y = 69 - (75 * Math.sin(phi));
+        }
+        saturation = keepWithin(r / 0.75, 0, 100);
+        hue = keepWithin(phi * 180 / Math.PI, 0, 360);
+        brightness = keepWithin(100 - Math.floor(sliderPos.y * (100 / slider.height())), 0, 100);
+        hex = hsb2hex({
+          h: hue,
+          s: saturation,
+          b: brightness
+        });
+
+        // Update UI
+        slider.css('backgroundColor', hsb2hex({ h: hue, s: saturation, b: 100 }));
+        break;
+
+      case 'saturation':
+        // Calculate hue, saturation, and brightness
+        hue = keepWithin(parseInt(gridPos.x * (360 / grid.width()), 10), 0, 360);
+        saturation = keepWithin(100 - Math.floor(sliderPos.y * (100 / slider.height())), 0, 100);
+        brightness = keepWithin(100 - Math.floor(gridPos.y * (100 / grid.height())), 0, 100);
+        hex = hsb2hex({
+          h: hue,
+          s: saturation,
+          b: brightness
+        });
+
+        // Update UI
+        slider.css('backgroundColor', hsb2hex({ h: hue, s: 100, b: brightness }));
+        minicolors.find('.minicolors-grid-inner').css('opacity', saturation / 100);
+        break;
+
+      case 'brightness':
+        // Calculate hue, saturation, and brightness
+        hue = keepWithin(parseInt(gridPos.x * (360 / grid.width()), 10), 0, 360);
+        saturation = keepWithin(100 - Math.floor(gridPos.y * (100 / grid.height())), 0, 100);
+        brightness = keepWithin(100 - Math.floor(sliderPos.y * (100 / slider.height())), 0, 100);
+        hex = hsb2hex({
+          h: hue,
+          s: saturation,
+          b: brightness
+        });
+
+        // Update UI
+        slider.css('backgroundColor', hsb2hex({ h: hue, s: saturation, b: 100 }));
+        minicolors.find('.minicolors-grid-inner').css('opacity', 1 - (brightness / 100));
+        break;
+
+      default:
+        // Calculate hue, saturation, and brightness
+        hue = keepWithin(360 - parseInt(sliderPos.y * (360 / slider.height()), 10), 0, 360);
+        saturation = keepWithin(Math.floor(gridPos.x * (100 / grid.width())), 0, 100);
+        brightness = keepWithin(100 - Math.floor(gridPos.y * (100 / grid.height())), 0, 100);
+        hex = hsb2hex({
+          h: hue,
+          s: saturation,
+          b: brightness
+        });
+
+        // Update UI
+        grid.css('backgroundColor', hsb2hex({ h: hue, s: 100, b: 100 }));
+        break;
+      }
+
+      // Handle opacity
+      if(settings.opacity) {
+        opacity = parseFloat(1 - (opacityPos.y / opacitySlider.height())).toFixed(2);
+      } else {
+        opacity = 1;
+      }
+
+      updateInput(input, hex, opacity);
+    }
+    else {
+      // Set swatch color
+      swatch.find('span').css({
+        backgroundColor: hex,
+        opacity: opacity
+      });
+
+      // Handle change event
+      doChange(input, hex, opacity);
+    }
+  }
+
+  // Sets the value of the input and does the appropriate conversions
+  // to respect settings, also updates the swatch
+  function updateInput(input, value, opacity) {
+    var rgb;
+
+    // Helpful references
+    var minicolors = input.parent();
+    var settings = input.data('minicolors-settings');
+    var swatch = minicolors.find('.minicolors-input-swatch');
+
+    if(settings.opacity) input.attr('data-opacity', opacity);
+
+    // Set color string
+    if(settings.format === 'rgb') {
+      // Returns RGB(A) string
+
+      // Checks for input format and does the conversion
+      if(isRgb(value)) {
+        rgb = parseRgb(value, true);
+      }
+      else {
+        rgb = hex2rgb(parseHex(value, true));
+      }
+
+      opacity = input.attr('data-opacity') === '' ? 1 : keepWithin(parseFloat(input.attr('data-opacity')).toFixed(2), 0, 1);
+      if(isNaN(opacity) || !settings.opacity) opacity = 1;
+
+      if(input.minicolors('rgbObject').a <= 1 && rgb && settings.opacity) {
+        // Set RGBA string if alpha
+        value = 'rgba(' + rgb.r + ', ' + rgb.g + ', ' + rgb.b + ', ' + parseFloat(opacity) + ')';
+      } else {
+        // Set RGB string (alpha = 1)
+        value = 'rgb(' + rgb.r + ', ' + rgb.g + ', ' + rgb.b + ')';
+      }
+    } else {
+      // Returns hex color
+
+      // Checks for input format and does the conversion
+      if(isRgb(value)) {
+        value = rgbString2hex(value);
+      }
+
+      value = convertCase(value, settings.letterCase);
+    }
+
+    // Update value from picker
+    input.val(value);
+
+    // Set swatch color
+    swatch.find('span').css({
+      backgroundColor: value,
+      opacity: opacity
     });
 
-    // Initialize input elements
-    function init(input, settings) {
+    // Handle change event
+    doChange(input, value, opacity);
+  }
 
-        var minicolors = $('<div class="minicolors" />'),
-            defaults = $.minicolors.defaults,
-            size,
-            swatches,
-            swatch,
-            panel,
-            i;
+  // Sets the color picker values from the input
+  function updateFromInput(input, preserveInputValue) {
+    var hex, hsb, opacity, keywords, alpha, value, x, y, r, phi;
 
-        // Do nothing if already initialized
-        if( input.data('minicolors-initialized') ) return;
+    // Helpful references
+    var minicolors = input.parent();
+    var settings = input.data('minicolors-settings');
+    var swatch = minicolors.find('.minicolors-input-swatch');
 
-        // Handle settings
-        settings = $.extend(true, {}, defaults, settings);
+    // Panel objects
+    var grid = minicolors.find('.minicolors-grid');
+    var slider = minicolors.find('.minicolors-slider');
+    var opacitySlider = minicolors.find('.minicolors-opacity-slider');
 
-        // The wrapper
-        minicolors
-            .addClass('minicolors-theme-' + settings.theme)
-            .toggleClass('minicolors-with-opacity', settings.opacity)
-            .toggleClass('minicolors-no-data-uris', settings.dataUris !== true);
+    // Picker objects
+    var gridPicker = grid.find('[class$=-picker]');
+    var sliderPicker = slider.find('[class$=-picker]');
+    var opacityPicker = opacitySlider.find('[class$=-picker]');
 
-        // Custom positioning
-        if( settings.position !== undefined ) {
-            $.each(settings.position.split(' '), function() {
-                minicolors.addClass('minicolors-position-' + this);
-            });
-        }
-
-        // Input size
-        if( settings.format === 'rgb' ) {
-            size = settings.opacity ? '25' : '20';
-        } else {
-            size = settings.keywords ? '11' : '7';
-        }
-
-        // The input
-        input
-            .addClass('minicolors-input')
-            .data('minicolors-initialized', false)
-            .data('minicolors-settings', settings)
-            .prop('size', size)
-            .wrap(minicolors)
-            .after(
-                '<div class="minicolors-panel minicolors-slider-' + settings.control + '">' +
-                    '<div class="minicolors-slider minicolors-sprite">' +
-                        '<div class="minicolors-picker"></div>' +
-                    '</div>' +
-                    '<div class="minicolors-opacity-slider minicolors-sprite">' +
-                        '<div class="minicolors-picker"></div>' +
-                    '</div>' +
-                    '<div class="minicolors-grid minicolors-sprite">' +
-                        '<div class="minicolors-grid-inner"></div>' +
-                        '<div class="minicolors-picker"><div></div></div>' +
-                    '</div>' +
-                '</div>'
-            );
-
-        // The swatch
-        if( !settings.inline ) {
-            input.after('<span class="minicolors-swatch minicolors-sprite minicolors-input-swatch"><span class="minicolors-swatch-color"></span></span>');
-            input.next('.minicolors-input-swatch').on('click', function(event) {
-                event.preventDefault();
-                input.focus();
-            });
-        }
-
-        // Prevent text selection in IE
-        panel = input.parent().find('.minicolors-panel');
-        panel.on('selectstart', function() { return false; }).end();
-
-        // Swatches
-        if (settings.swatches && settings.swatches.length !== 0) {
-            if (settings.swatches.length > 7) {
-                settings.swatches.length = 7;
-            }
-            panel.addClass('minicolors-with-swatches');
-            swatches = $('<ul class="minicolors-swatches"></ul>')
-                .appendTo(panel);
-            for(i = 0; i < settings.swatches.length; ++i) {
-                swatch = settings.swatches[i];
-                swatch = isRgb(swatch) ? parseRgb(swatch, true) : hex2rgb(parseHex(swatch, true));
-                $('<li class="minicolors-swatch minicolors-sprite"><span class="minicolors-swatch-color"></span></li>')
-                    .appendTo(swatches)
-                    .data('swatch-color', settings.swatches[i])
-                    .find('.minicolors-swatch-color')
-                    .css({
-                        backgroundColor: rgb2hex(swatch),
-                        opacity: swatch.a
-                    });
-                settings.swatches[i] = swatch;
-            }
-
-        }
-
-        // Inline controls
-        if( settings.inline ) input.parent().addClass('minicolors-inline');
-
-        updateFromInput(input, false);
-
-        input.data('minicolors-initialized', true);
-
+    // Determine hex/HSB values
+    if(isRgb(input.val())) {
+      // If input value is a rgb(a) string, convert it to hex color and update opacity
+      hex = rgbString2hex(input.val());
+      alpha = keepWithin(parseFloat(getAlpha(input.val())).toFixed(2), 0, 1);
+      if(alpha) {
+        input.attr('data-opacity', alpha);
+      }
+    } else {
+      hex = convertCase(parseHex(input.val(), true), settings.letterCase);
     }
 
-    // Returns the input back to its original state
-    function destroy(input) {
+    if(!hex){
+      hex = convertCase(parseInput(settings.defaultValue, true), settings.letterCase);
+    }
+    hsb = hex2hsb(hex);
 
-        var minicolors = input.parent();
+    // Get array of lowercase keywords
+    keywords = !settings.keywords ? [] : $.map(settings.keywords.split(','), function(a) {
+      return $.trim(a.toLowerCase());
+    });
 
-        // Revert the input element
-        input
-            .removeData('minicolors-initialized')
-            .removeData('minicolors-settings')
-            .removeProp('size')
-            .removeClass('minicolors-input');
-
-        // Remove the wrap and destroy whatever remains
-        minicolors.before(input).remove();
-
+    // Set color string
+    if(input.val() !== '' && $.inArray(input.val().toLowerCase(), keywords) > -1) {
+      value = convertCase(input.val());
+    } else {
+      value = isRgb(input.val()) ? parseRgb(input.val()) : hex;
     }
 
-    // Shows the specified dropdown panel
-    function show(input) {
+    // Update input value
+    if(!preserveInputValue) input.val(value);
 
-        var minicolors = input.parent(),
-            panel = minicolors.find('.minicolors-panel'),
-            settings = input.data('minicolors-settings');
+    // Determine opacity value
+    if(settings.opacity) {
+      // Get from data-opacity attribute and keep within 0-1 range
+      opacity = input.attr('data-opacity') === '' ? 1 : keepWithin(parseFloat(input.attr('data-opacity')).toFixed(2), 0, 1);
+      if(isNaN(opacity)) opacity = 1;
+      input.attr('data-opacity', opacity);
+      swatch.find('span').css('opacity', opacity);
 
-        // Do nothing if uninitialized, disabled, inline, or already open
-        if( !input.data('minicolors-initialized') ||
-            input.prop('disabled') ||
-            minicolors.hasClass('minicolors-inline') ||
-            minicolors.hasClass('minicolors-focus')
-        ) return;
-
-        hide();
-
-        minicolors.addClass('minicolors-focus');
-        panel
-            .stop(true, true)
-            .fadeIn(settings.showSpeed, function() {
-                if( settings.show ) settings.show.call(input.get(0));
-            });
-
+      // Set opacity picker position
+      y = keepWithin(opacitySlider.height() - (opacitySlider.height() * opacity), 0, opacitySlider.height());
+      opacityPicker.css('top', y + 'px');
     }
 
-    // Hides all dropdown panels
-    function hide() {
-
-        $('.minicolors-focus').each( function() {
-
-            var minicolors = $(this),
-                input = minicolors.find('.minicolors-input'),
-                panel = minicolors.find('.minicolors-panel'),
-                settings = input.data('minicolors-settings');
-
-            panel.fadeOut(settings.hideSpeed, function() {
-                if( settings.hide ) settings.hide.call(input.get(0));
-                minicolors.removeClass('minicolors-focus');
-            });
-
-        });
+    // Set opacity to zero if input value is transparent
+    if(input.val().toLowerCase() === 'transparent') {
+      swatch.find('span').css('opacity', 0);
     }
 
-    // Moves the selected picker
-    function move(target, event, animate) {
+    // Update swatch
+    swatch.find('span').css('backgroundColor', hex);
 
-        var input = target.parents('.minicolors').find('.minicolors-input'),
-            settings = input.data('minicolors-settings'),
-            picker = target.find('[class$=-picker]'),
-            offsetX = target.offset().left,
-            offsetY = target.offset().top,
-            x = Math.round(event.pageX - offsetX),
-            y = Math.round(event.pageY - offsetY),
-            duration = animate ? settings.animationSpeed : 0,
-            wx, wy, r, phi;
+    // Determine picker locations
+    switch(settings.control) {
+    case 'wheel':
+      // Set grid position
+      r = keepWithin(Math.ceil(hsb.s * 0.75), 0, grid.height() / 2);
+      phi = hsb.h * Math.PI / 180;
+      x = keepWithin(75 - Math.cos(phi) * r, 0, grid.width());
+      y = keepWithin(75 - Math.sin(phi) * r, 0, grid.height());
+      gridPicker.css({
+        top: y + 'px',
+        left: x + 'px'
+      });
 
-        // Touch support
-        if( event.originalEvent.changedTouches ) {
-            x = event.originalEvent.changedTouches[0].pageX - offsetX;
-            y = event.originalEvent.changedTouches[0].pageY - offsetY;
-        }
+      // Set slider position
+      y = 150 - (hsb.b / (100 / grid.height()));
+      if(hex === '') y = 0;
+      sliderPicker.css('top', y + 'px');
 
-        // Constrain picker to its container
-        if( x < 0 ) x = 0;
-        if( y < 0 ) y = 0;
-        if( x > target.width() ) x = target.width();
-        if( y > target.height() ) y = target.height();
+      // Update panel color
+      slider.css('backgroundColor', hsb2hex({ h: hsb.h, s: hsb.s, b: 100 }));
+      break;
 
-        // Constrain color wheel values to the wheel
-        if( target.parent().is('.minicolors-slider-wheel') && picker.parent().is('.minicolors-grid') ) {
-            wx = 75 - x;
-            wy = 75 - y;
-            r = Math.sqrt(wx * wx + wy * wy);
-            phi = Math.atan2(wy, wx);
-            if( phi < 0 ) phi += Math.PI * 2;
-            if( r > 75 ) {
-                r = 75;
-                x = 75 - (75 * Math.cos(phi));
-                y = 75 - (75 * Math.sin(phi));
-            }
-            x = Math.round(x);
-            y = Math.round(y);
-        }
+    case 'saturation':
+      // Set grid position
+      x = keepWithin((5 * hsb.h) / 12, 0, 150);
+      y = keepWithin(grid.height() - Math.ceil(hsb.b / (100 / grid.height())), 0, grid.height());
+      gridPicker.css({
+        top: y + 'px',
+        left: x + 'px'
+      });
 
-        // Move the picker
-        if( target.is('.minicolors-grid') ) {
-            picker
-                .stop(true)
-                .animate({
-                    top: y + 'px',
-                    left: x + 'px'
-                }, duration, settings.animationEasing, function() {
-                    updateFromControl(input, target);
-                });
-        } else {
-            picker
-                .stop(true)
-                .animate({
-                    top: y + 'px'
-                }, duration, settings.animationEasing, function() {
-                    updateFromControl(input, target);
-                });
-        }
+      // Set slider position
+      y = keepWithin(slider.height() - (hsb.s * (slider.height() / 100)), 0, slider.height());
+      sliderPicker.css('top', y + 'px');
 
+      // Update UI
+      slider.css('backgroundColor', hsb2hex({ h: hsb.h, s: 100, b: hsb.b }));
+      minicolors.find('.minicolors-grid-inner').css('opacity', hsb.s / 100);
+      break;
+
+    case 'brightness':
+      // Set grid position
+      x = keepWithin((5 * hsb.h) / 12, 0, 150);
+      y = keepWithin(grid.height() - Math.ceil(hsb.s / (100 / grid.height())), 0, grid.height());
+      gridPicker.css({
+        top: y + 'px',
+        left: x + 'px'
+      });
+
+      // Set slider position
+      y = keepWithin(slider.height() - (hsb.b * (slider.height() / 100)), 0, slider.height());
+      sliderPicker.css('top', y + 'px');
+
+      // Update UI
+      slider.css('backgroundColor', hsb2hex({ h: hsb.h, s: hsb.s, b: 100 }));
+      minicolors.find('.minicolors-grid-inner').css('opacity', 1 - (hsb.b / 100));
+      break;
+
+    default:
+      // Set grid position
+      x = keepWithin(Math.ceil(hsb.s / (100 / grid.width())), 0, grid.width());
+      y = keepWithin(grid.height() - Math.ceil(hsb.b / (100 / grid.height())), 0, grid.height());
+      gridPicker.css({
+        top: y + 'px',
+        left: x + 'px'
+      });
+
+      // Set slider position
+      y = keepWithin(slider.height() - (hsb.h / (360 / slider.height())), 0, slider.height());
+      sliderPicker.css('top', y + 'px');
+
+      // Update panel color
+      grid.css('backgroundColor', hsb2hex({ h: hsb.h, s: 100, b: 100 }));
+      break;
     }
 
-    // Sets the input based on the color picker values
-    function updateFromControl(input, target) {
+    // Fire change event, but only if minicolors is fully initialized
+    if(input.data('minicolors-initialized')) {
+      doChange(input, value, opacity);
+    }
+  }
 
-        function getCoords(picker, container) {
+  // Runs the change and changeDelay callbacks
+  function doChange(input, value, opacity) {
+    var settings = input.data('minicolors-settings');
+    var lastChange = input.data('minicolors-lastChange');
+    var obj, sel, i;
 
-            var left, top;
-            if( !picker.length || !container ) return null;
-            left = picker.offset().left;
-            top = picker.offset().top;
+    // Only run if it actually changed
+    if(!lastChange || lastChange.value !== value || lastChange.opacity !== opacity) {
 
-            return {
-                x: left - container.offset().left + (picker.outerWidth() / 2),
-                y: top - container.offset().top + (picker.outerHeight() / 2)
-            };
+      // Remember last-changed value
+      input.data('minicolors-lastChange', {
+        value: value,
+        opacity: opacity
+      });
 
-        }
-
-        var hue, saturation, brightness, x, y, r, phi,
-
-            hex = input.val(),
-            opacity = input.attr('data-opacity'),
-
-            // Helpful references
-            minicolors = input.parent(),
-            settings = input.data('minicolors-settings'),
-            swatch = minicolors.find('.minicolors-input-swatch'),
-
-            // Panel objects
-            grid = minicolors.find('.minicolors-grid'),
-            slider = minicolors.find('.minicolors-slider'),
-            opacitySlider = minicolors.find('.minicolors-opacity-slider'),
-
-            // Picker objects
-            gridPicker = grid.find('[class$=-picker]'),
-            sliderPicker = slider.find('[class$=-picker]'),
-            opacityPicker = opacitySlider.find('[class$=-picker]'),
-
-            // Picker positions
-            gridPos = getCoords(gridPicker, grid),
-            sliderPos = getCoords(sliderPicker, slider),
-            opacityPos = getCoords(opacityPicker, opacitySlider);
-
-        // Handle colors
-        if( target.is('.minicolors-grid, .minicolors-slider, .minicolors-opacity-slider') ) {
-
-            // Determine HSB values
-            switch(settings.control) {
-
-                case 'wheel':
-                    // Calculate hue, saturation, and brightness
-                    x = (grid.width() / 2) - gridPos.x;
-                    y = (grid.height() / 2) - gridPos.y;
-                    r = Math.sqrt(x * x + y * y);
-                    phi = Math.atan2(y, x);
-                    if( phi < 0 ) phi += Math.PI * 2;
-                    if( r > 75 ) {
-                        r = 75;
-                        gridPos.x = 69 - (75 * Math.cos(phi));
-                        gridPos.y = 69 - (75 * Math.sin(phi));
-                    }
-                    saturation = keepWithin(r / 0.75, 0, 100);
-                    hue = keepWithin(phi * 180 / Math.PI, 0, 360);
-                    brightness = keepWithin(100 - Math.floor(sliderPos.y * (100 / slider.height())), 0, 100);
-                    hex = hsb2hex({
-                        h: hue,
-                        s: saturation,
-                        b: brightness
-                    });
-
-                    // Update UI
-                    slider.css('backgroundColor', hsb2hex({ h: hue, s: saturation, b: 100 }));
-                    break;
-
-                case 'saturation':
-                    // Calculate hue, saturation, and brightness
-                    hue = keepWithin(parseInt(gridPos.x * (360 / grid.width()), 10), 0, 360);
-                    saturation = keepWithin(100 - Math.floor(sliderPos.y * (100 / slider.height())), 0, 100);
-                    brightness = keepWithin(100 - Math.floor(gridPos.y * (100 / grid.height())), 0, 100);
-                    hex = hsb2hex({
-                        h: hue,
-                        s: saturation,
-                        b: brightness
-                    });
-
-                    // Update UI
-                    slider.css('backgroundColor', hsb2hex({ h: hue, s: 100, b: brightness }));
-                    minicolors.find('.minicolors-grid-inner').css('opacity', saturation / 100);
-                    break;
-
-                case 'brightness':
-                    // Calculate hue, saturation, and brightness
-                    hue = keepWithin(parseInt(gridPos.x * (360 / grid.width()), 10), 0, 360);
-                    saturation = keepWithin(100 - Math.floor(gridPos.y * (100 / grid.height())), 0, 100);
-                    brightness = keepWithin(100 - Math.floor(sliderPos.y * (100 / slider.height())), 0, 100);
-                    hex = hsb2hex({
-                        h: hue,
-                        s: saturation,
-                        b: brightness
-                    });
-
-                    // Update UI
-                    slider.css('backgroundColor', hsb2hex({ h: hue, s: saturation, b: 100 }));
-                    minicolors.find('.minicolors-grid-inner').css('opacity', 1 - (brightness / 100));
-                    break;
-
-                default:
-                    // Calculate hue, saturation, and brightness
-                    hue = keepWithin(360 - parseInt(sliderPos.y * (360 / slider.height()), 10), 0, 360);
-                    saturation = keepWithin(Math.floor(gridPos.x * (100 / grid.width())), 0, 100);
-                    brightness = keepWithin(100 - Math.floor(gridPos.y * (100 / grid.height())), 0, 100);
-                    hex = hsb2hex({
-                        h: hue,
-                        s: saturation,
-                        b: brightness
-                    });
-
-                    // Update UI
-                    grid.css('backgroundColor', hsb2hex({ h: hue, s: 100, b: 100 }));
-                    break;
-
-            }
-
-            // Handle opacity
-            if( settings.opacity ) {
-                opacity = parseFloat(1 - (opacityPos.y / opacitySlider.height())).toFixed(2);
-            } else {
-                opacity = 1;
-            }
-
-            updateInput(input, hex, opacity);
+      // Check and select applicable swatch
+      if(settings.swatches && settings.swatches.length !== 0) {
+        if(!isRgb(value)) {
+          obj = hex2rgb(value);
         }
         else {
-            // Set swatch color
-            swatch.find('span').css({
-                backgroundColor: hex,
-                opacity: opacity
-            });
-
-            // Handle change event
-            doChange(input, hex, opacity);
+          obj = parseRgb(value, true);
         }
-    }
+        sel = -1;
+        for(i = 0; i < settings.swatches.length; ++i) {
+          if(obj.r === settings.swatches[i].r && obj.g === settings.swatches[i].g && obj.b === settings.swatches[i].b && obj.a === settings.swatches[i].a) {
+            sel = i;
+            break;
+          }
+        }
 
-    // Sets the value of the input and does the appropriate conversions
-    // to respect settings, also updates the swatch
-    function updateInput(input, value, opacity) {
-        var rgb,
+        input.parent().find('.minicolors-swatches .minicolors-swatch').removeClass('selected');
+        if(sel !== -1) {
+          input.parent().find('.minicolors-swatches .minicolors-swatch').eq(i).addClass('selected');
+        }
+      }
 
-        // Helpful references
-        minicolors = input.parent(),
-        settings = input.data('minicolors-settings'),
-        swatch = minicolors.find('.minicolors-input-swatch');
-
-        if( settings.opacity ) input.attr('data-opacity', opacity);
-
-        // Set color string
-        if( settings.format === 'rgb' ) {
-            // Returns RGB(A) string
-
-            // Checks for input format and does the conversion
-            if ( isRgb(value) ) {
-                rgb = parseRgb(value, true);
-            }
-            else {
-                rgb = hex2rgb(parseHex(value, true));
-            }
-
-            opacity = input.attr('data-opacity') === '' ? 1 : keepWithin( parseFloat( input.attr('data-opacity') ).toFixed(2), 0, 1 );
-            if( isNaN( opacity ) || !settings.opacity ) opacity = 1;
-
-            if( input.minicolors('rgbObject').a <= 1 && rgb && settings.opacity) {
-                // Set RGBA string if alpha
-                value = 'rgba(' + rgb.r + ', ' + rgb.g + ', ' + rgb.b + ', ' + parseFloat( opacity ) + ')';
-            } else {
-                // Set RGB string (alpha = 1)
-                value = 'rgb(' + rgb.r + ', ' + rgb.g + ', ' + rgb.b + ')';
-            }
+      // Fire change event
+      if(settings.change) {
+        if(settings.changeDelay) {
+          // Call after a delay
+          clearTimeout(input.data('minicolors-changeTimeout'));
+          input.data('minicolors-changeTimeout', setTimeout(function() {
+            settings.change.call(input.get(0), value, opacity);
+          }, settings.changeDelay));
         } else {
-            // Returns hex color
-
-            // Checks for input format and does the conversion
-            if ( isRgb(value) ) {
-                value = rgbString2hex(value);
-            }
-
-            value = convertCase( value, settings.letterCase );
+          // Call immediately
+          settings.change.call(input.get(0), value, opacity);
         }
+      }
+      input.trigger('change').trigger('input');
+    }
+  }
 
-        // Update value from picker
-        input.val( value );
+  // Generates an RGB(A) object based on the input's value
+  function rgbObject(input) {
+    var rgb,
+      opacity = $(input).attr('data-opacity');
+    if( isRgb($(input).val()) ) {
+      rgb = parseRgb($(input).val(), true);
+    } else {
+      var hex = parseHex($(input).val(), true);
+      rgb = hex2rgb(hex);
+    }
+    if( !rgb ) return null;
+    if( opacity !== undefined ) $.extend(rgb, { a: parseFloat(opacity) });
+    return rgb;
+  }
 
-        // Set swatch color
-        swatch.find('span').css({
-            backgroundColor: value,
-            opacity: opacity
-        });
+  // Generates an RGB(A) string based on the input's value
+  function rgbString(input, alpha) {
+    var rgb,
+      opacity = $(input).attr('data-opacity');
+    if( isRgb($(input).val()) ) {
+      rgb = parseRgb($(input).val(), true);
+    } else {
+      var hex = parseHex($(input).val(), true);
+      rgb = hex2rgb(hex);
+    }
+    if( !rgb ) return null;
+    if( opacity === undefined ) opacity = 1;
+    if( alpha ) {
+      return 'rgba(' + rgb.r + ', ' + rgb.g + ', ' + rgb.b + ', ' + parseFloat(opacity) + ')';
+    } else {
+      return 'rgb(' + rgb.r + ', ' + rgb.g + ', ' + rgb.b + ')';
+    }
+  }
 
-        // Handle change event
-        doChange(input, value, opacity);
+  // Converts to the letter case specified in settings
+  function convertCase(string, letterCase) {
+    return letterCase === 'uppercase' ? string.toUpperCase() : string.toLowerCase();
+  }
+
+  // Parses a string and returns a valid hex string when possible
+  function parseHex(string, expand) {
+    string = string.replace(/^#/g, '');
+    if(!string.match(/^[A-F0-9]{3,6}/ig)) return '';
+    if(string.length !== 3 && string.length !== 6) return '';
+    if(string.length === 3 && expand) {
+      string = string[0] + string[0] + string[1] + string[1] + string[2] + string[2];
+    }
+    return '#' + string;
+  }
+
+  // Parses a string and returns a valid RGB(A) string when possible
+  function parseRgb(string, obj) {
+    var values = string.replace(/[^\d,.]/g, '');
+    var rgba = values.split(',');
+
+    rgba[0] = keepWithin(parseInt(rgba[0], 10), 0, 255);
+    rgba[1] = keepWithin(parseInt(rgba[1], 10), 0, 255);
+    rgba[2] = keepWithin(parseInt(rgba[2], 10), 0, 255);
+    if(rgba[3] !== undefined) {
+      rgba[3] = keepWithin(parseFloat(rgba[3], 10), 0, 1);
     }
 
-    // Sets the color picker values from the input
-    function updateFromInput(input, preserveInputValue) {
-
-        var hex,
-            hsb,
-            opacity,
-            keywords,
-            alpha,
-            value,
-            x, y, r, phi,
-
-            // Helpful references
-            minicolors = input.parent(),
-            settings = input.data('minicolors-settings'),
-            swatch = minicolors.find('.minicolors-input-swatch'),
-
-            // Panel objects
-            grid = minicolors.find('.minicolors-grid'),
-            slider = minicolors.find('.minicolors-slider'),
-            opacitySlider = minicolors.find('.minicolors-opacity-slider'),
-
-            // Picker objects
-            gridPicker = grid.find('[class$=-picker]'),
-            sliderPicker = slider.find('[class$=-picker]'),
-            opacityPicker = opacitySlider.find('[class$=-picker]');
-
-        // Determine hex/HSB values
-        if( isRgb(input.val()) ) {
-            // If input value is a rgb(a) string, convert it to hex color and update opacity
-            hex = rgbString2hex(input.val());
-            alpha = keepWithin(parseFloat(getAlpha(input.val())).toFixed(2), 0, 1);
-            if( alpha ) {
-                input.attr('data-opacity', alpha);
-            }
-        } else {
-            hex = convertCase(parseHex(input.val(), true), settings.letterCase);
-        }
-
-        if( !hex ){
-            hex = convertCase(parseInput(settings.defaultValue, true), settings.letterCase);
-        }
-        hsb = hex2hsb(hex);
-
-        // Get array of lowercase keywords
-        keywords = !settings.keywords ? [] : $.map(settings.keywords.split(','), function(a) {
-            return $.trim(a.toLowerCase());
-        });
-
-        // Set color string
-        if( input.val() !== '' && $.inArray(input.val().toLowerCase(), keywords) > -1 ) {
-            value = convertCase(input.val());
-        } else {
-            value = isRgb(input.val()) ? parseRgb(input.val()) : hex;
-        }
-
-        // Update input value
-        if( !preserveInputValue ) input.val(value);
-
-        // Determine opacity value
-        if( settings.opacity ) {
-            // Get from data-opacity attribute and keep within 0-1 range
-            opacity = input.attr('data-opacity') === '' ? 1 : keepWithin(parseFloat(input.attr('data-opacity')).toFixed(2), 0, 1);
-            if( isNaN(opacity) ) opacity = 1;
-            input.attr('data-opacity', opacity);
-            swatch.find('span').css('opacity', opacity);
-
-            // Set opacity picker position
-            y = keepWithin(opacitySlider.height() - (opacitySlider.height() * opacity), 0, opacitySlider.height());
-            opacityPicker.css('top', y + 'px');
-        }
-
-        // Set opacity to zero if input value is transparent
-        if( input.val().toLowerCase() === 'transparent' ) {
-            swatch.find('span').css('opacity', 0);
-        }
-
-        // Update swatch
-        swatch.find('span').css('backgroundColor', hex);
-
-        // Determine picker locations
-        switch(settings.control) {
-
-            case 'wheel':
-                // Set grid position
-                r = keepWithin(Math.ceil(hsb.s * 0.75), 0, grid.height() / 2);
-                phi = hsb.h * Math.PI / 180;
-                x = keepWithin(75 - Math.cos(phi) * r, 0, grid.width());
-                y = keepWithin(75 - Math.sin(phi) * r, 0, grid.height());
-                gridPicker.css({
-                    top: y + 'px',
-                    left: x + 'px'
-                });
-
-                // Set slider position
-                y = 150 - (hsb.b / (100 / grid.height()));
-                if( hex === '' ) y = 0;
-                sliderPicker.css('top', y + 'px');
-
-                // Update panel color
-                slider.css('backgroundColor', hsb2hex({ h: hsb.h, s: hsb.s, b: 100 }));
-                break;
-
-            case 'saturation':
-                // Set grid position
-                x = keepWithin((5 * hsb.h) / 12, 0, 150);
-                y = keepWithin(grid.height() - Math.ceil(hsb.b / (100 / grid.height())), 0, grid.height());
-                gridPicker.css({
-                    top: y + 'px',
-                    left: x + 'px'
-                });
-
-                // Set slider position
-                y = keepWithin(slider.height() - (hsb.s * (slider.height() / 100)), 0, slider.height());
-                sliderPicker.css('top', y + 'px');
-
-                // Update UI
-                slider.css('backgroundColor', hsb2hex({ h: hsb.h, s: 100, b: hsb.b }));
-                minicolors.find('.minicolors-grid-inner').css('opacity', hsb.s / 100);
-                break;
-
-            case 'brightness':
-                // Set grid position
-                x = keepWithin((5 * hsb.h) / 12, 0, 150);
-                y = keepWithin(grid.height() - Math.ceil(hsb.s / (100 / grid.height())), 0, grid.height());
-                gridPicker.css({
-                    top: y + 'px',
-                    left: x + 'px'
-                });
-
-                // Set slider position
-                y = keepWithin(slider.height() - (hsb.b * (slider.height() / 100)), 0, slider.height());
-                sliderPicker.css('top', y + 'px');
-
-                // Update UI
-                slider.css('backgroundColor', hsb2hex({ h: hsb.h, s: hsb.s, b: 100 }));
-                minicolors.find('.minicolors-grid-inner').css('opacity', 1 - (hsb.b / 100));
-                break;
-
-            default:
-                // Set grid position
-                x = keepWithin(Math.ceil(hsb.s / (100 / grid.width())), 0, grid.width());
-                y = keepWithin(grid.height() - Math.ceil(hsb.b / (100 / grid.height())), 0, grid.height());
-                gridPicker.css({
-                    top: y + 'px',
-                    left: x + 'px'
-                });
-
-                // Set slider position
-                y = keepWithin(slider.height() - (hsb.h / (360 / slider.height())), 0, slider.height());
-                sliderPicker.css('top', y + 'px');
-
-                // Update panel color
-                grid.css('backgroundColor', hsb2hex({ h: hsb.h, s: 100, b: 100 }));
-                break;
-
-        }
-
-        // Fire change event, but only if minicolors is fully initialized
-        if( input.data('minicolors-initialized') ) {
-            doChange(input, value, opacity);
-        }
-
-    }
-
-    // Runs the change and changeDelay callbacks
-    function doChange(input, value, opacity) {
-
-        var settings = input.data('minicolors-settings'),
-            lastChange = input.data('minicolors-lastChange'),
-            obj,
-            sel,
-            i;
-
-        // Only run if it actually changed
-        if( !lastChange || lastChange.value !== value || lastChange.opacity !== opacity ) {
-
-            // Remember last-changed value
-            input.data('minicolors-lastChange', {
-                value: value,
-                opacity: opacity
-            });
-
-            // Check and select applicable swatch
-            if (settings.swatches && settings.swatches.length !== 0) {
-                if(!isRgb(value)) {
-                    obj = hex2rgb(value);
-                }
-                else {
-                    obj = parseRgb(value, true);
-                }
-                sel = -1;
-                for(i = 0; i < settings.swatches.length; ++i) {
-                    if (obj.r === settings.swatches[i].r && obj.g === settings.swatches[i].g && obj.b === settings.swatches[i].b && obj.a === settings.swatches[i].a) {
-                        sel = i;
-                        break;
-                    }
-                }
-
-                input.parent().find('.minicolors-swatches .minicolors-swatch').removeClass('selected');
-                if (i !== -1) {
-                    input.parent().find('.minicolors-swatches .minicolors-swatch').eq(i).addClass('selected');
-                }
-            }
-
-            // Fire change event
-            if( settings.change ) {
-                if( settings.changeDelay ) {
-                    // Call after a delay
-                    clearTimeout(input.data('minicolors-changeTimeout'));
-                    input.data('minicolors-changeTimeout', setTimeout( function() {
-                        settings.change.call(input.get(0), value, opacity);
-                    }, settings.changeDelay));
-                } else {
-                    // Call immediately
-                    settings.change.call(input.get(0), value, opacity);
-                }
-            }
-            input.trigger('change').trigger('input');
-        }
-
-    }
-
-    // Generates an RGB(A) object based on the input's value
-    function rgbObject(input) {
-        var hex = parseHex($(input).val(), true),
-            rgb = hex2rgb(hex),
-            opacity = $(input).attr('data-opacity');
-        if( !rgb ) return null;
-        if( opacity !== undefined ) $.extend(rgb, { a: parseFloat(opacity) });
-        return rgb;
-    }
-
-    // Generates an RGB(A) string based on the input's value
-    function rgbString(input, alpha) {
-        var hex = parseHex($(input).val(), true),
-            rgb = hex2rgb(hex),
-            opacity = $(input).attr('data-opacity');
-        if( !rgb ) return null;
-        if( opacity === undefined ) opacity = 1;
-        if( alpha ) {
-            return 'rgba(' + rgb.r + ', ' + rgb.g + ', ' + rgb.b + ', ' + parseFloat(opacity) + ')';
-        } else {
-            return 'rgb(' + rgb.r + ', ' + rgb.g + ', ' + rgb.b + ')';
-        }
-    }
-
-    // Converts to the letter case specified in settings
-    function convertCase(string, letterCase) {
-        return letterCase === 'uppercase' ? string.toUpperCase() : string.toLowerCase();
-    }
-
-    // Parses a string and returns a valid hex string when possible
-    function parseHex(string, expand) {
-        string = string.replace(/^#/g, '');
-        if( !string.match(/^[A-F0-9]{3,6}/ig) ) return '';
-        if( string.length !== 3 && string.length !== 6 ) return '';
-        if( string.length === 3 && expand ) {
-            string = string[0] + string[0] + string[1] + string[1] + string[2] + string[2];
-        }
-        return '#' + string;
-    }
-
-    // Parses a string and returns a valid RGB(A) string when possible
-    function parseRgb(string, obj) {
-
-        var values = string.replace(/[^\d,.]/g, ''),
-            rgba = values.split(',');
-
-        rgba[0] = keepWithin(parseInt(rgba[0], 10), 0, 255);
-        rgba[1] = keepWithin(parseInt(rgba[1], 10), 0, 255);
-        rgba[2] = keepWithin(parseInt(rgba[2], 10), 0, 255);
-        if( rgba[3] ) {
-            rgba[3] = keepWithin(parseFloat(rgba[3], 10), 0, 1);
-        }
-
-        // Return RGBA object
-        if( obj ) {
-            return {
-                r: rgba[0],
-                g: rgba[1],
-                b: rgba[2],
-                a: rgba[3] ? rgba[3] : null
-            };
-        }
-
-        // Return RGBA string
-        if( typeof(rgba[3]) !== 'undefined' && rgba[3] <= 1 ) {
-            return 'rgba(' + rgba[0] + ', ' + rgba[1] + ', ' + rgba[2] + ', ' + rgba[3] + ')';
-        } else {
-            return 'rgb(' + rgba[0] + ', ' + rgba[1] + ', ' + rgba[2] + ')';
-        }
-
-    }
-
-    // Parses a string and returns a valid color string when possible
-    function parseInput(string, expand) {
-        if( isRgb(string) ) {
-            // Returns a valid rgb(a) string
-            return parseRgb(string);
-        } else {
-            return parseHex(string, expand);
-        }
-    }
-
-    // Keeps value within min and max
-    function keepWithin(value, min, max) {
-        if( value < min ) value = min;
-        if( value > max ) value = max;
-        return value;
-    }
-
-    // Checks if a string is a valid RGB(A) string
-    function isRgb(string) {
-        var rgb = string.match(/^rgba?[\s+]?\([\s+]?(\d+)[\s+]?,[\s+]?(\d+)[\s+]?,[\s+]?(\d+)[\s+]?/i);
-        return (rgb && rgb.length === 4) ? true : false;
-    }
-
-    // Function to get alpha from a RGB(A) string
-    function getAlpha(rgba) {
-        rgba = rgba.match(/^rgba?[\s+]?\([\s+]?(\d+)[\s+]?,[\s+]?(\d+)[\s+]?,[\s+]?(\d+)[\s+]?,[\s+]?(\d+(\.\d{1,2})?|\.\d{1,2})[\s+]?/i);
-        return (rgba && rgba.length === 6) ? rgba[4] : '1';
-    }
-
-   // Converts an HSB object to an RGB object
-    function hsb2rgb(hsb) {
-        var rgb = {};
-        var h = Math.round(hsb.h);
-        var s = Math.round(hsb.s * 255 / 100);
-        var v = Math.round(hsb.b * 255 / 100);
-        if(s === 0) {
-            rgb.r = rgb.g = rgb.b = v;
-        } else {
-            var t1 = v;
-            var t2 = (255 - s) * v / 255;
-            var t3 = (t1 - t2) * (h % 60) / 60;
-            if( h === 360 ) h = 0;
-            if( h < 60 ) { rgb.r = t1; rgb.b = t2; rgb.g = t2 + t3; }
-            else if( h < 120 ) {rgb.g = t1; rgb.b = t2; rgb.r = t1 - t3; }
-            else if( h < 180 ) {rgb.g = t1; rgb.r = t2; rgb.b = t2 + t3; }
-            else if( h < 240 ) {rgb.b = t1; rgb.r = t2; rgb.g = t1 - t3; }
-            else if( h < 300 ) {rgb.b = t1; rgb.g = t2; rgb.r = t2 + t3; }
-            else if( h < 360 ) {rgb.r = t1; rgb.g = t2; rgb.b = t1 - t3; }
-            else { rgb.r = 0; rgb.g = 0; rgb.b = 0; }
-        }
+    // Return RGBA object
+    if( obj ) {
+      if (rgba[3] !== undefined) {
         return {
-            r: Math.round(rgb.r),
-            g: Math.round(rgb.g),
-            b: Math.round(rgb.b)
+          r: rgba[0],
+          g: rgba[1],
+          b: rgba[2],
+          a: rgba[3]
         };
-    }
-
-    // Converts an RGB string to a hex string
-    function rgbString2hex(rgb){
-        rgb = rgb.match(/^rgba?[\s+]?\([\s+]?(\d+)[\s+]?,[\s+]?(\d+)[\s+]?,[\s+]?(\d+)[\s+]?/i);
-        return (rgb && rgb.length === 4) ? '#' +
-        ('0' + parseInt(rgb[1],10).toString(16)).slice(-2) +
-        ('0' + parseInt(rgb[2],10).toString(16)).slice(-2) +
-        ('0' + parseInt(rgb[3],10).toString(16)).slice(-2) : '';
-    }
-
-    // Converts an RGB object to a hex string
-    function rgb2hex(rgb) {
-        var hex = [
-            rgb.r.toString(16),
-            rgb.g.toString(16),
-            rgb.b.toString(16)
-        ];
-        $.each(hex, function(nr, val) {
-            if (val.length === 1) hex[nr] = '0' + val;
-        });
-        return '#' + hex.join('');
-    }
-
-    // Converts an HSB object to a hex string
-    function hsb2hex(hsb) {
-        return rgb2hex(hsb2rgb(hsb));
-    }
-
-    // Converts a hex string to an HSB object
-    function hex2hsb(hex) {
-        var hsb = rgb2hsb(hex2rgb(hex));
-        if( hsb.s === 0 ) hsb.h = 360;
-        return hsb;
-    }
-
-    // Converts an RGB object to an HSB object
-    function rgb2hsb(rgb) {
-        var hsb = { h: 0, s: 0, b: 0 };
-        var min = Math.min(rgb.r, rgb.g, rgb.b);
-        var max = Math.max(rgb.r, rgb.g, rgb.b);
-        var delta = max - min;
-        hsb.b = max;
-        hsb.s = max !== 0 ? 255 * delta / max : 0;
-        if( hsb.s !== 0 ) {
-            if( rgb.r === max ) {
-                hsb.h = (rgb.g - rgb.b) / delta;
-            } else if( rgb.g === max ) {
-                hsb.h = 2 + (rgb.b - rgb.r) / delta;
-            } else {
-                hsb.h = 4 + (rgb.r - rgb.g) / delta;
-            }
-        } else {
-            hsb.h = -1;
-        }
-        hsb.h *= 60;
-        if( hsb.h < 0 ) {
-            hsb.h += 360;
-        }
-        hsb.s *= 100/255;
-        hsb.b *= 100/255;
-        return hsb;
-    }
-
-    // Converts a hex string to an RGB object
-    function hex2rgb(hex) {
-        hex = parseInt(((hex.indexOf('#') > -1) ? hex.substring(1) : hex), 16);
+      } else {
         return {
-            /* jshint ignore:start */
-            r: hex >> 16,
-            g: (hex & 0x00FF00) >> 8,
-            b: (hex & 0x0000FF)
-            /* jshint ignore:end */
+          r: rgba[0],
+          g: rgba[1],
+          b: rgba[2]
         };
+      }
     }
 
-    // Handle events
-    $(document)
-        // Hide on clicks outside of the control
-        .on('mousedown.minicolors touchstart.minicolors', function(event) {
-            if( !$(event.target).parents().add(event.target).hasClass('minicolors') ) {
-                hide();
-            }
-        })
-        // Start moving
-        .on('mousedown.minicolors touchstart.minicolors', '.minicolors-grid, .minicolors-slider, .minicolors-opacity-slider', function(event) {
-            var target = $(this);
-            event.preventDefault();
-            $(document).data('minicolors-target', target);
-            move(target, event, true);
-        })
-        // Move pickers
-        .on('mousemove.minicolors touchmove.minicolors', function(event) {
-            var target = $(document).data('minicolors-target');
-            if( target ) move(target, event);
-        })
-        // Stop moving
-        .on('mouseup.minicolors touchend.minicolors', function() {
-            $(this).removeData('minicolors-target');
-        })
-        // Selected a swatch
-        .on('click.minicolors', '.minicolors-swatches li', function(event) {
-            event.preventDefault();
-            var target = $(this), input = target.parents('.minicolors').find('.minicolors-input'), color = target.data('swatch-color');
-            updateInput(input, color, getAlpha(color));
-            updateFromInput(input);
-        })
-        // Show panel when swatch is clicked
-        .on('mousedown.minicolors touchstart.minicolors', '.minicolors-input-swatch', function(event) {
-            var input = $(this).parent().find('.minicolors-input');
-            event.preventDefault();
-            show(input);
-        })
-        // Show on focus
-        .on('focus.minicolors', '.minicolors-input', function() {
-            var input = $(this);
-            if( !input.data('minicolors-initialized') ) return;
-            show(input);
-        })
-        // Update value on blur
-        .on('blur.minicolors', '.minicolors-input', function() {
-            var input = $(this),
-                settings = input.data('minicolors-settings'),
-                keywords,
-                hex,
-                rgba,
-                swatchOpacity,
-                value;
+    // Return RGBA string
+    if(typeof(rgba[3]) !== 'undefined' && rgba[3] <= 1) {
+      return 'rgba(' + rgba[0] + ', ' + rgba[1] + ', ' + rgba[2] + ', ' + rgba[3] + ')';
+    } else {
+      return 'rgb(' + rgba[0] + ', ' + rgba[1] + ', ' + rgba[2] + ')';
+    }
 
-            if( !input.data('minicolors-initialized') ) return;
+  }
 
-            // Get array of lowercase keywords
-            keywords = !settings.keywords ? [] : $.map(settings.keywords.split(','), function(a) {
-                return $.trim(a.toLowerCase());
-            });
+  // Parses a string and returns a valid color string when possible
+  function parseInput(string, expand) {
+    if(isRgb(string)) {
+      // Returns a valid rgb(a) string
+      return parseRgb(string);
+    } else {
+      return parseHex(string, expand);
+    }
+  }
 
-            // Set color string
-            if( input.val() !== '' && $.inArray(input.val().toLowerCase(), keywords) > -1 ) {
-                value = input.val();
-            } else {
-                // Get RGBA values for easy conversion
-                if( isRgb(input.val()) ) {
-                    rgba = parseRgb(input.val(), true);
-                } else {
-                    hex = parseHex(input.val(), true);
-                    rgba = hex ? hex2rgb(hex) : null;
-                }
+  // Keeps value within min and max
+  function keepWithin(value, min, max) {
+    if(value < min) value = min;
+    if(value > max) value = max;
+    return value;
+  }
 
-                // Convert to format
-                if( rgba === null ) {
-                    value = settings.defaultValue;
-                } else if( settings.format === 'rgb' ) {
-                    value = settings.opacity ?
-                        parseRgb('rgba(' + rgba.r + ',' + rgba.g + ',' + rgba.b + ',' + input.attr('data-opacity') + ')') :
-                        parseRgb('rgb(' + rgba.r + ',' + rgba.g + ',' + rgba.b + ')');
-                } else {
-                    value = rgb2hex(rgba);
-                }
-            }
+  // Checks if a string is a valid RGB(A) string
+  function isRgb(string) {
+    var rgb = string.match(/^rgba?[\s+]?\([\s+]?(\d+)[\s+]?,[\s+]?(\d+)[\s+]?,[\s+]?(\d+)[\s+]?/i);
+    return (rgb && rgb.length === 4) ? true : false;
+  }
 
-            // Update swatch opacity
-            swatchOpacity = settings.opacity ? input.attr('data-opacity') : 1;
-            if( value.toLowerCase() === 'transparent' ) swatchOpacity = 0;
-            input
-                .closest('.minicolors')
-                .find('.minicolors-input-swatch > span')
-                .css('opacity', swatchOpacity);
+  // Function to get alpha from a RGB(A) string
+  function getAlpha(rgba) {
+    rgba = rgba.match(/^rgba?[\s+]?\([\s+]?(\d+)[\s+]?,[\s+]?(\d+)[\s+]?,[\s+]?(\d+)[\s+]?,[\s+]?(\d+(\.\d{1,2})?|\.\d{1,2})[\s+]?/i);
+    return (rgba && rgba.length === 6) ? rgba[4] : '1';
+  }
 
-            // Set input value
-            input.val(value);
+  // Converts an HSB object to an RGB object
+  function hsb2rgb(hsb) {
+    var rgb = {};
+    var h = Math.round(hsb.h);
+    var s = Math.round(hsb.s * 255 / 100);
+    var v = Math.round(hsb.b * 255 / 100);
+    if(s === 0) {
+      rgb.r = rgb.g = rgb.b = v;
+    } else {
+      var t1 = v;
+      var t2 = (255 - s) * v / 255;
+      var t3 = (t1 - t2) * (h % 60) / 60;
+      if(h === 360) h = 0;
+      if(h < 60) { rgb.r = t1; rgb.b = t2; rgb.g = t2 + t3; }
+      else if(h < 120) {rgb.g = t1; rgb.b = t2; rgb.r = t1 - t3; }
+      else if(h < 180) {rgb.g = t1; rgb.r = t2; rgb.b = t2 + t3; }
+      else if(h < 240) {rgb.b = t1; rgb.r = t2; rgb.g = t1 - t3; }
+      else if(h < 300) {rgb.b = t1; rgb.g = t2; rgb.r = t2 + t3; }
+      else if(h < 360) {rgb.r = t1; rgb.g = t2; rgb.b = t1 - t3; }
+      else { rgb.r = 0; rgb.g = 0; rgb.b = 0; }
+    }
+    return {
+      r: Math.round(rgb.r),
+      g: Math.round(rgb.g),
+      b: Math.round(rgb.b)
+    };
+  }
 
-            // Is it blank?
-            if( input.val() === '' ) input.val(parseInput(settings.defaultValue, true));
+  // Converts an RGB string to a hex string
+  function rgbString2hex(rgb){
+    rgb = rgb.match(/^rgba?[\s+]?\([\s+]?(\d+)[\s+]?,[\s+]?(\d+)[\s+]?,[\s+]?(\d+)[\s+]?/i);
+    return (rgb && rgb.length === 4) ? '#' +
+    ('0' + parseInt(rgb[1],10).toString(16)).slice(-2) +
+    ('0' + parseInt(rgb[2],10).toString(16)).slice(-2) +
+    ('0' + parseInt(rgb[3],10).toString(16)).slice(-2) : '';
+  }
 
-            // Adjust case
-            input.val( convertCase(input.val(), settings.letterCase) );
+  // Converts an RGB object to a hex string
+  function rgb2hex(rgb) {
+    var hex = [
+      rgb.r.toString(16),
+      rgb.g.toString(16),
+      rgb.b.toString(16)
+    ];
+    $.each(hex, function(nr, val) {
+      if(val.length === 1) hex[nr] = '0' + val;
+    });
+    return '#' + hex.join('');
+  }
 
-        })
-        // Handle keypresses
-        .on('keydown.minicolors', '.minicolors-input', function(event) {
-            var input = $(this);
-            if( !input.data('minicolors-initialized') ) return;
-            switch(event.keyCode) {
-                case 9: // tab
-                    hide();
-                    break;
-                case 13: // enter
-                case 27: // esc
-                    hide();
-                    input.blur();
-                    break;
-            }
-        })
-        // Update on keyup
-        .on('keyup.minicolors', '.minicolors-input', function() {
-            var input = $(this);
-            if( !input.data('minicolors-initialized') ) return;
-            updateFromInput(input, true);
-        })
-        // Update on paste
-        .on('paste.minicolors', '.minicolors-input', function() {
-            var input = $(this);
-            if( !input.data('minicolors-initialized') ) return;
-            setTimeout( function() {
-                updateFromInput(input, true);
-            }, 1);
-        });
+  // Converts an HSB object to a hex string
+  function hsb2hex(hsb) {
+    return rgb2hex(hsb2rgb(hsb));
+  }
 
+  // Converts a hex string to an HSB object
+  function hex2hsb(hex) {
+    var hsb = rgb2hsb(hex2rgb(hex));
+    if(hsb.s === 0) hsb.h = 360;
+    return hsb;
+  }
+
+  // Converts an RGB object to an HSB object
+  function rgb2hsb(rgb) {
+    var hsb = { h: 0, s: 0, b: 0 };
+    var min = Math.min(rgb.r, rgb.g, rgb.b);
+    var max = Math.max(rgb.r, rgb.g, rgb.b);
+    var delta = max - min;
+    hsb.b = max;
+    hsb.s = max !== 0 ? 255 * delta / max : 0;
+    if(hsb.s !== 0) {
+      if(rgb.r === max) {
+        hsb.h = (rgb.g - rgb.b) / delta;
+      } else if(rgb.g === max) {
+        hsb.h = 2 + (rgb.b - rgb.r) / delta;
+      } else {
+        hsb.h = 4 + (rgb.r - rgb.g) / delta;
+      }
+    } else {
+      hsb.h = -1;
+    }
+    hsb.h *= 60;
+    if(hsb.h < 0) {
+      hsb.h += 360;
+    }
+    hsb.s *= 100/255;
+    hsb.b *= 100/255;
+    return hsb;
+  }
+
+  // Converts a hex string to an RGB object
+  function hex2rgb(hex) {
+    hex = parseInt(((hex.indexOf('#') > -1) ? hex.substring(1) : hex), 16);
+    return {
+      r: hex >> 16,
+      g: (hex & 0x00FF00) >> 8,
+      b: (hex & 0x0000FF)
+    };
+  }
+
+  // Handle events
+  $([document])
+    // Hide on clicks outside of the control
+    .on('mousedown.minicolors touchstart.minicolors', function(event) {
+      if(!$(event.target).parents().add(event.target).hasClass('minicolors')) {
+        hide();
+      }
+    })
+    // Start moving
+    .on('mousedown.minicolors touchstart.minicolors', '.minicolors-grid, .minicolors-slider, .minicolors-opacity-slider', function(event) {
+      var target = $(this);
+      event.preventDefault();
+      $(event.delegateTarget).data('minicolors-target', target);
+      move(target, event, true);
+    })
+    // Move pickers
+    .on('mousemove.minicolors touchmove.minicolors', function(event) {
+      var target = $(event.delegateTarget).data('minicolors-target');
+      if(target) move(target, event);
+    })
+    // Stop moving
+    .on('mouseup.minicolors touchend.minicolors', function() {
+      $(this).removeData('minicolors-target');
+    })
+    // Selected a swatch
+    .on('click.minicolors', '.minicolors-swatches li', function(event) {
+      event.preventDefault();
+      var target = $(this), input = target.parents('.minicolors').find('.minicolors-input'), color = target.data('swatch-color');
+      updateInput(input, color, getAlpha(color));
+      updateFromInput(input);
+    })
+    // Show panel when swatch is clicked
+    .on('mousedown.minicolors touchstart.minicolors', '.minicolors-input-swatch', function(event) {
+      var input = $(this).parent().find('.minicolors-input');
+      event.preventDefault();
+      show(input);
+    })
+    // Show on focus
+    .on('focus.minicolors', '.minicolors-input', function() {
+      var input = $(this);
+      if(!input.data('minicolors-initialized')) return;
+      show(input);
+    })
+    // Update value on blur
+    .on('blur.minicolors', '.minicolors-input', function() {
+      var input = $(this);
+      var settings = input.data('minicolors-settings');
+      var keywords;
+      var hex;
+      var rgba;
+      var swatchOpacity;
+      var value;
+
+      if(!input.data('minicolors-initialized')) return;
+
+      // Get array of lowercase keywords
+      keywords = !settings.keywords ? [] : $.map(settings.keywords.split(','), function(a) {
+        return $.trim(a.toLowerCase());
+      });
+
+      // Set color string
+      if(input.val() !== '' && $.inArray(input.val().toLowerCase(), keywords) > -1) {
+        value = input.val();
+      } else {
+        // Get RGBA values for easy conversion
+        if(isRgb(input.val())) {
+          rgba = parseRgb(input.val(), true);
+        } else {
+          hex = parseHex(input.val(), true);
+          rgba = hex ? hex2rgb(hex) : null;
+        }
+
+        // Convert to format
+        if(rgba === null) {
+          value = settings.defaultValue;
+        } else if(settings.format === 'rgb') {
+          value = settings.opacity ?
+            parseRgb('rgba(' + rgba.r + ',' + rgba.g + ',' + rgba.b + ',' + input.attr('data-opacity') + ')') :
+            parseRgb('rgb(' + rgba.r + ',' + rgba.g + ',' + rgba.b + ')');
+        } else {
+          value = rgb2hex(rgba);
+        }
+      }
+
+      // Update swatch opacity
+      swatchOpacity = settings.opacity ? input.attr('data-opacity') : 1;
+      if(value.toLowerCase() === 'transparent') swatchOpacity = 0;
+      input
+        .closest('.minicolors')
+        .find('.minicolors-input-swatch > span')
+        .css('opacity', swatchOpacity);
+
+      // Set input value
+      input.val(value);
+
+      // Is it blank?
+      if(input.val() === '') input.val(parseInput(settings.defaultValue, true));
+
+      // Adjust case
+      input.val(convertCase(input.val(), settings.letterCase));
+
+    })
+    // Handle keypresses
+    .on('keydown.minicolors', '.minicolors-input', function(event) {
+      var input = $(this);
+      if(!input.data('minicolors-initialized')) return;
+      switch(event.which) {
+      case 9: // tab
+        hide();
+        break;
+      case 13: // enter
+      case 27: // esc
+        hide();
+        input.blur();
+        break;
+      }
+    })
+    // Update on keyup
+    .on('keyup.minicolors', '.minicolors-input', function() {
+      var input = $(this);
+      if(!input.data('minicolors-initialized')) return;
+      updateFromInput(input, true);
+    })
+    // Update on paste
+    .on('paste.minicolors', '.minicolors-input', function() {
+      var input = $(this);
+      if(!input.data('minicolors-initialized')) return;
+      setTimeout(function() {
+        updateFromInput(input, true);
+      }, 1);
+    });
 }));
 
 /*!
@@ -49840,7 +50483,7 @@ window.downloadFile=function(a){if(/(iP)/g.test(navigator.userAgent))return aler
  * @Author  Almsaeed Studio
  * @Support <http://www.almsaeedstudio.com>
  * @Email   <abdullah@almsaeedstudio.com>
- * @version 2.3.6
+ * @version 2.3.8
  * @license MIT <http://opensource.org/licenses/MIT>
  */
 
@@ -49896,6 +50539,8 @@ $.AdminLTE.options = {
   //choose to enable the plugin, make sure you load the script
   //before AdminLTE's app.js
   enableFastclick: false,
+  //Control Sidebar Tree views
+  enableControlTreeView: true,
   //Control Sidebar Options
   enableControlSidebar: true,
   controlSidebarOptions: {
@@ -49993,7 +50638,9 @@ $(function () {
   $.AdminLTE.layout.activate();
 
   //Enable sidebar tree view controls
-  $.AdminLTE.tree('.sidebar');
+  if (o.enableControlTreeView) {
+    $.AdminLTE.tree('.sidebar');
+  }
 
   //Enable control sidebar
   if (o.enableControlSidebar) {
@@ -50017,7 +50664,8 @@ $(function () {
   //Activate Bootstrap tooltip
   if (o.enableBSToppltip) {
     $('body').tooltip({
-      selector: o.BSTooltipSelector
+      selector: o.BSTooltipSelector,
+      container: 'body'
     });
   }
 
@@ -50075,20 +50723,24 @@ function _init() {
       var _this = this;
       _this.fix();
       _this.fixSidebar();
+      $('body, html, .wrapper').css('height', 'auto');
       $(window, ".wrapper").resize(function () {
         _this.fix();
         _this.fixSidebar();
       });
     },
     fix: function () {
+      // Remove overflow from .wrapper if layout-boxed exists
+      $(".layout-boxed > .wrapper").css('overflow', 'hidden');
       //Get window height and the wrapper height
-      var neg = $('.main-header').outerHeight() + $('.main-footer').outerHeight();
+      var footer_height = $('.main-footer').outerHeight() || 0;
+      var neg = $('.main-header').outerHeight() + footer_height;
       var window_height = $(window).height();
-      var sidebar_height = $(".sidebar").height();
+      var sidebar_height = $(".sidebar").height() || 0;
       //Set the min-height of the content and sidebar based on the
       //the height of the document.
       if ($("body").hasClass("fixed")) {
-        $(".content-wrapper, .right-side").css('min-height', window_height - $('.main-footer').outerHeight());
+        $(".content-wrapper, .right-side").css('min-height', window_height - footer_height);
       } else {
         var postSetWidth;
         if (window_height >= sidebar_height) {
@@ -50124,7 +50776,7 @@ function _init() {
           //Destroy if it exists
           $(".sidebar").slimScroll({destroy: true}).height("auto");
           //Add slimscroll
-          $(".sidebar").slimscroll({
+          $(".sidebar").slimScroll({
             height: ($(window).height() - $(".main-header").height()) + "px",
             color: "rgba(0,0,0,0.2)",
             size: "3px"
@@ -54390,6 +55042,20 @@ Dms.chart.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
+    element.find('input[type=checkbox].single-checkbox').iCheck({
+        checkboxClass: 'icheckbox_square-blue',
+        increaseArea: '20%'
+    });
+
+    element.find('input[type=checkbox]').each(function () {
+        var formGroup = $(this).closest('.form-group');
+
+        $(this).on('ifToggled', function(event){
+            formGroup.trigger('dms-change');
+        });
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
 
     element.find('.list-of-checkboxes').each(function () {
         var listOfCheckboxes = $(this);
@@ -54598,214 +55264,6 @@ Dms.form.initializeCallbacks.push(function (element) {
 
         startDisplay.text(convertFromServerToLocalTimezone(dateFormat, startDisplay.text()));
         endDisplay.text(convertFromServerToLocalTimezone(dateFormat, endDisplay.text()));
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
-    element.find('input[type=checkbox].single-checkbox').iCheck({
-        checkboxClass: 'icheckbox_square-blue',
-        increaseArea: '20%'
-    });
-
-    element.find('input[type=checkbox]').each(function () {
-        var formGroup = $(this).closest('.form-group');
-
-        $(this).on('ifToggled', function(event){
-            formGroup.trigger('dms-change');
-        });
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
-    element.find('.dms-inner-module, .dms-display-inner-module').each(function () {
-        var innerModule = $(this);
-
-        if (innerModule.data('dms-has-initialized-form')) {
-            return;
-        } else {
-            innerModule.data('dms-has-initialized-form', true);
-        }
-
-        var fieldName = innerModule.attr('data-name');
-        var formGroup = innerModule.closest('.form-group');
-        var rootUrl = innerModule.attr('data-root-url');
-        var isDisplayOnly = innerModule.attr('data-display-only');
-        var reloadStateUrl = rootUrl + '/state';
-        var innerModuleFormContainer = innerModule.find('.dms-inner-module-form-container');
-        var innerModuleForm = innerModuleFormContainer.find('.dms-inner-module-form');
-        var formStage = innerModule.closest('.dms-form-stage');
-        var stagedForm = innerModule.closest('.dms-staged-form');
-        var currentValue = JSON.parse(innerModule.attr('data-value') || '[]');
-
-        if (innerModule.attr('data-readonly')) {
-            innerModule.find(':input').attr('readonly', 'readonly');
-        }
-
-        var fieldDataPrefix = '__field_action_data';
-        var interceptor;
-
-        Dms.ajax.interceptors.push(interceptor = {
-            accepts: function (options) {
-                return options.url.indexOf(rootUrl) === 0 && options.url !== reloadStateUrl;
-            },
-            before: function (options) {
-                var formData;
-
-                if (isDisplayOnly) {
-                    formData = Dms.ajax.createFormData();
-                    formData.append('__initial_dependent_data', '1')
-                } else {
-                    formData = Dms.form.stages.getDependentDataForStage(formStage);
-                }
-
-
-                formData.append(fieldDataPrefix + '[current_state]', JSON.stringify(currentValue));
-                formData.append(fieldDataPrefix + '[request][url]', options.url.substring(rootUrl.length));
-                formData.append(fieldDataPrefix + '[request][method]', options.__emulatedType || options.type || 'get');
-
-                var parametersPrefix = fieldDataPrefix + '[request][parameters]';
-                $.each(Dms.ajax.parseData(options.data), function (name, entries) {
-                    $.each(entries, function (index, entry) {
-                        formData.append(Dms.utilities.combineFieldNames(parametersPrefix, name), entry.value, entry.filename);
-                    });
-                });
-
-                options.__originalDataType = options.dataType;
-                options.dataType = 'json';
-                if ((options.type || 'get').toLowerCase() === 'get') {
-                    options.data = formData.toQueryString();
-                } else {
-                    options.processData = false;
-                    options.contentType = false;
-                    options.data = formData;
-                }
-            },
-            after: function (options, response, data) {
-                if (response.statusText === 'abort') {
-                    return;
-                }
-
-                if (data) {
-                    currentValue = data['new_state'];
-
-                    return Dms.ajax.convertResponse(options.__originalDataType, data.response);
-                } else {
-                    data = JSON.parse(response.responseText);
-                    currentValue = data['new_state'];
-
-                    response.responseText = data.response;
-                    console.log(response.responseText);
-                }
-            }
-        });
-
-        var originalResponseHandler = Dms.action.responseHandler;
-        Dms.action.responseHandler = function (httpStatusCode, actionUrl, response) {
-            if (actionUrl.indexOf(rootUrl) !== 0 || httpStatusCode >= 400) {
-                originalResponseHandler(httpStatusCode, actionUrl, response);
-                return;
-            }
-
-            if (response.redirect) {
-                var redirectUrl = response.redirect;
-                delete response.redirect;
-
-                if (!Dms.utilities.areUrlsEqual(redirectUrl, rootUrl)) {
-                    loadModulePage(redirectUrl);
-                }
-            }
-
-            originalResponseHandler(httpStatusCode, actionUrl, response);
-
-            innerModule.find('.dms-table-control .dms-table').triggerHandler('dms-load-table-data');
-            innerModuleForm.empty();
-            formGroup.trigger('dms-change');
-        };
-
-        var rootActionUrl = rootUrl + '/action/';
-        var currentAjaxRequest;
-
-        var loadModulePage = function (url) {
-            innerModuleFormContainer.addClass('loading');
-            Dms.utilities.scrollToView(innerModuleFormContainer);
-
-            if (currentAjaxRequest) {
-                currentAjaxRequest.abort();
-            }
-
-            currentAjaxRequest = Dms.ajax.createRequest({
-                url: url,
-                type: 'post',
-                __emulatedType: 'get',
-                dataType: 'html',
-                data: {'__content_only': 1}
-            });
-
-            currentAjaxRequest.done(function (html) {
-                innerModuleForm.html(html);
-                innerModuleForm.find('[data-reload-page-after-submit]').removeAttr('data-reload-page-after-submit');
-                Dms.form.initialize(innerModuleForm);
-            });
-
-            currentAjaxRequest.fail(function (response) {
-                if (currentAjaxRequest.statusText === 'abort') {
-                    return;
-                }
-
-                Dms.controls.showErrorDialog({
-                    title: "Could not load form",
-                    text: "An unexpected error occurred",
-                    type: "error",
-                    debugInfo: response.responseText
-                });
-            });
-
-            currentAjaxRequest.always(function () {
-                innerModuleFormContainer.removeClass('loading');
-                currentAjaxRequest = null;
-            });
-        };
-
-        innerModule.on('click', 'a[href^="' + rootActionUrl + '"]', function (e) {
-            e.preventDefault();
-            e.stopImmediatePropagation();
-            var link = $(this);
-
-            loadModulePage(link.attr('href'));
-        });
-
-        innerModule.closest('.form-group').on('dms-get-input-data', function () {
-            var fieldData = {};
-            fieldData[fieldName] = currentValue;
-            return fieldData;
-        });
-
-        innerModule.closest('.form-group').on('dms-set-input-data', function (event, fieldData) {
-            var newValue = fieldData[fieldName] || [];
-
-            if (currentValue != newValue) {
-                currentValue = newValue;
-                innerModule.find('.dms-table').triggerHandler('dms-load-table-data');
-            }
-        });
-
-        stagedForm.on('dms-before-submit', function () {
-            innerModuleForm.empty();
-        });
-
-        var hasReset = false;
-        var resetAjaxInterception = function () {
-            if (hasReset) {
-                return;
-            } else {
-                hasReset = true;
-            }
-
-            Dms.ajax.interceptors.splice(Dms.ajax.interceptors.indexOf(interceptor), 1);
-            Dms.action.responseHandler = originalResponseHandler;
-        };
-
-        formStage.on('dms-stage-reload', resetAjaxInterception);
-        stagedForm.on('dms-post-submit-success', resetAjaxInterception);
-        innerModule.closest('.dms-page-content').on('dms-page-unloading', resetAjaxInterception);
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -55152,6 +55610,209 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
+    element.find('.dms-inner-form').each(function () {
+        var innerForm = $(this);
+
+        if (innerForm.attr('data-readonly')) {
+            innerForm.find(':input').attr('readonly', 'readonly');
+        }
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+    element.find('.dms-inner-module, .dms-display-inner-module').each(function () {
+        var innerModule = $(this);
+
+        if (innerModule.data('dms-has-initialized-form')) {
+            return;
+        } else {
+            innerModule.data('dms-has-initialized-form', true);
+        }
+
+        var fieldName = innerModule.attr('data-name');
+        var formGroup = innerModule.closest('.form-group');
+        var rootUrl = innerModule.attr('data-root-url');
+        var isDisplayOnly = innerModule.attr('data-display-only');
+        var reloadStateUrl = rootUrl + '/state';
+        var innerModuleFormContainer = innerModule.find('.dms-inner-module-form-container');
+        var innerModuleForm = innerModuleFormContainer.find('.dms-inner-module-form');
+        var formStage = innerModule.closest('.dms-form-stage');
+        var stagedForm = innerModule.closest('.dms-staged-form');
+        var currentValue = JSON.parse(innerModule.attr('data-value') || '[]');
+
+        if (innerModule.attr('data-readonly')) {
+            innerModule.find(':input').attr('readonly', 'readonly');
+        }
+
+        var fieldDataPrefix = '__field_action_data';
+        var interceptor;
+
+        Dms.ajax.interceptors.push(interceptor = {
+            accepts: function (options) {
+                return options.url.indexOf(rootUrl) === 0 && options.url !== reloadStateUrl;
+            },
+            before: function (options) {
+                var formData;
+
+                if (isDisplayOnly) {
+                    formData = Dms.ajax.createFormData();
+                    formData.append('__initial_dependent_data', '1')
+                } else {
+                    formData = Dms.form.stages.getDependentDataForStage(formStage);
+                }
+
+
+                formData.append(fieldDataPrefix + '[current_state]', JSON.stringify(currentValue));
+                formData.append(fieldDataPrefix + '[request][url]', options.url.substring(rootUrl.length));
+                formData.append(fieldDataPrefix + '[request][method]', options.__emulatedType || options.type || 'get');
+
+                var parametersPrefix = fieldDataPrefix + '[request][parameters]';
+                $.each(Dms.ajax.parseData(options.data), function (name, entries) {
+                    $.each(entries, function (index, entry) {
+                        formData.append(Dms.utilities.combineFieldNames(parametersPrefix, name), entry.value, entry.filename);
+                    });
+                });
+
+                options.__originalDataType = options.dataType;
+                options.dataType = 'json';
+                if ((options.type || 'get').toLowerCase() === 'get') {
+                    options.data = formData.toQueryString();
+                } else {
+                    options.processData = false;
+                    options.contentType = false;
+                    options.data = formData;
+                }
+            },
+            after: function (options, response, data) {
+                if (response.statusText === 'abort') {
+                    return;
+                }
+
+                if (data) {
+                    currentValue = data['new_state'];
+
+                    return Dms.ajax.convertResponse(options.__originalDataType, data.response);
+                } else {
+                    data = JSON.parse(response.responseText);
+                    currentValue = data['new_state'];
+
+                    response.responseText = data.response;
+                    console.log(response.responseText);
+                }
+            }
+        });
+
+        var originalResponseHandler = Dms.action.responseHandler;
+        Dms.action.responseHandler = function (httpStatusCode, actionUrl, response) {
+            if (actionUrl.indexOf(rootUrl) !== 0 || httpStatusCode >= 400) {
+                originalResponseHandler(httpStatusCode, actionUrl, response);
+                return;
+            }
+
+            if (response.redirect) {
+                var redirectUrl = response.redirect;
+                delete response.redirect;
+
+                if (!Dms.utilities.areUrlsEqual(redirectUrl, rootUrl)) {
+                    loadModulePage(redirectUrl);
+                }
+            }
+
+            originalResponseHandler(httpStatusCode, actionUrl, response);
+
+            innerModule.find('.dms-table-control .dms-table').triggerHandler('dms-load-table-data');
+            innerModuleForm.empty();
+            formGroup.trigger('dms-change');
+        };
+
+        var rootActionUrl = rootUrl + '/action/';
+        var currentAjaxRequest;
+
+        var loadModulePage = function (url) {
+            innerModuleFormContainer.addClass('loading');
+            Dms.utilities.scrollToView(innerModuleFormContainer);
+
+            if (currentAjaxRequest) {
+                currentAjaxRequest.abort();
+            }
+
+            currentAjaxRequest = Dms.ajax.createRequest({
+                url: url,
+                type: 'post',
+                __emulatedType: 'get',
+                dataType: 'html',
+                data: {'__content_only': 1}
+            });
+
+            currentAjaxRequest.done(function (html) {
+                innerModuleForm.html(html);
+                innerModuleForm.find('[data-reload-page-after-submit]').removeAttr('data-reload-page-after-submit');
+                Dms.form.initialize(innerModuleForm);
+            });
+
+            currentAjaxRequest.fail(function (response) {
+                if (currentAjaxRequest.statusText === 'abort') {
+                    return;
+                }
+
+                Dms.controls.showErrorDialog({
+                    title: "Could not load form",
+                    text: "An unexpected error occurred",
+                    type: "error",
+                    debugInfo: response.responseText
+                });
+            });
+
+            currentAjaxRequest.always(function () {
+                innerModuleFormContainer.removeClass('loading');
+                currentAjaxRequest = null;
+            });
+        };
+
+        innerModule.on('click', 'a[href^="' + rootActionUrl + '"]', function (e) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            var link = $(this);
+
+            loadModulePage(link.attr('href'));
+        });
+
+        innerModule.closest('.form-group').on('dms-get-input-data', function () {
+            var fieldData = {};
+            fieldData[fieldName] = currentValue;
+            return fieldData;
+        });
+
+        innerModule.closest('.form-group').on('dms-set-input-data', function (event, fieldData) {
+            var newValue = fieldData[fieldName] || [];
+
+            if (currentValue != newValue) {
+                currentValue = newValue;
+                innerModule.find('.dms-table').triggerHandler('dms-load-table-data');
+            }
+        });
+
+        stagedForm.on('dms-before-submit', function () {
+            innerModuleForm.empty();
+        });
+
+        var hasReset = false;
+        var resetAjaxInterception = function () {
+            if (hasReset) {
+                return;
+            } else {
+                hasReset = true;
+            }
+
+            Dms.ajax.interceptors.splice(Dms.ajax.interceptors.indexOf(interceptor), 1);
+            Dms.action.responseHandler = originalResponseHandler;
+        };
+
+        formStage.on('dms-stage-reload', resetAjaxInterception);
+        stagedForm.on('dms-post-submit-success', resetAjaxInterception);
+        innerModule.closest('.dms-page-content').on('dms-page-unloading', resetAjaxInterception);
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
 
     element.find('ul.dms-field-list').each(function () {
         var listOfFields = $(this);
@@ -55256,15 +55917,6 @@ Dms.form.initializeCallbacks.push(function (element) {
             }
         });
 
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
-    element.find('.dms-inner-form').each(function () {
-        var innerForm = $(this);
-
-        if (innerForm.attr('data-readonly')) {
-            innerForm.find(':input').attr('readonly', 'readonly');
-        }
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -55437,38 +56089,6 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-    element.find('input[type="number"][data-max-decimal-places]').each(function () {
-        $(this).attr('data-parsley-max-decimal-places', $(this).attr('data-max-decimal-places'));
-    });
-
-    element.find('input[type="number"][data-greater-than]').each(function () {
-        $(this).attr('data-parsley-gt', $(this).attr('data-greater-than'));
-    });
-
-    element.find('input[type="number"][data-less-than]').each(function () {
-        $(this).attr('data-parsley-lt', $(this).attr('data-less-than'));
-    });
-
-    element.find('input[type="number"]').each(function () {
-        if ($(this).attr('data-decimal-number')) {
-            $(this).attr({
-                'type': $(this).attr('step') ? 'number' : 'text',
-                'data-parsley-type': 'number'
-            });
-        } else {
-            $(this).attr({
-                'data-parsley-type': 'integer'
-            });
-        }
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
-    element.find('select[multiple]').multiselect({
-        enableFiltering: true,
-        includeSelectAllOption: true
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
     element.find('.dms-money-input-group').each(function () {
         var inputGroup = $(this);
         var moneyInput = inputGroup.find('.dms-money-input');
@@ -55495,6 +56115,44 @@ Dms.form.initializeCallbacks.push(function (element) {
 
         moneyInput.on('change input', updateShouldSubmitData);
         updateShouldSubmitData();
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+    element.find('select[multiple]').multiselect({
+        enableFiltering: true,
+        includeSelectAllOption: true
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+    element.find('input[type="number"][data-max-decimal-places]').each(function () {
+        $(this).attr('data-parsley-max-decimal-places', $(this).attr('data-max-decimal-places'));
+    });
+
+    element.find('input[type="number"][data-greater-than]').each(function () {
+        $(this).attr('data-parsley-gt', $(this).attr('data-greater-than'));
+    });
+
+    element.find('input[type="number"][data-less-than]').each(function () {
+        $(this).attr('data-parsley-lt', $(this).attr('data-less-than'));
+    });
+
+    element.find('input[type="number"]').each(function () {
+        if ($(this).attr('data-decimal-number')) {
+            $(this).attr({
+                'type': $(this).attr('step') ? 'number' : 'text',
+                'data-parsley-type': 'number'
+            });
+        } else {
+            $(this).attr({
+                'data-parsley-type': 'integer'
+            });
+        }
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+    element.find('input[type=radio]').iCheck({
+        radioClass: 'iradio_square-blue',
+        increaseArea: '20%'
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -55575,184 +56233,6 @@ Dms.form.initializeCallbacks.push(function (element) {
         }, {
             source: engine.ttAdapter(),
             displayKey: 'val'
-        });
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
-    element.find('input[type=radio]').iCheck({
-        radioClass: 'iradio_square-blue',
-        increaseArea: '20%'
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
-
-});
-Dms.form.initializeCallbacks.push(function (element) {
-    if (typeof tinymce === 'undefined') {
-        return;
-    }
-
-    var wysiwygElements = element.find('textarea.dms-wysiwyg, textarea.dms-wysiwyg-light');
-
-    wysiwygElements.each(function () {
-        if (!$(this).attr('id')) {
-            $(this).attr('id', Dms.utilities.idGenerator());
-        }
-    });
-
-    tinymce.baseURL = '/vendor/dms/wysiwyg/';
-
-    var setupTinyMce = function (editor) {
-        editor.on('change', function () {
-            editor.save();
-        });
-
-        editor.on('keyup cut paste change', function (e) {
-            $(tinymce.activeEditor.getElement()).closest('.form-group').trigger('dms-change');
-        });
-    };
-
-    var filePickerCallback = function (callback, value, meta) {
-        var wysiwygElement = $(tinymce.activeEditor.getElement()).closest('.dms-wysiwyg-container');
-        showFilePickerDialog(meta.filetype, wysiwygElement, function (fileUrl) {
-            callback(fileUrl);
-        });
-    };
-
-    tinymce.init({
-        selector: 'textarea.dms-wysiwyg',
-        tooltip: '',
-        plugins: [
-            "advlist",
-            "autolink",
-            "lists",
-            "link",
-            "image",
-            "charmap",
-            "textcolor",
-            "print",
-            "preview",
-            "anchor",
-            "searchreplace",
-            "visualblocks",
-            "code",
-            "insertdatetime",
-            "media",
-            "table",
-            "contextmenu",
-            "paste",
-            "imagetools"
-        ],
-        toolbar: "undo redo | styleselect | bold italic | forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist | link image",
-        setup: setupTinyMce,
-        relative_urls: false,
-        remove_script_host: true,
-        file_picker_callback: filePickerCallback
-    });
-
-    tinymce.init({
-        selector: 'textarea.dms-wysiwyg-light',
-        tooltip: '',
-        toolbar: 'undo redo | bold italic | link',
-        menubar: false,
-        statusbar: false,
-        plugins: [
-            "autolink",
-            "link",
-            "textcolor"
-        ],
-        setup: setupTinyMce,
-        relative_urls: false,
-        remove_script_host: true,
-        file_picker_callback: filePickerCallback
-    });
-
-    wysiwygElements.filter(function () {
-        return $(this).closest('.mce-tinymce').length === 0;
-    }).each(function () {
-        tinymce.EditorManager.execCommand('mceAddEditor', true, $(this).attr('id'));
-    });
-
-    wysiwygElements.closest('.dms-staged-form').on('dms-post-submit-success', function () {
-        $(this).find('textarea.dms-wysiwyg').each(function () {
-            tinymce.remove('#' + $(this).attr('id'));
-        });
-    });
-
-    var showFilePickerDialog = function (mode, wysiwygElement, callback) {
-        var loadFilePickerUrl = wysiwygElement.attr('data-load-file-picker-url');
-        var filePickerDialog = wysiwygElement.find('.dms-file-picker-dialog');
-        var filePickerContainer = filePickerDialog.find('.dms-file-picker-container');
-        var filePicker = filePickerContainer.find('.dms-file-picker');
-
-        filePickerDialog.appendTo('body').modal('show');
-        filePickerDialog.on('hidden.bs.modal', function () {
-            filePickerDialog.appendTo(wysiwygElement);
-        });
-
-        var request = Dms.ajax.createRequest({
-            url: loadFilePickerUrl,
-            type: 'get',
-            dataType: 'html',
-            data: {'__content_only': '1'}
-        });
-
-        filePickerContainer.addClass('loading');
-
-        request.done(function (html) {
-            filePicker.html(html);
-            Dms.table.initialize(filePicker);
-            Dms.form.initialize(filePicker);
-
-            var updateFilePickerButtons = function () {
-                filePicker.find('.dms-trashed-files-btn-container').hide();
-                var selectFileButton = $('<button class="btn btn-success btn-xs"><i class="fa fa-check"></i></button>');
-
-                filePicker.find('.dms-file-action-buttons').each(function () {
-                    var fileItemButtons = $(this);
-
-                    var specificFileSelectButton = selectFileButton.clone();
-                    fileItemButtons.empty();
-                    fileItemButtons.append(specificFileSelectButton);
-
-                    specificFileSelectButton.on('click', function () {
-                        callback(fileItemButtons.closest('.dms-file-item').attr('data-public-url'));
-                        filePickerDialog.modal('hide');
-                    });
-                });
-
-                if (mode === 'image') {
-                    filePicker.find('.btn-images-only').click().focus();
-                }
-            };
-
-            filePicker.find('.dms-file-tree').on('dms-file-tree-updated', updateFilePickerButtons);
-            updateFilePickerButtons();
-        });
-
-        request.always(function () {
-            filePickerContainer.removeClass('loading');
-        });
-
-        filePickerDialog.on('hide.bs.modal', function () {
-            filePicker.empty();
-        });
-    };
-
-
-    element.find('.dms-display-html').each(function () {
-        var control = $(this);
-        var viewMoreButton = control.find('.dms-view-more-button');
-        var iframe = control.find('iframe');
-        var htmlDocument = control.attr('data-value');
-
-        var document = iframe.contents().get(0);
-        document.open();
-        document.write(htmlDocument);
-        document.close();
-
-        viewMoreButton.on('click', function () {
-            Dms.controls.showContentDialog('Preview', htmlDocument, true);
         });
     });
 });
@@ -55960,6 +56440,178 @@ Dms.form.initializeCallbacks.push(function (element) {
 });
 Dms.form.initializeCallbacks.push(function (element) {
 
+});
+Dms.form.initializeCallbacks.push(function (element) {
+    if (typeof tinymce === 'undefined') {
+        return;
+    }
+
+    var wysiwygElements = element.find('textarea.dms-wysiwyg, textarea.dms-wysiwyg-light');
+
+    wysiwygElements.each(function () {
+        if (!$(this).attr('id')) {
+            $(this).attr('id', Dms.utilities.idGenerator());
+        }
+    });
+
+    tinymce.baseURL = '/vendor/dms/wysiwyg/';
+
+    var setupTinyMce = function (editor) {
+        editor.on('change', function () {
+            editor.save();
+        });
+
+        editor.on('keyup cut paste change', function (e) {
+            $(tinymce.activeEditor.getElement()).closest('.form-group').trigger('dms-change');
+        });
+    };
+
+    var filePickerCallback = function (callback, value, meta) {
+        var wysiwygElement = $(tinymce.activeEditor.getElement()).closest('.dms-wysiwyg-container');
+        showFilePickerDialog(meta.filetype, wysiwygElement, function (fileUrl) {
+            callback(fileUrl);
+        });
+    };
+
+    tinymce.init({
+        selector: 'textarea.dms-wysiwyg',
+        tooltip: '',
+        plugins: [
+            "advlist",
+            "autolink",
+            "lists",
+            "link",
+            "image",
+            "charmap",
+            "textcolor",
+            "print",
+            "preview",
+            "anchor",
+            "searchreplace",
+            "visualblocks",
+            "code",
+            "insertdatetime",
+            "media",
+            "table",
+            "contextmenu",
+            "paste",
+            "imagetools"
+        ],
+        toolbar: "undo redo | styleselect | bold italic | forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist | link image",
+        setup: setupTinyMce,
+        relative_urls: false,
+        remove_script_host: true,
+        file_picker_callback: filePickerCallback
+    });
+
+    tinymce.init({
+        selector: 'textarea.dms-wysiwyg-light',
+        tooltip: '',
+        toolbar: 'undo redo | bold italic | link',
+        menubar: false,
+        statusbar: false,
+        plugins: [
+            "autolink",
+            "link",
+            "textcolor"
+        ],
+        setup: setupTinyMce,
+        relative_urls: false,
+        remove_script_host: true,
+        file_picker_callback: filePickerCallback
+    });
+
+    wysiwygElements.filter(function () {
+        return $(this).closest('.mce-tinymce').length === 0;
+    }).each(function () {
+        tinymce.EditorManager.execCommand('mceAddEditor', true, $(this).attr('id'));
+    });
+
+    wysiwygElements.closest('.dms-staged-form').on('dms-post-submit-success', function () {
+        $(this).find('textarea.dms-wysiwyg').each(function () {
+            tinymce.remove('#' + $(this).attr('id'));
+        });
+    });
+
+    var showFilePickerDialog = function (mode, wysiwygElement, callback) {
+        var loadFilePickerUrl = wysiwygElement.attr('data-load-file-picker-url');
+        var filePickerDialog = wysiwygElement.find('.dms-file-picker-dialog');
+        var filePickerContainer = filePickerDialog.find('.dms-file-picker-container');
+        var filePicker = filePickerContainer.find('.dms-file-picker');
+
+        filePickerDialog.appendTo('body').modal('show');
+        filePickerDialog.on('hidden.bs.modal', function () {
+            filePickerDialog.appendTo(wysiwygElement);
+        });
+
+        var request = Dms.ajax.createRequest({
+            url: loadFilePickerUrl,
+            type: 'get',
+            dataType: 'html',
+            data: {'__content_only': '1'}
+        });
+
+        filePickerContainer.addClass('loading');
+
+        request.done(function (html) {
+            filePicker.html(html);
+            Dms.table.initialize(filePicker);
+            Dms.form.initialize(filePicker);
+
+            var updateFilePickerButtons = function () {
+                filePicker.find('.dms-trashed-files-btn-container').hide();
+                var selectFileButton = $('<button class="btn btn-success btn-xs"><i class="fa fa-check"></i></button>');
+
+                filePicker.find('.dms-file-action-buttons').each(function () {
+                    var fileItemButtons = $(this);
+
+                    var specificFileSelectButton = selectFileButton.clone();
+                    fileItemButtons.empty();
+                    fileItemButtons.append(specificFileSelectButton);
+
+                    specificFileSelectButton.on('click', function () {
+                        callback(fileItemButtons.closest('.dms-file-item').attr('data-public-url'));
+                        filePickerDialog.modal('hide');
+                    });
+                });
+
+                if (mode === 'image') {
+                    filePicker.find('.btn-images-only').click().focus();
+                }
+            };
+
+            filePicker.find('.dms-file-tree').on('dms-file-tree-updated', updateFilePickerButtons);
+            updateFilePickerButtons();
+        });
+
+        request.always(function () {
+            filePickerContainer.removeClass('loading');
+        });
+
+        filePickerDialog.on('hide.bs.modal', function () {
+            filePicker.empty();
+        });
+    };
+
+
+    element.find('.dms-display-html').each(function () {
+        var control = $(this);
+        var viewMoreButton = control.find('.dms-view-more-button');
+        var iframe = control.find('iframe');
+        var htmlDocument = control.attr('data-value');
+
+        var document = iframe.contents().get(0);
+        document.open();
+        document.write(htmlDocument);
+        document.close();
+
+        viewMoreButton.on('click', function () {
+            Dms.controls.showContentDialog('Preview', htmlDocument, true);
+        });
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+
     var fieldCounter = 1;
 
     element.find('.dms-form-fieldset .form-group').each(function () {
@@ -56093,6 +56745,7 @@ Dms.form.initializeCallbacks.push(function (element) {
                     Dms.table.initialize(currentStage);
                     currentStage.restoreValues(currentValues);
                     form.triggerHandler('dms-form-updated');
+                    currentStage.find('*[data-field-name]').trigger('dms-change')
                 });
 
                 currentAjaxRequest.fail(function (xhr) {

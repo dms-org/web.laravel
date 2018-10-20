@@ -113,6 +113,7 @@ Dms.form.initializeCallbacks.push(function (element) {
                     Dms.table.initialize(currentStage);
                     currentStage.restoreValues(currentValues);
                     form.triggerHandler('dms-form-updated');
+                    currentStage.find('*[data-field-name]').trigger('dms-change')
                 });
 
                 currentAjaxRequest.fail(function (xhr) {

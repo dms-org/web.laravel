@@ -54,13 +54,10 @@ Dms.form.initializeCallbacks.push(function (element) {
 
                 options.__originalDataType = options.dataType;
                 options.dataType = 'json';
-                if ((options.type || 'get').toLowerCase() === 'get') {
-                    options.data = formData.toQueryString();
-                } else {
-                    options.processData = false;
-                    options.contentType = false;
-                    options.data = formData;
-                }
+                options.type = 'post';
+                options.processData = false;
+                options.contentType = false;
+                options.data = formData;
             },
             after: function (options, response, data) {
                 if (response.statusText === 'abort') {

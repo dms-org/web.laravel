@@ -75,6 +75,7 @@ class InnerModuleFieldRenderer extends BladeFieldRendererWithActions implements 
                 false,
                 $detailsAction->getName(),
                 StringHumanizer::title($detailsAction->getName()),
+                '',
                 function (string $objectId) use ($detailsUrl) {
                     return str_replace('__object__', $objectId, $detailsUrl);
                 }

@@ -122,7 +122,7 @@
                                             @if(!$object || $action->isSupported($object))
                                                 <li>
                                                     @if($action->isPost())
-                                                        <a class="dms-run-action-form inline"
+                                                        <a class="dms-run-action-form inline btn-{{ $action->getClass() }}"
                                                            data-action="{{ $action->getUrl($objectId) }}"
                                                            data-reload-page-after-submit="1"
                                                            data-method="post">

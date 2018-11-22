@@ -8,6 +8,7 @@ use Dms\Core\Common\Crud\IReadModule;
 use Dms\Core\Model\ITypedObject;
 use Dms\Web\Laravel\Http\ModuleContext;
 use Dms\Web\Laravel\Util\ActionSafetyChecker;
+use Dms\Web\Laravel\Util\KeywordTypeIdentifier;
 use Dms\Web\Laravel\Util\StringHumanizer;
 
 /**
@@ -23,13 +24,20 @@ class ObjectActionButtonBuilder
     protected $actionSafetyChecker;
 
     /**
+     * @var KeywordTypeIdentifier
+     */
+    protected $keywordTypeIdentifier;
+
+
+    /**
      * ObjectActionButtonBuilder constructor.
      *
      * @param ActionSafetyChecker $actionSafetyChecker
      */
-    public function __construct(ActionSafetyChecker $actionSafetyChecker)
+    public function __construct(ActionSafetyChecker $actionSafetyChecker, KeywordTypeIdentifier $keywordTypeIdentifier)
     {
         $this->actionSafetyChecker = $actionSafetyChecker;
+        $this->keywordTypeIdentifier = $keywordTypeIdentifier;
     }
 
     /**
@@ -77,6 +85,7 @@ class ObjectActionButtonBuilder
                 $submitForm,
                 $action->getName(),
                 StringHumanizer::title($action->getName()),
+                $this->keywordTypeIdentifier->getTypeFromName($action->getName()),
                 function (string $objectId) use ($formUrl) {
                     return str_replace('__object__', $objectId, $formUrl);
                 },

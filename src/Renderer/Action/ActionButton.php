@@ -27,9 +27,15 @@ class ActionButton
     protected $label;
 
     /**
+     * @var string
+     */
+    private $class;
+
+    /**
      * @var callable
      */
     private $urlCallback;
+
     /**
      * @var callable
      */
@@ -46,15 +52,24 @@ class ActionButton
      * @param bool          $isPost
      * @param string        $name
      * @param string        $label
+     * @param string        $class
      * @param callable      $urlCallback
      * @param callable|null $objectSupportedCallback
      * @param bool          $disabled
      */
-    public function __construct(bool $isPost, string $name, string $label, callable $urlCallback, callable $objectSupportedCallback = null, bool $disabled = false)
-    {
+    public function __construct(
+        bool $isPost,
+        string $name,
+        string $label,
+        string $class,
+        callable $urlCallback,
+        callable $objectSupportedCallback = null,
+        bool $disabled = false
+    ) {
         $this->isPost                  = $isPost;
         $this->name                    = $name;
         $this->label                   = $label;
+        $this->class                   = $class;
         $this->urlCallback             = $urlCallback;
         $this->objectSupportedCallback = $objectSupportedCallback;
         $this->disabled                = $disabled;
@@ -63,7 +78,7 @@ class ActionButton
     /**
      * @return boolean
      */
-    public function isPost() : bool
+    public function isPost(): bool
     {
         return $this->isPost;
     }
@@ -73,7 +88,7 @@ class ActionButton
      *
      * @return string
      */
-    public function getUrl(string $objectId) : string
+    public function getUrl(string $objectId): string
     {
         return call_user_func($this->urlCallback, $objectId);
     }
@@ -81,7 +96,7 @@ class ActionButton
     /**
      * @return string
      */
-    public function getName() : string
+    public function getName(): string
     {
         return $this->name;
     }
@@ -89,15 +104,23 @@ class ActionButton
     /**
      * @return string
      */
-    public function getLabel() : string
+    public function getLabel(): string
     {
         return $this->label;
     }
 
     /**
+     * @return string
+     */
+    public function getClass(): string
+    {
+        return $this->class;
+    }
+
+    /**
      * @return bool
      */
-    public function hasObjectSupportedCallback() : bool
+    public function hasObjectSupportedCallback(): bool
     {
         return $this->objectSupportedCallback !== null;
     }
@@ -107,7 +130,7 @@ class ActionButton
      *
      * @return bool
      */
-    public function isSupported(ITypedObject $object) : bool
+    public function isSupported(ITypedObject $object): bool
     {
         return $this->objectSupportedCallback
             ? call_user_func($this->objectSupportedCallback, $object)

@@ -197,6 +197,10 @@ Dms.global.initializeCallbacks.push(function (element) {
     });
 
     $(window).on('popstate', function (e) {
+        if (!e.originalEvent.state) {
+            return;
+        }
+
         isPoppingState = true;
         var linkId = e.originalEvent.state.linkId;
         var link = $('#' + linkId);

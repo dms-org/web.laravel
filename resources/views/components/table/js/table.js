@@ -179,6 +179,13 @@ Dms.table.initializeCallbacks.push(function (element) {
             var linkedTablePane = $($(this).attr('href'));
 
             linkedTablePane.find('.dms-table-control:not([data-has-loaded-table-data]) .dms-table-container:not(.loading) .dms-table').triggerHandler('dms-load-table-data');
+            history.replaceState(history.state, document.title, $(this).attr('href'));
         });
+
+        var url = document.location.toString();
+
+        if (url.match('#')) {
+            tabs.find('.dms-table-tab-show-button[href="#' + url.split('#')[1] + '"]').click();
+        }
     });
 });

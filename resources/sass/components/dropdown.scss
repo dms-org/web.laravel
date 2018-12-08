@@ -1,6 +1,6 @@
 .dropdown-menu {
     > li > a {
-        &.btn-danger {
+        &.btn-danger, &.btn-info, &.btn-success {
             color: #fff;
         }
     }

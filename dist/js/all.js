@@ -54570,69 +54570,6 @@ Dms.utilities.debounceCallback = function (func, wait, immediate) {
         if (callNow) func.apply(context, args);
     };
 };
-Dms.controls.showContentDialog = function (title, content, showInIframe) {
-    var contentDialog = $('.dms-content-dialog').first();
-
-    contentDialog.find('.modal-title').text(title || '');
-
-    var dialogBody = contentDialog.find('.modal-body');
-    dialogBody.empty();
-
-    if (showInIframe) {
-        var iframe = $('<iframe />');
-        iframe.addClass('dms-content-iframe');
-        dialogBody.append(iframe);
-        setTimeout(function () {
-            var document = iframe.contents().get(0);
-            document.open();
-            document.write(content);
-            document.close();
-        }, 1);
-    } else {
-        dialogBody.html(content);
-    }
-
-    contentDialog.appendTo('body').modal('show');
-    Dms.all.initialize(dialogBody);
-
-    dialogBody.on('click', 'a[href]', function () {
-        contentDialog.modal('hide');
-    });
-};
-Dms.controls.showErrorDialog = function (config) {
-    if (Dms.config.debug && config.debugInfo) {
-
-        var errorDialog = $('.dms-error-dialog').first();
-
-        errorDialog.find('.modal-title').text(config.title || 'An error occurred');
-
-        var dialogBody = errorDialog.find('.modal-body');
-        dialogBody.empty();
-
-        var iframe = $('<iframe />');
-        iframe.addClass('dms-content-iframe');
-        dialogBody.append(iframe);
-        setTimeout(function () {
-            var document = iframe.contents().get(0);
-            document.open();
-            document.write(config.debugInfo);
-            document.close();
-        }, 1);
-
-        errorDialog.appendTo('body').modal('show');
-
-        errorDialog.find('.dms-refresh-page-button').on('click', function () {
-            window.location.reload();
-        });
-
-    } else {
-        config = $.extend({}, config, {
-            type: 'error'
-        });
-
-        swal(config);
-    }
-};
 window.Parsley.addValidator('ipAddress', {
     requirementType: 'boolean',
     validateString: function (value) {
@@ -54801,444 +54738,311 @@ Dms.global.initializeCallbacks.push(function () {
         equalto: "This must match the confirmation field."
     }, true);
 });
-Dms.form.initializeCallbacks.push(function (element) {
+Dms.controls.showContentDialog = function (title, content, showInIframe) {
+    var contentDialog = $('.dms-content-dialog').first();
 
-    var fieldCounter = 1;
+    contentDialog.find('.modal-title').text(title || '');
 
-    element.find('.dms-form-fieldset .form-group').each(function () {
-        var fieldLabel = $(this).children('.dms-label-container label[data-for]');
-        var forFieldName = fieldLabel.attr('data-for');
+    var dialogBody = contentDialog.find('.modal-body');
+    dialogBody.empty();
 
-        if (forFieldName) {
-            var forField = $(this).first('*[name="' + forFieldName + '"], .dms-inner-form[data-name="' + forFieldName + '"]');
+    if (showInIframe) {
+        var iframe = $('<iframe />');
+        iframe.addClass('dms-content-iframe');
+        dialogBody.append(iframe);
+        setTimeout(function () {
+            var document = iframe.contents().get(0);
+            document.open();
+            document.write(content);
+            document.close();
+        }, 1);
+    } else {
+        dialogBody.html(content);
+    }
 
-            if (!forField.attr('id')) {
-                forField.attr('id', 'dms-field-' + fieldCounter);
-                fieldCounter++;
-            }
+    contentDialog.appendTo('body').modal('show');
+    Dms.all.initialize(dialogBody);
 
-            fieldLabel.attr('for', forField.attr('id'));
-        }
+    dialogBody.on('click', 'a[href]', function () {
+        contentDialog.modal('hide');
     });
-});
-Dms.form.initializeCallbacks.push(function (element) {
+};
+Dms.controls.showErrorDialog = function (config) {
+    if (Dms.config.debug && config.debugInfo) {
 
-    element.find('.dms-staged-form').each(function () {
-        var form = $(this);
-        var parsley = Dms.form.validation.initialize(form);
-        var stageElements = form.find('.dms-form-stage');
+        var errorDialog = $('.dms-error-dialog').first();
 
-        var arePreviousFieldsValid = function (fields) {
-            var originalScroll = $(document).scrollTop();
-            var focusedElement = $(document.activeElement);
-            parsley.validate();
-            focusedElement.focus();
-            $(document).scrollTop(originalScroll);
+        errorDialog.find('.modal-title').text(config.title || 'An error occurred');
 
-            return fields.closest('.form-group').find('.dms-validation-message *').length === 0;
-        };
+        var dialogBody = errorDialog.find('.modal-body');
+        dialogBody.empty();
 
-        stageElements.filter('.dms-dependent-form-stage').each(function () {
-            var currentStage = $(this);
-            var container = currentStage.closest('.dms-form-stage-container');
-            var previousStages = container.prevAll('.dms-form-stage-container').find('.dms-form-stage');
-            var loadStageUrl = currentStage.attr('data-load-stage-url');
-            var dependentFields = currentStage.attr('data-stage-dependent-fields-stage-map');
-            var stageToDependentFieldsMap = dependentFields ? JSON.parse(currentStage.attr('data-stage-dependent-fields-stage-map')) : null;
-            var currentAjaxRequest = null;
-            var previousLoadAttempt = 0;
-            var minMillisecondsBetweenLoads = 2000;
-            var isWaitingForNextLoadAttempt = false;
+        var iframe = $('<iframe />');
+        iframe.addClass('dms-content-iframe');
+        dialogBody.append(iframe);
+        setTimeout(function () {
+            var document = iframe.contents().get(0);
+            document.open();
+            document.write(config.debugInfo);
+            document.close();
+        }, 1);
 
-            var makeDependentFieldSelectorFor = function (selector) {
-                if (stageToDependentFieldsMap) {
-                    return Dms.form.stages.makeDependentFieldSelectorForStageMap(stageToDependentFieldsMap, selector);
-                } else {
-                    return Dms.form.stages.makeDependentFieldSelectorFor(null, selector);
-                }
-            };
+        errorDialog.appendTo('body').modal('show');
 
-            var loadNextStage = function (event) {
-                if (event && event.target) {
-                    var formForEventTarget = $(event.target).closest('.dms-staged-form');
-
-                    if (!formForEventTarget.is(form)) {
-                        return;
-                    }
-                }
-
-                if (currentAjaxRequest) {
-                    currentAjaxRequest.abort();
-                }
-
-                if (stageToDependentFieldsMap) {
-                    var hasLoadedAllRequiredFields = true;
-
-                    $.each(stageToDependentFieldsMap, function (stageNumber, dependentFields) {
-                        var stage = previousStages.filter('[data-stage-number=' + stageNumber + ']');
-
-                        $.each(dependentFields, function (index, fieldName) {
-                            if (stage.find('.form-group[data-field-name="' + fieldName + '"]').length === 0) {
-                                hasLoadedAllRequiredFields = false;
-                            }
-                        });
-                    });
-
-                    if (!hasLoadedAllRequiredFields) {
-                        return;
-                    }
-                }
-
-                container.removeClass('loaded');
-                container.addClass('loading');
-
-                var currentTime = new Date().getTime();
-                var millisecondsBetweenLastLoad = currentTime - previousLoadAttempt;
-
-                if (millisecondsBetweenLastLoad >= minMillisecondsBetweenLoads) {
-                    isWaitingForNextLoadAttempt = false;
-                    previousLoadAttempt = currentTime;
-                }
-                else {
-                    if (!isWaitingForNextLoadAttempt) {
-                        isWaitingForNextLoadAttempt = true;
-                        setTimeout(loadNextStage, minMillisecondsBetweenLoads - millisecondsBetweenLastLoad);
-                    }
-                    return;
-                }
-
-                var previousFields = form.find(makeDependentFieldSelectorFor('*'));
-
-                if (!arePreviousFieldsValid(previousFields)) {
-                    container.removeClass('loading');
-                    return;
-                }
-
-                Dms.form.validation.clearMessages(form);
-
-                var formData = Dms.form.stages.getDependentDataForStage(currentStage);
-
-                currentAjaxRequest = Dms.ajax.createRequest({
-                    url: loadStageUrl,
-                    type: 'post',
-                    processData: false,
-                    contentType: false,
-                    dataType: 'html',
-                    data: formData
-                });
-
-                currentAjaxRequest.done(function (html) {
-                    currentStage.triggerHandler('dms-stage-reload');
-                    container.addClass('loaded');
-                    var currentValues = currentStage.getValues(true);
-                    currentStage.html(html);
-                    Dms.form.initialize(currentStage);
-                    Dms.table.initialize(currentStage);
-                    currentStage.restoreValues(currentValues);
-                    form.triggerHandler('dms-form-updated');
-                    currentStage.find('*[data-field-name]').trigger('dms-change')
-                });
-
-                currentAjaxRequest.fail(function (xhr) {
-                    if (currentAjaxRequest.statusText === 'abort') {
-                        return;
-                    }
-
-                    switch (xhr.status) {
-                        case 422: // Unprocessable Entity (validation failure)
-                            var validation = JSON.parse(xhr.responseText);
-                            Dms.form.validation.displayMessages(form, validation.messages.fields, validation.messages.constraints);
-                            break;
-
-                        case 400: // Bad request
-                            Dms.controls.showErrorDialog({
-                                title: "Could not load form",
-                                text: JSON.parse(xhr.responseText).message,
-                                type: "error"
-                            });
-                            break;
-
-                        default: // Unknown error
-                            Dms.controls.showErrorDialog({
-                                title: "Could not load form",
-                                text: "An unexpected error occurred",
-                                type: "error",
-                                debugInfo: xhr.responseText
-                            });
-                            break;
-                    }
-                });
-
-                currentAjaxRequest.always(function () {
-                    container.removeClass('loading');
-                });
-            };
-
-            form.on('input', makeDependentFieldSelectorFor('input'), loadNextStage);
-            form.on('input', makeDependentFieldSelectorFor('textarea'), loadNextStage);
-            form.on('change', makeDependentFieldSelectorFor('select'), loadNextStage);
-
-            if (stageToDependentFieldsMap) {
-                var selectors = [];
-
-                $.each(stageToDependentFieldsMap, function (stageNumber, dependentFields) {
-                    var stage = previousStages.filter('[data-stage-number=' + stageNumber + ']');
-                    $.each(dependentFields, function (index, fieldName) {
-                        selectors.push('.dms-form-stage[data-stage-number=' + stageNumber + '] .form-group[data-field-name="' + fieldName + '"]');
-                    });
-                });
-
-                form.on('dms-change', selectors.join(','), loadNextStage);
-            } else {
-                form.on('dms-change', '.form-group[data-field-name]', loadNextStage);
-            }
-        });
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
-
-    element.find('.dms-staged-form, .dms-run-action-form').each(function () {
-        var form = $(this);
-        var formContainer = form.closest('.dms-staged-form-container');
-        var parsley = Dms.form.validation.initialize(form);
-        var afterRunCallbacks = [];
-        var submitButtons = form.find('input[type=submit], button[type=submit]');
-        var submitMethod = form.attr('data-method');
-        var submitUrl = form.attr('data-action');
-        var reloadFormUrl = form.attr('data-reload-form-url');
-        var shouldReloadPageAfterSubmit = form.attr('data-reload-page-after-submit');
-
-        if ($(this).is('a.dms-run-action-form, button.dms-run-action-form')) {
-            submitButtons = submitButtons.add(this);
-        }
-
-        var isFormValid = function () {
-            return parsley.isValid()
-                && form.find('.dms-validation-message *').length === 0
-                && form.find('.dms-form-stage-container').length === form.find('.dms-form-stage-container.loaded').length;
-        };
-
-        submitButtons.on('click before-confirmation', function (e) {
-            parsley.validate();
-
-            if (!isFormValid()) {
-                e.stopImmediatePropagation();
-                form.find('.dms-form-stage-container:not(.loaded)').addClass('has-error');
-                return false;
-            }
+        errorDialog.find('.dms-refresh-page-button').on('click', function () {
+            window.location.reload();
         });
 
-        submitButtons.on('click', function (e) {
-            e.preventDefault();
+    } else {
+        config = $.extend({}, config, {
+            type: 'error'
+        });
 
-            Dms.form.validation.clearMessages(form);
+        swal(config);
+    }
+};
+Dms.chart.initializeCallbacks.push(function (element) {
 
-            form.triggerHandler('dms-before-submit');
+    element.find('.dms-chart-control').each(function () {
+        var control = $(this);
+        var chartContainer = control.find('.dms-chart-container');
+        var chartElement = chartContainer.find('.dms-chart');
+        var chartRangePicker = chartContainer.find('.dms-chart-range-picker');
+        var loadChartUrl = control.attr('data-load-chart-url');
 
-            var fieldsToReappend = [];
-            form.find('.dms-form-no-submit').each(function () {
-                var removedFields = $(this).children().detach();
+        var criteria = {
+            orderings: [],
+            conditions: []
+        };
 
-                fieldsToReappend.push({
-                    parentElement: $(this),
-                    children: removedFields
-                });
+        var currentAjaxRequest;
+
+        var loadCurrentData = function () {
+            chartContainer.addClass('loading');
+
+            if (currentAjaxRequest) {
+                currentAjaxRequest.abort();
+            }
+
+            currentAjaxRequest = Dms.ajax.createRequest({
+                url: loadChartUrl,
+                type: 'post',
+                dataType: 'html',
+                data: criteria
             });
 
-            var formData = Dms.form.stages.createFormDataFromFields(form.find(':input'));
-            form.find('.form-group').each(function () {
-                var additionalDataToSubmit = $(this).triggerHandler('dms-get-input-data');
-
-                if (additionalDataToSubmit) {
-                    $.each(Dms.ajax.parseData(additionalDataToSubmit), function (name, entries) {
-                        $.each(entries, function (index, entry) {
-                            formData.append(name, entry.value, entry.filename);
-                        });
-                    });
-                }
+            currentAjaxRequest.done(function (chartData) {
+                chartElement.html(chartData);
+                Dms.chart.initialize(chartElement);
             });
 
-            $.each(fieldsToReappend, function (index, elements) {
-                elements.parentElement.append(elements.children);
-            });
-
-            submitButtons.prop('disabled', true);
-            submitButtons.addClass('ladda-button').attr('data-style', 'expand-right');
-            var ladda = Ladda.create(submitButtons.get(0));
-            ladda.start();
-
-            var currentAjaxRequest = Dms.ajax.createRequest({
-                url: submitUrl,
-                type: submitMethod,
-                processData: false,
-                contentType: false,
-                dataType: 'json',
-                data: formData,
-                xhr: function () {
-                    var xhr = $.ajaxSettings.xhr();
-
-                    if (form.find('input[type=file]').length && xhr.upload) {
-                        xhr.upload.addEventListener('progress', function (event) {
-                            if (event.lengthComputable) {
-                                ladda.setProgress(event.loaded / event.total);
-                            }
-                        }, false);
-                    }
-
-                    return xhr;
-                }
-            });
-
-            currentAjaxRequest.done(function (data, statusText, xhr) {
-                Dms.action.responseHandler(xhr.status, submitUrl, data);
-                $.each(afterRunCallbacks, function (index, callback) {
-                    callback(data);
-                });
-
-                form.triggerHandler('dms-post-submit-success');
-            });
-
-            currentAjaxRequest.fail(function (xhr) {
+            currentAjaxRequest.fail(function (response) {
                 if (currentAjaxRequest.statusText === 'abort') {
                     return;
                 }
 
-                switch (xhr.status) {
-                    case 401: // Unauthorized
-                        Dms.controls.showErrorDialog({
-                            title: "Could not perform action",
-                            text: "You do not possess the necessary permissions to authorize this action",
-                            type: "error"
-                        });
-                        break;
+                chartContainer.addClass('error');
 
-                    case 422: // Unprocessable Entity (validation failure)
-                        var validation = JSON.parse(xhr.responseText);
-                        Dms.form.validation.displayMessages(form, validation.messages.fields, validation.messages.constraints);
-                        Dms.utilities.scrollToView(form.find('.help-block-error:not(:empty)').first());
-                        break;
-
-                    default:
-                        try {
-                            var response = JSON.parse(xhr.responseText);
-                            Dms.action.responseHandler(xhr.status, submitUrl, response);
-                        } catch (e) {
-                            // Unknown error
-                            Dms.controls.showErrorDialog({
-                                title: "Could not submit form",
-                                text: "An unexpected error occurred",
-                                type: "error",
-                                debugInfo: xhr.responseText
-                            });
-                            break;
-                        }
-                }
+                Dms.controls.showErrorDialog({
+                    title: "Could not load chart data",
+                    text: "An unexpected error occurred",
+                    type: "error",
+                    debugInfo: response.responseText
+                });
             });
 
             currentAjaxRequest.always(function () {
-                submitButtons.prop('disabled', false);
-                ladda.stop();
+                chartContainer.removeClass('loading');
             });
+        };
 
-            return false;
-        });
+        loadCurrentData();
 
-        var parentToRemove = form.attr('data-after-run-remove-closest');
-        if (parentToRemove) {
-            afterRunCallbacks.push(function () {
-                form.closest(parentToRemove).fadeOut(100);
-            });
-        }
+        chartRangePicker.on('dms-range-updated', function () {
+            var horizontalAxis = chartContainer.attr('data-date-axis-name');
+            criteria.conditions = [
+                {axis: horizontalAxis, operator: '>=', value: chartRangePicker.find('.dms-start-input').val()},
+                {axis: horizontalAxis, operator: '<=', value: chartRangePicker.find('.dms-end-input').val()}
+            ];
 
-        afterRunCallbacks.push(function () {
-            form.find('input[type=password]').val('');
-        });
-
-        afterRunCallbacks.push(function (data) {
-            if (data.redirect) {
-                return;
-            }
-
-            if (shouldReloadPageAfterSubmit) {
-                Dms.link.reloadCurrentPage();
-                return;
-            }
-
-            if (!form.is('.dms-staged-form')) {
-                return;
-            }
-
-            var request = Dms.ajax.createRequest({
-                url: reloadFormUrl,
-                type: 'get',
-                dataType: 'html',
-                data: {'__content_only': '1'}
-            });
-
-            formContainer.addClass('loading');
-
-            request.done(function (html) {
-                var newForm = $(html).find('.dms-staged-form').first();
-                form.replaceWith(newForm);
-                Dms.form.initialize(newForm.parent());
-                Dms.table.initialize(newForm.parent());
-            });
-
-            request.always(function () {
-                formContainer.removeClass('loading');
-            });
+            loadCurrentData();
         });
     });
 });
-Dms.form.initializeValidationCallbacks.push(function (element) {
+Dms.chart.initializeCallbacks.push(function (element) {
 
-    element.find('.dms-form-fields').each(function () {
-        if (!$(this).attr('id')) {
-            $(this).attr('id', Dms.utilities.idGenerator());
-        }
-    });
+    element.find('.dms-geo-chart').each(function () {
+        var chart = $(this);
+        var isCityChart = chart.attr('data-city-chart');
+        var hasLatLng = chart.attr('data-has-lat-lng');
+        var chartData = JSON.parse(chart.attr('data-chart-data'));
+        var region = chart.attr('data-region');
+        var locationLabel = chart.attr('data-location-label');
+        var valueLabels = JSON.parse(chart.attr('data-value-labels'));
 
-    element.find('.dms-form-fields').each(function () {
-        var formFieldSection = $(this);
-        var formFieldsGroupId = formFieldSection.attr('id');
+        Dms.loader.register('google-geo-charts', function (callback) {
+            google.charts.load('current', {'packages': ['geochart']});
+            google.charts.setOnLoadCallback(callback);
+        }, function () {
+            var headers = [];
 
+            if (hasLatLng) {
+                headers.push('Latitude');
+                headers.push('Longitude');
+            }
 
-        var buildElementSelector = function (fieldName) {
-            return '#' + formFieldsGroupId + ' *[name="' + fieldName + '"]';
-        };
+            headers.push(locationLabel);
+            headers = headers.concat(valueLabels);
 
-        var fieldValidations = {
-            'data-equal-fields': 'data-parsley-equalto',
-            'data-greater-than-fields': 'data-parsley-gt',
-            'data-greater-than-or-equal-fields': 'data-parsley-gte',
-            'data-less-than-fields': 'data-parsley-lt',
-            'data-less-than-or-equal-fields': 'data-parsley-lte'
-        };
+            var transformedChartData = [headers];
 
-        $.each(fieldValidations, function (validationAttr, parsleyAttr) {
-            var fieldsMap = formFieldSection.attr(validationAttr);
-
-            if (fieldsMap) {
-                $.each(JSON.parse(fieldsMap), function (fieldName, otherFieldName) {
-                    var field = $(buildElementSelector(fieldName));
-                    field.attr(parsleyAttr, buildElementSelector(otherFieldName));
+            if (chartData.length) {
+                $.each(chartData, function (index, row) {
+                    transformedChartData.push((hasLatLng ? row.lat_lng : []).concat([row.label]).concat(row.values));
                 });
+            }
+            
+            var data = google.visualization.arrayToDataTable(transformedChartData);
+
+            var googleChart = new google.visualization.GeoChart(chart.get(0));
+
+            var drawChart = function () {
+                googleChart.draw(data, {
+                    displayMode: isCityChart ? 'markers' : 'regions',
+                    region: region
+                });
+            };
+
+            var resizeTimeoutId;
+            $(window).resize(function () {
+                if (resizeTimeoutId) {
+                    clearTimeout(resizeTimeoutId);
+                }
+
+                resizeTimeoutId = setTimeout(function () {
+                    drawChart();
+                    resizeTimeoutId = null;
+                }, 500);
+            });
+
+            drawChart();
+        });
+    });
+});
+Dms.chart.initializeCallbacks.push(function (element) {
+    element.find('.dms-graph-chart').each(function () {
+        var chart = $(this);
+        var dateFormat = Dms.utilities.convertPhpDateFormatToMomentFormat(chart.attr('data-date-format'));
+        var chartData = JSON.parse(chart.attr('data-chart-data'));
+        var chartType = chart.attr('data-chart-type');
+        var horizontalAxisKey = chart.attr('data-horizontal-axis-key');
+        var horizontalAxisUnitType = chart.attr('data-horizontal-unit-type');
+        var verticalAxisKeys = JSON.parse(chart.attr('data-vertical-axis-keys'));
+        var verticalAxisLabels = JSON.parse(chart.attr('data-vertical-axis-labels'));
+        var minTimestamp;
+        var maxTimestamp;
+        var timeRowLookup = {};
+
+        if (!chart.attr('id')) {
+            chart.attr('id', Dms.utilities.idGenerator());
+        }
+
+        $.each(chartData, function (index, row) {
+            var timestamp = moment(row[horizontalAxisKey], dateFormat).valueOf();
+            row[horizontalAxisKey] = timestamp;
+            timeRowLookup[timestamp] = true;
+
+            if (!minTimestamp || timestamp < minTimestamp) {
+                minTimestamp = timestamp;
+            }
+
+            if (!maxTimestamp || timestamp > maxTimestamp) {
+                maxTimestamp = timestamp;
+            }
+        });
+
+        var zeroFillMissingValues = function (unitType, chartData) {
+            if (chartData.length === 0) {
+                return;
+            }
+
+            var addUnitToDate;
+            if (unitType === 'date') {
+                addUnitToDate = function (date) {
+                    date.setDate(date.getDate() + 1);
+                };
+            } else {
+                addUnitToDate = function (date) {
+                    date.setSeconds(date.getSeconds() + 1)
+                };
+            }
+
+            for (var i = new Date(minTimestamp); i.getTime() < maxTimestamp; addUnitToDate(i)) {
+                if (typeof timeRowLookup[i.getTime()] === 'undefined') {
+                    var rowData = {};
+                    rowData[horizontalAxisKey] = i.getTime();
+
+                    $.each(verticalAxisKeys, function (index, verticalAxisKey) {
+                        rowData[verticalAxisKey] = 0;
+                    });
+
+                    chartData.push(rowData);
+                }
+            }
+        };
+
+        zeroFillMissingValues(horizontalAxisUnitType, chartData);
+
+        var morrisConfig = {
+            element: chart.attr('id'),
+            data: chartData,
+            xkey: horizontalAxisKey,
+            ykeys: verticalAxisKeys,
+            labels: verticalAxisLabels,
+            resize: true,
+            redraw: true,
+            dateFormat: function (timestamp) {
+                return moment(timestamp).format(dateFormat);
+            }
+        };
+
+        var morrisChart;
+        if (chartType === 'bar') {
+            morrisChart = Morris.Bar(morrisConfig);
+        } else if (chartType === 'area') {
+            morrisChart = Morris.Area(morrisConfig);
+        } else {
+            morrisChart = Morris.Line(morrisConfig);
+        }
+
+        $(window).on('resize', function () {
+            if (morrisChart.raphael) {
+                morrisChart.redraw();
             }
         });
     });
+});
+Dms.chart.initializeCallbacks.push(function (element) {
+    element.find('.dms-pie-chart').each(function () {
+        var chart = $(this);
+        var chartData = JSON.parse(chart.attr('data-chart-data'));
 
-    element.find('.dms-staged-form').each(function () {
-        var form = $(this);
-        var parsley = Dms.form.validation.initialize(form);
+        if (!chart.attr('id')) {
+            chart.attr('id', Dms.utilities.idGenerator());
+        }
 
-        form.find('.dms-form-fields').each(function (index) {
-            $(this).find(':input').attr('data-parsley-group', 'validation-group-' + index);
+        var morrisChart = Morris.Donut({
+            element: chart.attr('id'),
+            data: chartData,
+            resize: true,
+            redraw: true
         });
-    });
 
-    element.find('.dms-form').each(function () {
-        var form = $(this);
-        var parsley = Dms.form.validation.initialize(form);
+        $(window).on('resize', function () {
+            if (morrisChart.raphael) {
+                morrisChart.redraw();
+            }
+        });
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -55253,36 +55057,6 @@ Dms.form.initializeCallbacks.push(function (element) {
         $(this).on('ifToggled', function(event){
             formGroup.trigger('dms-change');
         });
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
-
-    element.find('.list-of-checkboxes').each(function () {
-        var listOfCheckboxes = $(this);
-        listOfCheckboxes.find('input[type=checkbox]').iCheck({
-            checkboxClass: 'icheckbox_square-blue',
-            increaseArea: '20%'
-        });
-
-        var firstCheckbox = listOfCheckboxes.find('input[type=checkbox]').first();
-        firstCheckbox.attr('data-parsley-min-elements', listOfCheckboxes.attr('data-min-elements'));
-        firstCheckbox.attr('data-parsley-max-elements', listOfCheckboxes.attr('data-max-elements'));
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
-    element.find('input.dms-colour-input').each(function () {
-        var config = {
-            theme: 'bootstrap'
-        };
-
-        if ($(this).hasClass('dms-colour-input-rgb')) {
-            config.format = 'rgb';
-        } else if ($(this).hasClass('dms-colour-input-rgba')) {
-            config.format = 'rgb';
-            config.opacity = true;
-        }
-
-        $(this).addClass('minicolors').minicolors(config);
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -55464,6 +55238,36 @@ Dms.form.initializeCallbacks.push(function (element) {
 
         startDisplay.text(convertFromServerToLocalTimezone(dateFormat, startDisplay.text()));
         endDisplay.text(convertFromServerToLocalTimezone(dateFormat, endDisplay.text()));
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+
+    element.find('.list-of-checkboxes').each(function () {
+        var listOfCheckboxes = $(this);
+        listOfCheckboxes.find('input[type=checkbox]').iCheck({
+            checkboxClass: 'icheckbox_square-blue',
+            increaseArea: '20%'
+        });
+
+        var firstCheckbox = listOfCheckboxes.find('input[type=checkbox]').first();
+        firstCheckbox.attr('data-parsley-min-elements', listOfCheckboxes.attr('data-min-elements'));
+        firstCheckbox.attr('data-parsley-max-elements', listOfCheckboxes.attr('data-max-elements'));
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+    element.find('input.dms-colour-input').each(function () {
+        var config = {
+            theme: 'bootstrap'
+        };
+
+        if ($(this).hasClass('dms-colour-input-rgb')) {
+            config.format = 'rgb';
+        } else if ($(this).hasClass('dms-colour-input-rgba')) {
+            config.format = 'rgb';
+            config.opacity = true;
+        }
+
+        $(this).addClass('minicolors').minicolors(config);
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -56321,12 +56125,6 @@ Dms.form.initializeCallbacks.push(function (element) {
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
-    element.find('input[type=radio]').iCheck({
-        radioClass: 'iradio_square-blue',
-        increaseArea: '20%'
-    });
-});
-Dms.form.initializeCallbacks.push(function (element) {
     element.find('input[type="number"][data-max-decimal-places]').each(function () {
         $(this).attr('data-parsley-max-decimal-places', $(this).attr('data-max-decimal-places'));
     });
@@ -56350,6 +56148,12 @@ Dms.form.initializeCallbacks.push(function (element) {
                 'data-parsley-type': 'integer'
             });
         }
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+    element.find('input[type=radio]').iCheck({
+        radioClass: 'iradio_square-blue',
+        increaseArea: '20%'
     });
 });
 Dms.form.initializeCallbacks.push(function (element) {
@@ -56807,248 +56611,444 @@ Dms.form.initializeCallbacks.push(function (element) {
         });
     });
 });
-Dms.chart.initializeCallbacks.push(function (element) {
+Dms.form.initializeCallbacks.push(function (element) {
 
-    element.find('.dms-chart-control').each(function () {
-        var control = $(this);
-        var chartContainer = control.find('.dms-chart-container');
-        var chartElement = chartContainer.find('.dms-chart');
-        var chartRangePicker = chartContainer.find('.dms-chart-range-picker');
-        var loadChartUrl = control.attr('data-load-chart-url');
+    var fieldCounter = 1;
 
-        var criteria = {
-            orderings: [],
-            conditions: []
-        };
+    element.find('.dms-form-fieldset .form-group').each(function () {
+        var fieldLabel = $(this).children('.dms-label-container label[data-for]');
+        var forFieldName = fieldLabel.attr('data-for');
 
-        var currentAjaxRequest;
+        if (forFieldName) {
+            var forField = $(this).first('*[name="' + forFieldName + '"], .dms-inner-form[data-name="' + forFieldName + '"]');
 
-        var loadCurrentData = function () {
-            chartContainer.addClass('loading');
-
-            if (currentAjaxRequest) {
-                currentAjaxRequest.abort();
+            if (!forField.attr('id')) {
+                forField.attr('id', 'dms-field-' + fieldCounter);
+                fieldCounter++;
             }
 
-            currentAjaxRequest = Dms.ajax.createRequest({
-                url: loadChartUrl,
-                type: 'post',
-                dataType: 'html',
-                data: criteria
+            fieldLabel.attr('for', forField.attr('id'));
+        }
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+
+    element.find('.dms-staged-form').each(function () {
+        var form = $(this);
+        var parsley = Dms.form.validation.initialize(form);
+        var stageElements = form.find('.dms-form-stage');
+
+        var arePreviousFieldsValid = function (fields) {
+            var originalScroll = $(document).scrollTop();
+            var focusedElement = $(document.activeElement);
+            parsley.validate();
+            focusedElement.focus();
+            $(document).scrollTop(originalScroll);
+
+            return fields.closest('.form-group').find('.dms-validation-message *').length === 0;
+        };
+
+        stageElements.filter('.dms-dependent-form-stage').each(function () {
+            var currentStage = $(this);
+            var container = currentStage.closest('.dms-form-stage-container');
+            var previousStages = container.prevAll('.dms-form-stage-container').find('.dms-form-stage');
+            var loadStageUrl = currentStage.attr('data-load-stage-url');
+            var dependentFields = currentStage.attr('data-stage-dependent-fields-stage-map');
+            var stageToDependentFieldsMap = dependentFields ? JSON.parse(currentStage.attr('data-stage-dependent-fields-stage-map')) : null;
+            var currentAjaxRequest = null;
+            var previousLoadAttempt = 0;
+            var minMillisecondsBetweenLoads = 2000;
+            var isWaitingForNextLoadAttempt = false;
+
+            var makeDependentFieldSelectorFor = function (selector) {
+                if (stageToDependentFieldsMap) {
+                    return Dms.form.stages.makeDependentFieldSelectorForStageMap(stageToDependentFieldsMap, selector);
+                } else {
+                    return Dms.form.stages.makeDependentFieldSelectorFor(null, selector);
+                }
+            };
+
+            var loadNextStage = function (event) {
+                if (event && event.target) {
+                    var formForEventTarget = $(event.target).closest('.dms-staged-form');
+
+                    if (!formForEventTarget.is(form)) {
+                        return;
+                    }
+                }
+
+                if (currentAjaxRequest) {
+                    currentAjaxRequest.abort();
+                }
+
+                if (stageToDependentFieldsMap) {
+                    var hasLoadedAllRequiredFields = true;
+
+                    $.each(stageToDependentFieldsMap, function (stageNumber, dependentFields) {
+                        var stage = previousStages.filter('[data-stage-number=' + stageNumber + ']');
+
+                        $.each(dependentFields, function (index, fieldName) {
+                            if (stage.find('.form-group[data-field-name="' + fieldName + '"]').length === 0) {
+                                hasLoadedAllRequiredFields = false;
+                            }
+                        });
+                    });
+
+                    if (!hasLoadedAllRequiredFields) {
+                        return;
+                    }
+                }
+
+                container.removeClass('loaded');
+                container.addClass('loading');
+
+                var currentTime = new Date().getTime();
+                var millisecondsBetweenLastLoad = currentTime - previousLoadAttempt;
+
+                if (millisecondsBetweenLastLoad >= minMillisecondsBetweenLoads) {
+                    isWaitingForNextLoadAttempt = false;
+                    previousLoadAttempt = currentTime;
+                }
+                else {
+                    if (!isWaitingForNextLoadAttempt) {
+                        isWaitingForNextLoadAttempt = true;
+                        setTimeout(loadNextStage, minMillisecondsBetweenLoads - millisecondsBetweenLastLoad);
+                    }
+                    return;
+                }
+
+                var previousFields = form.find(makeDependentFieldSelectorFor('*'));
+
+                if (!arePreviousFieldsValid(previousFields)) {
+                    container.removeClass('loading');
+                    return;
+                }
+
+                Dms.form.validation.clearMessages(form);
+
+                var formData = Dms.form.stages.getDependentDataForStage(currentStage);
+
+                currentAjaxRequest = Dms.ajax.createRequest({
+                    url: loadStageUrl,
+                    type: 'post',
+                    processData: false,
+                    contentType: false,
+                    dataType: 'html',
+                    data: formData
+                });
+
+                currentAjaxRequest.done(function (html) {
+                    currentStage.triggerHandler('dms-stage-reload');
+                    container.addClass('loaded');
+                    var currentValues = currentStage.getValues(true);
+                    currentStage.html(html);
+                    Dms.form.initialize(currentStage);
+                    Dms.table.initialize(currentStage);
+                    currentStage.restoreValues(currentValues);
+                    form.triggerHandler('dms-form-updated');
+                    currentStage.find('*[data-field-name]').trigger('dms-change')
+                });
+
+                currentAjaxRequest.fail(function (xhr) {
+                    if (currentAjaxRequest.statusText === 'abort') {
+                        return;
+                    }
+
+                    switch (xhr.status) {
+                        case 422: // Unprocessable Entity (validation failure)
+                            var validation = JSON.parse(xhr.responseText);
+                            Dms.form.validation.displayMessages(form, validation.messages.fields, validation.messages.constraints);
+                            break;
+
+                        case 400: // Bad request
+                            Dms.controls.showErrorDialog({
+                                title: "Could not load form",
+                                text: JSON.parse(xhr.responseText).message,
+                                type: "error"
+                            });
+                            break;
+
+                        default: // Unknown error
+                            Dms.controls.showErrorDialog({
+                                title: "Could not load form",
+                                text: "An unexpected error occurred",
+                                type: "error",
+                                debugInfo: xhr.responseText
+                            });
+                            break;
+                    }
+                });
+
+                currentAjaxRequest.always(function () {
+                    container.removeClass('loading');
+                });
+            };
+
+            form.on('input', makeDependentFieldSelectorFor('input'), loadNextStage);
+            form.on('input', makeDependentFieldSelectorFor('textarea'), loadNextStage);
+            form.on('change', makeDependentFieldSelectorFor('select'), loadNextStage);
+
+            if (stageToDependentFieldsMap) {
+                var selectors = [];
+
+                $.each(stageToDependentFieldsMap, function (stageNumber, dependentFields) {
+                    var stage = previousStages.filter('[data-stage-number=' + stageNumber + ']');
+                    $.each(dependentFields, function (index, fieldName) {
+                        selectors.push('.dms-form-stage[data-stage-number=' + stageNumber + '] .form-group[data-field-name="' + fieldName + '"]');
+                    });
+                });
+
+                form.on('dms-change', selectors.join(','), loadNextStage);
+            } else {
+                form.on('dms-change', '.form-group[data-field-name]', loadNextStage);
+            }
+        });
+    });
+});
+Dms.form.initializeCallbacks.push(function (element) {
+
+    element.find('.dms-staged-form, .dms-run-action-form').each(function () {
+        var form = $(this);
+        var formContainer = form.closest('.dms-staged-form-container');
+        var parsley = Dms.form.validation.initialize(form);
+        var afterRunCallbacks = [];
+        var submitButtons = form.find('input[type=submit], button[type=submit]');
+        var submitMethod = form.attr('data-method');
+        var submitUrl = form.attr('data-action');
+        var reloadFormUrl = form.attr('data-reload-form-url');
+        var shouldReloadPageAfterSubmit = form.attr('data-reload-page-after-submit');
+
+        if ($(this).is('a.dms-run-action-form, button.dms-run-action-form')) {
+            submitButtons = submitButtons.add(this);
+        }
+
+        var isFormValid = function () {
+            return parsley.isValid()
+                && form.find('.dms-validation-message *').length === 0
+                && form.find('.dms-form-stage-container').length === form.find('.dms-form-stage-container.loaded').length;
+        };
+
+        submitButtons.on('click before-confirmation', function (e) {
+            parsley.validate();
+
+            if (!isFormValid()) {
+                e.stopImmediatePropagation();
+                form.find('.dms-form-stage-container:not(.loaded)').addClass('has-error');
+                return false;
+            }
+        });
+
+        submitButtons.on('click', function (e) {
+            e.preventDefault();
+
+            Dms.form.validation.clearMessages(form);
+
+            form.triggerHandler('dms-before-submit');
+
+            var fieldsToReappend = [];
+            form.find('.dms-form-no-submit').each(function () {
+                var removedFields = $(this).children().detach();
+
+                fieldsToReappend.push({
+                    parentElement: $(this),
+                    children: removedFields
+                });
             });
 
-            currentAjaxRequest.done(function (chartData) {
-                chartElement.html(chartData);
-                Dms.chart.initialize(chartElement);
+            var formData = Dms.form.stages.createFormDataFromFields(form.find(':input'));
+            form.find('.form-group').each(function () {
+                var additionalDataToSubmit = $(this).triggerHandler('dms-get-input-data');
+
+                if (additionalDataToSubmit) {
+                    $.each(Dms.ajax.parseData(additionalDataToSubmit), function (name, entries) {
+                        $.each(entries, function (index, entry) {
+                            formData.append(name, entry.value, entry.filename);
+                        });
+                    });
+                }
             });
 
-            currentAjaxRequest.fail(function (response) {
+            $.each(fieldsToReappend, function (index, elements) {
+                elements.parentElement.append(elements.children);
+            });
+
+            submitButtons.prop('disabled', true);
+            submitButtons.addClass('ladda-button').attr('data-style', 'expand-right');
+            var ladda = Ladda.create(submitButtons.get(0));
+            ladda.start();
+
+            var currentAjaxRequest = Dms.ajax.createRequest({
+                url: submitUrl,
+                type: submitMethod,
+                processData: false,
+                contentType: false,
+                dataType: 'json',
+                data: formData,
+                xhr: function () {
+                    var xhr = $.ajaxSettings.xhr();
+
+                    if (form.find('input[type=file]').length && xhr.upload) {
+                        xhr.upload.addEventListener('progress', function (event) {
+                            if (event.lengthComputable) {
+                                ladda.setProgress(event.loaded / event.total);
+                            }
+                        }, false);
+                    }
+
+                    return xhr;
+                }
+            });
+
+            currentAjaxRequest.done(function (data, statusText, xhr) {
+                Dms.action.responseHandler(xhr.status, submitUrl, data);
+                $.each(afterRunCallbacks, function (index, callback) {
+                    callback(data);
+                });
+
+                form.triggerHandler('dms-post-submit-success');
+            });
+
+            currentAjaxRequest.fail(function (xhr) {
                 if (currentAjaxRequest.statusText === 'abort') {
                     return;
                 }
 
-                chartContainer.addClass('error');
+                switch (xhr.status) {
+                    case 401: // Unauthorized
+                        Dms.controls.showErrorDialog({
+                            title: "Could not perform action",
+                            text: "You do not possess the necessary permissions to authorize this action",
+                            type: "error"
+                        });
+                        break;
 
-                Dms.controls.showErrorDialog({
-                    title: "Could not load chart data",
-                    text: "An unexpected error occurred",
-                    type: "error",
-                    debugInfo: response.responseText
-                });
+                    case 422: // Unprocessable Entity (validation failure)
+                        var validation = JSON.parse(xhr.responseText);
+                        Dms.form.validation.displayMessages(form, validation.messages.fields, validation.messages.constraints);
+                        Dms.utilities.scrollToView(form.find('.help-block-error:not(:empty)').first());
+                        break;
+
+                    default:
+                        try {
+                            var response = JSON.parse(xhr.responseText);
+                            Dms.action.responseHandler(xhr.status, submitUrl, response);
+                        } catch (e) {
+                            // Unknown error
+                            Dms.controls.showErrorDialog({
+                                title: "Could not submit form",
+                                text: "An unexpected error occurred",
+                                type: "error",
+                                debugInfo: xhr.responseText
+                            });
+                            break;
+                        }
+                }
             });
 
             currentAjaxRequest.always(function () {
-                chartContainer.removeClass('loading');
-            });
-        };
-
-        loadCurrentData();
-
-        chartRangePicker.on('dms-range-updated', function () {
-            var horizontalAxis = chartContainer.attr('data-date-axis-name');
-            criteria.conditions = [
-                {axis: horizontalAxis, operator: '>=', value: chartRangePicker.find('.dms-start-input').val()},
-                {axis: horizontalAxis, operator: '<=', value: chartRangePicker.find('.dms-end-input').val()}
-            ];
-
-            loadCurrentData();
-        });
-    });
-});
-Dms.chart.initializeCallbacks.push(function (element) {
-
-    element.find('.dms-geo-chart').each(function () {
-        var chart = $(this);
-        var isCityChart = chart.attr('data-city-chart');
-        var hasLatLng = chart.attr('data-has-lat-lng');
-        var chartData = JSON.parse(chart.attr('data-chart-data'));
-        var region = chart.attr('data-region');
-        var locationLabel = chart.attr('data-location-label');
-        var valueLabels = JSON.parse(chart.attr('data-value-labels'));
-
-        Dms.loader.register('google-geo-charts', function (callback) {
-            google.charts.load('current', {'packages': ['geochart']});
-            google.charts.setOnLoadCallback(callback);
-        }, function () {
-            var headers = [];
-
-            if (hasLatLng) {
-                headers.push('Latitude');
-                headers.push('Longitude');
-            }
-
-            headers.push(locationLabel);
-            headers = headers.concat(valueLabels);
-
-            var transformedChartData = [headers];
-
-            if (chartData.length) {
-                $.each(chartData, function (index, row) {
-                    transformedChartData.push((hasLatLng ? row.lat_lng : []).concat([row.label]).concat(row.values));
-                });
-            }
-            
-            var data = google.visualization.arrayToDataTable(transformedChartData);
-
-            var googleChart = new google.visualization.GeoChart(chart.get(0));
-
-            var drawChart = function () {
-                googleChart.draw(data, {
-                    displayMode: isCityChart ? 'markers' : 'regions',
-                    region: region
-                });
-            };
-
-            var resizeTimeoutId;
-            $(window).resize(function () {
-                if (resizeTimeoutId) {
-                    clearTimeout(resizeTimeoutId);
-                }
-
-                resizeTimeoutId = setTimeout(function () {
-                    drawChart();
-                    resizeTimeoutId = null;
-                }, 500);
+                submitButtons.prop('disabled', false);
+                ladda.stop();
             });
 
-            drawChart();
+            return false;
         });
-    });
-});
-Dms.chart.initializeCallbacks.push(function (element) {
-    element.find('.dms-graph-chart').each(function () {
-        var chart = $(this);
-        var dateFormat = Dms.utilities.convertPhpDateFormatToMomentFormat(chart.attr('data-date-format'));
-        var chartData = JSON.parse(chart.attr('data-chart-data'));
-        var chartType = chart.attr('data-chart-type');
-        var horizontalAxisKey = chart.attr('data-horizontal-axis-key');
-        var horizontalAxisUnitType = chart.attr('data-horizontal-unit-type');
-        var verticalAxisKeys = JSON.parse(chart.attr('data-vertical-axis-keys'));
-        var verticalAxisLabels = JSON.parse(chart.attr('data-vertical-axis-labels'));
-        var minTimestamp;
-        var maxTimestamp;
-        var timeRowLookup = {};
 
-        if (!chart.attr('id')) {
-            chart.attr('id', Dms.utilities.idGenerator());
+        var parentToRemove = form.attr('data-after-run-remove-closest');
+        if (parentToRemove) {
+            afterRunCallbacks.push(function () {
+                form.closest(parentToRemove).fadeOut(100);
+            });
         }
 
-        $.each(chartData, function (index, row) {
-            var timestamp = moment(row[horizontalAxisKey], dateFormat).valueOf();
-            row[horizontalAxisKey] = timestamp;
-            timeRowLookup[timestamp] = true;
-
-            if (!minTimestamp || timestamp < minTimestamp) {
-                minTimestamp = timestamp;
-            }
-
-            if (!maxTimestamp || timestamp > maxTimestamp) {
-                maxTimestamp = timestamp;
-            }
+        afterRunCallbacks.push(function () {
+            form.find('input[type=password]').val('');
         });
 
-        var zeroFillMissingValues = function (unitType, chartData) {
-            if (chartData.length === 0) {
+        afterRunCallbacks.push(function (data) {
+            if (data.redirect) {
                 return;
             }
 
-            var addUnitToDate;
-            if (unitType === 'date') {
-                addUnitToDate = function (date) {
-                    date.setDate(date.getDate() + 1);
-                };
-            } else {
-                addUnitToDate = function (date) {
-                    date.setSeconds(date.getSeconds() + 1)
-                };
+            if (shouldReloadPageAfterSubmit) {
+                Dms.link.reloadCurrentPage();
+                return;
             }
 
-            for (var i = new Date(minTimestamp); i.getTime() < maxTimestamp; addUnitToDate(i)) {
-                if (typeof timeRowLookup[i.getTime()] === 'undefined') {
-                    var rowData = {};
-                    rowData[horizontalAxisKey] = i.getTime();
-
-                    $.each(verticalAxisKeys, function (index, verticalAxisKey) {
-                        rowData[verticalAxisKey] = 0;
-                    });
-
-                    chartData.push(rowData);
-                }
+            if (!form.is('.dms-staged-form')) {
+                return;
             }
-        };
 
-        zeroFillMissingValues(horizontalAxisUnitType, chartData);
+            var request = Dms.ajax.createRequest({
+                url: reloadFormUrl,
+                type: 'get',
+                dataType: 'html',
+                data: {'__content_only': '1'}
+            });
 
-        var morrisConfig = {
-            element: chart.attr('id'),
-            data: chartData,
-            xkey: horizontalAxisKey,
-            ykeys: verticalAxisKeys,
-            labels: verticalAxisLabels,
-            resize: true,
-            redraw: true,
-            dateFormat: function (timestamp) {
-                return moment(timestamp).format(dateFormat);
-            }
-        };
+            formContainer.addClass('loading');
 
-        var morrisChart;
-        if (chartType === 'bar') {
-            morrisChart = Morris.Bar(morrisConfig);
-        } else if (chartType === 'area') {
-            morrisChart = Morris.Area(morrisConfig);
-        } else {
-            morrisChart = Morris.Line(morrisConfig);
-        }
+            request.done(function (html) {
+                var newForm = $(html).find('.dms-staged-form').first();
+                form.replaceWith(newForm);
+                Dms.form.initialize(newForm.parent());
+                Dms.table.initialize(newForm.parent());
+            });
 
-        $(window).on('resize', function () {
-            if (morrisChart.raphael) {
-                morrisChart.redraw();
-            }
+            request.always(function () {
+                formContainer.removeClass('loading');
+            });
         });
     });
 });
-Dms.chart.initializeCallbacks.push(function (element) {
-    element.find('.dms-pie-chart').each(function () {
-        var chart = $(this);
-        var chartData = JSON.parse(chart.attr('data-chart-data'));
+Dms.form.initializeValidationCallbacks.push(function (element) {
 
-        if (!chart.attr('id')) {
-            chart.attr('id', Dms.utilities.idGenerator());
+    element.find('.dms-form-fields').each(function () {
+        if (!$(this).attr('id')) {
+            $(this).attr('id', Dms.utilities.idGenerator());
         }
+    });
 
-        var morrisChart = Morris.Donut({
-            element: chart.attr('id'),
-            data: chartData,
-            resize: true,
-            redraw: true
-        });
+    element.find('.dms-form-fields').each(function () {
+        var formFieldSection = $(this);
+        var formFieldsGroupId = formFieldSection.attr('id');
 
-        $(window).on('resize', function () {
-            if (morrisChart.raphael) {
-                morrisChart.redraw();
+
+        var buildElementSelector = function (fieldName) {
+            return '#' + formFieldsGroupId + ' *[name="' + fieldName + '"]';
+        };
+
+        var fieldValidations = {
+            'data-equal-fields': 'data-parsley-equalto',
+            'data-greater-than-fields': 'data-parsley-gt',
+            'data-greater-than-or-equal-fields': 'data-parsley-gte',
+            'data-less-than-fields': 'data-parsley-lt',
+            'data-less-than-or-equal-fields': 'data-parsley-lte'
+        };
+
+        $.each(fieldValidations, function (validationAttr, parsleyAttr) {
+            var fieldsMap = formFieldSection.attr(validationAttr);
+
+            if (fieldsMap) {
+                $.each(JSON.parse(fieldsMap), function (fieldName, otherFieldName) {
+                    var field = $(buildElementSelector(fieldName));
+                    field.attr(parsleyAttr, buildElementSelector(otherFieldName));
+                });
             }
         });
+    });
+
+    element.find('.dms-staged-form').each(function () {
+        var form = $(this);
+        var parsley = Dms.form.validation.initialize(form);
+
+        form.find('.dms-form-fields').each(function (index) {
+            $(this).find(':input').attr('data-parsley-group', 'validation-group-' + index);
+        });
+    });
+
+    element.find('.dms-form').each(function () {
+        var form = $(this);
+        var parsley = Dms.form.validation.initialize(form);
     });
 });
 Dms.table.initializeCallbacks.push(function (element) {

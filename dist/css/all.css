@@ -15710,7 +15710,7 @@ a:not(.btn).ladda-button .ladda-spinner > div > div > div {
   max-height: 300px;
   overflow-y: scroll; }
 
-.dropdown-menu > li > a.btn-danger {
+.dropdown-menu > li > a.btn-danger, .dropdown-menu > li > a.btn-info, .dropdown-menu > li > a.btn-success {
   color: #fff; }
 
 body {

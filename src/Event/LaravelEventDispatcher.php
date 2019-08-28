@@ -81,6 +81,6 @@ class LaravelEventDispatcher extends EventDispatcher
      */
     public function emit(string $event, ...$arguments)
     {
-        $this->dispatcher->fire($event, $arguments);
+        $this->dispatcher->dispatch($event, $arguments);
     }
 }

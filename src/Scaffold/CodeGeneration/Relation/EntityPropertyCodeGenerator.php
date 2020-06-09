@@ -10,6 +10,7 @@ use Dms\Web\Laravel\Scaffold\Domain\DomainObjectStructure;
 use Dms\Web\Laravel\Scaffold\Domain\DomainStructure;
 use Dms\Web\Laravel\Scaffold\ScaffoldCmsContext;
 use Dms\Web\Laravel\Scaffold\ScaffoldPersistenceContext;
+use Illuminate\Support\Str;
 
 /**
  * @author Elliot Levin <elliotlevin@hotmail.com>
@@ -154,7 +155,7 @@ class EntityPropertyCodeGenerator extends PropertyCodeGenerator
     protected function findLabelProperty(DomainObjectStructure $entity) : string
     {
         foreach ($entity->getDefinition()->getProperties() as $property) {
-            if (str_contains(strtolower($property->getName()), ['name', 'title'])) {
+            if (Str::contains(strtolower($property->getName()), ['name', 'title'])) {
                 return $this->getPropertyReference($entity, $property->getName());
             }
         }

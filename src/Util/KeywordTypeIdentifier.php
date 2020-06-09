@@ -3,6 +3,7 @@
 namespace Dms\Web\Laravel\Util;
 
 use Illuminate\Contracts\Config\Repository;
+use Illuminate\Support\Str;
 
 /**
  * The keyword type identifier class.
@@ -82,19 +83,19 @@ class KeywordTypeIdentifier
             return $this->overridesMap[$name];
         }
 
-        if (str_contains($name, $this->dangerStrings)) {
+        if (Str::contains($name, $this->dangerStrings)) {
             return 'danger';
         }
 
-        if (str_contains($name, $this->successStrings)) {
+        if (Str::contains($name, $this->successStrings)) {
             return 'success';
         }
 
-        if (str_contains($name, $this->infoStrings)) {
+        if (Str::contains($name, $this->infoStrings)) {
             return 'info';
         }
 
-        if (str_contains($name, $this->primaryStrings)) {
+        if (Str::contains($name, $this->primaryStrings)) {
             return 'primary';
         }
 

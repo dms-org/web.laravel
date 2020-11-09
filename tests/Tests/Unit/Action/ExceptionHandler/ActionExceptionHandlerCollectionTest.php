@@ -23,7 +23,7 @@ class ActionExceptionHandlerCollectionTest extends UnitTest
      */
     protected $collection;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->collection = new ActionExceptionHandlerCollection([
             new InvalidFormSubmissionExceptionHandler(new MockLanguageProvider()),

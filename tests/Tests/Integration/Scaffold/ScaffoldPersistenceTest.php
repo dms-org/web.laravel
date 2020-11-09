@@ -37,8 +37,8 @@ class ScaffoldPersistenceTest extends ScaffoldTest
      */
     public function testScaffold(string $name, string $entityNamespace, string $domainPath, string $servicesPath, string $infrastructurePath)
     {
-        $tempServicesPath       = __DIR__ . '/temp/' . str_random();
-        $tempInfrastructurePath = __DIR__ . '/temp/' . str_random();
+        $tempServicesPath       = __DIR__ . '/temp/' . \Str::random();
+        $tempInfrastructurePath = __DIR__ . '/temp/' . \Str::random();
 
         foreach (Finder::create()->files()->in($domainPath) as $file) {
             /** @var \SplFileInfo $file */
@@ -82,7 +82,7 @@ class ScaffoldPersistenceTest extends ScaffoldTest
      */
     public function testFilterOption(string $filter, $shouldExist)
     {
-        $tempCmsPath = __DIR__ . '/temp/' . str_random();
+        $tempCmsPath = __DIR__ . '/temp/' . \Str::random();
 
         $this->app[NamespaceDirectoryResolver::class] = $this->mockNamespaceDirectoryResolver([
             __NAMESPACE__ . '\\Fixture\\Simple\\Domain'               => __DIR__ . '/Fixture/Simple/Domain',
@@ -102,7 +102,7 @@ class ScaffoldPersistenceTest extends ScaffoldTest
         if ($shouldExist) {
             $this->assertFileExists($tempCmsPath . '/Modules/TestEntityModule.php');
         } else {
-            $this->assertFileNotExists($tempCmsPath . '/Modules/TestEntityModule.php');
+            $this->assertFileDoesNotExist($tempCmsPath . '/Modules/TestEntityModule.php');
         }
     }
 }

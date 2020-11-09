@@ -39,7 +39,7 @@ abstract class CmsIntegrationTest extends TestCase
         throw new \Exception('Please implement the ' . get_called_class() . '::' . __FUNCTION__ . ' method');
     }
 
-    public static function setUpBeforeClass()
+    public static function setUpBeforeClass(): void
     {
         parent::setUpBeforeClass();
 

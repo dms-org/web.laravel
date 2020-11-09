@@ -34,7 +34,7 @@ class DmsUserProviderTest extends DbIntegrationTest
         return new AuthOrm();
     }
 
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
 

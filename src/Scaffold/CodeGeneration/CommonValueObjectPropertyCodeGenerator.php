@@ -58,9 +58,9 @@ abstract class CommonValueObjectPropertyCodeGenerator extends PropertyCodeGenera
         if ($property->getType() instanceof CollectionType) {
             $code->getCode()->appendLine('$map->embeddedCollection(' . $propertyReference . ')');
             $code->getCode()->indent++;
-            $code->getCode()->appendLine('->toTable(\'' . snake_case($object->getReflection()->getShortName() . '_' . $property->getName()) . '\')');
+            $code->getCode()->appendLine('->toTable(\'' . \Str::snake($object->getReflection()->getShortName() . '_' . $property->getName()) . '\')');
             $code->getCode()->appendLine('->withPrimaryKey(\'id\')');
-            $code->getCode()->appendLine('->withForeignKeyToParentAs(\'' . snake_case($object->getReflection()->getShortName()) . '_id' . '\')');
+            $code->getCode()->appendLine('->withForeignKeyToParentAs(\'' . \Str::snake($object->getReflection()->getShortName()) . '_id' . '\')');
         } else {
             $code->getCode()->appendLine('$map->embedded(' . $propertyReference . ')');
             $code->getCode()->indent++;

@@ -68,7 +68,7 @@ abstract class DmsFixture
         ]);
 
         $migrationGenerator = new LaravelMigrationGenerator(
-            app(MigrationCreator::class),
+            app(MigrationCreator::class, ['customStubPath' => __DIR__]),
             app(Filesystem::class),
             $migrationsPath
         );
@@ -83,7 +83,7 @@ abstract class DmsFixture
             $migrationFile = $migrationGenerator->generateMigration(
                 $app->make(IConnection::class),
                 $app->make(IOrm::class),
-                basename(str_replace('\\', '-', get_class($this))) . '-' . str_random(5)
+                basename(str_replace('\\', '-', get_class($this))) . '-' . \Str::random(5)
             );
 
             if ($migrationFile) {

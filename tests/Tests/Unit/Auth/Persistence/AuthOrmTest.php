@@ -54,7 +54,7 @@ class AuthOrmTest extends DbIntegrationTest
         return Admin::class;
     }
 
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
 

@@ -79,12 +79,12 @@ class TemporaryFileService implements ITemporaryFileService
 
         foreach ($files as $key => $file) {
             if ($file instanceof IUploadedFile) {
-                $fileName = str_random(32);
+                $fileName = \Str::random(32);
                 $file     = $file->moveTo(PathHelper::combine($tempUploadDirectory, $fileName));
             }
 
             $tempFiles[$key] = new TemporaryFile(
-                str_random(40),
+                \Str::random(40),
                 $file,
                 (new DateTime($this->clock->utcNow()))->addSeconds($expirySeconds)
             );

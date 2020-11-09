@@ -100,7 +100,7 @@ abstract class ScaffoldCommand extends Command
         $filter = trim($filter, ' \\');
 
         return array_filter($objects, function (DomainObjectStructure $object) use ($filter) {
-            return str_is($filter, $object->getReflection()->getName());
+            return \Str::is($filter, $object->getReflection()->getName());
         });
     }
 

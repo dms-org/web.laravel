@@ -205,6 +205,6 @@ abstract class PropertyCodeGenerator
      */
     protected function getShortClassName(string $class) : string
     {
-        return array_last(explode('\\', $class));
+        return last(explode('\\', $class));
     }
 }

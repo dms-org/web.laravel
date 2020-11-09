@@ -82,13 +82,13 @@ class EntityCollectionPropertyCodeGenerator extends PropertyCodeGenerator
         }
 
         if ($isManyToMany) {
-            $parentForeignKeyName  = snake_case($object->getReflection()->getShortName()) . '_id';
-            $relatedForeignKeyName = snake_case($entity->getReflection()->getShortName()) . '_id';
+            $parentForeignKeyName  = \Str::snake($object->getReflection()->getShortName()) . '_id';
+            $relatedForeignKeyName = \Str::snake($entity->getReflection()->getShortName()) . '_id';
             $code->getCode()->appendLine('->throughJoinTable(\'' . $this->getJoinTableName($object, $relation) . '\')');
             $code->getCode()->appendLine('->withParentIdAs(\'' . $parentForeignKeyName . '\')');
             $code->getCode()->append('->withRelatedIdAs(\'' . $relatedForeignKeyName . '\')');
         } else {
-            $parentForeignKeyName = snake_case($object->getReflection()->getShortName()) . '_id';
+            $parentForeignKeyName = \Str::snake($object->getReflection()->getShortName()) . '_id';
             $code->getCode()->append('->withParentIdAs(\'' . $parentForeignKeyName . '\')');
         }
 
@@ -120,7 +120,7 @@ class EntityCollectionPropertyCodeGenerator extends PropertyCodeGenerator
         $relativeNamespace      = $context->getRelativeObjectNamespace($entity);
         $dataSourceNamespace    = $context->getDataSourceNamespace() . ($relativeNamespace ? '\\' . $relativeNamespace : '');
         $dataSourceInterface    = $dataSourceNamespace . '\\I' . $entity->getReflection()->getShortName() . 'Repository';
-        $dataSourcePropertyName = camel_case($entity->getReflection()->getShortName()) . 'Repository';
+        $dataSourcePropertyName = \Str::camel($entity->getReflection()->getShortName()) . 'Repository';
 
         $code->addNamespaceImport($dataSourceInterface);
         $code->addNamespaceImport($entity->getDefinition()->getClassName());
@@ -153,13 +153,13 @@ class EntityCollectionPropertyCodeGenerator extends PropertyCodeGenerator
     private function getJoinTableName(DomainObjectStructure $parentEntity, DomainObjectRelation $relation) : string
     {
         $tables = [
-            snake_case($parentEntity->getReflection()->getShortName()),
-            snake_case($relation->getRelatedObject()->getReflection()->getShortName()),
+            \Str::snake($parentEntity->getReflection()->getShortName()),
+            \Str::snake($relation->getRelatedObject()->getReflection()->getShortName()),
         ];
 
         // Ensure consistent order
         sort($tables, SORT_STRING);
 
-        return $tables[0] . '_' . str_plural($tables[1]);
+        return $tables[0] . '_' . \Str::plural($tables[1]);
     }
 }

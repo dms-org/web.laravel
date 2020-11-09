@@ -161,7 +161,7 @@ abstract class OauthProvider
     public function allowsAccount(AdminAccountDetails $adminAccountDetails) : bool
     {
         foreach ($this->allowedEmails as $allowedEmail) {
-            if (str_is($allowedEmail, $adminAccountDetails->getEmail()->asString())) {
+            if (\Str::is($allowedEmail, $adminAccountDetails->getEmail()->asString())) {
                 return true;
             }
         }

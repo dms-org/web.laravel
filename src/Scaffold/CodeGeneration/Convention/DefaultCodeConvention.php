@@ -14,7 +14,7 @@ class DefaultCodeConvention extends CodeConvention
      */
     public function getPersistenceColumnName(string $propertyName) : string
     {
-        return snake_case($propertyName);
+        return \Str::snake($propertyName);
     }
 
     /**
@@ -24,7 +24,7 @@ class DefaultCodeConvention extends CodeConvention
      */
     public function getCmsFieldName(string $propertyName) : string
     {
-        return snake_case($propertyName);
+        return \Str::snake($propertyName);
     }
 
     /**
@@ -34,6 +34,6 @@ class DefaultCodeConvention extends CodeConvention
      */
     public function getCmsFieldLabel(string $propertyName) : string
     {
-        return ucwords(str_replace('_', ' ', snake_case($propertyName)));
+        return ucwords(str_replace('_', ' ', \Str::snake($propertyName)));
     }
 }

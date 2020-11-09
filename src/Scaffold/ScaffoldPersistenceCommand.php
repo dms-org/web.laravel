@@ -122,7 +122,7 @@ class ScaffoldPersistenceCommand extends ScaffoldCommand
                 '{name}'        => $mapperName,
                 '{entity}'      => $entity->getDefinition()->getClassName(),
                 '{entity_name}' => $entityName,
-                '{table_name}'  => str_plural(snake_case($entityName)),
+                '{table_name}'  => \Str::plural(\Str::snake($entityName)),
                 '{mapping}'     => $mappingCodeContext->getCode()->getCode(),
             ]
         );

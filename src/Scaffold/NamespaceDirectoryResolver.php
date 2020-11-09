@@ -23,7 +23,7 @@ class NamespaceDirectoryResolver
 
         foreach ($psr4Rules as $ruleNamespace => list($directory)) {
             $ruleNamespace = rtrim($ruleNamespace, '\\');
-            if (starts_with($namespace, $ruleNamespace)) {
+            if (\Str::startsWith($namespace, $ruleNamespace)) {
                 $path = PathHelper::combine($directory, substr($namespace, strlen($ruleNamespace)));
                 break;
             }
@@ -31,7 +31,7 @@ class NamespaceDirectoryResolver
 
         foreach ($psr0Rules as $ruleNamespace => list($directory)) {
             $ruleNamespace = rtrim($ruleNamespace, '\\');
-            if (starts_with($namespace, $ruleNamespace)) {
+            if (\Str::startsWith($namespace, $ruleNamespace)) {
                 $path = PathHelper::combine($directory, $namespace);
                 break;
             }

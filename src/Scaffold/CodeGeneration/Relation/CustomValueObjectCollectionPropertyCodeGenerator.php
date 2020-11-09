@@ -56,9 +56,9 @@ class CustomValueObjectCollectionPropertyCodeGenerator extends PropertyCodeGener
         $elementType = $type->getElementType();
         $valueObject = $context->getDomainStructure()->getObject($elementType->getClass());
 
-        $tableName      = snake_case($object->getReflection()->getShortName()) . '_' . str_plural(snake_case($property->getName()));
+        $tableName      = \Str::snake($object->getReflection()->getShortName()) . '_' . \Str::plural(\Str::snake($property->getName()));
         $primaryKeyName = 'id';
-        $foreignKeyName = snake_case($object->getReflection()->getShortName()) . '_id';
+        $foreignKeyName = \Str::snake($object->getReflection()->getShortName()) . '_id';
 
         $code->getCode()->appendLine('->toTable(\'' . $tableName . '\')');
         $code->getCode()->appendLine('->withPrimaryKey(\'' . $primaryKeyName . '\')');

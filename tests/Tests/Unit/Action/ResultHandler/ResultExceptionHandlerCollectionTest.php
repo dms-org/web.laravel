@@ -22,7 +22,7 @@ class ActionResultHandlerCollectionTest extends UnitTest
      */
     protected $collection;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->collection = new ActionResultHandlerCollection([
             new NullResultHandler(),

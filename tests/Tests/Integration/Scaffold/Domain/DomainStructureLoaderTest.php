@@ -44,13 +44,13 @@ class DomainStructureLoaderTest extends CmsIntegrationTest
             [
                 'domain_namespace' => 'Dms\\Web\\Laravel\\Tests\\Integration\\Scaffold\\Fixture\\ValueObject\\Domain',
                 'expected_domain'  => new DomainStructure([
-                    new DomainObjectStructure(TestValueObject::definition()),
-                    new DomainObjectStructure(TestDateTimeValueObject::definition()),
-                    new DomainObjectStructure(TestDateTimeRangeValueObject::definition()),
-                    new DomainObjectStructure(TestFileValueObject::definition()),
                     new DomainObjectStructure(TestColourValueObject::definition()),
+                    new DomainObjectStructure(TestDateTimeRangeValueObject::definition()),
+                    new DomainObjectStructure(TestDateTimeValueObject::definition()),
+                    new DomainObjectStructure(TestFileValueObject::definition()),
                     new DomainObjectStructure(TestGeoValueObject::definition()),
                     new DomainObjectStructure(TestMoneyValueObject::definition()),
+                    new DomainObjectStructure(TestValueObject::definition()),
                     new DomainObjectStructure(TestWebValueObject::definition()),
                 ]),
             ],

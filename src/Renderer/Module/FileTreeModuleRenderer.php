@@ -59,7 +59,7 @@ class FileTreeModuleRenderer extends ModuleRenderer
 
         return view('dms::package.module.dashboard.file-tree')
             ->with([
-                'isPublic'           => starts_with($rootDirectory, [
+                'isPublic'           => \Str::startsWith($rootDirectory, [
                     rtrim(PathHelper::normalize(config('dms.storage.public-files.dir')), '/\\'),
                     rtrim(public_path(), '/\\'),
                 ]),

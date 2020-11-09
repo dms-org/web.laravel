@@ -18,7 +18,7 @@ class PasswordHasherFactoryTest extends UnitTest
      */
     protected $factory;
 
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
 

@@ -75,7 +75,10 @@ class DomainStructureLoader
     {
         return Traversable::from(get_declared_classes())
             ->where(function (string $class) use ($namespace) {
-                return starts_with($class, $namespace) && is_subclass_of($class, TypedObject::class);
+                return \Str::startsWith($class, $namespace) && is_subclass_of($class, TypedObject::class);
+            })
+            ->orderByAscending(function ($class) {
+                return explode('\\', $class);
             })
             ->asArray();
     }

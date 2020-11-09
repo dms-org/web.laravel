@@ -17,7 +17,7 @@ class EncryptCookies extends BaseEncrypter
 
     public function isDisabled($name)
     {
-        if (starts_with($name, 'file-download')) {
+        if (\Str::startsWith($name, 'file-download')) {
             return true;
         }
 

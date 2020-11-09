@@ -53,7 +53,7 @@ class EntityPropertyCodeGenerator extends PropertyCodeGenerator
         $code->addNamespaceImport($entity->getDefinition()->getClassName());
 
         if ($isManyToOne) {
-            $foreignKeyName = snake_case($entity->getReflection()->getShortName()) . '_id';
+            $foreignKeyName = \Str::snake($entity->getReflection()->getShortName()) . '_id';
 
             $code->addNamespaceImport($entity->getDefinition()->getClassName());
 
@@ -98,7 +98,7 @@ class EntityPropertyCodeGenerator extends PropertyCodeGenerator
         if ($isManyToOne) {
             $code->getCode()->append('->withRelatedIdAs(\'' . $foreignKeyName . '\')');
         } else {
-            $foreignKeyName = snake_case($object->getReflection()->getShortName()) . '_id';
+            $foreignKeyName = \Str::snake($object->getReflection()->getShortName()) . '_id';
             $code->getCode()->append('->withParentIdAs(\'' . $foreignKeyName . '\')');
         }
 
@@ -131,7 +131,7 @@ class EntityPropertyCodeGenerator extends PropertyCodeGenerator
         $relativeNamespace      = $context->getRelativeObjectNamespace($entity);
         $dataSourceNamespace    = $context->getDataSourceNamespace() . ($relativeNamespace ? '\\' . $relativeNamespace : '');
         $dataSourceInterface    = $dataSourceNamespace . '\\I' . $entity->getReflection()->getShortName() . 'Repository';
-        $dataSourcePropertyName = camel_case($entity->getReflection()->getShortName()) . 'Repository';
+        $dataSourcePropertyName = \Str::camel($entity->getReflection()->getShortName()) . 'Repository';
 
         $code->addNamespaceImport($dataSourceInterface);
         $code->addNamespaceImport($entity->getDefinition()->getClassName());

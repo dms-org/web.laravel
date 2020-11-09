@@ -29,7 +29,7 @@ class SymfonyToDmsUploadedFileTransformerTest extends ActionInputTransformerTest
             ],
             [
                 $this->mockAction(),
-                ['inner' => ['file' => new SymfonyFile(__FILE__, 'name', 'image/png', null, UPLOAD_ERR_EXTENSION)]],
+                ['inner' => ['file' => new SymfonyFile(__FILE__, 'name', 'image/png', UPLOAD_ERR_EXTENSION)]],
                 ['inner' => ['file' => new UploadedImage(__FILE__, UPLOAD_ERR_EXTENSION, 'name', 'image/png')]],
             ],
         ];

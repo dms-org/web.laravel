@@ -17,7 +17,7 @@ abstract class ActionInputTransformerTest extends UnitTest
      */
     protected $transformer;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->transformer = $this->buildInputTransformer();
     }

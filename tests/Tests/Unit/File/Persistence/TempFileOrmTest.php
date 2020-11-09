@@ -24,7 +24,7 @@ class TempFileOrmTest extends DbIntegrationTest
         return new TempFileOrm();
     }
 
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
 

@@ -19,7 +19,7 @@ abstract class ResultHandlerTest extends UnitTest
      */
     protected $handler;
 
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
         $this->handler = $this->buildHandler();

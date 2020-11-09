@@ -52,7 +52,7 @@ class TemporaryFileServiceTest extends CmsTestCase
         };
     }
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->tempFileRepo    = $this->mockRepo();
         $this->tempFileService = new TemporaryFileService(

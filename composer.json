@@ -19,14 +19,14 @@
     },
     "require": {
         "php": ">=7.0.0",
-        "dms-org/core": "^0.8.2",
-        "dms-org/common.structure": "^0.8.0",
-        "dms-org/package.analytics": "^0.8.0",
-        "laravel/framework": "^5.5.0",
+        "dms-org/core": "dev-upgrade",
+        "dms-org/common.structure": "dev-upgrade",
+        "dms-org/package.analytics": "dev-upgrade",
+        "dms-org/library.metadata": "dev-upgrade",
+        "laravel/framework": "^8.0",
         "marcj/topsort": "^1.0.0",
         "cache/cache": "^0.1.0",
-        "league/oauth2-google": "^3.0.0",
-        "dms-org/library.metadata": "^0.8.0"
+        "league/oauth2-google": "^3.0.0"
     },
     "autoload-dev": {
         "psr-4": {
@@ -35,10 +35,9 @@
         }
     },
     "require-dev": {
-        "laravel/browser-kit-testing": "^2.0.0",
-        "dms-org/common.testing": "dev-master",
-        "dms-org/package.content": "0.8.0",
-        "orchestra/testbench": "3.5.0"
+        "dms-org/common.testing": "dev-upgrade",
+        "laravel/browser-kit-testing": "^6.0",
+        "orchestra/testbench": "^6.0"
     },
     "extra": {
         "laravel": {

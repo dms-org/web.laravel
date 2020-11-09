@@ -15,7 +15,7 @@ class BcryptPasswordHasherTest extends UnitTest
      */
     protected $hasher;
 
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
 

@@ -57,7 +57,7 @@ abstract class ScaffoldContext
      */
     public function getRelativeObjectNamespace(DomainObjectStructure $domainObjectStructure) : string
     {
-        if (!starts_with($domainObjectStructure->getDefinition()->getClassName(), $this->rootEntityNamespace)) {
+        if (!\Str::startsWith($domainObjectStructure->getDefinition()->getClassName(), $this->rootEntityNamespace)) {
             throw InvalidArgumentException::format('Domain object not in root namespace');
         }
 

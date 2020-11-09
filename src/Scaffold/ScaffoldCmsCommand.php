@@ -91,7 +91,7 @@ class ScaffoldCmsCommand extends ScaffoldCommand
         $entityName        = $entity->getReflection()->getShortName();
         $relativeNamespace = $context->getRelativeObjectNamespace($entity);
 
-        $moduleName                = snake_case($entityName, '-');
+        $moduleName                = \Str::snake($entityName, '-');
         $moduleClassName           = $entityName . 'Module';
         $moduleNamespace           = $context->getModuleNamespace() . ($relativeNamespace ? '\\' . $relativeNamespace : '');
         $moduleDirectory           = $this->namespaceResolver->getDirectoryFor($moduleNamespace);
@@ -228,7 +228,7 @@ class ScaffoldCmsCommand extends ScaffoldCommand
 
     private function generatePackage(string $packageName, ScaffoldCmsContext $context, array $modules, bool $overwrite)
     {
-        $packageClassName = studly_case($packageName) . 'Package';
+        $packageClassName = \Str::studly($packageName) . 'Package';
         $packageDirectory = $this->namespaceResolver->getDirectoryFor($context->getOutputNamespace());
 
         $php = $this->filesystem->get(__DIR__ . '/Stubs/Cms/Package.php.stub');
@@ -239,7 +239,7 @@ class ScaffoldCmsCommand extends ScaffoldCommand
 
         foreach ($modules as $name => $moduleClass) {
             $moduleImports[] = 'use ' . $moduleClass . ';';
-            $moduleName      = array_last(explode('\\', $moduleClass));
+            $moduleName      = last(explode('\\', $moduleClass));
             $moduleMap[]     = $indent . $indent . $indent . '\'' . $name . '\' => ' . $moduleName . '::class,';
         }
 

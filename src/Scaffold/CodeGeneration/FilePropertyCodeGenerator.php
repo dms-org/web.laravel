@@ -82,6 +82,6 @@ class FilePropertyCodeGenerator extends CommonValueObjectPropertyCodeGenerator
 
     protected function getStorageDirectoryCode(DomainObjectStructure $object) : string
     {
-        return 'public_path(\'app/' . snake_case($object->getReflection()->getShortName()) . '\')';
+        return 'public_path(\'app/' . \Str::snake($object->getReflection()->getShortName()) . '\')';
     }
 }

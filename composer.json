@@ -23,6 +23,7 @@
         "dms-org/common.structure": "dev-upgrade",
         "dms-org/package.analytics": "dev-upgrade",
         "dms-org/library.metadata": "dev-upgrade",
+        "timetoogo/pinq": "dev-upgrade",
         "laravel/framework": "^8.0",
         "marcj/topsort": "^1.0.0",
         "cache/cache": "^0.1.0",

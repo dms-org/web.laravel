@@ -68,7 +68,7 @@ class LaravelLoggingQuery extends Query
      */
     protected function doExecute()
     {
-        $this->laravelConnection->logQuery($this->sql, $this->bindings);
+        $this->laravelConnection->logQuery($this->sql, $this->bindings, 0.0);
         $this->innerQuery->execute();
     }
 

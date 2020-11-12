@@ -1,5 +1,7 @@
 <?php declare(strict_types = 1);
 
+namespace Database\Seeder;
+
 use Dms\Common\Structure\Web\EmailAddress;
 use Dms\Core\Auth\IAdminRepository;
 use Dms\Web\Laravel\Auth\Password\IPasswordHasherFactory;

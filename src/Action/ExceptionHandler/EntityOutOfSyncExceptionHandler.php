@@ -53,7 +53,7 @@ class EntityOutOfSyncExceptionHandler extends ActionExceptionHandler
         /** @var IReadModule $module */
         $module = $moduleContext->getModule();
         $label  = $module->getLabelFor($entity);
-        $type   = str_singular(StringHumanizer::humanize($module->getName()));
+        $type   = \Str::singular(StringHumanizer::humanize($module->getName()));
 
         // TODO: add options to resave?
         if ($hasEntityBeenDeleted) {

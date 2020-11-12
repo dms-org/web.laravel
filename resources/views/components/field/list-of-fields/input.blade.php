@@ -1,7 +1,7 @@
 <?php /** @var \Dms\Web\Laravel\Renderer\Form\FormRenderingContext $renderingContext */ ?>
 <?php /** @var \Dms\Web\Laravel\Renderer\Form\IFieldRenderer $fieldRenderer */ ?>
 <?php /** @var \Dms\Core\Form\IField $elementField */ ?>
-<?php $elementField = $elementField->withName($name, str_singular($label)); ?>
+<?php $elementField = $elementField->withName($name, \Str::singular($label)); ?>
 <ul
         class="list-group dms-field-list"
         @if($exactElements !== null)

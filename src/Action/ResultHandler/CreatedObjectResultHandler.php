@@ -55,7 +55,7 @@ class CreatedObjectResultHandler extends ActionResultHandler
         $moduleContext = ModuleRequestRouter::currentModuleContext();
         $module        = $moduleContext->getModule();
         $label         = $module->getLabelFor($result);
-        $type          = str_singular(StringHumanizer::humanize($module->getName()));
+        $type          = \Str::singular(StringHumanizer::humanize($module->getName()));
 
         $isSubmodule   = $moduleContext->isSubmodule();
         $canEditObject = $module instanceof ICrudModule && $module->allowsEdit() && $module->getEditAction()->isAuthorized();

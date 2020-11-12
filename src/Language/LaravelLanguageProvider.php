@@ -49,7 +49,7 @@ class LaravelLanguageProvider implements ILanguageProvider
 
         $messageId = $namespace . '::' . $message->getId();
 
-        $response = $this->laravelTranslator->trans(
+        $response = $this->laravelTranslator->get(
             $messageId,
             $params = $this->processParameters($message->getParameters())
         );

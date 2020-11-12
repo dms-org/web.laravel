@@ -1,4 +1,15 @@
 Dms.action.responseHandler = function (httpStatusCode, actionUrl, response) {
+    if (httpStatusCode >= 500) {
+        Dms.controls.showErrorDialog({
+            title: "Server error",
+            text: "An unexpected error occurred",
+            type: "error",
+            debugInfo: '<pre style="background:#fff">' + JSON.stringify(response, null, 4) + '</pre>'
+        });
+        return
+    }
+
+
     if (typeof response.redirect !== 'undefined') {
         if (typeof response.message !== 'undefined') {
             Cookies.set('dms-flash-alert', {

@@ -50,7 +50,7 @@ class EditedObjectResultHandler extends ActionResultHandler
         /** @var IReadModule $module */
         $module = $moduleContext->getModule();
         $label  = $module->getLabelFor($result);
-        $type   = str_singular(StringHumanizer::humanize($module->getName()));
+        $type   = \Str::singular(StringHumanizer::humanize($module->getName()));
 
         return \response()->json([
             'message' => "The '{$label}' {$type} has been updated.",

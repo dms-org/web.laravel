@@ -115,8 +115,8 @@ class DmsInstallCommand extends Command
      */
     protected function cleanDefaultModelsAndEntities(Filesystem $filesystem)
     {
-        $filesystem->delete(app_path('User.php'));
-        $this->info('Deleted: ' . app_path('User.php'));
+        $filesystem->deleteDirectory(app_path('Models'));
+        $this->info('Deleted: ' . app_path('Models'));
         $filesystem->cleanDirectory(database_path('migrations/'));
         $this->info('Deleted: ' . database_path('migrations/') . '*');
     }

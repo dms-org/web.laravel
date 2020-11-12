@@ -158,12 +158,12 @@ class DmsInstallCommand extends Command
      */
     protected function scaffoldDatabaseSeeders(Filesystem $filesystem)
     {
-        $filesystem->copy(__DIR__ . '/Stubs/DmsAdminSeeder.php.stub', database_path('seeds/DmsAdminSeeder.php'));
-        require_once database_path('seeds/DmsAdminSeeder.php');
-        $this->info('Created: ' . database_path('seeds/DmsAdminSeeder.php'));
-        $filesystem->copy(__DIR__ . '/Stubs/DatabaseSeeder.php.stub', database_path('seeds/DatabaseSeeder.php'));
-        require_once database_path('seeds/DatabaseSeeder.php');
-        $this->info('Updated: ' . database_path('seeds/DatabaseSeeder.php'));
+        $filesystem->copy(__DIR__ . '/Stubs/DmsAdminSeeder.php.stub', database_path('seeders/DmsAdminSeeder.php'));
+        require_once database_path('seeders/DmsAdminSeeder.php');
+        $this->info('Created: ' . database_path('seeders/DmsAdminSeeder.php'));
+        $filesystem->copy(__DIR__ . '/Stubs/DatabaseSeeder.php.stub', database_path('seeders/DatabaseSeeder.php'));
+        require_once database_path('seeders/DatabaseSeeder.php');
+        $this->info('Updated: ' . database_path('seeders/DatabaseSeeder.php'));
     }
 
     /**

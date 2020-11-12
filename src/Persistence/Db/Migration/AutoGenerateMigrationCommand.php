@@ -6,7 +6,9 @@ use Dms\Core\Exception\InvalidArgumentException;
 use Dms\Core\Persistence\Db\Connection\IConnection;
 use Dms\Core\Persistence\Db\Doctrine\DoctrineConnection;
 use Dms\Core\Persistence\Db\Mapping\IOrm;
+use Illuminate\Filesystem\Filesystem;
 use Illuminate\Database\Console\Migrations\BaseCommand;
+use Illuminate\Database\Migrations\MigrationCreator;
 use Illuminate\Support\Composer;
 
 /**
@@ -54,12 +56,16 @@ class AutoGenerateMigrationCommand extends BaseCommand
      * @param IOrm                      $orm
      */
     public function handle(
-        LaravelMigrationGenerator $autoMigrationGenerator,
         IConnection $connection,
         IOrm $orm
     )
     {
         InvalidArgumentException::verifyInstanceOf(__METHOD__, 'connection', $connection, DoctrineConnection::class);
+
+        $autoMigrationGenerator = new LaravelMigrationGenerator(
+            app(MigrationCreator::class, ['customStubPath' => null]),
+            app(Filesystem::class)
+        );
 
         $file = $autoMigrationGenerator->generateMigration(
             $connection,

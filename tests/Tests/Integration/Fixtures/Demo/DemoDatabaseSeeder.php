@@ -19,6 +19,6 @@ class DemoDatabaseSeeder extends Seeder
     public function run()
     {
         require_once __DIR__ . '/../../../../../src/Install/Stubs/DmsAdminSeeder.php.stub';
-        $this->call(\DmsAdminSeeder::class);
+        $this->call(\Database\Seeders\DmsAdminSeeder::class);
     }
 }

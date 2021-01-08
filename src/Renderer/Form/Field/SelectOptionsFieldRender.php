@@ -87,7 +87,7 @@ class SelectOptionsFieldRender extends OptionsFieldRender implements IFieldRende
      */
     public function handleAction(FormRenderingContext $renderingContext, IField $field, Request $request, string $actionName = null, array $data)
     {
-        if (ends_with($request->url(), '/load-options') && $request->has('query')) {
+        if (\Str::endsWith($request->url(), '/load-options') && $request->has('query')) {
             /** @var IFieldOptions $options */
             $options = $field->getType()->get(FieldType::ATTR_OPTIONS);
 

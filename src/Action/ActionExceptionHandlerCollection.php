@@ -75,8 +75,8 @@ class ActionExceptionHandlerCollection
 
         throw new UnhandleableActionExceptionException(
             sprintf(
-                'Could not handle action exception of type %s from action \'%s\': no matching action handler could be found',
-                get_class($exception), $action->getName()
+                'Could not handle action exception (%s: %s) from action \'%s\': no matching action handler could be found',
+                get_class($exception), $exception->getMessage(), $action->getName()
             ),
             0,
             $exception

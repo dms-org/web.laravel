@@ -47,6 +47,7 @@ Dms.table.initializeCallbacks.push(function (element) {
                 control.data('dms-table-criteria', criteria);
                 control.attr('data-has-loaded-table-data', true);
 
+                paginationNextButton.removeClass('disabled');
                 if (table.find('tbody tr').length < criteria.max_rows) {
                     paginationNextButton.addClass('disabled');
                 }

@@ -353,7 +353,7 @@ class DmsServiceProvider extends ServiceProvider
             /** @var Connection $connection */
             $connection = $this->app->make(Connection::class);
 
-            if ($this->isRunningInConsole()) {
+            if ($this->isRunningInConsole() && $connection instanceof MySqlConnection) {
                 $connection->getDoctrineConnection()->getDatabasePlatform()->registerDoctrineTypeMapping('enum',
                     'string');
                 $connection->getDoctrineConnection()->getEventManager()->addEventSubscriber(new CustomColumnDefinitionEventSubscriber());

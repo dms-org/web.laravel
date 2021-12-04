@@ -42,6 +42,11 @@ class LazyConnection implements IConnection
         return $this->connection;
     }
 
+    public function innerConnection(): IConnection
+    {
+        return $this->connection();
+    }
+
     /**
      * Gets the last insert id.
      *

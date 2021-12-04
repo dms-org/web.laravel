@@ -6,6 +6,7 @@ use Dms\Core\Exception\InvalidArgumentException;
 use Dms\Core\Persistence\Db\Connection\IConnection;
 use Dms\Core\Persistence\Db\Doctrine\DoctrineConnection;
 use Dms\Core\Persistence\Db\Mapping\IOrm;
+use Dms\Web\Laravel\Persistence\Db\LazyConnection;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Database\Console\Migrations\BaseCommand;
 use Illuminate\Database\Migrations\MigrationCreator;
@@ -60,6 +61,10 @@ class AutoGenerateMigrationCommand extends BaseCommand
         IOrm $orm
     )
     {
+        if ($connection instanceof LazyConnection) {
+            $connection = $connection->innerConnection();
+        }
+
         InvalidArgumentException::verifyInstanceOf(__METHOD__, 'connection', $connection, DoctrineConnection::class);
 
         $autoMigrationGenerator = new LaravelMigrationGenerator(

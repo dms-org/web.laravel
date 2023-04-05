@@ -91,6 +91,11 @@ class AdminMapper extends EntityMapper
             $map->property(OauthAdmin::OAUTH_ACCOUNT_ID)
                 ->to('oauth_account_id')
                 ->asVarchar(255);
+
+            $map->property(OauthAdmin::REMEMBER_TOKEN)
+                ->to(self::AUTH_REMEMBER_TOKEN_COLUMN)
+                ->nullable()
+                ->asVarchar(255);
         });
 
         MetadataMapper::mapMetadataToJsonColumn($map, 'metadata');

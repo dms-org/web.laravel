@@ -17,6 +17,7 @@ class OauthAdmin extends Admin
 {
     const OAUTH_PROVIDER_NAME = 'oauthProviderName';
     const OAUTH_ACCOUNT_ID = 'oauthAccountId';
+    const REMEMBER_TOKEN = 'rememberToken';
 
     /**
      * @var string
@@ -27,6 +28,11 @@ class OauthAdmin extends Admin
      * @var string
      */
     protected $oauthAccountId;
+
+    /**
+     * @var string|null
+     */
+    protected $rememberToken;
 
     /**
      * OauthAdmin constructor.
@@ -67,6 +73,7 @@ class OauthAdmin extends Admin
 
         $class->property($this->oauthProviderName)->asString();
         $class->property($this->oauthAccountId)->asString();
+        $class->property($this->rememberToken)->nullable()->asString();
     }
 
     /**
@@ -100,11 +107,10 @@ class OauthAdmin extends Admin
      * Get the token value for the "remember me" session.
      *
      * @return string
-     * @throws InvalidOperationException
      */
     public function getRememberToken()
     {
-        throw InvalidOperationException::methodCall(__METHOD__, 'not supported');
+        return $this->rememberToken;
     }
 
     /**
@@ -112,11 +118,11 @@ class OauthAdmin extends Admin
      *
      * @param  string $value
      *
-     * @throws InvalidOperationException
+     * @throws void
      */
     public function setRememberToken($value)
     {
-
+        $this->rememberToken = $value;
     }
 
     /**

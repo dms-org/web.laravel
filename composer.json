@@ -26,7 +26,8 @@
         "laravel/framework": "^8.0",
         "marcj/topsort": "^1.0.0",
         "cache/cache": "^0.1.0",
-        "league/oauth2-google": "^3.0.0"
+        "league/oauth2-google": "^3.0.0",
+        "stevenmaguire/oauth2-microsoft": "^2.2"
     },
     "autoload-dev": {
         "psr-4": {

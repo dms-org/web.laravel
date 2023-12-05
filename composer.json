@@ -8,7 +8,7 @@
             "email": "elliotlevin@hotmail.com"
         }
     ],
-    "minimum-stability": "stable",
+    "minimum-stability": "dev",
     "autoload": {
         "psr-4": {
             "Dms\\Web\\Laravel\\": "./src/"

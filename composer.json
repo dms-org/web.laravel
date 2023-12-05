@@ -8,7 +8,7 @@
             "email": "elliotlevin@hotmail.com"
         }
     ],
-    "minimum-stability": "dev",
+    "minimum-stability": "stable",
     "autoload": {
         "psr-4": {
             "Dms\\Web\\Laravel\\": "./src/"
@@ -34,7 +34,7 @@
         "marcj/topsort": "^1.0.0",
         "cache/cache": "^0.1.0",
         "league/oauth2-google": "^3.0.0",
-        "stevenmaguire/oauth2-microsoft": "dev-master"
+        "stevenmaguire/oauth2-microsoft": "dev-auth-url-fix"
     },
     "autoload-dev": {
         "psr-4": {

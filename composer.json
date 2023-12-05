@@ -17,6 +17,13 @@
             "./src/helpers.php"
         ]
     },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/iddigitalagency/oauth2-microsoft",
+            "no-api": true
+        }
+    ],
     "require": {
         "php": ">=7.0.0",
         "dms-org/core": "^0.9.0",
@@ -27,7 +34,7 @@
         "marcj/topsort": "^1.0.0",
         "cache/cache": "^0.1.0",
         "league/oauth2-google": "^3.0.0",
-        "stevenmaguire/oauth2-microsoft": "^2.2"
+        "stevenmaguire/oauth2-microsoft": "dev-master"
     },
     "autoload-dev": {
         "psr-4": {

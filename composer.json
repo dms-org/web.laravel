@@ -48,7 +48,8 @@
     },
     "require-dev": {
         "dms-org/common.testing": "dev-upgrade",
-        "laravel/browser-kit-testing": "^7.0"
+        "laravel/browser-kit-testing": "^7.0",
+        "orchestra/testbench": "^9.0"
     },
     "extra": {
         "laravel": {

@@ -38,7 +38,7 @@
         "marcj/topsort": "^1.0.0",
         "cache/cache": "dev-master",
         "league/oauth2-google": "^3.0.0",
-        "stevenmaguire/oauth2-microsoft": "dev-auth-url-fix"
+        "stevenmaguire/oauth2-microsoft": "dev-master"
     },
     "autoload-dev": {
         "psr-4": {

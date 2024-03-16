@@ -22,17 +22,21 @@
             "type": "vcs",
             "url": "https://github.com/iddigitalagency/oauth2-microsoft",
             "no-api": true
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/Chris53897/cache"
         }
     ],
     "require": {
-        "php": ">=7.0.0",
-        "dms-org/core": "^0.9.0",
-        "dms-org/common.structure": "^0.9.0",
-        "dms-org/package.analytics": "^0.9.0",
-        "dms-org/library.metadata": "^0.9.0",
-        "laravel/framework": "^8.0",
+        "php": "^8.2",
+        "dms-org/core": "dev-upgrade",
+        "dms-org/common.structure": "dev-upgrade",
+        "dms-org/package.analytics": "dev-upgrade",
+        "dms-org/library.metadata": "dev-upgrade",
+        "laravel/framework": "^11.0",
         "marcj/topsort": "^1.0.0",
-        "cache/cache": "^0.1.0",
+        "cache/cache": "dev-master",
         "league/oauth2-google": "^3.0.0",
         "stevenmaguire/oauth2-microsoft": "dev-auth-url-fix"
     },
@@ -43,9 +47,8 @@
         }
     },
     "require-dev": {
-        "dms-org/common.testing": "^0.9.0",
-        "laravel/browser-kit-testing": "^6.0",
-        "orchestra/testbench": "^6.0"
+        "dms-org/common.testing": "dev-upgrade",
+        "laravel/browser-kit-testing": "^7.0"
     },
     "extra": {
         "laravel": {
@@ -53,5 +56,9 @@
                 "Dms\\Web\\Laravel\\DmsServiceProvider"
             ]
         }
+    },
+    "replace": {
+        "symfony/http-foundation": "*",
+        "league/flysystem": "*"
     }
 }

@@ -9,7 +9,6 @@
         }
     ],
     "minimum-stability": "stable",
-    "prefer-stable": true,
     "autoload": {
         "psr-4": {
             "Dms\\Web\\Laravel\\": "./src/"
@@ -26,20 +25,20 @@
         },
         {
             "type": "vcs",
-            "url": "https://github.com/Chris53897/cache"
+            "url": "https://github.com/alihamza/cache"
         }
     ],
     "require": {
-        "php": "^8.2",
+        "php": "^8.1",
         "dms-org/core": "dev-upgrade",
         "dms-org/common.structure": "dev-upgrade",
         "dms-org/package.analytics": "dev-upgrade",
         "dms-org/library.metadata": "dev-upgrade",
-        "laravel/framework": "^11.0",
+        "laravel/framework": "^10.0",
         "marcj/topsort": "^1.0.0",
         "cache/cache": "dev-master",
         "league/oauth2-google": "^3.0.0",
-        "stevenmaguire/oauth2-microsoft": "dev-master"
+        "stevenmaguire/oauth2-microsoft": "dev-auth-url-fix"
     },
     "autoload-dev": {
         "psr-4": {
@@ -49,8 +48,8 @@
     },
     "require-dev": {
         "dms-org/common.testing": "dev-upgrade",
-        "laravel/browser-kit-testing": "^7.0",
-        "orchestra/testbench": "^9.0"
+        "laravel/browser-kit-testing": "^6.0",
+        "orchestra/testbench": "^8.0"
     },
     "extra": {
         "laravel": {
@@ -58,9 +57,5 @@
                 "Dms\\Web\\Laravel\\DmsServiceProvider"
             ]
         }
-    },
-    "replace": {
-        "symfony/http-foundation": "*",
-        "league/flysystem": "*"
     }
 }

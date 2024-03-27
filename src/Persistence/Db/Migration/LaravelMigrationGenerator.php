@@ -202,7 +202,7 @@ class LaravelMigrationGenerator extends MigrationGenerator
     protected function replaceMethodBody($methodName, $code, $migrationContents)
     {
         return preg_replace(
-            '/(function\\s+' . $methodName . '\\(\\)\\s*{)\\s*.*(\\s*})/',
+            '/(function\\s+' . $methodName . '\\(\\):\\s+void\\s*{)\\s*.*(\\s*})/',
             '$1' . PHP_EOL . $code . '$2',
             $migrationContents
         );

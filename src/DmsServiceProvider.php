@@ -81,8 +81,8 @@ use Illuminate\Routing\Router;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
-use League\Flysystem\Adapter\Local;
 use League\Flysystem\Filesystem;
+use League\Flysystem\Local\LocalFilesystemAdapter;
 use Psr\Cache\CacheItemPoolInterface;
 
 /**
@@ -264,7 +264,7 @@ class DmsServiceProvider extends ServiceProvider
     private function registerCache()
     {
         $this->app->singleton(CacheItemPoolInterface::class, function () {
-            return new FilesystemCachePool(new Filesystem(new Local(storage_path('dms/cache'))));
+            return new FilesystemCachePool(new Filesystem(new LocalFilesystemAdapter(storage_path('dms/cache'))));
         });
     }
 
